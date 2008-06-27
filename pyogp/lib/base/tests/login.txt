@@ -1,0 +1,30 @@
+Login
+=====
+
+>>> from pyogp.lib.base.credentials import PlainPasswordCredential
+>>> from pyogp.lib.base.agentdomain import AgentDomain
+>>> from pyogp.lib.base.regiondomain import Region
+
+First we create some credentials:
+>>> credentials = PlainPasswordCredential('Firstname', 'Lastname', 'password')
+
+Then we need some agent domain to connect to. This might automatically retrieve some XRDS file to get the actual login endpoint:
+>>> agentdomain = AgentDomain('http://agent.domain')
+
+Now we can use both to get an agent object (which transparently handles capabilities etc.):
+>>> agent = AgentDomain.login(credentials)
+
+The next step is to use this agent to actually place the avatar somewhere. We therefor need a region:
+>>> region = Region('http://region.uri')
+
+Note that we can also first retrieve a RegionDomain object and ask this for possible regions and a map etc.
+
+
+So let's place the agent in form of an avatar there (or try it at least):
+>>> avatar = region.place_avatar(agent)
+
+Now we should establish a presence there:
+
+avatar.establish_presence()
+
+As this is an infinite loop the question is how this could be handled. Maybe in a different thread?
