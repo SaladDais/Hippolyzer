@@ -4,27 +4,47 @@ Login
 >>> from pyogp.lib.base.credentials import PlainPasswordCredential
 >>> from pyogp.lib.base.agentdomain import AgentDomain
 >>> from pyogp.lib.base.regiondomain import Region
+>>> from pyogp.lib.base.regiondomain import Region
+
+
 
 First we create some credentials:
->>> credentials = PlainPasswordCredential('Firstname', 'Lastname', 'password')
+>>> credentials = PlainPasswordCredential('Firstname', 'Lastname', 'secret')
 
 Then we need some agent domain to connect to. This might automatically retrieve some XRDS file to get the actual login endpoint:
->>> agentdomain = AgentDomain('http://agent.domain')
+agentdomain = AgentDomain('http://localhost:12345')
+>>> agentdomain = AgentDomain('/')
 
 Now we can use both to get an agent object (which transparently handles capabilities etc.):
->>> agent = AgentDomain.login(credentials)
+>>> agent = agentdomain.login(credentials)
 
-The next step is to use this agent to actually place the avatar somewhere. We therefor need a region:
->>> region = Region('http://region.uri')
+The agent domain instance now should contain a seed capability:
+>>> agentdomain.seed_cap
+<SeedCapability for http://127.0.0.1:12345/seed_cap>
 
-Note that we can also first retrieve a RegionDomain object and ask this for possible regions and a map etc.
+We could ask this seed capability now to retrieve another cap for us:
+>>> caps = agentdomain.seed_cap.get(['place_avatar'])
+>>> caps
+{'place_avatar': <Capability for http://localhost:12345/cap/place_avatar>}
+
+Now we want to place out avatar somewhere on a region. To do so we first need a Region object:
+>>> region = Region('http://localhost:12345/region')
+
+Now we adapt the agent to the place avatar functionality like this:
+>>> from pyogp.lib.base.interfaces import IPlaceAvatarAdapter
+>>> place = IPlaceAvatarAdapter(agent)
+
+'place' now is an adapter which knows how to call the place_avatar capability. We can ask it to do it:
+>>> avatar = place(region)
+
+The result is dummy right now and should contain a long dictionary with region info:
+>>> avatar['sim_ip']
+'127.0.0.1'
+
+>>> avatar['sim_port']
+12345
+
+This needs to be worked on to be a region and not an avatar. 
 
 
-So let's place the agent in form of an avatar there (or try it at least):
->>> avatar = region.place_avatar(agent)
 
-Now we should establish a presence there:
-
-avatar.establish_presence()
-
-As this is an infinite loop the question is how this could be handled. Maybe in a different thread?
