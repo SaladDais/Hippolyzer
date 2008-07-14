@@ -6,8 +6,6 @@ optionflags = doctest.REPORT_ONLY_FIRST_FAILURE | doctest.ELLIPSIS
 # setup functions
 
 def setUp(self):
-    from pyogp.lib.base.registration import init
-    init()
     print "ok"
     
 def tearDown(self):
