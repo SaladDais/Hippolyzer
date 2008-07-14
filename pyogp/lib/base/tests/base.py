@@ -8,7 +8,6 @@ class AgentDomain(object):
     def __call__(self, environ, start_response):
         self.environ = environ
         self.start = start_response
-        import pdb; pdb.set_trace()
         self.request = Request(environ)
         self.response = Response()
 
