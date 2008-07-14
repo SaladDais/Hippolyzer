@@ -12,8 +12,7 @@ First we create some credentials:
 >>> credentials = PlainPasswordCredential('Firstname', 'Lastname', 'secret')
 
 Then we need some agent domain to connect to. This might automatically retrieve some XRDS file to get the actual login endpoint:
-agentdomain = AgentDomain('http://localhost:12345')
->>> agentdomain = AgentDomain('/')
+>>> agentdomain = AgentDomain('http://localhost:12345')
 
 Now we can use both to get an agent object (which transparently handles capabilities etc.):
 >>> agent = agentdomain.login(credentials)
