@@ -2,6 +2,7 @@ from agent import Agent
 from interfaces import ICredentialSerializer
 from caps import SeedCapability
 import urllib2
+from indra.base import llsd
 
 
 # URL Opener for the agent domain login
@@ -30,13 +31,19 @@ class AgentDomain(object):
         serializer = ICredentialSerializer(credentials) # convert to string via adapter
         payload = serializer.serialize()
         headers = serializer.headers
-        print payload, headers
         
         # now create the request. We assume for now that self.uri is the login uri
         # TODO: make this pluggable so we can use other transports like eventlet in the future
         # TODO: add logging and error handling
-        request = urllib2.Request(self.uri,payload,headers)
-        seed_cap_url = AgentDomainLoginOpener.open(request)
+        # 
+        request = urllib2.Request(self.uri,payload,headers)        
+        res = AgentDomainLoginOpener.open(request)        
+        if type(res)!=type(""):            
+            seed_cap_url_data = res.read() # it might be an addinfourl object
+            seed_cap_url = llsd.parse(seed_cap_url_data)['agent_seed_capability']
+        else:
+            # this only happens in the Linden Lab Agent Domain with their redirect
+            seed_cap_url = res        
         self.seed_cap = SeedCapability('seed_cap', seed_cap_url)
         return Agent(self)
         
