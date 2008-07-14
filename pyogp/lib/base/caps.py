@@ -33,6 +33,8 @@ class Capability(object):
             raise
         return llsd.parse(result)
         
+    def __repr__(self):
+        return "<Capability for %s>" %self.private_url
         
 class SeedCapability(Capability):
     """a seed capability which is able to retrieve other capabilities"""
@@ -52,7 +54,9 @@ class SeedCapability(Capability):
         return caps
              
         
-        
+    def __repr__(self):
+        return "<SeedCapability for %s>" %self.private_url
+
         
         
         
