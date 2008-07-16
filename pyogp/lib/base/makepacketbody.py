@@ -3,7 +3,7 @@ import packet
 import pprint
 from pyogp.lib.base.data import msg_tmpl
 
-def parse_packets():
+def template_message_parser():
     dic = {}
     count = 0
     msg_tmpl.seek(0)
@@ -14,7 +14,6 @@ def parse_packets():
 
     current_packet = None
     current_block = None
-    current_var = None
 
     print lines
 
@@ -45,7 +44,7 @@ def parse_packets():
             current_packet.addBlock(current_block)
             
         block_data  = re.match("^\t\t([{}]+.+)",line)  #gets block data
-        if block_data != None:
+        if block_template_message_parserdata != None:
             parts = block_data.group(1)
             parts = parts.split()
             parts.remove('{')
@@ -79,7 +78,7 @@ def get_all_types(packet_list):
     return type_list
 
 def main():
-    p_list = parse_packets()
+    p_list = template_message_parser()
     #print_packet_list(p_list)
 
     p_typelist = get_all_types(p_list)
