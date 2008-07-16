@@ -1,7 +1,6 @@
 import re
 import packet
 import pprint
-from data import msg_tmpl
 
 def parse_packets():
     dic = {}
