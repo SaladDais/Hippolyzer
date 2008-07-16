@@ -49,7 +49,7 @@ HIGH_FREQUENCY_MESSAGE   = ''
         self.name = name
         self.lltype = tp"""
 
-class PacketBlock():
+class MessageTemplateBlock():
     def __init__(self, header):
         self.header = header
         self.name = header[0]
@@ -75,7 +75,7 @@ class PacketBlock():
 
         return None
 
-class Packet():
+class MessageTemplate():
     def __init__(self, header):
         self.header = header
         self.name = header[0]

@@ -1,5 +1,5 @@
 import re
-import packet
+import message_template
 import pprint
 from pyogp.lib.base.data import msg_tmpl
 
@@ -32,7 +32,7 @@ def template_message_parser():
             parts = packet_header.group(1)
             parts = parts.split()
             
-            current_packet = packet.Packet(parts)
+            current_packet = message_template.MessageTemplate(parts)
             dic[current_packet.name] = current_packet
 
         block_header = re.match("^\t\t([^{}]+.+)",line) #gets packet block header
@@ -40,11 +40,11 @@ def template_message_parser():
             parts = block_header.group(1)
             parts = parts.split()
             
-            current_block = packet.PacketBlock(parts)
+            current_block = message_template.MessageTemplateBlock(parts)
             current_packet.addBlock(current_block)
             
         block_data  = re.match("^\t\t([{}]+.+)",line)  #gets block data
-        if block_template_message_parserdata != None:
+        if block_data != None:
             parts = block_data.group(1)
             parts = parts.split()
             parts.remove('{')
