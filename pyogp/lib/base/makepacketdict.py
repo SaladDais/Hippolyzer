@@ -24,13 +24,12 @@ $/LicenseInfo$
 """
 
 import re
-import sys
-print sys.path
 from pyogp.lib.base.data import msg_tmpl
 
 def makereversepacketdict():
     rev_dict = {}
-    for line in open(msg_tmpl, ).xreadlines():
+    msg_tmpl.seek(0)
+    for line in msg_tmpl:
         results = re.match("^\t([^\t{}]+.+)",line)
         if results:
             aline = results.group(1)
@@ -45,9 +44,8 @@ def makereversepacketdict():
 
 def makepacketdict():
     dict = {}
-    raw_input()
-    for line in open(msg_tmpl, ).xreadlines():
-        raw_input()
+    msg_tmpl.seek(0)
+    for line in msg_tmpl:
         results = re.match("^\t([^\t{}]+.+)",line)
         if results:
             aline = results.group(1)

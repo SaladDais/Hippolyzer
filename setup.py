@@ -31,7 +31,8 @@ setup(name='pyogp.lib.base',
       entry_points={
         'console_scripts': [
             'login = pyogp.lib.base.example:main',
-            'OGPlogin = pyogp.lib.base.OGPLogin:main'
+            'OGPlogin = pyogp.lib.base.OGPLogin:main',
+            'packets = pyogp.lib.base.makepacketbody:main'
         ],
       },
       

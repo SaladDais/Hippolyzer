@@ -1,11 +1,13 @@
 import re
 import packet
 import pprint
+from pyogp.lib.base.data import msg_tmpl
 
 def parse_packets():
     dic = {}
     count = 0
-    lines = open(msg_tmpl, ).xreadlines()
+    msg_tmpl.seek(0)
+    lines = msg_tmpl
     #results = re.match("^\t([^\t{}]+.+)",line) #gets packet headers
     #results  = re.match("^\t\t([^{}]+.+)",line) #gets packet blocks
     #results  = re.match("^\t\t([{}]+.+)",line)  #gets block data
@@ -14,10 +16,14 @@ def parse_packets():
     current_block = None
     current_var = None
 
+    print lines
+
     #we have to go through all the packets and parse them
     while(True):
         try:
             line = lines.next()
+            #print line
+            #raw_input()
         except StopIteration:
             break
         
@@ -58,27 +64,26 @@ def print_packet_list(packet_list):
         for block in packet_list[packet].blocks:
             print '\t' + block.name
             
-            for var in block.vars:
-                print '\t\t' + var #var.name + '   ' + var.lltype
+            for varname in block.vars:
+                print '\t\t' + varname + '\t' + block.vars[varname]
 
 def get_all_types(packet_list):
     type_set = set([])
     for packet in packet_list:
         for block in packet_list[packet].blocks:
-            for var in block.vars.keys():
-                #print var
-                type_set.add(var)#var.lltype)                
+            for varname in block.vars:
+                type_set.add(block.vars[varname])
 
     type_list = list(type_set)
     type_list.sort()
     return type_list
 
 def main():
-    #p_list = parse_packets()
+    p_list = parse_packets()
     #print_packet_list(p_list)
 
-    #p_typelist = get_all_types(p_list)
-    #pprint.pprint(p_typelist)
+    p_typelist = get_all_types(p_list)
+    pprint.pprint(p_typelist)
     return
     
 if __name__ == "__main__":

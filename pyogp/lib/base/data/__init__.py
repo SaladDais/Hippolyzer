@@ -1,3 +1,3 @@
-from pkg_resources import resource_string
+from pkg_resources import resource_stream
 
-msg_tmpl = resource_string(__name__, 'message_template.msg')
+msg_tmpl = resource_stream(__name__, 'message_template.msg')

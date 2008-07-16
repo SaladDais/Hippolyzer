@@ -60,7 +60,7 @@ class PacketBlock():
         #self.vars.append(var)
 
     def addVar(self, name, typename):
-        self.vars[name] = tp
+        self.vars[name] = typename
 
     def getVar(self, index):
         return self.vars[index]
