@@ -44,52 +44,52 @@ LOW_FREQUENCY_MESSAGE    = '\xFF\xFF'
 MEDIUM_FREQUENCY_MESSAGE = '\xFF'
 HIGH_FREQUENCY_MESSAGE   = ''
 
-"""class PacketBlockVariable():
+class MessageTemplateVariable():
     def __init__(self, name, tp):
         self.name = name
-        self.lltype = tp"""
+        self.lltype = tp
+
+    def getName(self):
+        return self.name
+
+    def getType(self):
+        return self.lltype
 
 class MessageTemplateBlock():
     def __init__(self, header):
-        self.header = header
+        self.header = header #this should be broken up into individual components
         self.name = header[0]
         self.vars = {}
-        #self.vars = []
 
-    #def addVar(self, var):
-        #self.vars.append(var)
+    def getName(self):
+        return self.name
 
-    def addVar(self, name, typename):
-        self.vars[name] = typename
+    def addVar(self, var):
+        self.vars[var.getName()] = var
 
-    def getVar(self, index):
-        return self.vars[index]
+    def getVariables(self):
+        return self.vars.values()
 
-    """def getVarByName(self, name):
-        for var in self.vars:
-            if var.name == name:
-                return var"""
-
-    def getVarByName(self, name):
+    def getVariable(self, name):
         return self.vars[name]
-
-        return None
 
 class MessageTemplate():
     def __init__(self, header):
         self.header = header
         self.name = header[0]
-        self.blocks = []
+        self.blocks = {}
+
+    def getName(self):
+        return self.name
 
     def addBlock(self, block):
-        self.blocks.append(block)
-        
-    def getBlockByName(self, name):
-        for block in self.blocks:
-            if block.name == name:
-                return block
+        self.blocks[block.getName()] = block
 
-        return None
+    def getBlocks(self):
+        return self.blocks.values()
+        
+    def getBlock(self, name):
+        return self.blocks[name]
     
 def decodeHeaderPair(frequency, num):
     return mypacketdictionary[(frequency, num)]
