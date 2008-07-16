@@ -44,27 +44,34 @@ LOW_FREQUENCY_MESSAGE    = '\xFF\xFF'
 MEDIUM_FREQUENCY_MESSAGE = '\xFF'
 HIGH_FREQUENCY_MESSAGE   = ''
 
-class PacketBlockVariable():
+"""class PacketBlockVariable():
     def __init__(self, name, tp):
         self.name = name
-        self.lltype = tp
+        self.lltype = tp"""
 
 class PacketBlock():
     def __init__(self, header):
         self.header = header
         self.name = header[0]
-        self.vars = []
+        self.vars = {}
+        #self.vars = []
 
-    def addVar(self, var):
-        self.vars.append(var)
+    #def addVar(self, var):
+        #self.vars.append(var)
+
+    def addVar(self, name, typename):
+        self.vars[name] = tp
 
     def getVar(self, index):
         return self.vars[index]
 
-    def getVarByName(self, name):
+    """def getVarByName(self, name):
         for var in self.vars:
             if var.name == name:
-                return var
+                return var"""
+
+    def getVarByName(self, name):
+        return self.vars[name]
 
         return None
 

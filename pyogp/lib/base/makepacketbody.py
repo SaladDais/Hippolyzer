@@ -1,11 +1,12 @@
 import re
 import packet
 import pprint
+from data import msg_tmpl
 
 def parse_packets():
     dic = {}
     count = 0
-    lines = open("../../linden/scripts/messages/message_template.msg", ).xreadlines()
+    lines = open(msg_tmpl, ).xreadlines()
     #results = re.match("^\t([^\t{}]+.+)",line) #gets packet headers
     #results  = re.match("^\t\t([^{}]+.+)",line) #gets packet blocks
     #results  = re.match("^\t\t([{}]+.+)",line)  #gets block data
@@ -44,8 +45,9 @@ def parse_packets():
             parts = parts.split()
             parts.remove('{')
             parts.remove('}')
-            current_var = packet.PacketBlockVariable(parts[0], parts[1])
-            current_block.addVar(current_var)
+            #current_var = packet.PacketBlockVariable(parts[0], parts[1])
+            #current_block.addVar(current_var)
+            current_block.addVar(parts[0], parts[1])
 
     return dic
 
@@ -58,25 +60,27 @@ def print_packet_list(packet_list):
             print '\t' + block.name
             
             for var in block.vars:
-                print '\t\t' + var.name + '   ' + var.lltype
+                print '\t\t' + var #var.name + '   ' + var.lltype
 
 def get_all_types(packet_list):
     type_set = set([])
     for packet in packet_list:
         for block in packet_list[packet].blocks:
-            for var in block.vars:
-                type_set.add(var.lltype)                
+            for var in block.vars.keys():
+                #print var
+                type_set.add(var)#var.lltype)                
 
     type_list = list(type_set)
     type_list.sort()
     return type_list
 
 def main():
-    p_list = parse_packets()
+    #p_list = parse_packets()
     #print_packet_list(p_list)
 
-    p_typelist = get_all_types(p_list)
-    pprint.pprint(p_typelist)
+    #p_typelist = get_all_types(p_list)
+    #pprint.pprint(p_typelist)
+    return
     
 if __name__ == "__main__":
     main()

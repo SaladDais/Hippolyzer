@@ -24,10 +24,11 @@ $/LicenseInfo$
 """
 
 import re
+from data import msg_tmpl
 
 def makereversepacketdict():
     rev_dict = {}
-    for line in open("../../linden/scripts/messages/message_template.msg", ).xreadlines():
+    for line in open(msg_tmpl, ).xreadlines():
         results = re.match("^\t([^\t{}]+.+)",line)
         if results:
             aline = results.group(1)
@@ -42,7 +43,7 @@ def makereversepacketdict():
 
 def makepacketdict():
     dict = {}
-    for line in open("../../linden/scripts/messages/message_template.msg", ).xreadlines():
+    for line in open(msg_tmpl, ).xreadlines():
         results = re.match("^\t([^\t{}]+.+)",line)
         if results:
             aline = results.group(1)
