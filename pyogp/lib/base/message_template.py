@@ -57,9 +57,20 @@ class MessageTemplateVariable():
 
 class MessageTemplateBlock():
     def __init__(self, header):
-        self.header = header #this should be broken up into individual components
-        self.name = header[0]
         self.vars = {}
+
+        self.name = header[0]
+        self.blockType = header[1]
+        if self.blockType == 'Multiple':
+            self.number = header[2]
+        else:
+            self.number = 0
+
+    def getBlockType(self):
+        return self.blockType
+
+    def getBlockNumber(self):
+        return self.number
 
     def getName(self):
         return self.name
@@ -75,9 +86,32 @@ class MessageTemplateBlock():
 
 class MessageTemplate():
     def __init__(self, header):
-        self.header = header
-        self.name = header[0]
         self.blocks = {}
+
+        self.name = header[0]
+        self.frequency = header[1]
+        self.msgNum = header[2]
+        self.msgTrust = header[3]
+        self.msgEncoding = header[4]
+        if len(header) > 5:
+            self.msgDeprecation = header[5]
+        else:
+            self.msgDeprecation = ''
+            
+    def getFrequency(self):
+        return self.frequency
+
+    def getMessageNumber(self):
+        return self.msgNum
+
+    def getMessageTrust(self):
+        return self.msgTrust
+
+    def getMessageEncoding(self):
+        return self.msgEncoding
+
+    def getDeprecation(self):
+        return self.msgDeprecation
 
     def getName(self):
         return self.name

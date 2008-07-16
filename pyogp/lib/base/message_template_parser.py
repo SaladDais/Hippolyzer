@@ -67,13 +67,16 @@ class Message_Template_Parser():
 def print_packet_list(packet_list):
     for packet in packet_list:
         print '======================================'
-        print packet
+        print packet.getName() + ' ' + packet.getFrequency() + ' ' + \
+                packet.getMessageNumber() + ' ' + packet.getMessageTrust() + ' ' + \
+                packet.getMessageEncoding() + '' + packet.getDeprecation()
         
-        for block in packet_list[packet].blocks:
-            print '\t' + block.name
-            
-            for varname in block.vars:
-                print '\t\t' + varname + '\t' + block.vars[varname]
+        for block in packet.getBlocks():
+            print '\t' + block.getName() + ' ' + block.getBlockType() + ' ' + \
+                  str(block.getBlockNumber())
+            for variable in block.getVariables():
+                sz = len(variable.getName())
+                print '\t\t' + variable.getName() + variable.getType().rjust(30 - sz)
 
 def get_all_types(packet_list):
     type_set = set([])
@@ -91,10 +94,10 @@ def main():
     parser.parse_template_file(msg_tmpl)
     templates = parser.getTemplateList()
     
-    #print_packet_list(templates)
+    print_packet_list(templates)
 
     p_typelist = get_all_types(templates)
-    pprint.pprint(p_typelist)
+    #pprint.pprint(p_typelist)
     return
     
 if __name__ == "__main__":
