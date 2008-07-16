@@ -32,7 +32,7 @@ setup(name='pyogp.lib.base',
         'console_scripts': [
             'login = pyogp.lib.base.example:main',
             'OGPlogin = pyogp.lib.base.OGPLogin:main',
-            'packets = pyogp.lib.base.makepacketbody:main'
+            'packets = pyogp.lib.base.message_template_parser:main'
         ],
       },
       
