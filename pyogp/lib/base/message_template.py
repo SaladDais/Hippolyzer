@@ -23,9 +23,12 @@ limitations under the License.
 $/LicenseInfo$
 """
 
-from makepacketdict import makepacketdict, makereversepacketdict
+#standard libraries
 import struct
 import pprint
+
+#local libraries
+from makepacketdict import makepacketdict, makereversepacketdict
 
 mypacketdictionary = makepacketdict()
 myreversedictionary = makereversepacketdict()
@@ -49,10 +52,10 @@ class MessageTemplateVariable():
         self.name = name
         self.lltype = tp
 
-    def getName(self):
+    def get_name(self):
         return self.name
 
-    def getType(self):
+    def get_type(self):
         return self.lltype
 
 class MessageTemplateBlock():
@@ -66,22 +69,22 @@ class MessageTemplateBlock():
         else:
             self.number = 0
 
-    def getBlockType(self):
+    def get_block_type(self):
         return self.blockType
 
-    def getBlockNumber(self):
+    def get_block_number(self):
         return self.number
 
-    def getName(self):
+    def get_name(self):
         return self.name
 
-    def addVar(self, var):
-        self.vars[var.getName()] = var
+    def add_var(self, var):
+        self.vars[var.get_name()] = var
 
-    def getVariables(self):
+    def get_variables(self):
         return self.vars.values()
 
-    def getVariable(self, name):
+    def get_variable(self, name):
         return self.vars[name]
 
 class MessageTemplate():
@@ -98,33 +101,35 @@ class MessageTemplate():
         else:
             self.msgDeprecation = ''
             
-    def getFrequency(self):
+    def get_frequency(self):
         return self.frequency
 
-    def getMessageNumber(self):
+    def get_message_number(self):
         return self.msgNum
 
-    def getMessageTrust(self):
+    def get_message_trust(self):
         return self.msgTrust
 
-    def getMessageEncoding(self):
+    def get_message_encoding(self):
         return self.msgEncoding
 
-    def getDeprecation(self):
+    def get_deprecation(self):
         return self.msgDeprecation
 
-    def getName(self):
+    def get_name(self):
         return self.name
 
-    def addBlock(self, block):
-        self.blocks[block.getName()] = block
+    def add_block(self, block):
+        self.blocks[block.get_name()] = block
 
-    def getBlocks(self):
+    def get_blocks(self):
         return self.blocks.values()
         
-    def getBlock(self, name):
+    def get_block(self, name):
         return self.blocks[name]
-    
+
+
+#these remain unformatted (by standard) because they are going to be moved    
 def decodeHeaderPair(frequency, num):
     return mypacketdictionary[(frequency, num)]
 
