@@ -25,8 +25,10 @@ $/LicenseInfo$
 
 #standard libraries
 import struct
+import string
+import re
 import pprint
-
+       
 #local libraries
 from makepacketdict import makepacketdict, makereversepacketdict
 
@@ -93,28 +95,44 @@ class MessageTemplate():
 
         self.name = header[0]
         self.frequency = header[1]
-        self.msgNum = header[2]
-        self.msgTrust = header[3]
-        self.msgEncoding = header[4]
+        
+        self.msg_num = string.atoi(header[2],0)
+        if self.frequency == 'Fixed':   
+            #have to do this because Fixed messages are stored as a long in the template
+            binTemp = struct.pack('>l', string.atol(header[2],0))
+            self.msg_num_hex = repr(binTemp)
+            self.msg_num = struct.unpack('>h','\x00' + binTemp[3])[0]
+        elif self.frequency == 'Low':
+            self.msg_num_hex = repr(struct.pack('>bbh',0xff,0xff, self.msg_num))
+        elif self.frequency == 'Medium':
+            self.msg_num_hex = repr(struct.pack('>bb',0xff, self.msg_num))
+        elif self.frequency == 'High':
+            self.msg_num_hex = repr(struct.pack('>b', self.msg_num))
+            
+        self.msg_trust = header[3]
+        self.msg_encoding = header[4]
         if len(header) > 5:
-            self.msgDeprecation = header[5]
+            self.msg_deprecation = header[5]
         else:
-            self.msgDeprecation = ''
+            self.msg_deprecation = ''
             
     def get_frequency(self):
         return self.frequency
 
     def get_message_number(self):
-        return self.msgNum
+        return self.msg_num
+
+    def get_message_hex_num(self):
+        return self.msg_num_hex
 
     def get_message_trust(self):
-        return self.msgTrust
+        return self.msg_trust
 
     def get_message_encoding(self):
-        return self.msgEncoding
+        return self.msg_encoding
 
     def get_deprecation(self):
-        return self.msgDeprecation
+        return self.msg_deprecation
 
     def get_name(self):
         return self.name

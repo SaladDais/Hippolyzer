@@ -8,16 +8,21 @@ from pyogp.lib.base.data import msg_tmpl
 
 class MessageTemplateParser():
     def __init__(self):
-        self.message_templates = {}
-    
+        self.message_templates = []
+        self.version = ''
+
+    def get_version(self):
+        return self.version
+        
     def get_template_list(self):
-        return self.message_templates.values()
+        return self.message_templates
 
     def get_template(self, name):
         return self.message_templates[name]
 
     def add_template(self, new_template):
-        self.message_templates[new_template.get_name()] = new_template
+        #self.message_templates[new_template.get_name()] = new_template
+        self.message_templates.append(new_template)
 
     def parse_template_file(self, template_file):
         count = 0
@@ -40,6 +45,14 @@ class MessageTemplateParser():
                 #raw_input()
             except StopIteration:
                 break
+
+            if self.version == '':
+                version_test = re.match("version.(.+)",line) #gets packet headers
+                if version_test != None:
+                    parts = version_test.group(1)
+                    parts = parts.split()
+                    self.version = float(parts[0])
+           
             
             #get packet header, starting a new packet
             packet_header = re.match("^\t([^\t{}]+.+)",line) #gets packet headers
@@ -71,8 +84,9 @@ def print_packet_list(packet_list):
     for packet in packet_list:
         print '======================================'
         print packet.get_name() + ' ' + packet.get_frequency() + ' ' + \
-                packet.get_message_number() + ' ' + packet.get_message_trust() + ' ' + \
-                packet.get_message_encoding() + '' + packet.get_deprecation()
+                str(packet.get_message_number()) + ' ' + str(packet.get_message_hex_num()) + \
+                ' ' + packet.get_message_trust() + ' ' + \
+                packet.get_message_encoding() + ' ' + packet.get_deprecation()
         
         for block in packet.get_blocks():
             print '\t' + block.get_name() + ' ' + block.get_block_type() + ' ' + \
