@@ -25,14 +25,17 @@ setup(name='pyogp.lib.base',
       install_requires=[
           'setuptools',
           'zope.interface',
-          'zope.component'
+          'zope.component',
           # -*- Extra requirements: -*-
+          'webob',
+          'wsgiref',
       ],
       entry_points={
         'console_scripts': [
             'login = pyogp.lib.base.example:main',
             'OGPlogin = pyogp.lib.base.OGPLogin:main',
-            'packets = pyogp.lib.base.message_template_parser:main'
+            'packets = pyogp.lib.base.message_template_parser:main',
+            'testserver = pyogp.lib.base.tests.base:main'
         ],
       },
       
