@@ -81,7 +81,17 @@ class SeedCapability(Capability):
 
 
 class DictLLSDSerializer(object):
-    """adapter for serializing a dictionary to LLSD"""
+    """adapter for serializing a dictionary to LLSD
+    
+    An example:
+    >>> d={'foo':'bar', 'test':1234}
+    >>> serializer = ISerialization(d)
+    >>> serializer.serialize()
+    '<?xml version="1.0" ?><llsd><map><key>test</key><integer>1234</integer><key>foo</key><string>bar</string></map></llsd>'
+    >>> serializer.content_type
+    'application/llsd+xml'
+    
+    """
     implements(ISerialization)
     adapts(dict)
     
@@ -98,7 +108,31 @@ class DictLLSDSerializer(object):
         return "application/llsd+xml"
         
 class LLSDDeserializer(object):
-    """utility for deserializing LLSD data"""
+    """utility for deserializing LLSD data
+    
+    The deserialization component is defined as a utility because the input
+    data can be a string or a file. It might be possible to define this as 
+    an adapter on a string but a string is too generic for this. So that's 
+    why it is a utility.
+    
+    You can use it like this:
+    
+    >>> s='<?xml version="1.0" ?><llsd><map><key>test</key><integer>1234</integer><key>foo</key><string>bar</string></map></llsd>'
+    
+    We use queryUtility because this returns None instead of an exception
+    when a utility is not registered. We use the content type we received
+    as the name of the utility. Another option would of course be to subclas
+    string to some LLSDString class and use an adapter. We then would need some
+    factory for generating the LLSDString class from whatever came back from
+    the HTTP call.
+    
+    So here is how you use that utility:
+    >>> deserializer = queryUtility(IDeserialization,name="application/llsd+xml")
+    >>> llsd = deserializer.deserialize_string(s)
+    >>> llsd
+    {'test': 1234, 'foo': 'bar'}
+    
+    """
     implements(IDeserialization)
     
     def deserialize_string(self, data):

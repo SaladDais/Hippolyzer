@@ -12,11 +12,15 @@ def tearDown(self):
     print "down"
 
 def test_suite():
-    return unittest.TestSuite((
+    suite = unittest.TestSuite()
+    suite.addTest(
             doctest.DocFileSuite("login.txt","caps.txt",
                 package="pyogp.lib.base.tests",
                 setUp = setUp,
-                tearDown = tearDown,
-                
+                tearDown = tearDown,  
                 )
-            ))
+            )
+    suite.addTest(doctest.DocTestSuite('pyogp.lib.base.caps', optionflags=optionflags))
+    suite.addTest(doctest.DocTestSuite('pyogp.lib.base.credentials', optionflags=optionflags))
+    
+    return suite

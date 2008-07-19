@@ -21,7 +21,16 @@ class PlainPasswordCredential(object):
 # an adapter to serialize this to LLSD
 
 class PlainPasswordLLSDSerializer(object):
-    """converts a plain password credential to LLSD"""
+    """converts a plain password credential to LLSD
+    
+    Here is how you can use it:
+    >>> credential = PlainPasswordCredential('Firstname','Lastname','password')
+    >>> serializer = ISerialization(credential)
+    >>> serializer.serialize()
+    '<?xml version="1.0" ?><llsd><map><key>lastname</key><string>Lastname</string><key>password</key><string>password</string><key>firstname</key><string>Firstname</string></map></llsd>'
+    >>> serializer.content_type
+    'application/llsd+xml'
+    """
     
     implements(ISerialization)
     adapts(IPlainPasswordCredential)
