@@ -1,40 +1,57 @@
 from zope.interface import implements
+from zope.component import queryUtility, adapts
 
 import urllib2
 from indra.base import llsd
 
 from interfaces import ICapability, ISeedCapability
+from interfaces import ISerialization, IDeserialization
+
 
 class Capability(object):
     """models a capability"""
     
     implements(ICapability)
     
-    def __init__(self, name, private_url):
+    def __init__(self, name, public_url):
         """initialize the capability"""
         
         self.name = name
-        self.private_url = private_url
+        self.public_url = public_url
         
     def __call__(self,payload,custom_headers={}):
         """call this capability, return the parsed result"""
         
-        headers = {"Content-type" : "application/llsd+xml"}
-        headers.update(custom_headers)
-        llsd_payload = llsd.format_xml(payload)
+        # serialize the data
+        serializer = ISerialization(payload)
+        content_type = serializer.content_type
+        serialized_payload = serializer.serialize()
+        
+        headers = {"Content-type" : content_type}
+        headers.update(custom_headers)  # give the user the ability to add headers 
         
         # TODO: better errorhandling with own exceptions
         try:
-            request = urllib2.Request(self.private_url, llsd_payload, headers)
-            result = urllib2.urlopen(request).read()
+            request = urllib2.Request(self.public_url, serialized_payload, headers)
+            result = urllib2.urlopen(request)
         except urllib2.HTTPError, e:
             print "** failure while calling cap:",
             print e.read()
             raise
-        return llsd.parse(result)
+            
+        # now deserialize the data again, we ask for a utility with the content type
+        # as the name
+        content_type_charset = result.headers['Content-Type']
+        content_type = content_type_charset.split(";")[0] # remove the charset part
+        
+        deserializer = queryUtility(IDeserialization,name=content_type)
+        if deserializer is None:
+            # TODO: do better error handling here
+            raise "deserialization for %s not supported" %(content_type)
+        return deserializer.deserialize_string(result.read())
         
     def __repr__(self):
-        return "<Capability for %s>" %self.private_url
+        return "<Capability for %s>" %self.public_url
         
 class SeedCapability(Capability):
     """a seed capability which is able to retrieve other capabilities"""
@@ -55,8 +72,52 @@ class SeedCapability(Capability):
              
         
     def __repr__(self):
-        return "<SeedCapability for %s>" %self.private_url
+        return "<SeedCapability for %s>" %self.public_url
 
         
+####
+#### Serialization adapters
+####
+
+
+class DictLLSDSerializer(object):
+    """adapter for serializing a dictionary to LLSD"""
+    implements(ISerialization)
+    adapts(dict)
+    
+    def __init__(self, context):
+        self.context = context
+        
+    def serialize(self):
+        """convert the payload to LLSD"""
+        return llsd.format_xml(self.context)
+        
+    @property
+    def content_type(self):
+        """return the content type of this serializer"""
+        return "application/llsd+xml"
+        
+class LLSDDeserializer(object):
+    """utility for deserializing LLSD data"""
+    implements(IDeserialization)
+    
+    def deserialize_string(self, data):
+        """deserialize a string"""
+        return llsd.parse(data)
+        
+    def deserialize_file(self, fp):
+        """deserialize a file"""
+        data = fp.read()
+        return self.deserialize_string(data)
         
         
+# register everything
+# now we register this adapter so it can be used later:
+from zope.component import provideAdapter, provideUtility
+
+# register adapters for the HTML node
+provideAdapter(DictLLSDSerializer)
+provideUtility(LLSDDeserializer(), IDeserialization, name="application/llsd+xml")
+
+
+

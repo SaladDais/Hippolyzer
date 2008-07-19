@@ -10,6 +10,21 @@ class IPlainPasswordCredential(ICredential):
     lastname = Attribute("""last name of avatar""")
     password = Attribute("""plain password""")
     
+class ISerialization(Interface):
+    """serialization functions"""
+    
+    def serialize():
+        """return the serialized version of the context"""
+        
+    content_type = Attribute("""the content type of the serializer""")
+    
+class IDeserialization(Interface):
+    """deserialization functions"""
+    
+    def deserlialize():
+        """deserialize the context"""
+    
+    
 class ICredentialSerializer(Interface):
     """converts a credential to a serialized format for sending it over the network"""
     

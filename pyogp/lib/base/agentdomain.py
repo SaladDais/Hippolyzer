@@ -1,5 +1,5 @@
 from agent import Agent
-from interfaces import ICredentialSerializer
+from interfaces import ISerialization
 from caps import SeedCapability
 import urllib2
 from indra.base import llsd
@@ -28,9 +28,10 @@ class AgentDomain(object):
         
     def login(self, credentials):
         """login to the agent domain and return an agent object"""
-        serializer = ICredentialSerializer(credentials) # convert to string via adapter
+        serializer = ISerialization(credentials) # convert to string via adapter
         payload = serializer.serialize()
-        headers = serializer.headers
+        content_type = serializer.content_type
+        headers = {'Content-Type': content_type}
         
         # now create the request. We assume for now that self.uri is the login uri
         # TODO: make this pluggable so we can use other transports like eventlet in the future

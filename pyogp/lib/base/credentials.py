@@ -4,7 +4,7 @@ from zope.component import adapts
 from indra.base import llsd
 
 
-from interfaces import IPlainPasswordCredential, ICredentialSerializer
+from interfaces import IPlainPasswordCredential, ISerialization
 
 class PlainPasswordCredential(object):
     """a plain password credential"""
@@ -23,7 +23,7 @@ class PlainPasswordCredential(object):
 class PlainPasswordLLSDSerializer(object):
     """converts a plain password credential to LLSD"""
     
-    implements(ICredentialSerializer)
+    implements(ISerialization)
     adapts(IPlainPasswordCredential)
     
     def __init__(self, context):
@@ -41,11 +41,11 @@ class PlainPasswordLLSDSerializer(object):
 
         llsdlist = llsd.format_xml(loginparams)
         return llsdlist
-    
+
     @property
-    def headers(self):
+    def content_type(self):
         """return HTTP headers needed here"""
-        return {"Content-type" : "application/llsd+xml"}
+        return "application/llsd+xml"
 
 # now we register this adapter so it can be used later:
 from zope.component import provideAdapter
