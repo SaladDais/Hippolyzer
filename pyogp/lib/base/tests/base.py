@@ -28,6 +28,8 @@ class AgentDomain(object):
             return self.handle_seedcap(data)
         elif self.request.path=="/cap/place_avatar":
             return self.place_avatar(data)
+        elif self.request.path=="/cap/some_capability":
+            return self.some_capability(data)        
         else:
             return self.send_response(404)
 
@@ -56,6 +58,17 @@ class AgentDomain(object):
         self.response.content_type='application/llsd+xml'
         self.response.body = data
         return self.response(self.environ, self.start)
+
+    def some_capability(self, data):
+        """handle a dummy test capabilty"""
+        d={'something':'else',
+           'some' : 12345}
+        data = llsd.format_xml(d)
+        self.response.status=200
+        self.response.content_type='application/llsd+xml'
+        self.response.body = data
+        return self.response(self.environ, self.start)
+
         
     def handle_login(self,data):
         """handle the login string"""
@@ -77,8 +90,6 @@ class AgentDomain(object):
         self.response.status = status
         return self.response(self.environ, self.start)
 
-
-    
 
 def main():
     from wsgiref.simple_server import make_server

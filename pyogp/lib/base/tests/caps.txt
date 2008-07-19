@@ -1,0 +1,54 @@
+The Capabilities component
+==========================
+
+The Capabilities component basically gives us two objects: a Capability 
+and a SeedCapability.
+
+We can instaniate a SeedCapability like this:
+>>> from pyogp.lib.base.caps import SeedCapability, Capability
+>>> seed = SeedCapability('seed', 'http://127.0.0.1:12345/seed_cap')
+
+We assume that we got the seed capability URL itself from login or some other service.
+
+We can now ask this SeedCapability object for new capabilities:
+>>> caps = seed.get(['some_capability', 'some_other'])
+
+The result is a dictionary object:
+>>> len(caps.keys())
+2
+
+Let's store the some_capability cap in a variable:
+>>> some_cap = caps['some_capability']
+
+The capability now can be simply called with a payload and returns some data itself.
+
+First we call it:
+>>> data = some_cap({'a':'b'})
+
+And now we can check the data:
+>>> data['something']
+'else'
+>>> data['some']
+12345
+
+This data here is provided by the mockup server for testing.
+
+Internals
+=========
+
+Each capability stores it's name and public URL which it is instantiated with. 
+We can access these like this:
+
+>>> some_cap.name
+'some_capability'
+
+>>> some_cap.public_url
+'http://localhost:12345/cap/some_capability'
+
+As we can see, it's not a secret URL in this mockup case but in production it will be.
+
+
+
+
+
+

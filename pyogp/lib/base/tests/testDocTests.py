@@ -13,7 +13,7 @@ def tearDown(self):
 
 def test_suite():
     return unittest.TestSuite((
-            doctest.DocFileSuite("login.txt",
+            doctest.DocFileSuite("login.txt","caps.txt",
                 package="pyogp.lib.base.tests",
                 setUp = setUp,
                 tearDown = tearDown,
