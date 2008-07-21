@@ -7,9 +7,12 @@ import message_template
 from pyogp.lib.base.data import msg_tmpl
 
 class MessageTemplateParser():
-    def __init__(self):
+    def __init__(self, template_file):
         self.message_templates = []
         self.version = ''
+        self.template_file = template_file
+        self.count = 0
+        self.__parse_template_file()
 
     def get_version(self):
         return self.version
@@ -17,25 +20,24 @@ class MessageTemplateParser():
     def get_template_list(self):
         return self.message_templates
 
-    def get_template(self, name):
-        return self.message_templates[name]
+    def get_count(self):
+        return self.count
 
-    def add_template(self, new_template):
+    def __add_template(self, new_template):
+        self.count += 1
         #self.message_templates[new_template.get_name()] = new_template
         self.message_templates.append(new_template)
 
-    def parse_template_file(self, template_file):
+    def __parse_template_file(self):
         count = 0
-        template_file.seek(0)
-        lines = template_file
+        self.template_file.seek(0)
+        lines = self.template_file
         #results = re.match("^\t([^\t{}]+.+)",line) #gets packet headers
         #results  = re.match("^\t\t([^{}]+.+)",line) #gets packet blocks
         #results  = re.match("^\t\t([{}]+.+)",line)  #gets block data
 
         current_packet = None
         current_block = None
-
-        print lines
 
         #we have to go through all the packets and parse them
         while(True):
@@ -61,7 +63,7 @@ class MessageTemplateParser():
                 parts = parts.split()
                 
                 current_packet = message_template.MessageTemplate(parts)
-                self.add_template(current_packet)
+                self.__add_template(current_packet)
 
             block_header = re.match("^\t\t([^{}]+.+)",line) #gets packet block header
             if block_header != None:
@@ -78,7 +80,9 @@ class MessageTemplateParser():
                 parts.remove('{')
                 parts.remove('}')
                 current_var = message_template.MessageTemplateVariable(parts[0], parts[1])
-                current_block.add_var(current_var)
+                current_block.add_variable(current_var)
+
+        self.template_file.seek(0)
 
 def print_packet_list(packet_list):
     for packet in packet_list:

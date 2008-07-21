@@ -67,7 +67,7 @@ class MessageTemplateBlock():
         self.name = header[0]
         self.blockType = header[1]
         if self.blockType == 'Multiple':
-            self.number = header[2]
+            self.number = int(header[2])
         else:
             self.number = 0
 
@@ -80,7 +80,7 @@ class MessageTemplateBlock():
     def get_name(self):
         return self.name
 
-    def add_var(self, var):
+    def add_variable(self, var):
         self.vars[var.get_name()] = var
 
     def get_variables(self):
@@ -99,15 +99,15 @@ class MessageTemplate():
         self.msg_num = string.atoi(header[2],0)
         if self.frequency == 'Fixed':   
             #have to do this because Fixed messages are stored as a long in the template
-            binTemp = struct.pack('>l', string.atol(header[2],0))
-            self.msg_num_hex = repr(binTemp)
+            binTemp = struct.pack('>L', string.atol(header[2],0))
+            self.msg_num_hex = binTemp
             self.msg_num = struct.unpack('>h','\x00' + binTemp[3])[0]
         elif self.frequency == 'Low':
-            self.msg_num_hex = repr(struct.pack('>bbh',0xff,0xff, self.msg_num))
+            self.msg_num_hex = struct.pack('>BBh',0xff,0xff, self.msg_num)
         elif self.frequency == 'Medium':
-            self.msg_num_hex = repr(struct.pack('>bb',0xff, self.msg_num))
+            self.msg_num_hex = struct.pack('>BB',0xff, self.msg_num)
         elif self.frequency == 'High':
-            self.msg_num_hex = repr(struct.pack('>b', self.msg_num))
+            self.msg_num_hex = struct.pack('>B', self.msg_num)
             
         self.msg_trust = header[3]
         self.msg_encoding = header[4]
@@ -125,10 +125,10 @@ class MessageTemplate():
     def get_message_hex_num(self):
         return self.msg_num_hex
 
-    def get_message_trust(self):
+    def get_trust(self):
         return self.msg_trust
 
-    def get_message_encoding(self):
+    def get_encoding(self):
         return self.msg_encoding
 
     def get_deprecation(self):
