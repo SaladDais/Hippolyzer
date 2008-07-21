@@ -6,6 +6,33 @@ from pyogp.lib.base.data import msg_tmpl
 from pyogp.lib.base.message_template import MessageTemplate, MessageTemplateBlock, MessageTemplateVariable
 from pyogp.lib.base.message_template_parser import MessageTemplateParser
 
+class TestDictionary(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        self.template_file = msg_tmpl
+        parser = MessageTemplateParser(None)
+        self.template_list = parser.get_template_list()
+
+    def test_create_dictionary(self):
+        try:
+            msg_dict = TemplateDictionary(None)
+            assert False, "Template dictionary fail case list==None not caught"
+        except:
+            assert True
+            
+    def test_get_packet(self):
+        msg_dict = TemplateDictionary(self.template_list)
+        packet = msg_dict.get_packet('ConfirmEnableSimulator')
+        assert packet != None, "get_packet failed"
+        assert packet.get_frequency() == 'Medium', "Incorrect frequency for ConfirmEnableSimulator'
+        assert packet.get_message_number() == 8, "Incorrect message number for ConfirmEnableSimulator'
+
+    def test_get_packet_pair(self):
+        msg_dict = TemplateDictionary(self.template_list)
+        packet = msg_dict.get_packet_by_pair('Medium', 8)
+        assert packet.get_name() == 'ConfirmEnableSimulator', "Frequency-Number pair resulting in incorrect packet"        
 
 class TestTemplates(unittest.TestCase):
     
@@ -139,4 +166,5 @@ def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
     suite.addTest(makeSuite(TestTemplates))
+    suite.addTest(makeSuite(TestDictionary))
     return suite

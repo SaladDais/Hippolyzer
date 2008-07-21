@@ -38,17 +38,6 @@ myreversedictionary = makereversepacketdict()
 """ can construct and deconstruct packet headers. Has nothing to
         do with the packet payload, yet. """
 
-LL_ZERO_CODE_FLAG = '\x80'
-LL_RELIABLE_FLAG  = '\x40'
-LL_RESENT_FLAG    = '\x20'
-LL_ACK_FLAG       = '\x10'
-LL_NONE           = '\x00'
-
-FIXED_FREQUENCY_MESSAGE  = '\xFF\xFF\xFF'
-LOW_FREQUENCY_MESSAGE    = '\xFF\xFF'
-MEDIUM_FREQUENCY_MESSAGE = '\xFF'
-HIGH_FREQUENCY_MESSAGE   = ''
-
 class MessageTemplateVariable():
     def __init__(self, name, tp):
         self.name = name

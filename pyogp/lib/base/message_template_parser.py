@@ -8,10 +8,13 @@ from pyogp.lib.base.data import msg_tmpl
 
 class MessageTemplateParser():
     def __init__(self, template_file):
+        if template_file == None:
+            raise Exception('Template file cannot be None')
+
+        self.template_file = template_file
         self.message_templates = []
         self.version = ''
-        self.template_file = template_file
-        self.count = 0
+        self.count = 0        
         self.__parse_template_file()
 
     def get_version(self):
@@ -30,6 +33,7 @@ class MessageTemplateParser():
 
     def __parse_template_file(self):
         count = 0
+        
         self.template_file.seek(0)
         lines = self.template_file
         #results = re.match("^\t([^\t{}]+.+)",line) #gets packet headers
