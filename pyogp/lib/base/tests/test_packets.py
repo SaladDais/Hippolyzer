@@ -17,8 +17,15 @@ class TestTemplates(unittest.TestCase):
 
     def test_parser(self):
         parser = MessageTemplateParser(self.template_file)
-        
-        
+        assert parser.get_template_list() != None, "Parsing template file failed"
+
+    def test_parser_fail(self):
+        try:
+            parser = MessageTemplateParser(None)
+            assert False, "Fail case TEMPLATE_FILE == NONE not caught"
+        except:
+            assert True
+                        
     def test_parser_version(self):
         parser = MessageTemplateParser(self.template_file)
         version = parser.get_version()
