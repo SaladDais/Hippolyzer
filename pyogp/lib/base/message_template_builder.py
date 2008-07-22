@@ -1,5 +1,6 @@
 from pyogp.lib.base.message_template import MsgData, MsgBlockData, \
      MsgVariableData
+from pyogp.lib.base.message_types import MsgType
 
 class MessageTemplateBuilder():
     """ This class builds messages at its high level, that is, keeping
@@ -21,7 +22,23 @@ class MessageTemplateBuilder():
 
     def get_current_block(self):
         return self.current_block
-        
+
+    def build_message(self):
+        """ Builds the message by serializing the data. Creates a packet ready
+            to be sent. """
+        #this probably needs a serializer to do the work
+        #serializer should serialize the MsgData and traverse its blocks,
+        #and the blocks variables
+        #serializer should adapt the interface of MsgData (whatever it is),
+        #and implement ISerializer
+        pass
+
+    def build_block(self):
+        pass
+    
+    def build_variable(self):
+        pass
+    
     def new_message(self, message_name):
         """ Creates a new packet where data can be added to it. Note, the variables
             are added when they are used, or data added to them, so to make sure
@@ -40,14 +57,26 @@ class MessageTemplateBuilder():
         self.current_block = self.current_template.get_block(block_name)
         #error check
 
-        self.cur_msg_name = block_name
+        self.cur_block_name = block_name
         
         for variable in self.current_block.get_variables():
             var_data = MsgVariableData(variable.get_name(), variable.get_type())
             self.current_block.add_variable(var_data)
 
     def add_data(self, var_name, data, data_size):
+        self.check_size(var_name, data_size)
         self.current_block.add_data(var_name, data, data_size)
+
+    def check_size(self, var_name, data, data_size):
+        block = self.template_list[cur_msg_name].get_block(self.cur_block_name)
+        size = block.get_variable(var_name).get_size()
+        if size != data_size:
+            #warning
+            #for now, exception
+            raise Exception('Variable size isn"t the same as the variable size')
+
+    def add_bool(self, var_name, bool_data):
+        self.add_data(var_name, bool_data, MsgType.sizeof(MsgType.MVT_BOOL))
             
 """class IMessageSerializer():
     implements ISerializer

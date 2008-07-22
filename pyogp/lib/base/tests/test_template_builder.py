@@ -113,7 +113,7 @@ class TestTemplateBuilder(unittest.TestCase):
         builder = MessageTemplateBuilder(self.template_dict)
         builder.new_message('AvatarTextureUpdate')
         builder.next_block('AgentData')
-        builder.add_bool('TexturesChanged', True, message_types.MVT_BOOL)
+        builder.add_bool('TexturesChanged', True)
         #need a way to determine the right variable data is sent compared to the type
         assert builder.get_current_block().variables['TexturesChanged'].get_data() == True,\
                "Data not set correctly"
@@ -122,7 +122,7 @@ class TestTemplateBuilder(unittest.TestCase):
         builder = MessageTemplateBuilder(self.template_dict)
         builder.new_message('AvatarTextureUpdate')
         builder.next_block('AgentData')
-        builder.add_lluuid('AgentID', "4baff.afef.1234.1241fvbaf", message_types.MVT_LLUUID)
+        builder.add_lluuid('AgentID', "4baff.afef.1234.1241fvbaf")
         assert builder.get_current_block().variables['AgentID'].get_data() == "4baff.afef.1234.1241fvbaf",\
                "Data not set correctly"
         #assert builder.get_current_block().variables['AgentID'].get_size() == ?

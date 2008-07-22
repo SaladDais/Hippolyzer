@@ -60,3 +60,46 @@ class MsgType():
     MVT_BOOL, \
     MVT_IP_ADDR, \
     MVT_IP_PORT = range(20)
+
+    #TODO should this be changed? Less switch-style and more object-style?
+    def sizeof(var):
+        if var == MsgType.MVT_FIXED:
+            return -1
+        elif var == MsgType.MVT_VARIABLE:
+            return -1
+        elif var == MsgType.MVT_U8:
+            return 1
+        elif var == MsgType.MVT_U16:
+            return 2
+        elif var == MsgType.MVT_U32:
+            return 4
+        elif var == MsgType.MVT_U64:
+            return 8
+        elif var == MsgType.MVT_S8:
+            return 1
+        elif var == MsgType.MVT_S16:
+            return 2
+        elif var == MsgType.MVT_S32:
+            return 4
+        elif var == MsgType.MVT_S64:
+            return 8
+        elif var == MsgType.MVT_F32:
+            return 4
+        elif var == MsgType.MVT_F64:
+            return 8
+        elif var == MsgType.MVT_LLVector3:
+            return 12
+        elif var == MsgType.MVT_LLVector3d:
+            return 24
+        elif var == MsgType.MVT_LLVector4:
+            return 16
+        elif var == MsgType.MVT_LLQuaternion:
+            return 12
+        elif var == MsgType.MVT_LLUUID:
+            return 16
+        elif var == MsgType.MVT_BOOL:
+            return 1
+        elif var == MsgType.MVT_IP_ADDR:
+            return 4
+        elif var == MsgType.MVT_IP_PORT:
+            return 2
