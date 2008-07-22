@@ -38,6 +38,71 @@ myreversedictionary = makereversepacketdict()
 """ can construct and deconstruct packet headers. Has nothing to
         do with the packet payload, yet. """
 
+#this probably needs to implement an interface so it can be serialized
+class MsgData():
+    """ Used as a Message that is being created that will be
+        serialized and sent. """
+    def __init__(self, name):
+        self.name = name
+        self.total_size = 0
+        self.blocks = {}
+
+    def add_block(self, block):
+        self.blocks[block.get_name()] = block
+
+    def get_blocks(self):
+        return self.blocks
+
+    def get_block(self, block_name):
+        return self.blocks[block_name]
+
+    def add_data(self, block_name, var_name, data, data_size):
+        get_block(block_name).add_data(var_name, data, data_size)
+
+#this probably needs to implement an interface so it can be serialized
+class MsgBlockData():
+    """ Used as a Message block that is being created that will be
+        serialized and sent. """
+    def __init__(self, name):
+        self.name = name
+        self.total_size = 0
+        self.vars = {}
+
+    def add_variable(self, var):
+        self.vars[var.get_name()] = var
+
+    def get_variables(self):
+        return self.vars
+
+    def get_variable(self, var_name):
+        return self.vars[var_name]
+
+    def add_data(self, var_name, data, data_size):
+        get_variable[var_name].add_data(data, data_size)
+
+class MsgVariableData():
+    """ Used as a Message Block variable that is being created that will be
+        serialized and sent """
+    def __init__(self, name, tp):
+        self.name = name
+        self.total_size = 0
+        self.lltype = tp
+        self.data = None
+
+    #how DO we add data? What format will it be in?
+    def add_data(self, data, data_size):
+        self.data = data
+    
+    def get_data(self):
+        return self.data
+
+    def get_total_size(self):
+        return self.total_size
+
+    def get_type(self):
+        return self.lltype
+        
+
 class MessageTemplateVariable():
     def __init__(self, name, tp):
         self.name = name
@@ -82,6 +147,9 @@ class MessageTemplate():
     def __init__(self, header):
         self.blocks = {}
 
+        #this is the function or object that will handle this type of message
+        self.handler = None
+
         self.name = header[0]
         self.frequency = header[1]
         
@@ -104,6 +172,13 @@ class MessageTemplate():
             self.msg_deprecation = header[5]
         else:
             self.msg_deprecation = ''
+
+    def get_handler(self):
+        return self.handler
+
+    #this probably needs more arguments to pass to the func or object
+    def set_handler(self, handler):
+        self.handler = handler
             
     def get_frequency(self):
         return self.frequency
