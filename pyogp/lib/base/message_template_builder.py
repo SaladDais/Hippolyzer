@@ -1,4 +1,5 @@
-from pyogp.lib.base.message_template import MsgData, MsgBlockData, MsgVariableData
+from pyogp.lib.base.message_template import MsgData, MsgBlockData, \
+     MsgVariableData
 
 class MessageTemplateBuilder():
     """ This class builds messages at its high level, that is, keeping

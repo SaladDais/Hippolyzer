@@ -25,7 +25,6 @@ $/LicenseInfo$
 
 #standard libraries
 import struct
-import string
 import re
 import pprint
        
@@ -107,12 +106,15 @@ class MsgVariableData():
 
     def get_type(self):
         return self.lltype
-        
 
 class MessageTemplateVariable():
-    def __init__(self, name, tp):
+    def __init__(self, name, tp, size):
         self.name = name
         self.lltype = tp
+        self.size = size
+
+    def get_size(self):
+        return self.size
 
     def get_name(self):
         return self.name
@@ -121,18 +123,14 @@ class MessageTemplateVariable():
         return self.lltype
 
 class MessageTemplateBlock():
-    def __init__(self, header):
+    def __init__(self, name):
         self.variables = {}
-
-        self.name = header[0]
-        self.blockType = header[1]
-        if self.blockType == 'Multiple':
-            self.number = int(header[2])
-        else:
-            self.number = 0
+        self.name = name
+        self.block_type = None
+        self.number = 0
 
     def get_block_type(self):
-        return self.blockType
+        return self.block_type
 
     def get_block_number(self):
         return self.number
@@ -149,35 +147,24 @@ class MessageTemplateBlock():
     def get_variable(self, name):
         return self.variables[name]
 
-class MessageTemplate():
-    def __init__(self, header):
-        self.blocks = {}
+    def set_type(self, tp):
+        self.block_type = tp
 
+    def set_number(self, num):
+        self.number = num
+    
+
+class MessageTemplate():
+    def __init__(self, name):
+        self.blocks = {}
         #this is the function or object that will handle this type of message
         self.handler = None
-
-        self.name = header[0]
-        self.frequency = header[1]
-        
-        self.msg_num = string.atoi(header[2],0)
-        if self.frequency == 'Fixed':   
-            #have to do this because Fixed messages are stored as a long in the template
-            binTemp = struct.pack('>L', string.atol(header[2],0))
-            self.msg_num_hex = binTemp
-            self.msg_num = struct.unpack('>h','\x00' + binTemp[3])[0]
-        elif self.frequency == 'Low':
-            self.msg_num_hex = struct.pack('>BBh',0xff,0xff, self.msg_num)
-        elif self.frequency == 'Medium':
-            self.msg_num_hex = struct.pack('>BB',0xff, self.msg_num)
-        elif self.frequency == 'High':
-            self.msg_num_hex = struct.pack('>B', self.msg_num)
-            
-        self.msg_trust = header[3]
-        self.msg_encoding = header[4]
-        if len(header) > 5:
-            self.msg_deprecation = header[5]
-        else:
-            self.msg_deprecation = ''
+        self.name = name
+        self.frequency = None
+        self.msg_num = 0
+        self.msg_num_hex = None
+        self.msg_trust = None
+        self.msg_deprecation = None
 
     def get_handler(self):
         return self.handler
@@ -216,7 +203,24 @@ class MessageTemplate():
     def get_block(self, name):
         return self.blocks[name]
 
+    def set_frequency(self, freq):
+        self.frequency = freq
 
+    def set_message_number(self, num):
+        self.msg_num = num
+
+    def set_message_hex_num(self, num):
+        self.msg_num_hex = num
+
+    def set_trust(self, trust):
+        self.msg_trust = trust
+
+    def set_encoding(self, enc):
+        self.msg_encoding = enc
+
+    def set_deprecation(self, dep):
+        self.msg_deprecation = dep
+        
 #these remain unformatted (by standard) because they are going to be moved    
 def decodeHeaderPair(frequency, num):
     return mypacketdictionary[(frequency, num)]

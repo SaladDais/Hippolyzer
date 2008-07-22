@@ -6,6 +6,8 @@ from pyogp.lib.base.data import msg_tmpl
 from pyogp.lib.base.message_template import MessageTemplate, MessageTemplateBlock, MessageTemplateVariable
 from pyogp.lib.base.message_template_dict import TemplateDictionary
 from pyogp.lib.base.message_template_parser import MessageTemplateParser
+from pyogp.lib.base.message_types import MsgFrequency, MsgTrust, \
+     MsgEncoding, MsgDeprecation, MsgBlockType, MsgType
 
 class TestDictionary(unittest.TestCase):
     def setUp(self):
@@ -27,7 +29,7 @@ class TestDictionary(unittest.TestCase):
         msg_dict = TemplateDictionary(self.template_list)
         packet = msg_dict.get_template('ConfirmEnableSimulator')
         assert packet != None, "get_packet failed"
-        assert packet.get_frequency() == 'Medium', "Incorrect frequency for ConfirmEnableSimulator"
+        assert packet.get_frequency() == MsgFrequency.MEDIUM_FREQUENCY_MESSAGE, "Incorrect frequency for ConfirmEnableSimulator"
         assert packet.get_message_number() == 8, "Incorrect message number for ConfirmEnableSimulator"
 
     def test_get_packet_pair(self):
@@ -42,6 +44,8 @@ class TestTemplates(unittest.TestCase):
 
     def setUp(self):
         self.template_file = msg_tmpl
+        self.parser = MessageTemplateParser(self.template_file)
+        self.msg_dict = TemplateDictionary(self.parser.get_template_list())
 
     def test_parser(self):
         parser = MessageTemplateParser(self.template_file)
@@ -55,12 +59,11 @@ class TestTemplates(unittest.TestCase):
             assert True
                         
     def test_parser_version(self):
-        parser = MessageTemplateParser(self.template_file)
-        version = parser.get_version()
+        version = self.parser.get_version()
         assert version == 2.0, "Version not correct, expected 2.0, got " + str(version)
 
     def test_template(self):
-        template = MessageTemplate(('CompletePingCheck', 'High', '2', 'NotTrusted', 'Unencoded'))
+        template = self.msg_dict['CompletePingCheck']
         name = template.get_name()
         freq = template.get_frequency()
         num = template.get_message_number()
@@ -69,61 +72,57 @@ class TestTemplates(unittest.TestCase):
         enc = template.get_encoding()
         dep = template.get_deprecation()
         assert name == 'CompletePingCheck', "Expected: CompletePingCheck  Returned: " + name
-        assert freq == 'High', "Expected: High  Returned: " + freq
+        assert freq == MsgFrequency.HIGH_FREQUENCY_MESSAGE, "Expected: High  Returned: " + freq
         assert num == 2, "Expected: 2  Returned: " + str(num)
         assert hx == '\x02', "Expected: '\x02'  Returned: " + repr(hx)
-        assert trust == 'NotTrusted', "Expected: NotTrusted  Returned: " + trust
-        assert enc == 'Unencoded', "Expected: Unencoded  Returned: " + enc
-        assert dep == '', "Expected:   Returned: " + dep       
+        assert trust == MsgTrust.LL_NOTRUST, "Expected: NotTrusted  Returned: " + trust
+        assert enc == MsgEncoding.LL_UNENCODED, "Expected: Unencoded  Returned: " + enc
+        assert dep == MsgDeprecation.LL_NOTDEPRECATED, "Expected:   Returned: " + dep       
 
-    def test_template_low_deprecated(self):
-        template = MessageTemplate(('CompletePingCheck', 'Low', '2', 'NotTrusted', 'Unencoded', 'Deprecated'))
+    def test_template_low(self):
+        template = self.msg_dict['AddCircuitCode']
         hx = template.get_message_hex_num()
-        dep = template.get_deprecation()
         assert hx == '\xff\xff\x00\x02', "Expected: '\xff\xff\x00\x02'  Returned: " + repr(hx)
-        assert dep == 'Deprecated', "Expected:  Deprecated  Returned: " + dep       
+
+    def test_deprecated(self):
+        template = self.msg_dict['ObjectPosition']
+        dep = template.get_deprecation()
+        assert dep == MsgDeprecation.LL_DEPRECATED, "Expected:  Deprecated  Returned: " + dep
 
     def test_template_medium(self):
-        template = MessageTemplate(('CompletePingCheck', 'Medium', '2', 'NotTrusted', 'Unencoded', 'Deprecated'))
+        template = self.msg_dict['RequestMultipleObjects']
         hx = template.get_message_hex_num()
-        dep = template.get_deprecation()
-        assert hx == '\xff\x02', "Expected: " + r'\xff\x02' + "  Returned: " + hx
+        assert hx == '\xff\x03', "Expected: " + r'\xff\x03' + "  Returned: " + hx
 
     def test_template_fixed(self):
-        template = MessageTemplate(('CompletePingCheck', 'Fixed', '0xFFFFFFFB', 'NotTrusted', 'Unencoded'))
+        template = self.msg_dict['PacketAck']
         num = template.get_message_number()
         hx = template.get_message_hex_num()
         assert num == 251, "Expected: 251  Returned: " + str(num)
         assert hx == '\xff\xff\xff\xfb', "Expected: " + r'\xff\xff\xff\xfb' + "  Returned: " + repr(hx)
 
     def test_block(self):
-        block = MessageTemplateBlock(('PingID', 'Single'))
-        name = block.get_name()
+        block = self.msg_dict['OpenCircuit'].get_block('CircuitInfo')
         tp = block.get_block_type()
         num = block.get_block_number()
-        assert name == 'PingID', "Expected:   PingID    Returned" + name       
-        assert tp == 'Single', "Expected:   Single   Returned: " + tp       
+        assert tp == MsgBlockType.MBT_SINGLE, "Expected:   Single   Returned: " + tp       
         assert num == 0, "Expected:   0  Returned: " + str(num)               
         
     def test_block_multiple(self):
-        block = MessageTemplateBlock(('CircuitCode', 'Multiple', '2'))
-        name = block.get_name()
+        block = self.msg_dict['NeighborList'].get_block('NeighborBlock')
         tp = block.get_block_type()
         num = block.get_block_number()
-        assert name == 'CircuitCode', "Expected:   CircuitCode    Returned" + name       
-        assert tp == 'Multiple', "Expected:   Multiple   Returned: " + tp
-        assert num == 2, "Expected:   2  Returned: " + str(num)               
+        assert tp == MsgBlockType.MBT_MULTIPLE, "Expected:   Multiple   Returned: " + tp
+        assert num == 4, "Expected:   4  Returned: " + str(num)               
 
     def test_variable(self):
-        variable = MessageTemplateVariable("PingID", "U8")
-        name = variable.get_name()
+        variable = self.msg_dict['StartPingCheck'].get_block('PingID').get_variable('PingID')
         tp = variable.get_type()
-        assert name == 'PingID', "Expected: PingID  Returned:  " + name
-        assert tp == 'U8', "Expected: U8  Returned:  " + tp        
+        assert tp == MsgType.MVT_U8, "Expected: U8  Returned:  " + str(tp)
 
     def test_add_get_block(self):
-        template = MessageTemplate(('CompletePingCheck', 'High', '2', 'NotTrusted', 'Unencoded'))
-        block = MessageTemplateBlock(('CircuitCode', 'Multiple', '2'))
+        template = MessageTemplate('CompletePingCheck')
+        block = MessageTemplateBlock('CircuitCode')
         template.add_block(block)
         blocks = template.get_blocks()
         count = len(blocks)
@@ -131,37 +130,12 @@ class TestTemplates(unittest.TestCase):
         assert template.get_block('CircuitCode') != None, "Get block failed"
         
     def test_add_variable(self):
-        block = MessageTemplateBlock(('CircuitCode', 'Multiple', '2'))
-        variable = MessageTemplateVariable("PingID", "U8")
+        block = MessageTemplateBlock('CircuitCode')
+        variable = MessageTemplateVariable("PingID", MsgType.MVT_U8, 1)
         block.add_variable(variable)
         var_list = block.get_variables()
         assert var_list[0].get_name() == 'PingID', "Add variable failed"
         assert block.get_variable('PingID') != None, "Get variable failed"
-
-    def test_StartPingCheck(self):
-        parser = MessageTemplateParser(self.template_file)
-        template_list = parser.get_template_list()
-        my_template = template_list[4]
-        name = my_template.get_name()
-        frequency = my_template.get_frequency()
-        num = my_template.get_message_number()
-        hx = my_template.get_message_hex_num()
-        trust = my_template.get_trust()
-        code = my_template.get_encoding()
-        deprecate = my_template.get_deprecation()
-        block_count = len(my_template.get_blocks())
-        my_block = my_template.get_block('PingID')
-        p_id = my_block.get_variable('PingID')
-        assert name == 'StartPingCheck', "Expected: StartPingCheck  Returned: " + name
-        assert frequency == 'High', "Expected: High  Returned: " + frequency
-        assert num == 1, "Expected: 1  Returned: " + str(num)
-        assert hx == '\x01', "Expected: " + r'\x01' + "  Returned: " + repr(hx)
-        assert trust == 'NotTrusted', "Expected: NotTrusted  Returned: " + trust
-        assert code == 'Unencoded', "Expected: Unencoded  Returned: " + code
-        assert deprecate == '', "Expected:    Returned: " + str(deprecate)
-        assert block_count == 1, "Expected: 1  Returned: " + str(block_count)
-        assert my_block != None, "Getting block PingID failed"
-        assert p_id != None, "Getting variable PingID failed"
 
 def test_suite():
     from unittest import TestSuite, makeSuite

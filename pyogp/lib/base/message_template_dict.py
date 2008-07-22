@@ -1,4 +1,5 @@
 from pyogp.lib.base.data import msg_tmpl
+from pyogp.lib.base.message_types import MsgFrequency
 
 class TemplateDictionary():
     def __init__(self, template_list):
@@ -14,12 +15,24 @@ class TemplateDictionary():
     def buildDictionaries(self, template_list):
         for template in template_list:
             self.message_templates[template.get_name()] = template
-            self.message_dict[(template.get_frequency(), \
+
+            #do a mapping of type to a string for easier reference
+            frequency_str = ''
+            if template.get_frequency() == MsgFrequency.FIXED_FREQUENCY_MESSAGE:
+                frequency_str = "Fixed"
+            elif template.get_frequency() == MsgFrequency.LOW_FREQUENCY_MESSAGE:
+                frequency_str = "Low"
+            elif template.get_frequency() == MsgFrequency.MEDIUM_FREQUENCY_MESSAGE:
+                frequency_str = "Medium"
+            elif template.get_frequency() == MsgFrequency.HIGH_FREQUENCY_MESSAGE:
+                frequency_str = "High"
+                
+            self.message_dict[(frequency_str, \
                                template.get_message_number())] = template
 
     def get_template(self, template_name):
         return self.message_templates[template_name]
-
+    
     def get_template_by_pair(self, frequency, num):
         return self.message_dict[(frequency, num)]
 

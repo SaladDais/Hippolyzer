@@ -7,7 +7,7 @@ from pyogp.lib.base.message_template import MessageTemplate, MessageTemplateBloc
 from pyogp.lib.base.message_template_parser import MessageTemplateParser
 from pyogp.lib.base.message_template_builder import MessageTemplateBuilder
 from pyogp.lib.base.message_template_dict import TemplateDictionary
-from pyogp.lib.base.message_types import MsgTypes
+from pyogp.lib.base.message_types import MsgType
 
 
 class TestTemplateBuilder(unittest.TestCase):
@@ -97,7 +97,7 @@ class TestTemplateBuilder(unittest.TestCase):
             t_var = variables['AgentID']
             assert t_var != None,"Block doesn't have AgentID variable"
             assert t_var.get_name() == 'AgentID', "AgentID name incorrect"
-            assert t_var.get_type() == MsgTypes.MVT_LLUUID, "AgentID type incorrect"
+            assert t_var.get_type() == MsgType.MVT_LLUUID, "AgentID type incorrect"
         except KeyError:
             assert False, "Block doesn't have AgentID variable"
 
@@ -105,7 +105,7 @@ class TestTemplateBuilder(unittest.TestCase):
             t_var = variables['TexturesChanged']
             assert t_var != None,"Block doesn't have TexturesChanged variable"
             assert t_var.get_name() == 'TexturesChanged', "Name incorrect"
-            assert t_var.get_type() == message_types.MVT_BOOL, "Type incorrect"
+            assert t_var.get_type() == MsgType.MVT_BOOL, "Type incorrect"
         except KeyError:
             assert False, "Block doesn't have TexturesChanged variable"
 
