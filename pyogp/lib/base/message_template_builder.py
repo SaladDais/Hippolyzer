@@ -1,11 +1,11 @@
-
+from pyogp.lib.base.message_template import MsgData, MsgBlockData, MsgVariableData
 
 class MessageTemplateBuilder():
     """ This class builds messages at its high level, that is, keeping
         that data in data structure form. A serializer should be used on
         the message produced by this so that it can be sent over a network. """
-    def __init__(self, template_list):
-        self.template_list = template_list
+    def __init__(self, template_dict):
+        self.template_list = template_dict
         #when a message is being built, uses this template
         #to add blocks and variables
         self.current_template = None
@@ -14,6 +14,12 @@ class MessageTemplateBuilder():
 
         self.cur_msg_name = ''
         self.cur_block_name = ''
+
+    def get_current_message(self):
+        return self.current_msg
+
+    def get_current_block(self):
+        return self.current_block
         
     def new_message(self, message_name):
         """ Creates a new packet where data can be added to it. Note, the variables
@@ -37,7 +43,7 @@ class MessageTemplateBuilder():
         
         for variable in self.current_block.get_variables():
             var_data = MsgVariableData(variable.get_name(), variable.get_type())
-            self.current_msg.add_variable(var_data)
+            self.current_block.add_variable(var_data)
 
     def add_data(self, var_name, data, data_size):
         self.current_block.add_data(var_name, data, data_size)

@@ -1,8 +1,3 @@
-
-
-
-
-
 #pack flags
 class PackFlags():
     LL_ZERO_CODE_FLAG = '\x80'
@@ -42,7 +37,7 @@ class MsgTypes():
     MVT_F64, \
     MVT_LLVector3, \
     MVT_LLVector4, \
-    MVT_LLVector3d, \    
+    MVT_LLVector3d, \
     MVT_LLQuaternion, \
     MVT_LLUUID, \
     MVT_IP_ADDR, \

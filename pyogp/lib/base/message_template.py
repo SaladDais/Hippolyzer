@@ -66,16 +66,19 @@ class MsgBlockData():
     def __init__(self, name):
         self.name = name
         self.total_size = 0
-        self.vars = {}
+        self.variables = {}
+             
+    def get_name(self):
+        return self.name
 
     def add_variable(self, var):
-        self.vars[var.get_name()] = var
+        self.variables[var.get_name()] = var
 
     def get_variables(self):
-        return self.vars
+        return self.variables
 
     def get_variable(self, var_name):
-        return self.vars[var_name]
+        return self.variables[var_name]
 
     def add_data(self, var_name, data, data_size):
         get_variable[var_name].add_data(data, data_size)
@@ -88,6 +91,9 @@ class MsgVariableData():
         self.total_size = 0
         self.lltype = tp
         self.data = None
+
+    def get_name(self):
+        return self.name
 
     #how DO we add data? What format will it be in?
     def add_data(self, data, data_size):
@@ -116,7 +122,7 @@ class MessageTemplateVariable():
 
 class MessageTemplateBlock():
     def __init__(self, header):
-        self.vars = {}
+        self.variables = {}
 
         self.name = header[0]
         self.blockType = header[1]
@@ -135,13 +141,13 @@ class MessageTemplateBlock():
         return self.name
 
     def add_variable(self, var):
-        self.vars[var.get_name()] = var
+        self.variables[var.get_name()] = var
 
     def get_variables(self):
-        return self.vars.values()
+        return self.variables.values()
 
     def get_variable(self, name):
-        return self.vars[name]
+        return self.variables[name]
 
 class MessageTemplate():
     def __init__(self, header):
