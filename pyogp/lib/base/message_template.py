@@ -47,7 +47,8 @@ class MsgData():
         self.blocks = {}
 
     def add_block(self, block):
-        self.blocks[block.get_name()] = block
+        self.blocks[block.get_name()] = []
+        self.blocks[block.get_name()].append(block)
 
     def get_blocks(self):
         return self.blocks
@@ -64,7 +65,7 @@ class MsgBlockData():
         serialized and sent. """
     def __init__(self, name):
         self.name = name
-        self.total_size = 0
+        self.size = 0
         self.variables = {}
              
     def get_name(self):
@@ -87,7 +88,10 @@ class MsgVariableData():
         serialized and sent """
     def __init__(self, name, tp):
         self.name = name
-        self.total_size = 0
+        #data_size holds info whether or not the variable is of type
+        #MVT_VARIABLE
+        self.data_size = 0
+        self.size = -1
         self.lltype = tp
         self.data = None
 
@@ -101,7 +105,7 @@ class MsgVariableData():
     def get_data(self):
         return self.data
 
-    def get_total_size(self):
+    def get_size(self):
         return self.total_size
 
     def get_type(self):

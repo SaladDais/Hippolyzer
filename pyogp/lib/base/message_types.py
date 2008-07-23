@@ -4,19 +4,29 @@ class MsgBlockType():
     MBT_VARIABLE = range(3)
 
 #pack flags
+#= '\x80'
+#= '\x80'
+#= '\x40'
+#= '\x20'
+#= '\x10'
+#= '\x00'
 class PackFlags():
-    LL_ZERO_CODE_FLAG = '\x80'
-    LL_RELIABLE_FLAG  = '\x40'
-    LL_RESENT_FLAG    = '\x20'
-    LL_ACK_FLAG       = '\x10'
-    LL_NONE           = '\x00'
+    LL_ZERO_CODE_FLAG, \
+    LL_RELIABLE_FLAG, \
+    LL_RESENT_FLAG, \
+    LL_ACK_FLAG, \
+    LL_NONE = range(5)   
 
 #frequency for messages
+#= '\xFF\xFF\xFF'
+#= '\xFF\xFF'
+#= '\xFF'
+#= ''
 class MsgFrequency():
-    FIXED_FREQUENCY_MESSAGE  = '\xFF\xFF\xFF'
-    LOW_FREQUENCY_MESSAGE    = '\xFF\xFF'
-    MEDIUM_FREQUENCY_MESSAGE = '\xFF'
-    HIGH_FREQUENCY_MESSAGE   = ''
+    FIXED_FREQUENCY_MESSAGE, \
+    LOW_FREQUENCY_MESSAGE, \
+    MEDIUM_FREQUENCY_MESSAGE, \
+    HIGH_FREQUENCY_MESSAGE = range(4) 
 
 class MsgTrust():
     LL_TRUSTED, \
@@ -61,45 +71,45 @@ class MsgType():
     MVT_IP_ADDR, \
     MVT_IP_PORT = range(20)
 
-    #TODO should this be changed? Less switch-style and more object-style?
-    def sizeof(var):
-        if var == MsgType.MVT_FIXED:
-            return -1
-        elif var == MsgType.MVT_VARIABLE:
-            return -1
-        elif var == MsgType.MVT_U8:
-            return 1
-        elif var == MsgType.MVT_U16:
-            return 2
-        elif var == MsgType.MVT_U32:
-            return 4
-        elif var == MsgType.MVT_U64:
-            return 8
-        elif var == MsgType.MVT_S8:
-            return 1
-        elif var == MsgType.MVT_S16:
-            return 2
-        elif var == MsgType.MVT_S32:
-            return 4
-        elif var == MsgType.MVT_S64:
-            return 8
-        elif var == MsgType.MVT_F32:
-            return 4
-        elif var == MsgType.MVT_F64:
-            return 8
-        elif var == MsgType.MVT_LLVector3:
-            return 12
-        elif var == MsgType.MVT_LLVector3d:
-            return 24
-        elif var == MsgType.MVT_LLVector4:
-            return 16
-        elif var == MsgType.MVT_LLQuaternion:
-            return 12
-        elif var == MsgType.MVT_LLUUID:
-            return 16
-        elif var == MsgType.MVT_BOOL:
-            return 1
-        elif var == MsgType.MVT_IP_ADDR:
-            return 4
-        elif var == MsgType.MVT_IP_PORT:
-            return 2
+#TODO should this be changed? Less switch-style and more object-style?
+def sizeof(var):
+    if var == MsgType.MVT_FIXED:
+        return -1
+    elif var == MsgType.MVT_VARIABLE:
+        return -1
+    elif var == MsgType.MVT_U8:
+        return 1
+    elif var == MsgType.MVT_U16:
+        return 2
+    elif var == MsgType.MVT_U32:
+        return 4
+    elif var == MsgType.MVT_U64:
+        return 8
+    elif var == MsgType.MVT_S8:
+        return 1
+    elif var == MsgType.MVT_S16:
+        return 2
+    elif var == MsgType.MVT_S32:
+        return 4
+    elif var == MsgType.MVT_S64:
+        return 8
+    elif var == MsgType.MVT_F32:
+        return 4
+    elif var == MsgType.MVT_F64:
+        return 8
+    elif var == MsgType.MVT_LLVector3:
+        return 12
+    elif var == MsgType.MVT_LLVector3d:
+        return 24
+    elif var == MsgType.MVT_LLVector4:
+        return 16
+    elif var == MsgType.MVT_LLQuaternion:
+        return 12
+    elif var == MsgType.MVT_LLUUID:
+        return 16
+    elif var == MsgType.MVT_BOOL:
+        return 1
+    elif var == MsgType.MVT_IP_ADDR:
+        return 4
+    elif var == MsgType.MVT_IP_PORT:
+        return 2
