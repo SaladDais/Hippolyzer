@@ -43,15 +43,14 @@ class MsgData():
         serialized and sent. """
     def __init__(self, name):
         self.name = name
-        self.total_size = 0
+        self.size = 0
         self.blocks = {}
 
     def add_block(self, block):
-        self.blocks[block.get_name()] = []
-        self.blocks[block.get_name()].append(block)
-
-    def get_blocks(self):
-        return self.blocks
+        if block.name not in self.blocks:
+            self.blocks[block.name] = []
+            
+        self.blocks[block.name].append(block)
 
     def get_block(self, block_name):
         return self.blocks[block_name]
@@ -67,21 +66,16 @@ class MsgBlockData():
         self.name = name
         self.size = 0
         self.variables = {}
+        self.block_number = 0
              
-    def get_name(self):
-        return self.name
-
-    def add_variable(self, var):
-        self.variables[var.get_name()] = var
-
-    def get_variables(self):
-        return self.variables
-
     def get_variable(self, var_name):
         return self.variables[var_name]
 
+    def add_variable(self, var):
+        self.variables[var.name] = var
+
     def add_data(self, var_name, data, data_size):
-        get_variable[var_name].add_data(data, data_size)
+        self.get_variable(var_name).add_data(data, data_size)
 
 class MsgVariableData():
     """ Used as a Message Block variable that is being created that will be
@@ -92,75 +86,39 @@ class MsgVariableData():
         #MVT_VARIABLE
         self.data_size = 0
         self.size = -1
-        self.lltype = tp
+        self.type = tp
         self.data = None
-
-    def get_name(self):
-        return self.name
 
     #how DO we add data? What format will it be in?
     def add_data(self, data, data_size):
         self.data = data
-    
-    def get_data(self):
-        return self.data
-
-    def get_size(self):
-        return self.total_size
-
-    def get_type(self):
-        return self.lltype
+        self.size = data_size
 
 class MessageTemplateVariable():
     def __init__(self, name, tp, size):
         self.name = name
-        self.lltype = tp
+        self.type = tp
         self.size = size
-
-    def get_size(self):
-        return self.size
-
-    def get_name(self):
-        return self.name
-
-    def get_type(self):
-        return self.lltype
 
 class MessageTemplateBlock():
     def __init__(self, name):
-        self.variables = {}
+        self.variable_map = {}
         self.name = name
         self.block_type = None
         self.number = 0
 
-    def get_block_type(self):
-        return self.block_type
-
-    def get_block_number(self):
-        return self.number
-
-    def get_name(self):
-        return self.name
-
     def add_variable(self, var):
-        self.variables[var.get_name()] = var
+        self.variable_map[var.name] = var
 
     def get_variables(self):
-        return self.variables.values()
+        return self.variable_map.values()
 
     def get_variable(self, name):
-        return self.variables[name]
-
-    def set_type(self, tp):
-        self.block_type = tp
-
-    def set_number(self, num):
-        self.number = num
-    
+        return self.variable_map[name]
 
 class MessageTemplate():
     def __init__(self, name):
-        self.blocks = {}
+        self.block_map = {}
         #this is the function or object that will handle this type of message
         self.handler = None
         self.name = name
@@ -170,60 +128,18 @@ class MessageTemplate():
         self.msg_trust = None
         self.msg_deprecation = None
 
-    def get_handler(self):
-        return self.handler
-
     #this probably needs more arguments to pass to the func or object
     def set_handler(self, handler):
         self.handler = handler
-            
-    def get_frequency(self):
-        return self.frequency
-
-    def get_message_number(self):
-        return self.msg_num
-
-    def get_message_hex_num(self):
-        return self.msg_num_hex
-
-    def get_trust(self):
-        return self.msg_trust
-
-    def get_encoding(self):
-        return self.msg_encoding
-
-    def get_deprecation(self):
-        return self.msg_deprecation
-
-    def get_name(self):
-        return self.name
 
     def add_block(self, block):
-        self.blocks[block.get_name()] = block
+        self.block_map[block.name] = block
 
     def get_blocks(self):
-        return self.blocks.values()
+        return self.block_map.values()
         
     def get_block(self, name):
-        return self.blocks[name]
-
-    def set_frequency(self, freq):
-        self.frequency = freq
-
-    def set_message_number(self, num):
-        self.msg_num = num
-
-    def set_message_hex_num(self, num):
-        self.msg_num_hex = num
-
-    def set_trust(self, trust):
-        self.msg_trust = trust
-
-    def set_encoding(self, enc):
-        self.msg_encoding = enc
-
-    def set_deprecation(self, dep):
-        self.msg_deprecation = dep
+        return self.block_map[name]
         
 #these remain unformatted (by standard) because they are going to be moved    
 def decodeHeaderPair(frequency, num):

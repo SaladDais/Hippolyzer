@@ -8,7 +8,7 @@ from pyogp.lib.base.message_template_parser import MessageTemplateParser
 from pyogp.lib.base.message_template_builder import MessageTemplateBuilder
 from pyogp.lib.base.message_template_dict import TemplateDictionary
 from pyogp.lib.base.message_types import MsgType
-
+from indra.base.lluuid import UUID
 
 class TestTemplateBuilder(unittest.TestCase):
     
@@ -18,7 +18,7 @@ class TestTemplateBuilder(unittest.TestCase):
     def setUp(self):
         self.template_file = msg_tmpl
         parser = MessageTemplateParser(self.template_file)
-        self.template_list = parser.get_template_list()
+        self.template_list = parser.message_templates
         self.template_dict = TemplateDictionary(self.template_list)
         
     def test_builder(self):
@@ -73,7 +73,7 @@ class TestTemplateBuilder(unittest.TestCase):
         assert builder.get_current_block() == None, "Message block exists before  it was created"
         builder.next_block('AgentData')
         assert builder.get_current_block() != None, "Setting next block failed"
-        assert builder.get_current_block().get_name() == 'AgentData', "Wrong block set"        
+        assert builder.get_current_block().name == 'AgentData', "Wrong block set"        
 
     def test_next_block_fail(self):
         builder = MessageTemplateBuilder(self.template_dict)
@@ -91,21 +91,21 @@ class TestTemplateBuilder(unittest.TestCase):
         builder.new_message('AvatarTextureUpdate')
         builder.next_block('AgentData')
         variables = builder.get_current_block().variables
-        
+
         assert len(variables) == 2, "Variables not added to the block"
         try:
             t_var = variables['AgentID']
             assert t_var != None,"Block doesn't have AgentID variable"
-            assert t_var.get_name() == 'AgentID', "AgentID name incorrect"
-            assert t_var.get_type() == MsgType.MVT_LLUUID, "AgentID type incorrect"
+            assert t_var.name == 'AgentID', "AgentID name incorrect"
+            assert t_var.type == MsgType.MVT_LLUUID, "AgentID type incorrect"
         except KeyError:
             assert False, "Block doesn't have AgentID variable"
 
         try:
             t_var = variables['TexturesChanged']
             assert t_var != None,"Block doesn't have TexturesChanged variable"
-            assert t_var.get_name() == 'TexturesChanged', "Name incorrect"
-            assert t_var.get_type() == MsgType.MVT_BOOL, "Type incorrect"
+            assert t_var.name == 'TexturesChanged', "Name incorrect"
+            assert t_var.type == MsgType.MVT_BOOL, "Type incorrect"
         except KeyError:
             assert False, "Block doesn't have TexturesChanged variable"
 
@@ -113,17 +113,17 @@ class TestTemplateBuilder(unittest.TestCase):
         builder = MessageTemplateBuilder(self.template_dict)
         builder.new_message('AvatarTextureUpdate')
         builder.next_block('AgentData')
-        builder.add_bool('TexturesChanged', True)
+        builder.add_data('TexturesChanged', True, MsgType.MVT_BOOL)
         #need a way to determine the right variable data is sent compared to the type
-        assert builder.get_current_block().variables['TexturesChanged'].get_data() == True,\
+        assert builder.get_current_block().variables['TexturesChanged'].data == True,\
                "Data not set correctly"
 
     def test_add_lluuid(self):
         builder = MessageTemplateBuilder(self.template_dict)
         builder.new_message('AvatarTextureUpdate')
         builder.next_block('AgentData')
-        builder.add_lluuid('AgentID', "4baff.afef.1234.1241fvbaf")
-        assert builder.get_current_block().variables['AgentID'].get_data() == "4baff.afef.1234.1241fvbaf",\
+        builder.add_data('AgentID', UUID("550e8400-e29b-41d4-a716-446655440000"), MsgType.MVT_LLUUID)
+        assert builder.get_current_block().variables['AgentID'].data == UUID("550e8400-e29b-41d4-a716-446655440000"),\
                "Data not set correctly"
         #assert builder.get_current_block().variables['AgentID'].get_size() == ?
         

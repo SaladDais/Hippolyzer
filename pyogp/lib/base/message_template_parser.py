@@ -21,15 +21,6 @@ class MessageTemplateParser():
         self.count = 0        
         self.__parse_template_file()
 
-    def get_version(self):
-        return self.version
-        
-    def get_template_list(self):
-        return self.message_templates
-
-    def get_count(self):
-        return self.count
-
     def __add_template(self, new_template):
         self.count += 1
         #self.message_templates[new_template.get_name()] = new_template
@@ -80,7 +71,7 @@ class MessageTemplateParser():
                 elif parts[1] == 'Fixed':
                     frequency = MsgFrequency.FIXED_FREQUENCY_MESSAGE
 
-                current_template.set_frequency(frequency)
+                current_template.frequency = frequency
                 
                 msg_num = string.atoi(parts[2],0)
                 if frequency == MsgFrequency.FIXED_FREQUENCY_MESSAGE:   
@@ -95,8 +86,8 @@ class MessageTemplateParser():
                 elif frequency == MsgFrequency.HIGH_FREQUENCY_MESSAGE:
                     msg_num_hex = struct.pack('>B', msg_num)
 
-                current_template.set_message_number(msg_num)
-                current_template.set_message_hex_num(msg_num_hex)
+                current_template.msg_num = msg_num
+                current_template.msg_num_hex = msg_num_hex
             
                 msg_trust = None
                 if parts[3] == 'Trusted':
@@ -104,7 +95,7 @@ class MessageTemplateParser():
                 elif parts[3] == 'NotTrusted':
                     msg_trust = MsgTrust.LL_NOTRUST
 
-                current_template.set_trust(msg_trust)                    
+                current_template.msg_trust = msg_trust                 
 
                 msg_encoding = None
                 if parts[4] == 'Unencoded':
@@ -112,7 +103,7 @@ class MessageTemplateParser():
                 elif parts[4] == 'Zerocoded':
                     msg_encoding = MsgEncoding.LL_ZEROCODED
 
-                current_template.set_encoding(msg_encoding)
+                current_template.msg_encoding = msg_encoding
 
                 msg_dep = None
                 if len(parts) > 5:
@@ -125,7 +116,7 @@ class MessageTemplateParser():
                 else:
                     msg_dep = MsgDeprecation.LL_NOTDEPRECATED
 
-                current_template.set_deprecation(msg_dep)
+                current_template.msg_deprecation = msg_dep
 
                 self.__add_template(current_template)
 
@@ -146,8 +137,8 @@ class MessageTemplateParser():
                 elif parts[1] == 'Variable':
                     block_type = MsgBlockType.MBT_VARIABLE
 
-                current_block.set_type(block_type)
-                current_block.set_number(block_num)
+                current_block.type = block_type
+                current_block.block_number = block_num
                     
                 current_template.add_block(current_block)
                 

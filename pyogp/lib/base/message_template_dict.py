@@ -14,21 +14,21 @@ class TemplateDictionary():
 
     def buildDictionaries(self, template_list):
         for template in template_list:
-            self.message_templates[template.get_name()] = template
+            self.message_templates[template.name] = template
 
             #do a mapping of type to a string for easier reference
             frequency_str = ''
-            if template.get_frequency() == MsgFrequency.FIXED_FREQUENCY_MESSAGE:
+            if template.frequency == MsgFrequency.FIXED_FREQUENCY_MESSAGE:
                 frequency_str = "Fixed"
-            elif template.get_frequency() == MsgFrequency.LOW_FREQUENCY_MESSAGE:
+            elif template.frequency == MsgFrequency.LOW_FREQUENCY_MESSAGE:
                 frequency_str = "Low"
-            elif template.get_frequency() == MsgFrequency.MEDIUM_FREQUENCY_MESSAGE:
+            elif template.frequency == MsgFrequency.MEDIUM_FREQUENCY_MESSAGE:
                 frequency_str = "Medium"
-            elif template.get_frequency() == MsgFrequency.HIGH_FREQUENCY_MESSAGE:
+            elif template.frequency == MsgFrequency.HIGH_FREQUENCY_MESSAGE:
                 frequency_str = "High"
                 
             self.message_dict[(frequency_str, \
-                               template.get_message_number())] = template
+                               template.msg_num)] = template
 
     def get_template(self, template_name):
         return self.message_templates[template_name]

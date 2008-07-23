@@ -4,8 +4,8 @@ import struct
 #pyogp libs
 from pyogp.lib.base.message_template import MsgData, MsgBlockData, \
      MsgVariableData
-import pyogp.lib.base.message_types
-#from pyogp.lib.base.message_types import MsgType, MsgBlockType, MsgFrequency    
+#import pyogp.lib.base.message_types
+from pyogp.lib.base.message_types import MsgType, MsgBlockType, MsgFrequency, sizeof
 from pyogp.lib.base.data_packer import DataPacker
 
 class MessageTemplateBuilder():
@@ -67,7 +67,7 @@ class MessageTemplateBuilder():
         block_buffer = ''
         bytes = 0
 
-        block_list = message_data.get_block(template_block.get_name())
+        block_list = message_data.get_block(template_block.name)
         block_count = len(block_list)
 
         message_block = block_list[0]
@@ -78,7 +78,7 @@ class MessageTemplateBuilder():
         #receieve this know how many to read automatically
         if template_block.get_type() == MsgBlockType.MBT_MULTIPLE:
             if template_block.get_block_number() != message_block.get_block_number():
-                raise Exception('Block ' + template_block.get_name() + ' is type MBT_MULTIPLE \
+                raise Exception('Block ' + template_block.name + ' is type MBT_MULTIPLE \
                           but only has data stored for ' + str(block_count) + ' out of its ' + \
                           template_block.get_block_number() + ' blocks')
                                   
@@ -94,8 +94,8 @@ class MessageTemplateBuilder():
                 var_size  = variable.get_size()
                 
                 if var_size == -1:
-                    raise Exception('Variable ' + variable.get_name() + ' in block ' + \
-                        message_block.get_name() + ' of message ' + message_data.get_name() + \
+                    raise Exception('Variable ' + variable.name + ' in block ' + \
+                        message_block.name + ' of message ' + message_data.name + \
                         ' wasn"t set prior to buildMessage call')
 
                 data_size = variable.get_data_size()
@@ -124,37 +124,72 @@ class MessageTemplateBuilder():
         """ Creates a new packet where data can be added to it. Note, the variables
             are added when they are used, or data added to them, so to make sure
             no bad data is sent over the network. """
-        self.current_template = self.template_list[message_name]
         #error check
-
+        self.current_template = self.template_list[message_name]
         self.current_msg = MsgData(message_name)
         self.cur_msg_name = message_name
 
         for block in self.current_template.get_blocks():
-            block_data = MsgBlockData(block.get_name())
+            block_data = MsgBlockData(block.name)
             self.current_msg.add_block(block_data)
 
     def next_block(self, block_name):
-        self.current_block = self.current_template.get_block(block_name)
         #if it doesn't exist, create a new block (may be a VARIABLE or MULTIPLE type
         #block
+        if block_name not in self.current_template.block_map:
+            #error: 
+            print 'ERROR: template doesn"t have the block'
+            return
 
-        self.cur_block_name = block_name
-        
-        for variable in self.current_block.get_variables():
-            var_data = MsgVariableData(variable.get_name(), variable.get_type())
-            self.current_block.add_variable(var_data)
+        template_block = self.current_template.get_block(block_name)
+        block_data = self.current_msg.get_block(block_name)[0]
+
+        #if the block's number is 0, then we haven't set up this block yet
+        if block_data.block_number == 0:
+            block_data.block_number = 1
+            self.current_block = block_data
+            self.cur_block_name = block_name
+            
+            for variable in template_block.get_variables():
+                var_data = MsgVariableData(variable.name, variable.type)
+                self.current_block.add_variable(var_data)
+
+            return
+
+        #although we may have a block already, there are some cases where we can have
+        #more than one block of the same name (when type is MULTIPLE or VARIABLE)
+        else:
+            #make sure it isn't SINGLE
+            if self.template_block.type == MsgBlockType.MBT_SINGLE:
+                #error: can't have more than 1 block when its supposed to be 1
+                print 'ERROR: can"t have more than 1 block when its supposed to be 1'
+                return
+
+            elif self.template_block.type == MsgBlockType.MBT_MULTIPLE and \
+                 self.template_block.block_number == block_data.block_number:
+                #error: we are about to exceed block total
+                print 'ERROR: we are about to exceed block total'
+                return
+            
+            block_data.block_number += 1
+            self.current_block = MsgBlockData(block.name)
+            self.current_msg.add_block(self.current_block)
+            self.cur_block_name = block_name
+
+            for variable in self.current_block.variables:
+                var_data = MsgVariableData(variable.name, variable.type)
+                self.current_block.add_variable(var_data)
 
     def add_data(self, var_name, data, data_type):
         """ the data type is passed in to make sure that the programmer is aware of
             what type (and therefore size) of the data that is being passed in. """
-        self.__check_size(var_name, data_type)
+        self.__check_size(var_name, data, data_type)
         self.current_block.add_data(var_name, data, data_type)
 
     def __check_size(self, var_name, data, data_type):
-        block = self.template_list[cur_msg_name].get_block(self.cur_block_name)
-        data_size = MsgType.sizeof(data_type)
-        size = block.get_variable(var_name).get_size()
+        block = self.template_list[self.cur_msg_name].get_block(self.cur_block_name)
+        data_size = sizeof(data_type)
+        size = block.get_variable(var_name).size
         if size != data_size:
             #warning
             #for now, exception
