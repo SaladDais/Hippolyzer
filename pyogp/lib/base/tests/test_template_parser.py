@@ -13,7 +13,7 @@ class TestDictionary(unittest.TestCase):
     def setUp(self):
         self.template_file = msg_tmpl
         parser = MessageTemplateParser(self.template_file)
-        self.template_list = parser.get_template_list()
+        self.template_list = parser.message_templates
 
     def tearDown(self):
         pass
@@ -29,13 +29,13 @@ class TestDictionary(unittest.TestCase):
         msg_dict = TemplateDictionary(self.template_list)
         packet = msg_dict.get_template('ConfirmEnableSimulator')
         assert packet != None, "get_packet failed"
-        assert packet.get_frequency() == MsgFrequency.MEDIUM_FREQUENCY_MESSAGE, "Incorrect frequency for ConfirmEnableSimulator"
-        assert packet.get_message_number() == 8, "Incorrect message number for ConfirmEnableSimulator"
+        assert packet.frequency == MsgFrequency.MEDIUM_FREQUENCY_MESSAGE, "Incorrect frequency for ConfirmEnableSimulator"
+        assert packet.msg_num == 8, "Incorrect message number for ConfirmEnableSimulator"
 
     def test_get_packet_pair(self):
         msg_dict = TemplateDictionary(self.template_list)
         packet = msg_dict.get_template_by_pair('Medium', 8)
-        assert packet.get_name() == 'ConfirmEnableSimulator', "Frequency-Number pair resulting in incorrect packet"        
+        assert packet.name == 'ConfirmEnableSimulator', "Frequency-Number pair resulting in incorrect packet"        
 
 class TestTemplates(unittest.TestCase):
     
@@ -45,11 +45,11 @@ class TestTemplates(unittest.TestCase):
     def setUp(self):
         self.template_file = msg_tmpl
         self.parser = MessageTemplateParser(self.template_file)
-        self.msg_dict = TemplateDictionary(self.parser.get_template_list())
+        self.msg_dict = TemplateDictionary(self.parser.message_templates)
 
     def test_parser(self):
         parser = MessageTemplateParser(self.template_file)
-        assert parser.get_template_list() != None, "Parsing template file failed"
+        assert parser.message_templates != None, "Parsing template file failed"
 
     def test_parser_fail(self):
         try:
@@ -59,18 +59,18 @@ class TestTemplates(unittest.TestCase):
             assert True
                         
     def test_parser_version(self):
-        version = self.parser.get_version()
+        version = self.parser.version
         assert version == 2.0, "Version not correct, expected 2.0, got " + str(version)
 
     def test_template(self):
         template = self.msg_dict['CompletePingCheck']
-        name = template.get_name()
-        freq = template.get_frequency()
-        num = template.get_message_number()
-        hx = template.get_message_hex_num()
-        trust = template.get_trust()
-        enc = template.get_encoding()
-        dep = template.get_deprecation()
+        name = template.name
+        freq = template.frequency
+        num = template.msg_num
+        hx = template.msg_num_hex
+        trust = template.msg_trust
+        enc = template.msg_encoding
+        dep = template.msg_deprecation
         assert name == 'CompletePingCheck', "Expected: CompletePingCheck  Returned: " + name
         assert freq == MsgFrequency.HIGH_FREQUENCY_MESSAGE, "Expected: High  Returned: " + freq
         assert num == 2, "Expected: 2  Returned: " + str(num)
@@ -81,43 +81,43 @@ class TestTemplates(unittest.TestCase):
 
     def test_template_low(self):
         template = self.msg_dict['AddCircuitCode']
-        hx = template.get_message_hex_num()
+        hx = template.msg_num_hex
         assert hx == '\xff\xff\x00\x02', "Expected: '\xff\xff\x00\x02'  Returned: " + repr(hx)
 
     def test_deprecated(self):
         template = self.msg_dict['ObjectPosition']
-        dep = template.get_deprecation()
+        dep = template.msg_deprecation
         assert dep == MsgDeprecation.LL_DEPRECATED, "Expected:  Deprecated  Returned: " + dep
 
     def test_template_medium(self):
         template = self.msg_dict['RequestMultipleObjects']
-        hx = template.get_message_hex_num()
+        hx = template.msg_num_hex
         assert hx == '\xff\x03', "Expected: " + r'\xff\x03' + "  Returned: " + hx
 
     def test_template_fixed(self):
         template = self.msg_dict['PacketAck']
-        num = template.get_message_number()
-        hx = template.get_message_hex_num()
+        num = template.msg_num
+        hx = template.msg_num_hex
         assert num == 251, "Expected: 251  Returned: " + str(num)
         assert hx == '\xff\xff\xff\xfb', "Expected: " + r'\xff\xff\xff\xfb' + "  Returned: " + repr(hx)
 
     def test_block(self):
         block = self.msg_dict['OpenCircuit'].get_block('CircuitInfo')
-        tp = block.get_block_type()
-        num = block.get_block_number()
+        tp = block.type
+        num = block.block_number
         assert tp == MsgBlockType.MBT_SINGLE, "Expected:   Single   Returned: " + tp       
         assert num == 0, "Expected:   0  Returned: " + str(num)               
         
     def test_block_multiple(self):
         block = self.msg_dict['NeighborList'].get_block('NeighborBlock')
-        tp = block.get_block_type()
-        num = block.get_block_number()
+        tp = block.type
+        num = block.block_number
         assert tp == MsgBlockType.MBT_MULTIPLE, "Expected:   Multiple   Returned: " + tp
         assert num == 4, "Expected:   4  Returned: " + str(num)               
 
     def test_variable(self):
         variable = self.msg_dict['StartPingCheck'].get_block('PingID').get_variable('PingID')
-        tp = variable.get_type()
+        tp = variable.type
         assert tp == MsgType.MVT_U8, "Expected: U8  Returned:  " + str(tp)
 
     def test_add_get_block(self):
@@ -126,7 +126,7 @@ class TestTemplates(unittest.TestCase):
         template.add_block(block)
         blocks = template.get_blocks()
         count = len(blocks)
-        assert blocks[0].get_name() == 'CircuitCode', "Add block failed"
+        assert blocks[0].name == 'CircuitCode', "Add block failed"
         assert template.get_block('CircuitCode') != None, "Get block failed"
         
     def test_add_variable(self):
@@ -134,7 +134,7 @@ class TestTemplates(unittest.TestCase):
         variable = MessageTemplateVariable("PingID", MsgType.MVT_U8, 1)
         block.add_variable(variable)
         var_list = block.get_variables()
-        assert var_list[0].get_name() == 'PingID', "Add variable failed"
+        assert var_list[0].name == 'PingID', "Add variable failed"
         assert block.get_variable('PingID') != None, "Get variable failed"
 
 def test_suite():

@@ -127,6 +127,7 @@ class MessageTemplate():
         self.msg_num_hex = None
         self.msg_trust = None
         self.msg_deprecation = None
+        self.msg_encoding = None
 
     #this probably needs more arguments to pass to the func or object
     def set_handler(self, handler):

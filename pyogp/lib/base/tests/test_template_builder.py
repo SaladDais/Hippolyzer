@@ -127,7 +127,13 @@ class TestTemplateBuilder(unittest.TestCase):
                "Data not set correctly"
         #assert builder.get_current_block().variables['AgentID'].get_size() == ?
         
-
+    #test should go with the packer mostly
+    """def test_serialize_u8(self):
+        builder = MessageTemplateBuilder(self.template_dict)
+        builder.new_message('AvatarTextureUpdate')
+        builder.next_block('AgentData')
+        builder.add_data('AgentID', 0x01, MsgType.MVT_U8)"""
+        
         
 def test_suite():
     from unittest import TestSuite, makeSuite

@@ -250,7 +250,7 @@ def get_all_types(packet_list):
 def main():
     parser = MessageTemplateParser()
     parser.parse_template_file(msg_tmpl)
-    templates = parser.get_template_list()
+    templates = parser.message_templates
     
     print_packet_list(templates)
 
