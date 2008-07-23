@@ -40,6 +40,10 @@ class IAgent(Interface):
     
     agentdomain = Attribute("""the agent domain endpoint""")
     
+
+class IAgentDomain(Interface):
+    """an agent domain"""
+    seed_cap = Attribute("""the seed capability""")
         
 class IRegion(Interface):
     """a region endpoint"""
@@ -53,7 +57,7 @@ class IAvatar(Interface):
     def establish_presence():
         """for now it will do a loop to establish a presence on a region"""
         
-class IPlaceAvatarAdapter(Interface):
+class IPlaceAvatar(Interface):
     """adapts an agents to a method which can place an avatar on a region"""
     
     def __call__(region):

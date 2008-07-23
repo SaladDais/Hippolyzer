@@ -38,7 +38,7 @@ myreversedictionary = makereversepacketdict()
         do with the packet payload, yet. """
 
 #this probably needs to implement an interface so it can be serialized
-class MsgData():
+class MsgData(object):
     """ Used as a Message that is being created that will be
         serialized and sent. """
     def __init__(self, name):
@@ -59,7 +59,7 @@ class MsgData():
         get_block(block_name).add_data(var_name, data, data_size)
 
 #this probably needs to implement an interface so it can be serialized
-class MsgBlockData():
+class MsgBlockData(object):
     """ Used as a Message block that is being created that will be
         serialized and sent. """
     def __init__(self, name):
@@ -80,7 +80,7 @@ class MsgBlockData():
     def add_data(self, var_name, data, data_size):
         self.get_variable(var_name).add_data(data, data_size)
 
-class MsgVariableData():
+class MsgVariableData(object):
     """ Used as a Message Block variable that is being created that will be
         serialized and sent """
     def __init__(self, name, tp):
@@ -97,13 +97,13 @@ class MsgVariableData():
         self.data = data
         self.size = data_size
 
-class MessageTemplateVariable():
+class MessageTemplateVariable(object):
     def __init__(self, name, tp, size):
         self.name = name
         self.type = tp
         self.size = size
 
-class MessageTemplateBlock():
+class MessageTemplateBlock(object):
     def __init__(self, name):
         self.variable_map = {}
         self.name = name
@@ -119,7 +119,7 @@ class MessageTemplateBlock():
     def get_variable(self, name):
         return self.variable_map[name]
 
-class MessageTemplate():
+class MessageTemplate(object):
     def __init__(self, name):
         self.block_map = {}
         #this is the function or object that will handle this type of message

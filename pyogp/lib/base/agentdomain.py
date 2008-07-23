@@ -1,9 +1,19 @@
 from agent import Agent
 from interfaces import ISerialization
 from caps import SeedCapability
+
 import urllib2
+
+from zope.interface import implements
+import grokcore.component as grok
+
 from indra.base import llsd
 
+from interfaces import ICredentialSerializer, IPlaceAvatar, IAgentDomain
+
+from agent import Agent
+from avatar import Avatar
+from caps import SeedCapability
 
 # URL Opener for the agent domain login
 # 
@@ -12,6 +22,7 @@ class RedirectHandler(urllib2.HTTPRedirectHandler):
     def http_error_302(self, req, fp, code, msg, headers):
         #ignore the redirect, grabbing the seed cap url from the headers
         # TODO: add logging and error handling
+        print "huhu"
         return headers['location']
 
 
@@ -21,6 +32,8 @@ AgentDomainLoginOpener = urllib2.build_opener(RedirectHandler())
 
 class AgentDomain(object):
     """an agent domain endpoint"""
+    
+    implements(IAgentDomain)
     
     def __init__(self,uri):
         """initialize the agent domain endpoint"""
@@ -38,7 +51,11 @@ class AgentDomain(object):
         # TODO: add logging and error handling
         # 
         request = urllib2.Request(self.uri,payload,headers)        
-        res = AgentDomainLoginOpener.open(request)        
+        try:
+            res = AgentDomainLoginOpener.open(request)        
+        except urllib2.HTTPError,e:
+            print e.read()
+            raise
         if type(res)!=type(""):            
             seed_cap_url_data = res.read() # it might be an addinfourl object
             seed_cap_url = llsd.parse(seed_cap_url_data)['agent_seed_capability']
@@ -49,3 +66,26 @@ class AgentDomain(object):
         return Agent(self)
         
         
+class PlaceAvatar(grok.Adapter):
+    """handles placing an avatar for an agent object"""
+    grok.implements(IPlaceAvatar)
+    grok.context(IAgentDomain)
+    
+    def __init__(self, context):
+        """initialize this adapter"""
+        self.context = context 
+        
+        # let's retrieve the cap we need
+        self.seed_cap = self.context.seed_cap # ISeedCapability
+        self.place_avatar_cap = self.seed_cap.get(['place_avatar'])['place_avatar']
+    
+    def __call__(self, region):
+        """initiate the placing process"""
+        region_uri = region.uri
+        payload = {'region_url' : region_uri } 
+        result = self.place_avatar_cap(payload)
+        
+        region.details = result
+        avatar = Avatar(region)
+
+        return avatar

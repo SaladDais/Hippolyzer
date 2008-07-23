@@ -2,7 +2,7 @@ import struct
 
 from pyogp.lib.base.message_types import MsgType
 
-class DataPacker():
+class DataPacker(object):
     def __init__(self):
         self.packer = {}
         self.packer[MsgType.MVT_VARIABLE] = self.__pack_string

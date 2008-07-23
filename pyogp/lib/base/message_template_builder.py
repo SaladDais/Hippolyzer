@@ -8,7 +8,7 @@ from pyogp.lib.base.message_template import MsgData, MsgBlockData, \
 from pyogp.lib.base.message_types import MsgType, MsgBlockType, MsgFrequency, sizeof
 from pyogp.lib.base.data_packer import DataPacker
 
-class MessageTemplateBuilder():
+class MessageTemplateBuilder(object):
     """ This class builds messages at its high level, that is, keeping
         that data in data structure form. A serializer should be used on
         the message produced by this so that it can be sent over a network. """

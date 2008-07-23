@@ -10,5 +10,8 @@ class Region(object):
     def __init__(self, uri):
         """initialize the region with the region uri"""
         self.uri = uri
+        self.details = {}
+        
+    
     
         

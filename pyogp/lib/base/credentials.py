@@ -3,6 +3,7 @@ from zope.component import adapts
 
 from indra.base import llsd
 
+import grokcore.component as grok
 
 from interfaces import IPlainPasswordCredential, ISerialization
 
@@ -20,7 +21,7 @@ class PlainPasswordCredential(object):
 
 # an adapter to serialize this to LLSD
 
-class PlainPasswordLLSDSerializer(object):
+class PlainPasswordLLSDSerializer(grok.Adapter):
     """converts a plain password credential to LLSD
     
     Here is how you can use it:
@@ -32,8 +33,8 @@ class PlainPasswordLLSDSerializer(object):
     'application/llsd+xml'
     """
     
-    implements(ISerialization)
-    adapts(IPlainPasswordCredential)
+    grok.implements(ISerialization)
+    grok.context(IPlainPasswordCredential)
     
     def __init__(self, context):
         """initialize this adapter by storing the context (the credential)"""
@@ -56,8 +57,3 @@ class PlainPasswordLLSDSerializer(object):
         """return HTTP headers needed here"""
         return "application/llsd+xml"
 
-# now we register this adapter so it can be used later:
-from zope.component import provideAdapter
-
-# register adapters for the HTML node
-provideAdapter(PlainPasswordLLSDSerializer)

@@ -24,11 +24,13 @@ setup(name='pyogp.lib.base',
       zip_safe=False,
       install_requires=[
           'setuptools',
-          'zope.interface',
-          'zope.component',
           # -*- Extra requirements: -*-
+          'zope.interface',
+          'zope.component [zcml]',
           'webob',
           'wsgiref',
+          'grokcore.component',
+          
       ],
       entry_points={
         'console_scripts': [

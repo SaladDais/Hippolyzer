@@ -1,7 +1,7 @@
 from pyogp.lib.base.data import msg_tmpl
 from pyogp.lib.base.message_types import MsgFrequency
 
-class TemplateDictionary():
+class TemplateDictionary(object):
     def __init__(self, template_list):
         if template_list == None:
             raise Exception('Template list null')

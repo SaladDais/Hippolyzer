@@ -1,4 +1,4 @@
-class MsgBlockType():
+class MsgBlockType(object):
     MBT_SINGLE, \
     MBT_MULTIPLE, \
     MBT_VARIABLE = range(3)
@@ -10,7 +10,7 @@ class MsgBlockType():
 #= '\x20'
 #= '\x10'
 #= '\x00'
-class PackFlags():
+class PackFlags(object):
     LL_ZERO_CODE_FLAG, \
     LL_RELIABLE_FLAG, \
     LL_RESENT_FLAG, \
@@ -22,27 +22,27 @@ class PackFlags():
 #= '\xFF\xFF'
 #= '\xFF'
 #= ''
-class MsgFrequency():
+class MsgFrequency(object):
     FIXED_FREQUENCY_MESSAGE, \
     LOW_FREQUENCY_MESSAGE, \
     MEDIUM_FREQUENCY_MESSAGE, \
     HIGH_FREQUENCY_MESSAGE = range(4) 
 
-class MsgTrust():
+class MsgTrust(object):
     LL_TRUSTED, \
     LL_NOTRUST = range(2)
 
-class MsgEncoding():
+class MsgEncoding(object):
     LL_UNENCODED, \
     LL_ZEROCODED = range(2)
 
-class MsgDeprecation():
+class MsgDeprecation(object):
     LL_DEPRECATED, \
     LL_UDPDEPRECATED, \
     LL_NOTDEPRECATED = range(3)
 
 #message variable types
-class MsgType():
+class MsgType(object):
     #these are variables that aren't used because they can't be added to the
     #builder
     #MVT_NULL, \

@@ -2,7 +2,7 @@ from pyogp.lib.base.credentials import PlainPasswordCredential
 from pyogp.lib.base.agentdomain import AgentDomain
 from pyogp.lib.base.regiondomain import Region
 
-from pyogp.lib.base.interfaces import IPlaceAvatarAdapter
+from pyogp.lib.base.interfaces import IPlaceAvatar
 
 import getpass, sys
 from optparse import OptionParser
@@ -31,7 +31,7 @@ class ExampleLogin(object):
 
         print "logged in, we now have an agent: ", agent
 
-        place = IPlaceAvatarAdapter(agent)
+        place = IPlaceAvatar(agentdomain)
         region = Region(options.regionuri)
 
         print "now we try to place the avatar on a region"

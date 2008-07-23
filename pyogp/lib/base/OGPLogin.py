@@ -2,7 +2,7 @@ from pyogp.lib.base.credentials import PlainPasswordCredential
 from pyogp.lib.base.agentdomain import AgentDomain
 from pyogp.lib.base.regiondomain import Region
 
-from pyogp.lib.base.interfaces import IPlaceAvatarAdapter
+from pyogp.lib.base.interfaces import IPlaceAvatar
 
 import getpass, sys
 from optparse import OptionParser
@@ -43,7 +43,7 @@ class OGPLogin(object):
     def placeAvatarCap(self):
         """ actually gets the place_avatar cap and posts to it """
         region = Region(self.regionuri)
-        place = IPlaceAvatarAdapter(self.agent)
+        place = IPlaceAvatar(self.agent)
         self.avatar = place(region)
         return self.avatar
         

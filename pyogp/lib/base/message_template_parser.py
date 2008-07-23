@@ -10,7 +10,7 @@ from pyogp.lib.base.data import msg_tmpl
 from pyogp.lib.base.message_types import MsgFrequency, MsgTrust, \
      MsgEncoding, MsgDeprecation, MsgBlockType, MsgType
 
-class MessageTemplateParser():
+class MessageTemplateParser(object):
     def __init__(self, template_file):
         if template_file == None:
             raise Exception('Template file cannot be None')

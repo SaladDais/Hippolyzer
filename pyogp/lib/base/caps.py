@@ -47,6 +47,8 @@ class Capability(object):
         deserializer = queryUtility(IDeserialization,name=content_type)
         if deserializer is None:
             # TODO: do better error handling here
+            print "RESULT", result.read()
+            print result.headers
             raise "deserialization for %s not supported" %(content_type)
         return deserializer.deserialize_string(result.read())
         

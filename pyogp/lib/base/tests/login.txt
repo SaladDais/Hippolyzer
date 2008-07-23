@@ -4,7 +4,6 @@ Login
 >>> from pyogp.lib.base.credentials import PlainPasswordCredential
 >>> from pyogp.lib.base.agentdomain import AgentDomain
 >>> from pyogp.lib.base.regiondomain import Region
->>> from pyogp.lib.base.regiondomain import Region
 
 
 
@@ -30,17 +29,17 @@ Now we want to place out avatar somewhere on a region. To do so we first need a 
 >>> region = Region('http://localhost:12345/region')
 
 Now we adapt the agent to the place avatar functionality like this:
->>> from pyogp.lib.base.interfaces import IPlaceAvatarAdapter
->>> place = IPlaceAvatarAdapter(agent)
+>>> from pyogp.lib.base.interfaces import IPlaceAvatar
+>>> place = IPlaceAvatar(agentdomain)
 
 'place' now is an adapter which knows how to call the place_avatar capability. We can ask it to do it:
 >>> avatar = place(region)
 
 The result is dummy right now and should contain a long dictionary with region info:
->>> avatar['sim_ip']
+>>> avatar.region.details['sim_ip']
 '127.0.0.1'
 
->>> avatar['sim_port']
+>>> avatar.region.details['sim_port']
 12345
 
 This needs to be worked on to be a region and not an avatar. 
