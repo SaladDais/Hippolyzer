@@ -50,14 +50,14 @@ class MessageTemplateBuilder():
 
         #don't need to pack the frequency and message number. The template
         #stores it because it doesn't change per template.
-        pack_freq_num = self.current_template.get_message_hex_num()
+        pack_freq_num = self.current_template.msg_num_hex
         msg_buffer += pack_freq_num
         bytes += len(pack_freq_num)
 
         #add some offset?
 
-        for block in self.current_template:
-            packed_block, block_size = build_block(block, self.current_msg)
+        for block in self.current_template.get_blocks():
+            packed_block, block_size = self.build_block(block, self.current_msg)
             msg_buffer += packed_block
             bytes += block_size
         
@@ -76,29 +76,29 @@ class MessageTemplateBuilder():
         #that make up this message, with the number stored in the template
         #don't need to add it to the buffer, because the message handlers that
         #receieve this know how many to read automatically
-        if template_block.get_type() == MsgBlockType.MBT_MULTIPLE:
-            if template_block.get_block_number() != message_block.get_block_number():
+        if template_block.type == MsgBlockType.MBT_MULTIPLE:
+            if template_block.block_number != message_block.block_number:
                 raise Exception('Block ' + template_block.name + ' is type MBT_MULTIPLE \
                           but only has data stored for ' + str(block_count) + ' out of its ' + \
-                          template_block.get_block_number() + ' blocks')
+                          template_block.block_number + ' blocks')
                                   
         #variable means the block variables can repeat, so we have to
         #mark how many blocks there are of this type that repeat, stored in
         #the data
-        if template_block.get_type() == MsgBlockType.MBT_VARIABLE:
-            block_buffer += struct.pack('>B', message_block.get_block_number())
+        if template_block.type == MsgBlockType.MBT_VARIABLE:
+            block_buffer += struct.pack('>B', message_block.block_number)
             bytes += 1            
 
         for block in block_list:
             for variable in message_block.get_variables():
-                var_size  = variable.get_size()
+                var_size  = variable.size
                 
                 if var_size == -1:
                     raise Exception('Variable ' + variable.name + ' in block ' + \
                         message_block.name + ' of message ' + message_data.name + \
                         ' wasn"t set prior to buildMessage call')
 
-                data_size = variable.get_data_size()
+                data_size = variable.data_size
                 #variable's data_size represents whether or not it is of the type
                 #MVT_VARIABLE. If it is positive, it is
                 if data_size > 0:
@@ -115,10 +115,12 @@ class MessageTemplateBuilder():
                     bytes += data_size
 
                 #make sure there IS data to pack
-                if variable.get_data() != None and var_size > 0:
-                    data = self.packer.pack_data(variable.get_data())
+                if variable.data != None and var_size > 0:
+                    data = self.packer.pack_data(variable.data, variable.type)
                     block_buffer += data
                     bytes += len(data)
+
+        return block_buffer, bytes
     
     def new_message(self, message_name):
         """ Creates a new packet where data can be added to it. Note, the variables
@@ -193,4 +195,4 @@ class MessageTemplateBuilder():
         if size != data_size:
             #warning
             #for now, exception
-            raise Exception('Variable size isn"t the same as the variable size')
+            raise Exception('Variable size isn"t the same as the template size')

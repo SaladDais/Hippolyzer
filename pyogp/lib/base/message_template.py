@@ -44,16 +44,16 @@ class MsgData():
     def __init__(self, name):
         self.name = name
         self.size = 0
-        self.blocks = {}
+        self.block_map = {}
 
     def add_block(self, block):
-        if block.name not in self.blocks:
-            self.blocks[block.name] = []
+        if block.name not in self.block_map:
+            self.block_map[block.name] = []
             
-        self.blocks[block.name].append(block)
+        self.block_map[block.name].append(block)
 
     def get_block(self, block_name):
-        return self.blocks[block_name]
+        return self.block_map[block_name]
 
     def add_data(self, block_name, var_name, data, data_size):
         get_block(block_name).add_data(var_name, data, data_size)
@@ -65,14 +65,17 @@ class MsgBlockData():
     def __init__(self, name):
         self.name = name
         self.size = 0
-        self.variables = {}
+        self.variable_map = {}
         self.block_number = 0
              
     def get_variable(self, var_name):
-        return self.variables[var_name]
+        return self.variable_map[var_name]
+
+    def get_variables(self):
+        return self.variable_map.values()
 
     def add_variable(self, var):
-        self.variables[var.name] = var
+        self.variable_map[var.name] = var
 
     def add_data(self, var_name, data, data_size):
         self.get_variable(var_name).add_data(data, data_size)

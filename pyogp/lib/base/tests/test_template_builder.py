@@ -47,7 +47,7 @@ class TestTemplateBuilder(unittest.TestCase):
     def test_create_message_blocks(self):
         builder = MessageTemplateBuilder(self.template_dict)
         builder.new_message('AvatarTextureUpdate')
-        blocks = builder.get_current_message().blocks
+        blocks = builder.get_current_message().block_map
         assert len(blocks) == 3, "Blocks not added to the message"
         try:
             t_block = blocks['AgentData']
@@ -90,7 +90,7 @@ class TestTemplateBuilder(unittest.TestCase):
         builder = MessageTemplateBuilder(self.template_dict)
         builder.new_message('AvatarTextureUpdate')
         builder.next_block('AgentData')
-        variables = builder.get_current_block().variables
+        variables = builder.get_current_block().variable_map
 
         assert len(variables) == 2, "Variables not added to the block"
         try:
@@ -115,7 +115,7 @@ class TestTemplateBuilder(unittest.TestCase):
         builder.next_block('AgentData')
         builder.add_data('TexturesChanged', True, MsgType.MVT_BOOL)
         #need a way to determine the right variable data is sent compared to the type
-        assert builder.get_current_block().variables['TexturesChanged'].data == True,\
+        assert builder.get_current_block().variable_map['TexturesChanged'].data == True,\
                "Data not set correctly"
 
     def test_add_lluuid(self):
@@ -123,17 +123,30 @@ class TestTemplateBuilder(unittest.TestCase):
         builder.new_message('AvatarTextureUpdate')
         builder.next_block('AgentData')
         builder.add_data('AgentID', UUID("550e8400-e29b-41d4-a716-446655440000"), MsgType.MVT_LLUUID)
-        assert builder.get_current_block().variables['AgentID'].data == UUID("550e8400-e29b-41d4-a716-446655440000"),\
+        assert builder.get_current_block().variable_map['AgentID'].data == UUID("550e8400-e29b-41d4-a716-446655440000"),\
                "Data not set correctly"
         #assert builder.get_current_block().variables['AgentID'].get_size() == ?
         
     #test should go with the packer mostly
-    """def test_serialize_u8(self):
+    def test_serialize_u8_fail(self):
         builder = MessageTemplateBuilder(self.template_dict)
         builder.new_message('AvatarTextureUpdate')
         builder.next_block('AgentData')
-        builder.add_data('AgentID', 0x01, MsgType.MVT_U8)"""
+
+        try:
+            builder.add_data('AgentID', 0x01, MsgType.MVT_U8)
+            assert False, "Adding U8 to a variable that should be UUID"
+        except:
+            assert True
         
+    def test_serialize_u8(self):
+        builder = MessageTemplateBuilder(self.template_dict)
+        builder.new_message('CompletePingCheck')
+        builder.next_block('PingID')
+        builder.add_data('PingID', 0x01, MsgType.MVT_U8)
+        msg, size = builder.build_message()
+        assert msg == "\x02\x01", "U8 not packed correctly"
+        assert size == 2, "U8 size not correct"
         
 def test_suite():
     from unittest import TestSuite, makeSuite
