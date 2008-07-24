@@ -25,7 +25,7 @@ setup(name='pyogp.lib.base',
       install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-
-          'zope.interface',
+          'zope.interface>=3.4',
           'zope.component [zcml]',
           'WebOb',
           'wsgiref',
