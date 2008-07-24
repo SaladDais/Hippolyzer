@@ -15,7 +15,7 @@ def login_with_plainpassword(agentdomain_url, firstname, lastname, password):
     takes firstname, lastname and plain password and returns an agent object
     
     Using it is simple:
-    >>> agent = login_with_plainpassword("http://localhost:12345","Firstname","Lastname","secret")
+    >>> agent = login_with_plainpassword("http://localhost:12345/","Firstname","Lastname","secret")
     
     Now this agent should contain an agentdomain object
     >>> agent.agentdomain
@@ -40,7 +40,7 @@ def place_avatar(agent, region_url):
     Placing an avatar is simple. We just need an agent object and a region url.
 
     We get an agent object via the login:
-    >>> agent = login_with_plainpassword("http://localhost:12345","Firstname","Lastname","secret")
+    >>> agent = login_with_plainpassword("http://localhost:12345/","Firstname","Lastname","secret")
     
     And now we can call it:
     >>> avatar = place_avatar(agent, "http://localhost:12345/region")
@@ -64,7 +64,7 @@ def run_loop(avatar):
     """run the UDP loop for the avatar
     
     First we create one as seen above:
-    >>> agent = login_with_plainpassword("http://localhost:12345","Firstname","Lastname","secret")
+    >>> agent = login_with_plainpassword("http://localhost:12345/","Firstname","Lastname","secret")
     >>> avatar = place_avatar(agent, "http://localhost:12345/region")
 
     And now we can run the loop:

@@ -1,6 +1,8 @@
 from zope.interface import implements
 from zope.component import adapts
 
+import md5
+
 from indra.base import llsd
 
 import grokcore.component as grok
@@ -44,9 +46,10 @@ class PlainPasswordLLSDSerializer(grok.Adapter):
         """return the credential as a string"""
         
         loginparams={
-               'password'   : self.context.password,
-               'lastname'   : self.context.lastname,
-               'firstname'  : self.context.firstname
+#                'password'      : "$1$"+md5.new(self.context.password).hexdigest(),
+                'password'      : self.context.password,
+                'lastname'     : self.context.lastname,
+                'firstname'    : self.context.firstname
         }
 
         llsdlist = llsd.format_xml(loginparams)

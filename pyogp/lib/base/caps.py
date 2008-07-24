@@ -1,11 +1,13 @@
-from zope.interface import implements
-from zope.component import queryUtility, adapts
-
 import urllib2
+
+from zope.interface import implements
+from zope.component import queryUtility, adapts, getUtility
+import grokcore.component as grok
 from indra.base import llsd
 
 from interfaces import ICapability, ISeedCapability
 from interfaces import ISerialization, IDeserialization
+from network import IRESTClient, HTTPError
 
 
 class Capability(object):
@@ -19,7 +21,7 @@ class Capability(object):
         self.name = name
         self.public_url = public_url
         
-    def __call__(self,payload,custom_headers={}):
+    def POST(self,payload,custom_headers={}):
         """call this capability, return the parsed result"""
         
         # serialize the data
@@ -32,25 +34,23 @@ class Capability(object):
         
         # TODO: better errorhandling with own exceptions
         try:
-            request = urllib2.Request(self.public_url, serialized_payload, headers)
-            result = urllib2.urlopen(request)
-        except urllib2.HTTPError, e:
+            restclient = getUtility(IRESTClient)
+            response = restclient.POST(self.public_url, serialized_payload, headers=headers)
+        except HTTPError, e:
             print "** failure while calling cap:",
             print e.read()
             raise
             
         # now deserialize the data again, we ask for a utility with the content type
         # as the name
-        content_type_charset = result.headers['Content-Type']
+        content_type_charset = response.headers['Content-Type']
         content_type = content_type_charset.split(";")[0] # remove the charset part
         
         deserializer = queryUtility(IDeserialization,name=content_type)
         if deserializer is None:
             # TODO: do better error handling here
-            print "RESULT", result.read()
-            print result.headers
             raise "deserialization for %s not supported" %(content_type)
-        return deserializer.deserialize_string(result.read())
+        return deserializer.deserialize_string(response.body)
         
     def __repr__(self):
         return "<Capability for %s>" %self.public_url
@@ -63,7 +63,7 @@ class SeedCapability(Capability):
     def get(self, names=[]):
         """if this is a seed cap we can retrieve other caps here"""
         payload = {'caps':names} 
-        parsed_result = self(payload)['caps']
+        parsed_result = self.POST(payload)['caps']
         
         caps = {}
         for name in names:
@@ -82,7 +82,7 @@ class SeedCapability(Capability):
 ####
 
 
-class DictLLSDSerializer(object):
+class DictLLSDSerializer(grok.Adapter):
     """adapter for serializing a dictionary to LLSD
     
     An example:
@@ -94,8 +94,8 @@ class DictLLSDSerializer(object):
     'application/llsd+xml'
     
     """
-    implements(ISerialization)
-    adapts(dict)
+    grok.implements(ISerialization)
+    grok.context(dict)
     
     def __init__(self, context):
         self.context = context
@@ -109,7 +109,7 @@ class DictLLSDSerializer(object):
         """return the content type of this serializer"""
         return "application/llsd+xml"
         
-class LLSDDeserializer(object):
+class LLSDDeserializer(grok.GlobalUtility):
     """utility for deserializing LLSD data
     
     The deserialization component is defined as a utility because the input
@@ -135,7 +135,8 @@ class LLSDDeserializer(object):
     {'test': 1234, 'foo': 'bar'}
     
     """
-    implements(IDeserialization)
+    grok.implements(IDeserialization)
+    grok.name('application/llsd+xml')
     
     def deserialize_string(self, data):
         """deserialize a string"""
@@ -146,14 +147,6 @@ class LLSDDeserializer(object):
         data = fp.read()
         return self.deserialize_string(data)
         
-        
-# register everything
-# now we register this adapter so it can be used later:
-from zope.component import provideAdapter, provideUtility
-
-# register adapters for the HTML node
-provideAdapter(DictLLSDSerializer)
-provideUtility(LLSDDeserializer(), IDeserialization, name="application/llsd+xml")
 
 
 

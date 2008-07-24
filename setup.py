@@ -27,7 +27,7 @@ setup(name='pyogp.lib.base',
           # -*- Extra requirements: -*-
           'zope.interface',
           'zope.component [zcml]',
-          'webob',
+          'WebOb',
           'wsgiref',
           'grokcore.component',
           

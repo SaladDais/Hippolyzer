@@ -23,7 +23,7 @@ Let's store the some_capability cap in a variable:
 The capability now can be simply called with a payload and returns some data itself.
 
 First we call it:
->>> data = some_cap({'a':'b'})
+>>> data = some_cap.POST({'a':'b'})
 
 And now we can check the data:
 >>> data['something']
@@ -46,6 +46,19 @@ We can access these like this:
 'http://localhost:12345/cap/some_capability'
 
 As we can see, it's not a secret URL in this mockup case but in production it will be.
+
+
+
+Testing errors
+==============
+
+Now we can test what happens to our code when the server returns a wrong content type.
+In this case it should not find a deserializer and say so:
+>>> seed = SeedCapability('seed', 'http://127.0.0.1:12345/seed_cap_wrong_content_type')
+>>> cap = seed.get(['some_capability'])
+Traceback (most recent call last):
+...
+deserialization for text/html not supported
 
 
 
