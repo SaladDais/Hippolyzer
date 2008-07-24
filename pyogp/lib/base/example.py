@@ -1,6 +1,7 @@
 from pyogp.lib.base.credentials import PlainPasswordCredential
 from pyogp.lib.base.agentdomain import AgentDomain
 from pyogp.lib.base.regiondomain import Region
+from pyogp.lib.base import registration
 
 from pyogp.lib.base.interfaces import IPlaceAvatar
 
@@ -11,6 +12,7 @@ from optparse import OptionParser
 class ExampleLogin(object):
     
     def login(self):
+        registration.init()
         parser = OptionParser()
 
         parser.add_option("-a", "--agentdomain", dest="loginuri", default="https://login1.aditi.lindenlab.com/cgi-bin/auth.cgi",
