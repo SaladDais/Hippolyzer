@@ -26,11 +26,14 @@ class DataPacker(object):
         self.packer[MsgType.MVT_IP_PORT] = self.__pack_string
 
     def pack_data(self, data, data_type):
-        pack = self.packer[data_type]
-        if callable(pack):
-            return pack(data)
-        else:
-            return struct.pack(pack, data)
+        if data_type in self.packer:
+            pack = self.packer[data_type]
+            if callable(pack):
+                return pack(data)
+            else:
+                return struct.pack(pack, data)
+
+        return None
 
     def __pack_tuple(self, tup, tp):
         size = len(tup)
