@@ -24,12 +24,6 @@ class MessageTemplateBuilder(object):
         self.cur_block_name = ''
 
         self.packer = DataPacker()
-                    
-    def get_current_message(self):
-        return self.current_msg
-
-    def get_current_block(self):
-        return self.current_block
 
     def build_message(self):
         """ Builds the message by serializing the data. Creates a packet ready
@@ -90,18 +84,19 @@ class MessageTemplateBuilder(object):
             bytes += 1            
 
         for block in block_list:
-            for variable in message_block.get_variables():
+            for v in template_block.get_variables(): #message_block.get_variables():
+                #this mapping has to occur to make sure the data is written in correct order
+                variable = message_block.get_variable(v.name)
                 var_size  = variable.size
-                
+
                 if var_size == -1:
                     raise Exception('Variable ' + variable.name + ' in block ' + \
                         message_block.name + ' of message ' + message_data.name + \
                         ' wasn"t set prior to buildMessage call')
 
-                data_size = variable.data_size
-                #variable's data_size represents whether or not it is of the type
-                #MVT_VARIABLE. If it is positive, it is
-                if data_size > 0:
+                #if its a VARIABLE type, we have to write in the size of the data
+                if variable.type == MsgType.MVT_VARIABLE:
+                    data_size = template_block.get_variable(variable.name).size
                     if data_size == 1:
                         block_buffer += struct.pack('>B', var_size)
                     elif data_size == 2:
@@ -136,11 +131,8 @@ class MessageTemplateBuilder(object):
             self.current_msg.add_block(block_data)
 
     def next_block(self, block_name):
-        #if it doesn't exist, create a new block (may be a VARIABLE or MULTIPLE type
-        #block
         if block_name not in self.current_template.block_map:
             #error: 
-            print 'ERROR: template doesn"t have the block'
             return
 
         template_block = self.current_template.get_block(block_name)
@@ -159,40 +151,64 @@ class MessageTemplateBuilder(object):
             return
 
         #although we may have a block already, there are some cases where we can have
-        #more than one block of the same name (when type is MULTIPLE or VARIABLE)
+        #more than one block of the same name (when type is MULTIPLE or VARIABLE), so we
+        #might have to create a whole new block
         else:
-            #make sure it isn't SINGLE
-            if self.template_block.type == MsgBlockType.MBT_SINGLE:
-                #error: can't have more than 1 block when its supposed to be 1
-                print 'ERROR: can"t have more than 1 block when its supposed to be 1'
-                return
+            #make sure it isn't SINGLE and trying to create a new block
+            if template_block.type == MsgBlockType.MBT_SINGLE:
+                raise Exception('ERROR: can"t have more than 1 block when its supposed to be 1')
 
-            elif self.template_block.type == MsgBlockType.MBT_MULTIPLE and \
-                 self.template_block.block_number == block_data.block_number:
-                #error: we are about to exceed block total
-                print 'ERROR: we are about to exceed block total'
-                return
+            elif template_block.type == MsgBlockType.MBT_MULTIPLE and \
+                 template_block.block_number == block_data.block_number:
+                raise Exception('ERROR: we are about to exceed block total')
             
             block_data.block_number += 1
-            self.current_block = MsgBlockData(block.name)
+            self.current_block = MsgBlockData(block_name)
             self.current_msg.add_block(self.current_block)
             self.cur_block_name = block_name
 
-            for variable in self.current_block.variables:
+            for variable in template_block.get_variables():
                 var_data = MsgVariableData(variable.name, variable.type)
                 self.current_block.add_variable(var_data)
 
     def add_data(self, var_name, data, data_type):
         """ the data type is passed in to make sure that the programmer is aware of
             what type (and therefore size) of the data that is being passed in. """
-        self.__check_size(var_name, data, data_type)
-        self.current_block.add_data(var_name, data, data_type)
+        if self.current_template == None:
+            raise Exception('Attempting to add data to a null message')
 
-    def __check_size(self, var_name, data, data_type):
+        if self.current_block == None:
+            raise Exception('Attempting to add data to a null block')
+
+        template_variable = self.current_template.get_block(self.cur_block_name).get_variable(var_name)
+        if template_variable == None:
+            raise Exception('Variable is not in the block')
+
+        #this should be the size of the actual data
+        size = sizeof(data_type)
+
+        if data_type == MsgType.MVT_VARIABLE:
+            #if its a MVT_VARIABLE type of data, then size will be -1 for the type
+            #so the actual size we will have to get from the data itself
+            #HACK - this may cause a bug if the data type doesn't have len
+            size = len(data)
+            #template holds the max size the data can be
+            data_size = template_variable.size
+            #error check - size can't be larger than the bytes will hold
+            
+            self.current_block.add_data(var_name, data, size)
+            
+        else:
+            #size check can't be done on VARIABLE sized variables
+            if self.__check_size(var_name, data, size) == False:
+                raise Exception('Variable size isn"t the same as the template size')
+            
+            self.current_block.add_data(var_name, data, size)
+
+    def __check_size(self, var_name, data, data_size):
         block = self.template_list[self.cur_msg_name].get_block(self.cur_block_name)
-        data_size = sizeof(data_type)
         size = block.get_variable(var_name).size
         if size != data_size:
-            #warning
-            #for now, exception
-            raise Exception('Variable size isn"t the same as the template size')
+            return False
+            
+        return True

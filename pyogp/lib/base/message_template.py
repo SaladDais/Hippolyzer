@@ -77,8 +77,8 @@ class MsgBlockData(object):
     def add_variable(self, var):
         self.variable_map[var.name] = var
 
-    def add_data(self, var_name, data, data_size):
-        self.get_variable(var_name).add_data(data, data_size)
+    def add_data(self, var_name, data, size):
+        self.get_variable(var_name).add_data(data, size)
 
 class MsgVariableData(object):
     """ Used as a Message Block variable that is being created that will be
@@ -87,15 +87,14 @@ class MsgVariableData(object):
         self.name = name
         #data_size holds info whether or not the variable is of type
         #MVT_VARIABLE
-        self.data_size = 0
         self.size = -1
         self.type = tp
         self.data = None
 
     #how DO we add data? What format will it be in?
-    def add_data(self, data, data_size):
+    def add_data(self, data, size):
         self.data = data
-        self.size = data_size
+        self.size = size
 
 class MessageTemplateVariable(object):
     def __init__(self, name, tp, size):
@@ -105,6 +104,7 @@ class MessageTemplateVariable(object):
 
 class MessageTemplateBlock(object):
     def __init__(self, name):
+        self.variables = []
         self.variable_map = {}
         self.name = name
         self.block_type = None
@@ -112,15 +112,17 @@ class MessageTemplateBlock(object):
 
     def add_variable(self, var):
         self.variable_map[var.name] = var
+        self.variables.append(var)
 
     def get_variables(self):
-        return self.variable_map.values()
+        return self.variables #self.variable_map.values()
 
     def get_variable(self, name):
         return self.variable_map[name]
 
 class MessageTemplate(object):
     def __init__(self, name):
+        self.blocks = []
         self.block_map = {}
         #this is the function or object that will handle this type of message
         self.handler = None
@@ -138,9 +140,10 @@ class MessageTemplate(object):
 
     def add_block(self, block):
         self.block_map[block.name] = block
+        self.blocks.append(block)
 
     def get_blocks(self):
-        return self.block_map.values()
+        return self.blocks #self.block_map.values()
         
     def get_block(self, name):
         return self.block_map[name]
