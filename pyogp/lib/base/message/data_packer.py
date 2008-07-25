@@ -1,6 +1,6 @@
 import struct
 
-from pyogp.lib.base.message_types import MsgType
+from pyogp.lib.base.message.message_types import MsgType
 
 class DataPacker(object):
     def __init__(self):

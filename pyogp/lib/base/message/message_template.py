@@ -29,10 +29,6 @@ import re
 import pprint
        
 #local libraries
-from makepacketdict import makepacketdict, makereversepacketdict
-
-mypacketdictionary = makepacketdict()
-myreversedictionary = makereversepacketdict()
 
 """ can construct and deconstruct packet headers. Has nothing to
         do with the packet payload, yet. """
@@ -149,7 +145,7 @@ class MessageTemplate(object):
         return self.block_map[name]
         
 #these remain unformatted (by standard) because they are going to be moved    
-def decodeHeaderPair(frequency, num):
+"""def decodeHeaderPair(frequency, num):
     return mypacketdictionary[(frequency, num)]
 
 def decodeFrequency(header):
@@ -223,4 +219,4 @@ def encodeHeaderName(ack, sequenceNumber, packetName):
     
 def encodeHeader(ack, sequenceNumber, frequency, num):
     packetID = encodePacketID(frequency, num)
-    return ack + struct.pack('>LB', sequenceNumber, 0) + packetID
+    return ack + struct.pack('>LB', sequenceNumber, 0) + packetID"""

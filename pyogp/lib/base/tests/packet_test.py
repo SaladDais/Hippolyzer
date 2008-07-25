@@ -2,7 +2,7 @@ import unittest
 import message_template
 
 class PacketTest(unittest.TestCase):
-
+"""
     #testing each component
     def test_freqLow(self):
         assert message_template.decodeFrequency('\xFF\xFF\x01') == 'Low', '0xFFFF01 is supposed to be "Low"'
@@ -101,6 +101,6 @@ class PacketTest(unittest.TestCase):
     def test_encodeHeaderNameHigh(self):
         header = message_template.encodeHeaderName(message_template.LL_NONE, 1, 'StartPingCheck')
         assert header == '\x00\x00\x00\x00\x01\x00\x01', 'Outcome: ' + repr(header) + ' Expected: ' + r'\x00\x00\x00\x00\x01\x00\x01'
-
+"""
 if __name__ == "__main__":
     unittest.main()

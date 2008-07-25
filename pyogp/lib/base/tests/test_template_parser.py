@@ -3,10 +3,10 @@ import unittest, doctest
 
 #local libraries
 from pyogp.lib.base.data import msg_tmpl
-from pyogp.lib.base.message_template import MessageTemplate, MessageTemplateBlock, MessageTemplateVariable
-from pyogp.lib.base.message_template_dict import TemplateDictionary
-from pyogp.lib.base.message_template_parser import MessageTemplateParser
-from pyogp.lib.base.message_types import MsgFrequency, MsgTrust, \
+from pyogp.lib.base.message.message_template import MessageTemplate, MessageTemplateBlock, MessageTemplateVariable
+from pyogp.lib.base.message.message_template_dict import TemplateDictionary
+from pyogp.lib.base.message.message_template_parser import MessageTemplateParser
+from pyogp.lib.base.message.message_types import MsgFrequency, MsgTrust, \
      MsgEncoding, MsgDeprecation, MsgBlockType, MsgType
 
 class TestDictionary(unittest.TestCase):

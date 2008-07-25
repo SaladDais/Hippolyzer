@@ -2,11 +2,11 @@
 import struct
 
 #pyogp libs
-from pyogp.lib.base.message_template import MsgData, MsgBlockData, \
+from pyogp.lib.base.message.message_template import MsgData, MsgBlockData, \
      MsgVariableData
 #import pyogp.lib.base.message_types
-from pyogp.lib.base.message_types import MsgType, MsgBlockType, MsgFrequency, sizeof
-from pyogp.lib.base.data_packer import DataPacker
+from pyogp.lib.base.message.message_types import MsgType, MsgBlockType, MsgFrequency, sizeof
+from pyogp.lib.base.message.data_packer import DataPacker
 
 class MessageTemplateBuilder(object):
     """ This class builds messages at its high level, that is, keeping

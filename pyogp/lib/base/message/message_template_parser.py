@@ -7,7 +7,7 @@ import pprint
 #local libraries
 import message_template
 from pyogp.lib.base.data import msg_tmpl
-from pyogp.lib.base.message_types import MsgFrequency, MsgTrust, \
+from pyogp.lib.base.message.message_types import MsgFrequency, MsgTrust, \
      MsgEncoding, MsgDeprecation, MsgBlockType, MsgType
 
 class MessageTemplateParser(object):
