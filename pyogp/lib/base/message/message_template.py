@@ -27,11 +27,11 @@ $/LicenseInfo$
 import struct
 import re
 import pprint
-       
-#local libraries
 
-""" can construct and deconstruct packet headers. Has nothing to
-        do with the packet payload, yet. """
+#represents how much of a message is taken up by packet ID things, such as
+#the packet flags and the sequence number. After the ID, then comes the header
+#NOTE: This will be moved into a messaging system eventually
+PACKET_ID_LENGTH = 6
 
 #this probably needs to implement an interface so it can be serialized
 class MsgData(object):
@@ -143,80 +143,3 @@ class MessageTemplate(object):
         
     def get_block(self, name):
         return self.block_map[name]
-        
-#these remain unformatted (by standard) because they are going to be moved    
-"""def decodeHeaderPair(frequency, num):
-    return mypacketdictionary[(frequency, num)]
-
-def decodeFrequency(header):
-    #if it is not a high
-    if header[0] == '\xFF':
-        #if it is not a medium frequency message
-        if header[1] == '\xFF':
-            #if it is a Fixed frequency message
-            if header[2] == '\xFF':
-                return 'Fixed'
-            #then it is low
-            else:
-                return 'Low'
-        #then it is medium
-        else:
-            return 'Medium'
-    #then it is high
-    else:
-        return 'High'
-
-    return None
-
-def decodeNum(header):
-    frequency = decodeFrequency(header)
-
-    if frequency == 'Low':
-        return struct.unpack('B', header[2:4])[0] #int("0x"+ByteToHex(header[2:4]).replace(' ', ''),16)
-        
-    elif frequency == 'Medium':
-        return struct.unpack('B', header[1:2])[0] #int("0x"+ByteToHex(header[1:2]).replace(' ', ''),16)
-        
-    elif frequency == 'High':
-        return struct.unpack('B', header[0])[0] #int("0x"+ByteToHex(header[0]), 16)  
-
-    elif frequency == 'Fixed':
-        return struct.unpack('B', header[0:4])[0] #int("0x"+ByteToHex(header[0:4]).replace(' ', ''), 16)
-
-    else:
-        return None
-
-def decodeHeader(header):
-    frequency = decodeFrequency(header)
-    num = decodeNum(header)
-    
-    return decodeHeaderPair(frequency, num)
-
-def encodePacketID(frequency, num):
-    if frequency == 'Low':
-        frequencyData = LOW_FREQUENCY_MESSAGE
-        packedNum = struct.pack('>H', num)
-        
-    elif frequency == 'Medium':
-        frequencyData = MEDIUM_FREQUENCY_MESSAGE
-        packedNum = struct.pack('>B', num)
-
-    elif frequency == 'High':
-        frequencyData = HIGH_FREQUENCY_MESSAGE
-        packedNum = struct.pack('>B', num)
-
-    elif frequency == 'Fixed':
-        frequencyData = FIXED_FREQUENCY_MESSAGE
-        packedNum = struct.pack('>B', num)
-
-    return frequencyData + packedNum
-
-def encodeHeaderName(ack, sequenceNumber, packetName):
-    header_tuple = myreversedictionary[packetName]
-    frequency = header_tuple[0]
-    num = header_tuple[1]
-    return encodeHeader(ack, sequenceNumber, frequency, num)
-    
-def encodeHeader(ack, sequenceNumber, frequency, num):
-    packetID = encodePacketID(frequency, num)
-    return ack + struct.pack('>LB', sequenceNumber, 0) + packetID"""
