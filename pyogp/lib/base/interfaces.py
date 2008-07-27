@@ -25,15 +25,12 @@ class IDeserialization(Interface):
         """deserialize the context"""
     
     
-class ICredentialSerializer(Interface):
+class ICredentialDeserialization(Interface):
     """converts a credential to a serialized format for sending it over the network"""
     
-    def serialize():
-        """return a serialized string"""
-        
-    def headers():
-        """return headers eventually needed for sending it out"""
-
+    def deserialize():
+        """deserialize the context"""
+                
 
 class IAgent(Interface):
     """models an agent"""

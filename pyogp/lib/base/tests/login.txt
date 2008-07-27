@@ -1,48 +1,99 @@
 Login
 =====
 
->>> from pyogp.lib.base.credentials import PlainPasswordCredential
->>> from pyogp.lib.base.agentdomain import AgentDomain
->>> from pyogp.lib.base.regiondomain import Region
+First some imports::
+
+    >>> from pyogp.lib.base.credentials import PlainPasswordCredential
+    >>> from pyogp.lib.base.agentdomain import AgentDomain
+    >>> from pyogp.lib.base.regiondomain import Region
 
 
 
-First we create some credentials:
->>> credentials = PlainPasswordCredential('Firstname', 'Lastname', 'secret')
+First we create some credentials::
+    
+    >>> credentials = PlainPasswordCredential('Firstname', 'Lastname', 'secret')
 
-Then we need some agent domain to connect to. This might automatically retrieve some XRDS file to get the actual login endpoint:
->>> agentdomain = AgentDomain('http://localhost:12345/')
+Then we need some agent domain to connect to. This might automatically retrieve some XRDS file to get the actual login endpoint::
+    
+    >>> agentdomain = AgentDomain('http://localhost:12345/')
 
-Now we can use both to get an agent object (which transparently handles capabilities etc.):
->>> agent = agentdomain.login(credentials)
+Now we can use both to get an agent object (which transparently handles capabilities etc.)::
+    
+    >>> agent = agentdomain.login(credentials)
 
-The agent domain instance now should contain a seed capability:
->>> agentdomain.seed_cap
-<SeedCapability for http://127.0.0.1:12345/seed_cap>
+The agent domain instance now should contain a seed capability::
 
-We could ask this seed capability now to retrieve another cap for us:
->>> caps = agentdomain.seed_cap.get(['place_avatar'])
->>> caps
-{'place_avatar': <Capability for http://localhost:12345/cap/place_avatar>}
+    >>> agentdomain.seed_cap
+    <SeedCapability for http://127.0.0.1:12345/seed_cap>
 
-Now we want to place out avatar somewhere on a region. To do so we first need a Region object:
->>> region = Region('http://localhost:12345/region')
+We could ask this seed capability now to retrieve another cap for us::
 
-Now we adapt the agent to the place avatar functionality like this:
->>> from pyogp.lib.base.interfaces import IPlaceAvatar
->>> place = IPlaceAvatar(agentdomain)
+    >>> caps = agentdomain.seed_cap.get(['place_avatar'])
+    >>> caps
+    {'place_avatar': <Capability for http://localhost:12345/cap/place_avatar>}
 
-'place' now is an adapter which knows how to call the place_avatar capability. We can ask it to do it:
->>> avatar = place(region)
+Now we want to place out avatar somewhere on a region. To do so we first need a Region object::
+    
+    >>> region = Region('http://localhost:12345/region')
 
-The result is dummy right now and should contain a long dictionary with region info:
->>> avatar.region.details['sim_ip']
-'127.0.0.1'
+Now we adapt the agent to the place avatar functionality like this::
 
->>> avatar.region.details['sim_port']
-12345
+    >>> from pyogp.lib.base.interfaces import IPlaceAvatar
+    >>> place = IPlaceAvatar(agentdomain)
+
+'place' now is an adapter which knows how to call the place_avatar capability. We can ask it to do it::
+
+    >>> avatar = place(region)
+
+The result is dummy right now and should contain a long dictionary with region info::
+    
+    >>> avatar.region.details['sim_ip']
+    '127.0.0.1'
+
+    >>> avatar.region.details['sim_port']
+    12345
 
 This needs to be worked on to be a region and not an avatar. 
+
+
+Credential Serialization and Deserialization
+============================================
+
+In order to send a credential over the wire we need to serialize it::
+
+    >>> credential = PlainPasswordCredential('firstname','lastname','plainpw')
+    
+Now we use an adapter to serializer it:
+
+    >>> from pyogp.lib.base.interfaces import ISerialization
+    >>> serializer = ISerialization(credential)
+    
+    >>> serializer.serialize()
+    '<?xml version="1.0" ?><llsd><map><key>lastname</key><string>lastname</string><key>password</key><string>plainpw</string><key>firstname</key><string>firstname</string></map></llsd>'
+    >>> serializer.content_type
+    'application/llsd+xml'
+    
+So assume we received this string and need a credential object again, we do the following::
+
+    >>> data = serializer.serialize()
+
+    >>> from pyogp.lib.base.interfaces import ICredentialDeserialization
+    >>> from zope.component import getUtility
+    >>> deserializer = getUtility(ICredentialDeserialization,name="application/llsd+xml")
+    >>> credential = deserializer.deserialize(data)
+    >>> credential.firstname
+    'firstname'
+    >>> credential.lastname
+    'lastname'
+    >>> credential.password
+    'plainpw'
+
+
+    
+    
+    
+
+
 
 
 

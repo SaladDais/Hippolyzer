@@ -7,7 +7,7 @@ from indra.base import llsd
 
 import grokcore.component as grok
 
-from interfaces import IPlainPasswordCredential, ISerialization
+from interfaces import IPlainPasswordCredential, ISerialization, ICredentialDeserialization
 
 class PlainPasswordCredential(object):
     """a plain password credential"""
@@ -60,3 +60,16 @@ class PlainPasswordLLSDSerializer(grok.Adapter):
         """return HTTP headers needed here"""
         return "application/llsd+xml"
 
+
+class PlainPasswordLLSDDeserializer(grok.GlobalUtility):
+    """take an LLSD string and create a credential object
+
+    This is a utility
+    """
+    grok.implements(ICredentialDeserialization)
+    grok.name('application/llsd+xml')
+
+    def deserialize(self, s):
+        payload = llsd.parse(s)
+        # TODO: make this serialization stuff more flexible in terms of other types
+        return PlainPasswordCredential(payload['firstname'], payload['lastname'], payload['password'])

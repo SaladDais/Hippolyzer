@@ -11,7 +11,7 @@ import grokcore.component as grok
 
 from indra.base import llsd
 
-from interfaces import ICredentialSerializer, IPlaceAvatar, IAgentDomain
+from interfaces import IPlaceAvatar, IAgentDomain
 from network import IRESTClient, HTTPError
 from zope.component import queryUtility, adapts, getUtility
 
