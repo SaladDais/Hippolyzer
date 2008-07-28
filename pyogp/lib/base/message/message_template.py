@@ -28,12 +28,6 @@ import struct
 import re
 import pprint
 
-#represents how much of a message is taken up by packet ID things, such as
-#the packet flags and the sequence number. After the ID, then comes the header
-#NOTE: This will be moved into a messaging system eventually
-PACKET_ID_LENGTH = 6
-PHL_OFFSET = 5
-
 #this probably needs to implement an interface so it can be serialized
 class MsgData(object):
     """ Used as a Message that is being created that will be

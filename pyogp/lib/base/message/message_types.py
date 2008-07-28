@@ -1,3 +1,10 @@
+#represents how much of a message is taken up by packet ID things, such as
+#the packet flags and the sequence number. After the ID, then comes the header
+#NOTE: This will be moved into a messaging system eventually
+class MsgHeader(object):
+    PACKET_ID_LENGTH = 6
+    PHL_OFFSET = 5
+
 class MsgBlockType(object):
     MBT_SINGLE, \
     MBT_MULTIPLE, \

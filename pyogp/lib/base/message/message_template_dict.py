@@ -31,10 +31,16 @@ class TemplateDictionary(object):
                                template.msg_num)] = template
 
     def get_template(self, template_name):
-        return self.message_templates[template_name]
+        if template_name in self.message_templates:
+            return self.message_templates[template_name]
+
+        return None
     
     def get_template_by_pair(self, frequency, num):
-        return self.message_dict[(frequency, num)]
+        if (frequency, num) in self.message_dict:
+            return self.message_dict[(frequency, num)]
+
+        return None
 
     def __getitem__(self, i):
         return self.get_template(i)
