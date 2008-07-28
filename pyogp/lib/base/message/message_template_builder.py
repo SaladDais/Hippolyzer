@@ -121,8 +121,10 @@ class MessageTemplateBuilder(object):
         """ Creates a new packet where data can be added to it. Note, the variables
             are added when they are used, or data added to them, so to make sure
             no bad data is sent over the network. """
-        #error check
         self.current_template = self.template_list[message_name]
+        #error check
+        if self.current_template == None:
+            return
         self.current_msg = MsgData(message_name)
         self.cur_msg_name = message_name
 
