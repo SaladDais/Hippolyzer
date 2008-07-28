@@ -32,6 +32,7 @@ import pprint
 #the packet flags and the sequence number. After the ID, then comes the header
 #NOTE: This will be moved into a messaging system eventually
 PACKET_ID_LENGTH = 6
+PHL_OFFSET = 5
 
 #this probably needs to implement an interface so it can be serialized
 class MsgData(object):
@@ -122,6 +123,8 @@ class MessageTemplate(object):
         self.block_map = {}
         #this is the function or object that will handle this type of message
         self.handler = None
+        self.received_count = 0
+        
         self.name = name
         self.frequency = None
         self.msg_num = 0

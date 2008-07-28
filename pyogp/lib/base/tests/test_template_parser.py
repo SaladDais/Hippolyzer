@@ -82,7 +82,7 @@ class TestTemplates(unittest.TestCase):
     def test_template_low(self):
         template = self.msg_dict['AddCircuitCode']
         hx = template.msg_num_hex
-        assert hx == '\xff\xff\x00\x02', "Expected: '\xff\xff\x00\x02'  Returned: " + repr(hx)
+        assert hx == '\xff\xff\x00\x02', "Expected: " + r'\xff\xff\x00\x02' + " Returned: " + repr(hx)
 
     def test_deprecated(self):
         template = self.msg_dict['ObjectPosition']

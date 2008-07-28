@@ -88,7 +88,7 @@ class MessageTemplateParser(object):
 
                 current_template.msg_num = msg_num
                 current_template.msg_num_hex = msg_num_hex
-            
+
                 msg_trust = None
                 if parts[3] == 'Trusted':
                     msg_trust = MsgTrust.LL_TRUSTED

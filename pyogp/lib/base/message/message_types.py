@@ -4,18 +4,12 @@ class MsgBlockType(object):
     MBT_VARIABLE = range(3)
 
 #pack flags
-#= '\x80'
-#= '\x80'
-#= '\x40'
-#= '\x20'
-#= '\x10'
-#= '\x00'
 class PackFlags(object):
-    LL_ZERO_CODE_FLAG, \
-    LL_RELIABLE_FLAG, \
-    LL_RESENT_FLAG, \
-    LL_ACK_FLAG, \
-    LL_NONE = range(5)   
+    LL_ZERO_CODE_FLAG = '\x80'
+    LL_RELIABLE_FLAG  = '\x40'
+    LL_RESENT_FLAG    = '\x20'
+    LL_ACK_FLAG       = '\x10'
+    LL_NONE           = '\x00'
 
 #frequency for messages
 #= '\xFF\xFF\xFF'
@@ -23,10 +17,10 @@ class PackFlags(object):
 #= '\xFF'
 #= ''
 class MsgFrequency(object):
-    FIXED_FREQUENCY_MESSAGE, \
-    LOW_FREQUENCY_MESSAGE, \
-    MEDIUM_FREQUENCY_MESSAGE, \
-    HIGH_FREQUENCY_MESSAGE = range(4) 
+    FIXED_FREQUENCY_MESSAGE  = -1 #marking it
+    LOW_FREQUENCY_MESSAGE    = 4
+    MEDIUM_FREQUENCY_MESSAGE = 2
+    HIGH_FREQUENCY_MESSAGE   = 1
 
 class MsgTrust(object):
     LL_TRUSTED, \
