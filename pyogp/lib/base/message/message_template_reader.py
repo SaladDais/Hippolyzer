@@ -77,15 +77,20 @@ class MessageTemplateReader(object):
         if self.current_template == None:
             raise Exception('Attempting to decode data without validating it')
         if self.current_msg != None:
-            print 'WARNING: Attempting to decode data without clearing the last message'
+            #print 'WARNING: Attempting to decode data without clearing the last message'
             self.current_msg = None
 
         #at the offset position, the messages stores the offset to where the
         #payload begins (may be extra header information)
         offset = self.unpacker.unpack_data(data[MsgHeader.PHL_OFFSET:MsgHeader.PHL_OFFSET+1], MsgType.MVT_U8)
-        
+
+        freq_bytes = self.current_template.frequency
+        #fixed case
+        if freq_bytes == -1:
+            freq_bytes = 4
+
         decode_pos = MsgHeader.PACKET_ID_LENGTH + \
-                     self.current_template.frequency + \
+                     freq_bytes + \
                      offset
         
         self.current_msg = MsgData(self.current_template.name)
@@ -97,6 +102,7 @@ class MessageTemplateReader(object):
                 repeat_count = 1
             elif block.type == MsgBlockType.MBT_MULTIPLE:
                 repeat_count = block.number
+                
             elif block.type == MsgBlockType.MBT_VARIABLE:
                 #if the block type is VARIABLE, then the current position
                 #will be the repeat count written in
@@ -109,7 +115,7 @@ class MessageTemplateReader(object):
 
             for i in range(repeat_count):
                 block_data = MsgBlockData(block.name)
-                block_data.number = repeat_count
+                block_data.block_number = i
                 self.current_block = block_data
                 
                 self.current_msg.add_block(self.current_block)
@@ -126,15 +132,17 @@ class MessageTemplateReader(object):
                         #afterwards
                         data_size = var_size
                         if data_size == 1:
-                            var_size = struct.unpack('>B', data[decode_pos:decode_pos+1])
+                            var_size = struct.unpack('>B', data[decode_pos:decode_pos+1])[0]
                         elif data_size == 2:
-                            var_size = struct.unpack('>H', data[decode_pos:decode_pos+2])
+                            var_size = struct.unpack('>H', data[decode_pos:decode_pos+2])[0]
+                            print 'Data size 2'
+                            print 'Var size: ' + str(var_size)
                         elif data_size == 4:
-                            var_size = struct.unpack('>I', data[decode_pos:decode_pos+4])
+                            var_size = struct.unpack('>I', data[decode_pos:decode_pos+4])[0]
                         else:
                             raise Exception('Attempting to read variable with unknown size \
                                               of ' + str(data_size))
-
+                        
                         decode_pos += data_size
 
                     unpacked_data = self.unpacker.unpack_data(data[decode_pos:decode_pos+var_size],variable.type)
@@ -186,7 +194,7 @@ class MessageTemplateReader(object):
             return struct.unpack('>B', header[0])[0] #int("0x"+ByteToHex(header[0]), 16)  
 
         elif frequency == 'Fixed':
-            return struct.unpack('>I', header[0:4])[0] #int("0x"+ByteToHex(header[0:4]).replace(' ', ''), 16)
+            return struct.unpack('>B', header[3:4])[0] #int("0x"+ByteToHex(header[0:4]).replace(' ', ''), 16)
 
         else:
             return None

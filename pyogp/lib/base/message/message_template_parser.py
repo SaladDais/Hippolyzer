@@ -138,7 +138,7 @@ class MessageTemplateParser(object):
                     block_type = MsgBlockType.MBT_VARIABLE
 
                 current_block.type = block_type
-                current_block.block_number = block_num
+                current_block.number = block_num
                     
                 current_template.add_block(current_block)
                 

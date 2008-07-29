@@ -23,7 +23,7 @@ class DataPacker(object):
         self.packer[MsgType.MVT_LLUUID]         = self.__pack_uuid
         self.packer[MsgType.MVT_BOOL]           = '>B'
         self.packer[MsgType.MVT_IP_ADDR]        = self.__pack_string
-        self.packer[MsgType.MVT_IP_PORT]        = self.__pack_string
+        self.packer[MsgType.MVT_IP_PORT]        = '>H'
 
     def pack_data(self, data, data_type):
         if data_type in self.packer:

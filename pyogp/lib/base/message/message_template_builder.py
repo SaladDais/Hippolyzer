@@ -71,10 +71,10 @@ class MessageTemplateBuilder(object):
         #don't need to add it to the buffer, because the message handlers that
         #receieve this know how many to read automatically
         if template_block.type == MsgBlockType.MBT_MULTIPLE:
-            if template_block.block_number != message_block.block_number:
+            if template_block.number != message_block.block_number:
                 raise Exception('Block ' + template_block.name + ' is type MBT_MULTIPLE \
                           but only has data stored for ' + str(block_count) + ' out of its ' + \
-                          template_block.block_number + ' blocks')
+                          template_block.number + ' blocks')
                                   
         #variable means the block variables can repeat, so we have to
         #mark how many blocks there are of this type that repeat, stored in
@@ -161,9 +161,9 @@ class MessageTemplateBuilder(object):
                 raise Exception('ERROR: can"t have more than 1 block when its supposed to be 1')
 
             elif template_block.type == MsgBlockType.MBT_MULTIPLE and \
-                 template_block.block_number == block_data.block_number:
+                 template_block.number == block_data.block_number:
                 raise Exception('ERROR: we are about to exceed block total')
-            
+
             block_data.block_number += 1
             self.current_block = MsgBlockData(block_name)
             self.current_msg.add_block(self.current_block)
