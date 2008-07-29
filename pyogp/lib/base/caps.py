@@ -147,6 +147,11 @@ class LLSDDeserializer(grok.GlobalUtility):
         data = fp.read()
         return self.deserialize_string(data)
         
+# TODO: remove this again! Just a workaround for SVC-2682
+grok.global_utility(LLSDDeserializer,
+                                  provides=IDeserialization,
+                                  name='text/html',
+                                  direct=False)
 
 
 
