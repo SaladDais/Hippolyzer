@@ -43,7 +43,7 @@ class OGPLogin(object):
     def placeAvatarCap(self):
         """ actually gets the place_avatar cap and posts to it """
         region = Region(self.regionuri)
-        place = IPlaceAvatar(self.agent)
+        place = IPlaceAvatar(self.agentdomain)
         self.avatar = place(region)
         return self.avatar
         
