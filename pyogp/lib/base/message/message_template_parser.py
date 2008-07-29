@@ -197,7 +197,7 @@ class MessageTemplateParser(object):
                     var_size = int(parts[2])
                     if var_size <= 0:
                         raise Exception('Bad variable size')
-
+                #if the size hasn't been read yet, then read it from message_types
                 if var_size == -1:
                     var_size = sizeof(var_type)
                 
