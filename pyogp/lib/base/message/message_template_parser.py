@@ -8,7 +8,7 @@ import pprint
 import message_template
 from pyogp.lib.base.data import msg_tmpl
 from pyogp.lib.base.message.message_types import MsgFrequency, MsgTrust, \
-     MsgEncoding, MsgDeprecation, MsgBlockType, MsgType
+     MsgEncoding, MsgDeprecation, MsgBlockType, MsgType, sizeof
 
 class MessageTemplateParser(object):
     def __init__(self, template_file):
@@ -154,58 +154,40 @@ class MessageTemplateParser(object):
                 var_size = -1
                 if type_string == 'U8':
                     var_type = MsgType.MVT_U8
-                    var_size = 1
                 elif type_string == 'U16':
                     var_type = MsgType.MVT_U16                    
-                    var_size = 2
                 elif type_string == 'U32':
                     var_type = MsgType.MVT_U32                    
-                    var_size = 4
                 elif type_string == 'U64':
                     var_type = MsgType.MVT_U64                    
-                    var_size = 8
                 elif type_string == 'S8':
                     var_type = MsgType.MVT_S8                    
-                    var_size = 1
                 elif type_string == 'S16':
                     var_type = MsgType.MVT_S16                    
-                    var_size = 2
                 elif type_string == 'S32':
                     var_type = MsgType.MVT_S32                   
-                    var_size = 4
                 elif type_string == 'S64':
                     var_type = MsgType.MVT_S64                    
-                    var_size = 8
                 elif type_string == 'F32':
                     var_type = MsgType.MVT_F32                    
-                    var_size = 4
                 elif type_string == 'F64':
                     var_type = MsgType.MVT_F64                    
-                    var_size = 8
                 elif type_string == 'LLVector3':
                     var_type = MsgType.MVT_LLVector3                    
-                    var_size = 12
                 elif type_string == 'LLVector3d':
                     var_type = MsgType.MVT_LLVector3d                    
-                    var_size = 24
                 elif type_string == 'LLVector4':
                     var_type = MsgType.MVT_LLVector4                    
-                    var_size = 16
                 elif type_string == 'LLQuaternion':
                     var_type = MsgType.MVT_LLQuaternion                    
-                    var_size = 12
                 elif type_string == 'LLUUID':
                     var_type = MsgType.MVT_LLUUID                    
-                    var_size = 16
                 elif type_string == 'BOOL':
                     var_type = MsgType.MVT_BOOL                    
-                    var_size = 1
                 elif type_string == 'IPADDR':
                     var_type = MsgType.MVT_IP_ADDR                    
-                    var_size = 4
                 elif type_string == 'IPPORT':
                     var_type = MsgType.MVT_IP_PORT                    
-                    var_size = 2
                 elif type_string == 'Fixed' or  type_string == 'Variable':
                     if type_string == 'Fixed':
                         var_type = MsgType.MVT_FIXED
@@ -215,7 +197,10 @@ class MessageTemplateParser(object):
                     var_size = int(parts[2])
                     if var_size <= 0:
                         raise Exception('Bad variable size')
-                    
+
+                if var_size == -1:
+                    var_size = sizeof(var_type)
+                
                 current_var = message_template.MessageTemplateVariable(parts[0], var_type, var_size)
                 current_block.add_variable(current_var)
 

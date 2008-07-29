@@ -249,7 +249,7 @@ class TestTemplateReader(unittest.TestCase):
         self.builder.next_block('Info')
         self.builder.add_data('AgentID', UUID("550e8400-e29b-41d4-a716-446655440000"), MsgType.MVT_LLUUID)
         self.builder.add_data('LocationID', 0x00000001, MsgType.MVT_U32)
-        self.builder.add_data('SimIP', 'www.testing.com', MsgType.MVT_IP_ADDR)
+        self.builder.add_data('SimIP', '.com', MsgType.MVT_IP_ADDR)
         self.builder.add_data('SimPort', 80, MsgType.MVT_IP_PORT)        
         self.builder.add_data('RegionHandle', 0x0000000000000001, MsgType.MVT_U64)
         self.builder.add_data('SeedCapability', "Testing", MsgType.MVT_VARIABLE)
@@ -263,7 +263,20 @@ class TestTemplateReader(unittest.TestCase):
 
         assert self.reader.get_data('Info', 'SeedCapability', MsgType.MVT_VARIABLE) == "Testing",\
             "TeleportFinish variable not read correctly"        
-    
+        assert self.reader.get_data('Info', 'SimPort', MsgType.MVT_IP_PORT) == 80,\
+            "TeleportFinish variable not read correctly"        
+
+    def test_read_medium(self):
+        self.builder.new_message('ConfirmEnableSimulator')
+        self.builder.next_block('AgentData')
+        self.builder.add_data('AgentID', UUID("550e8400-e29b-41d4-a716-446655440000"), MsgType.MVT_LLUUID)
+        self.builder.add_data('SessionID', UUID("550e8400-e29b-41d4-a716-446655440000"), MsgType.MVT_LLUUID)
+        message, size = self.builder.build_message()
+        message = PackFlags.LL_NONE + '\x00\x00\x00\x01' + '\x00' + message
+        size = len(message)
+        
+        assert self.reader.validate_message(message, size), "Variable invalid"
+        assert self.reader.read_message(message), "Variable read fail"
 
     def test_get_bad_data(self):
         self.reader.clear_message()

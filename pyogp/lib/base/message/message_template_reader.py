@@ -85,7 +85,7 @@ class MessageTemplateReader(object):
         offset = self.unpacker.unpack_data(data[MsgHeader.PHL_OFFSET:MsgHeader.PHL_OFFSET+1], MsgType.MVT_U8)
 
         freq_bytes = self.current_template.frequency
-        #fixed case
+        #HACK: fixed case
         if freq_bytes == -1:
             freq_bytes = 4
 
@@ -135,8 +135,6 @@ class MessageTemplateReader(object):
                             var_size = struct.unpack('>B', data[decode_pos:decode_pos+1])[0]
                         elif data_size == 2:
                             var_size = struct.unpack('>H', data[decode_pos:decode_pos+2])[0]
-                            print 'Data size 2'
-                            print 'Var size: ' + str(var_size)
                         elif data_size == 4:
                             var_size = struct.unpack('>I', data[decode_pos:decode_pos+4])[0]
                         else:
