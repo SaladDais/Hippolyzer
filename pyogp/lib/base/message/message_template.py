@@ -116,7 +116,6 @@ class MessageTemplate(object):
         self.blocks = []
         self.block_map = {}
         #this is the function or object that will handle this type of message
-        self.handler = None
         self.received_count = 0
         
         self.name = name
@@ -126,10 +125,6 @@ class MessageTemplate(object):
         self.msg_trust = None
         self.msg_deprecation = None
         self.msg_encoding = None
-
-    #this probably needs more arguments to pass to the func or object
-    def set_handler(self, handler):
-        self.handler = handler
 
     def add_block(self, block):
         self.block_map[block.name] = block
