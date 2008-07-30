@@ -9,7 +9,7 @@ class MessageSystem(object):
         self.socket       = None
 
     def receive_check(self):
-        #determine if we have any messages that can be received
+        #determine if we have any messages that can be received through UDP
         #also, check and decode the message we have received
         pass
                         
