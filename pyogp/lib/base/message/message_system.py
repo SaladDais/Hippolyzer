@@ -31,7 +31,7 @@ class MessageSystem(object):
         #acks are just the packet_id that we are acking
         pass
 
-    def send_message(self, host);
+    def send_message(self, host):
         """ Sends the message that is currently built to the desired host """
         #build it if it isn't built
         
@@ -53,7 +53,7 @@ class MessageSystem(object):
         send_acks()
         pass
 
-    def resend_all_unacked(self);
+    def resend_all_unacked(self):
         """ Resends all packets sent that haven't yet been acked. """
         #go through all circuits in the map
             #go through all packets for circuit that are unacked
