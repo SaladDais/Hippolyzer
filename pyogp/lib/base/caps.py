@@ -153,5 +153,11 @@ grok.global_utility(LLSDDeserializer,
                                   name='text/html',
                                   direct=False)
 
+# TODO: remove this again! Just a workaround for SVC-2720
+grok.global_utility(LLSDDeserializer,
+                                  provides=IDeserialization,
+                                  name='application/xml',
+                                  direct=False)
+
 
 
