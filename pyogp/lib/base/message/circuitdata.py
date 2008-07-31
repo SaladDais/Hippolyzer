@@ -14,10 +14,10 @@ class Circuit(object):
     """ Some statistics things we may need: bytes/packets in, bytes/packets out,
         unacked packet count/bytes, acked packet count/bytes"""
     
-    def __init__(self, host, circuit_code, secure_session_id):
+    def __init__(self, host, circuit_code, remote_session_id):
         self.host = host
         self.circuit_code = circuit_code
-        self.secure_session_id = secure_session_id
+        self.session_id = remote_session_id
         self.is_alive = True
         self.is_blocked = False
         self.allow_timeout = True
