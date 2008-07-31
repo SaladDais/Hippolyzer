@@ -1,5 +1,5 @@
-from pyogp.lib.base.data_unpacker import DataUnpacker
-from pyogp.lib.base.message_types import MsgHeader, MsgType
+from pyogp.lib.base.message.data_unpacker import DataUnpacker
+from pyogp.lib.base.message.message_types import MsgHeader, MsgType
 
 class Packet(object):
     def __init__(self, sock, packet_buffer, buffer_length, **kwds):
