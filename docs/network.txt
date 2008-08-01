@@ -1,0 +1,56 @@
+The Networking Layer
+====================
+
+The networking layer is meant to be flexible and replaceable via the Zope Component Architecture (ZCA).
+First we will explain how to use it, then how to configure the network layer to use. pyogp.lib.base
+ships with two network layers per default: a standard lib based one using urllib2 and httplib and
+one for testing which is a mockup networking layer and delegates all requests to an WSGI app without
+actually sending bytes over the network.
+
+
+Usage
+-----
+
+The usage is simple. The network layer is registered as a utility and in order to obtain it you
+need to ask for a utility which implements the interface ``IRESTClient`` like this::
+
+    >>> from pyogp.lib.base.network.interfaces import IRESTClient
+    >>> from zope.component import getUtility
+    
+    >>> client = getUtility(IRESTClient)
+
+
+Now you have a client which complies to the interface IRESTClient which means it has
+methods such as GET(), POST(), PUT, DELETE(). You can simply call them with an URL and some
+parameters depending on the method:: 
+
+    >>> response = client.GET('http://localhost:12345/network/get')
+
+
+It returns a standard WebOb Response object and can be accessed like this::
+
+    >>> response.headers['content-type']
+    'text/html'
+
+    >>> response.body
+    'Hello, World'
+
+Please refer to the WebOb documentation to learn more about the Response object.
+
+POST and PUT look slightly different as you can send data aswell::
+
+    >>> response = client.POST('http://localhost:12345/network/post','test me')
+    >>> response.body
+    'returned: test me'
+
+
+You can also pass an additional, optional headers dictionary to all methods in order to
+overwrite or add your own HTTP headers::
+
+    >>> response = client.POST('http://localhost:12345/network/post','test me',headers={'Connection':'close'})
+
+    
+
+
+
+

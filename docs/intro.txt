@@ -1,0 +1,10 @@
+============
+Introduction
+============
+
+The pyogp.lib.base library is the base library for implementing 
+applications for the Open Grid Protocol. 
+
+
+
+
