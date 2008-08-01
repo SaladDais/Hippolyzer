@@ -54,6 +54,7 @@ class IAvatar(Interface):
     def establish_presence():
         """for now it will do a loop to establish a presence on a region"""
         
+        
 class IPlaceAvatar(Interface):
     """adapts an agents to a method which can place an avatar on a region"""
     
@@ -61,6 +62,16 @@ class IPlaceAvatar(Interface):
         """takes a region objects and tries to place the agent there as an avatar
         
         return an IAvatar"""
+        
+class IEventQueueGet(Interface):
+    """adapts an agent domain to the event queue get functionality"""
+
+    def __call__(payload={}):
+        """call the event queue and try to get some event via long poll.
+
+        Optionally post some payload to it
+        """
+    
         
 class ICapability(Interface):
     """a capability"""

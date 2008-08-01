@@ -107,3 +107,26 @@ class PlaceAvatar(grok.Adapter):
         avatar = Avatar(region)
 
         return avatar
+    
+from interfaces import IEventQueueGet
+class EventQueueGet(grok.Adapter):
+    """an event queue get capability"""
+    grok.implements(IEventQueueGet)
+    grok.context(IAgentDomain)
+    
+    def __init__(self, context):
+        """initialize this adapter"""
+        self.context = context 
+        
+        # let's retrieve the cap we need
+        self.seed_cap = self.context.seed_cap # ISeedCapability
+        self.cap = self.seed_cap.get(['event_queue'])['event_queue']
+
+        
+    def __call__(self, data = {}):
+        """initiate the event queue get request"""
+        result = self.cap.POST(data)
+        return result
+        
+    
+    

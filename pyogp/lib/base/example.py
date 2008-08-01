@@ -3,7 +3,7 @@ from pyogp.lib.base.agentdomain import AgentDomain
 from pyogp.lib.base.regiondomain import Region
 from pyogp.lib.base import registration
 
-from pyogp.lib.base.interfaces import IPlaceAvatar
+from pyogp.lib.base.interfaces import IPlaceAvatar, IEventQueueGet
 
 import getpass, sys
 from optparse import OptionParser
@@ -38,7 +38,24 @@ class ExampleLogin(object):
 
         print "now we try to place the avatar on a region"
         avatar = place(region)
+        
+        # now get an event_queue_get cap
+        eqg = IEventQueueGet(agentdomain)
+        print "we got an event queue cap: ", eqg.cap
 
+        print "calling it!"
+        result = eqg()
+        print "returned: %s" %result
+
+        print "calling it!"
+        result = eqg()
+        print "returned: %s" %result
+
+        print "calling it!"
+        result = eqg()
+        print "returned: %s" %result
+        
+        
         #avatar.establish_presence()
         # 
 def main():
