@@ -56,7 +56,8 @@ Getting the buildout
 
 We use zc.buildout to automatically setup a development environment. buildout gives you the ability to install packages only locally instead of your global python installation. It's sort of a local python installation which helps you avoiding version conflicts of packages.
 
-1. First check out the buildout into a directory of your choice::
+
+First check out the buildout into a directory of your choice::
 
     svn co http://svn.secondlife.com/svn/linden/projects/2008/pyogp/buildouts/libdev/trunk/ libdev
 
@@ -66,7 +67,7 @@ If you are using svn1.5 or have otherwise problems on Mac OSX, try this buildout
 
 It needs Python2.5 though (which is the standard Python version of Mac OSX though)
 
-2. Now turn this directory into a virtual python environment which is independant of your normal Python installation::
+Now turn this directory into a virtual python environment which is independant of your normal Python installation::
 
     cd libdev
     virtualenv . --no-site-packages
@@ -75,7 +76,7 @@ on Windows, you may need to specify the path::
 
     c:\Python25\Scripts\virtualenv.exe . --no-site-packages
 
-3. Now run the bootstrap.py file with the newly created local Python interpreter::
+Now run the bootstrap.py file with the newly created local Python interpreter::
 
     bin/python bootstrap.py
 
@@ -83,7 +84,7 @@ or on Windows::
 
     Scripts\python bootstrap.py
 
-4. This creates a bunch of directories and the bin/buildout script (bin\buildout.exe on windows). We now run this::
+This creates a bunch of directories and the bin/buildout script (bin\buildout.exe on windows). We now run this::
 
     bin/buildout -v
 
@@ -91,7 +92,7 @@ or on Windows::
 
     bin\buildout.exe -v
 
-5. The development sandbox is ready. There now is a bin/pyogp which is a python interpreter which contains all the installed packaged and the pyogp library and related projects.
+The development sandbox is ready. There now is a bin/pyogp which is a python interpreter which contains all the installed packaged and the pyogp library and related projects.
 
 Run the tests
 -------------
