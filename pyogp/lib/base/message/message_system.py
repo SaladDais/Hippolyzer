@@ -1,15 +1,19 @@
 from zope.component import getGlobalSiteManager
 gsm = getGlobalSiteManager()
 
-from pyogp.lib.base.data import msg_tmpl
+from pyogp.lib.base.data import msg_tmpl, msg_details
 from pyogp.lib.base.message.message_llsd_builder import LLSDMessageBuilder
 from pyogp.lib.base.message.message_template_parser import MessageTemplateParser
 from pyogp.lib.base.message.message_template_builder import MessageTemplateBuilder
 from pyogp.lib.base.message.message_template_reader import MessageTemplateReader
 from pyogp.lib.base.message.message_template_dict import TemplateDictionary
+from pyogp.lib.base.message.message_dict import MessageDictionary
 
 class MessageSystem(object):
-    def __init__():
+    def __init__(self):
+        #holds the details of the message, or how the messages should be sent,
+        #built, and read
+        self.message_details = None
         self.builder      = None
         self.reader       = None
         self.circuit_info = None
@@ -18,15 +22,16 @@ class MessageSystem(object):
         self.llsd_builder       = LLSDMessageBuilder()
         #self.llsd_reader        = LLSDMessageReader()
 
-        template_dict           = self.load_template(msg_tmpl)
-        self.template_builder   = MessageTemplateBuilder(template_dict)
-        self.template_reader    = MessageTemplateReader(template_dict)
+        self.message_dict, template_dict    = self.load_template(msg_tmpl, msg_details)
+        self.template_builder               = MessageTemplateBuilder(template_dict)
+        self.template_reader                = MessageTemplateReader(template_dict)
 
-    def load_template(self, template_file):
+    def load_template(self, template_file, details_file):
         #use the parser to load the message_template.msg message templates
         parser                  = MessageTemplateParser(msg_tmpl)
         template_list           = parser.message_templates
-        return TemplateDictionary(self.template_list)
+        
+        return MessageDictionary(details_file), TemplateDictionary(template_list)
 
     def receive_check(self):
         #determine if we have any messages that can be received through UDP
