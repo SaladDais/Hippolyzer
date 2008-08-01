@@ -1,9 +1,14 @@
 #represents how much of a message is taken up by packet ID things, such as
 #the packet flags and the sequence number. After the ID, then comes the header
 #NOTE: This will be moved into a messaging system eventually
-class MsgHeader(object):
+class PacketLayout(object):
     PACKET_ID_LENGTH = 6
+    PHL_FLAGS = 0
+    PHL_PACKET_ID = 1 #length of 4
     PHL_OFFSET = 5
+    PHL_NAME = 6
+    #1 byte flags, 4 bytes sequence, 1 byte offset + 1 byte message name (high)
+    MINIMUM_VALID_PACKET_SIZE = PACKET_ID_LENGTH + 1
 
 class MsgBlockType(object):
     MBT_SINGLE, \
@@ -12,11 +17,11 @@ class MsgBlockType(object):
 
 #pack flags
 class PackFlags(object):
-    LL_ZERO_CODE_FLAG = '\x80'
-    LL_RELIABLE_FLAG  = '\x40'
-    LL_RESENT_FLAG    = '\x20'
-    LL_ACK_FLAG       = '\x10'
-    LL_NONE           = '\x00'
+    LL_ZERO_CODE_FLAG = 0x80
+    LL_RELIABLE_FLAG  = 0x40
+    LL_RESENT_FLAG    = 0x20
+    LL_ACK_FLAG       = 0x10
+    LL_NONE           = 0x00
 
 #frequency for messages
 #= '\xFF\xFF\xFF'

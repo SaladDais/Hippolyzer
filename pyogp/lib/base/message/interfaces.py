@@ -19,6 +19,9 @@ class IMessageBuilder(Interface):
     """base interface for a message builder"""
     current_msg    = Attribute("""the message built/being built""")
 
+    def is_built():
+        """ returns true if the message has been built """
+
     def build_message():
         """ returns the message and its size in serialized form. """
 

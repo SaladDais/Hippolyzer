@@ -5,6 +5,13 @@ class Host(object):
         self.ip = ip_addr
         self.port = port
 
+    def is_ok(self):
+        if self.ip == None or self.port == None or \
+           self.ip == 0 or self.port == 0:
+            return False
+
+        return True
+
     def set_host_by_name(self, hostname):
         pass
 
@@ -14,17 +21,17 @@ class Circuit(object):
     """ Some statistics things we may need: bytes/packets in, bytes/packets out,
         unacked packet count/bytes, acked packet count/bytes"""
     
-    def __init__(self, host, circuit_code, remote_session_id):
+    def __init__(self, host, pack_in_id):
         self.host = host
-        self.circuit_code = circuit_code
-        self.session_id = remote_session_id
+        self.circuit_code = 0
+        self.session_id = 0
         self.is_alive = True
         self.is_blocked = False
         self.allow_timeout = True
         self.last_packet_out_id  = 0  #id of the packet we last sent
-        self.last_packet_in_id   = 0  #id of the packet we last received
+        self.last_packet_in_id   = pack_in_id
 
-        self.acks                = [] #packets we need to ack        
+        self.acks                = [] #packets we need to ack (ids)       
         self.unacked_packets     = {} #packets we want acked, can be resent
         self.unack_packet_count  = 0
         self.unack_packet_bytes  = 0
@@ -44,15 +51,15 @@ class Circuit(object):
             (need to send ack out)"""
         self.acks.append(packet_id)
         
-
-    def add_reliable_packet(self, sock, message_buffer, buffer_length, **kwds):
+    def add_reliable_packet(self, sock, message_buffer, buffer_length, params):
         """ add a packet that we want to be acked
             (want an incoming ack) """
         packet = Packet(sock, message_buffer, buffer_length, kwds)
         self.unack_packet_count += 1
         self.unack_packet_bytes += buffer_length
         #if it can be resent/retried (not final) add it to the unack list
-        if 'retries' in kwds:
+        if 'retries' in params:
+            packet.retries = params['retries']
             self.unacked_packets[packet.packet_id] = packet
         #otherwise, it can't be resent to get acked
         else:
@@ -63,7 +70,8 @@ class CircuitManager(object):
         functionality to do so. """
     def __init__(self):
         self.circuit_map = {}
-
+        self.unacked_circuits = {}
+        
     def get_unacked_circuits(self):
         #go through circuits, if it has any unacked packets waiting ack, add
         #to a list

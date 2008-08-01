@@ -9,14 +9,21 @@ from pyogp.lib.base.message.message_template_reader import MessageTemplateReader
 from pyogp.lib.base.message.message_template_dict import TemplateDictionary
 from pyogp.lib.base.message.message_dict import MessageDictionary
 from pyogp.lib.base.message.circuitdata import CircuitManager
-from pyogp.lib.base.message.message_types import PackFlags, sizeof
+from pyogp.lib.base.message.message_types import PacketLayout, PackFlags,\
+                 MsgType, sizeof
 from pyogp.lib.base.message.data_unpacker import DataUnpacker
+from pyogp.lib.base.message.data_packer import DataPacker
 from pyogp.lib.base.message.net import *
 
 class MessageSystem(object):
     def __init__(self, port):
         #holds the details of the message, or how the messages should be sent,
         #built, and read
+        self.send_buffer        = ''
+        self.send_flags         = PackFlags.LL_NONE
+        self.send_reliable      = False
+        self.reliable_params    = {}
+
         self.message_details    = None
         self.builder            = None
         self.reader             = None
@@ -25,7 +32,7 @@ class MessageSystem(object):
         self.socket             = None
         #the ID of the packet we most recently received
         self.receive_packet_id  = -1
-        
+
         self.llsd_builder       = LLSDMessageBuilder()
         #self.llsd_reader        = LLSDMessageReader()
 
@@ -34,8 +41,8 @@ class MessageSystem(object):
         self.template_reader                = MessageTemplateReader(template_dict)
 
         self.socket = start_udp_connection(self.port)
-
         self.unpacker = DataUnpacker()
+        self.packer = DataPacker()
 
     def load_template(self, template_file, details_file):
         #use the parser to load the message_template.msg message templates
@@ -72,7 +79,7 @@ class MessageSystem(object):
                 #determine packet flags
                 flag = ord(msg_buf[0])
                 self.receive_packet_id = \
-                    self.unpacker.unpack_data(msg_buf[1:1+sizeof(MsgType.U32)], MsgType.U32)
+                    self.unpacker.unpack_data(msg_buf,MsgType.U32, 1)
                 
                 #determine sender
                 host = get_sender()
@@ -137,65 +144,153 @@ class MessageSystem(object):
             self.template_reader.clear_message()
 
         return valid_packet
-                                                     
-                        
-    def send_reliable(self, host):
+                                                                             
+    def send_reliable(self, host, retries, message_buf=None):
         """ Wants to be acked """
         #sets up the message so send_message will add the RELIABLE flag to
         #the message
-        pass
+        self.send_reliable = True
+        unacked_packet.buffer[PacketLayout.PHL_FLAGS] |= PackFlags.LL_RELIABLE_FLAG
+        self.reliable_params = {}
+        self.reliable_params['retries'] = retries
+        send_message(host)
     
-    def send_retry(self, host):
+    def send_retry(self, host, message_buf=None):
         """ This is a retry because we didn't get acked """
         #sets up the message so send_message will add the RETRY flag to it
-        pass
-        
-    def send_acks(self, host):
-        """ Acks all packets received that we haven't acked yet. """
-        #go through the circuit manager, find the circuits that need acks
-        #and send the acks by building ack messages
-        #acks are just the packet_id that we are acking
-        pass
-
-    def send_message_circuit(self, circuit):
-        """ allows someone to send a message only knowing the circuit """
-        #send_message(map_circuit_to_host(circuit))
-        pass
+        unacked_packet.buffer[PacketLayout.PHL_FLAGS] |= PackFlags.LL_RESENT_FLAG
+        send_message(host, message_buf)                
 
     def send_message_llsd(self, host, name, message):
         """ sends an llsd message without going through builder """
         pass
 
-    def send_message(self, host):
+    def send_message(self, host, message_buf=None):
         """ Sends the message that is currently built to the desired host """
-        #build it if it isn't built
+        message_size = -1
         
         #make sure host is OK (ip and address aren't null)
+        if host.is_ok() == False:
+            return
 
+        #build it if it isn't built
+        if message_buf == None:
+            if self.builder.is_built() == False:
+                message_buf, message_size = self.builder.build_message()
+            else:
+                message_buf = self.self.builder.current_msg
 
-        #IF UDP/template message
         #use circuit manager to get the circuit to send on
-
-        #if the packet is reliable, add it to the circuit manager's list of
-        #unacked circuits
-        #also, tell the circuit it is waiting for an ack for this packet
+        circuit = self.find_circuit(host)
 
         #also, sends as many acks as we can onto the end of the packet
         #acks are just the packet_id that we are acking
-        pass
+        ack_count = len(circuit.acks)
+        if ack_count > 0:
+            self.send_flags |= PackFlags.LL_ACK_FLAG
+            for packet_id in circuit.acks:
+                pack_id = self.packer.pack_data(packet_id, MsgType.MVT_S32)
+                message_buf += pack_id
+
+            append_ack_count = self.packer.pack_data(ack_count, MsgType.MVT_U8)
+            message_buf += append_ack_count
+
+
+        self.send_buffer = ''
+
+        #put the flags in the begining of the data
+        self.send_buffer += self.packer.pack_data(self.send_flags, MsgType.MVT_U8)
+
+        #set packet ID
+        self.send_buffer += self.packer.pack_data(circuit.next_packet_id(), \
+                                                  MsgType.MVT_S32)
+
+        if self.send_reliable == True:
+            if circuit.unack_packet_count <= 0:
+                self.circuit_manager.unacked_circuits[host] = circuit
+
+            circuit.add_reliable_packet(self.socket, self.send_buffer, \
+                                        len(self.send_buffer), \
+                                        self.reliable_params)
+            
+        #now that the pre-message data is added, add the real data to the end
+        self.send_buffer += message_buf
+
+        #TODO: remove this when testing a network
+        #send_packet(self.socket, self.send_buffer, host)
+        self.send_reliable = False
+        self.reliable_params = {}
                         
     def process_acks(self):
+        """ resends all of our messages that were unacked, and acks all
+            the messages that others are waiting to be acked. """
+        
         #send the ones we didn't get acked
         resend_all_unacked()
         #send the acks we didn't reply to
         send_acks()
-        pass
-
+        
     def resend_all_unacked(self):
         """ Resends all packets sent that haven't yet been acked. """
+        #now_time = get_time_now()
+        
         #go through all circuits in the map
-            #go through all packets for circuit that are unacked
-                #resend the packet  
-        pass
+        for circuit in self.circuit_manager.unacked_circuits.values():
+            for unacked_packet in circuit.unacked_packets.values():
+                unacked_packet.retries -= 1
+                #is this correct? should it be serialized or something?
+                self.reset_send_buffer()
+                self.send_buffer += unacked_packet.buffer
+                send_retry(unacked_packet.host, unacked_packet.retries)
 
-    
+                if unacked_packet.retries <= 0:
+                    circuit.final_retry_packets[packet.packet_id] = unacked_packet
+                    del circuit.unacked_packets[unacked_packet.packet_id]
+
+            #final retries aren't resent, they are just forgotten about. boo
+            #for unacked_packet in circuit.final_retry_packets.values():
+            #    if now_time > unacked_packet.expiration_time:
+            #        del circuit.final_retry_packets[unacked_packet.packet_id] 
+
+    def send_acks(self, host):
+        """ Acks all packets received that we haven't acked yet. """
+        for circuit in self.circuit_manager.circuit_map.values():
+            acks_this_packet = 0
+            for packet_id in circuit.acks:
+                if acks_this_packet == 0:
+                    new_message("PacketAck")
+
+                next_block("Packets")
+                add_data("ID", packet_id, MsgType.U32)
+                acks_this_packet += 1
+                if acks_this_packet > 250:
+                    send_message(circuit.host)
+                    acks_this_packet = 0
+
+            if acks_this_packet > 0:
+                    send_message(circuit.host)
+
+            circuit.acks.clear()
+
+    #the following methods are for a higher-level api
+    #new_message is important because it selects the correct builder
+            
+    def new_message(self, message_name):
+        if self.message_dict[message_name] == None:
+            return
+
+        flavor = self.message_dict.get_message_flavor(message_name)
+        if flavor == 'template':
+            self.builder = self.template_builder
+        elif flavor == 'llsd':
+            self.builder = self.llsd_builder
+
+        self.send_reliable = False
+        self.builder.new_message(message_name)
+
+    def next_block(self, block_name):
+        self.builder.next_block(block_name)
+
+    def add_data(self, var_name, data, data_type):
+        self.builder.add_data(var_name, data, data_type)
+            

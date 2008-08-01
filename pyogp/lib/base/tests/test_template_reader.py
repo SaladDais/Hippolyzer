@@ -30,7 +30,7 @@ class TestTemplateReader(unittest.TestCase):
         self.builder.next_block('PingID')
         self.builder.add_data('PingID', 0x01, MsgType.MVT_U8)
         message, size = self.builder.build_message()
-        message = PackFlags.LL_NONE + '\x00\x00\x00\x00' +'\x00' + message
+        message = '\x00' + '\x00\x00\x00\x00' +'\x00' + message
         size = len(message)
         assert self.reader.validate_message(message, size) == True, \
                "Validation failed"
@@ -43,7 +43,7 @@ class TestTemplateReader(unittest.TestCase):
         self.builder.next_block('PingID')
         self.builder.add_data('PingID', 0x01, MsgType.MVT_U8)
         message, size = self.builder.build_message()
-        message = PackFlags.LL_NONE + '\x00\x00\x00\x00' +'\x00' + message
+        message = '\x00' + '\x00\x00\x00\x00' +'\x00' + message
         size = len(message)
         self.reader.validate_message(message, size)
         assert self.reader.current_template != None, "Validate failed"
@@ -60,7 +60,7 @@ class TestTemplateReader(unittest.TestCase):
 
     def test_validation_fail(self):
         self.reader.clear_message()
-        message = PackFlags.LL_NONE + '\x00\x00\x00\x01' + '\x00'
+        message = '\x00' + '\x00\x00\x00\x01' + '\x00'
         message += '\xff\xff\x01\xC2'
         assert self.reader.validate_message(message, len(message)) == False, \
               "Validation passed with incorrect message"
@@ -79,7 +79,7 @@ class TestTemplateReader(unittest.TestCase):
         self.builder.next_block('PingID')
         self.builder.add_data('PingID', 0x01, MsgType.MVT_U8)
         message, size = self.builder.build_message()
-        message = PackFlags.LL_NONE + '\x00\x00\x00\x01' + '\x00' + message
+        message = '\x00' + '\x00\x00\x00\x01' + '\x00' + message
         size = len(message)
         assert self.reader.validate_message(message, size), "Validation failed for test_read"
         assert self.reader.read_message(message), "Read failed"
@@ -92,7 +92,7 @@ class TestTemplateReader(unittest.TestCase):
         self.builder.next_block('PingID')
         self.builder.add_data('PingID', 0x01, MsgType.MVT_U8)
         message, size = self.builder.build_message()
-        message = PackFlags.LL_NONE + '\x00\x00\x00\x01' + '\x00' + message
+        message = '\x00' + '\x00\x00\x00\x01' + '\x00' + message
         size = len(message)
         try:
             self.reader.read_message(message)
@@ -102,7 +102,7 @@ class TestTemplateReader(unittest.TestCase):
         
     def test_read_no_validate(self):
         self.reader.clear_message()
-        message = PackFlags.LL_NONE + '\x00\x00\x00\x01' + '\x00' + 'Sweetmessage'
+        message = '\x00' + '\x00\x00\x00\x01' + '\x00' + 'Sweetmessage'
 
         try:
             assert self.reader.receive_size == -1, "Receive size incorrect"
@@ -128,7 +128,7 @@ class TestTemplateReader(unittest.TestCase):
         self.builder.next_block('PingID')
         self.builder.add_data('PingID', 0x01, MsgType.MVT_U8)
         message, size = self.builder.build_message()
-        message = PackFlags.LL_NONE + '\x00\x00\x00\x01' + '\x00' + message
+        message = '\x00' + '\x00\x00\x00\x01' + '\x00' + message
         size = len(message)
         self.reader.validate_message(message, size)
         self.reader.read_message(message)
@@ -144,7 +144,7 @@ class TestTemplateReader(unittest.TestCase):
         self.builder.next_block('Packets')
         self.builder.add_data('ID', 0x00000001, MsgType.MVT_U32)
         message, size = self.builder.build_message()
-        message = PackFlags.LL_NONE + '\x00\x00\x00\x01' + '\x00' + message
+        message = '\x00' + '\x00\x00\x00\x01' + '\x00' + message
         size = len(message)
 
         assert self.reader.validate_message(message, size), \
@@ -180,7 +180,7 @@ class TestTemplateReader(unittest.TestCase):
         self.builder.add_data('Test1', 0x00000001, MsgType.MVT_U32)
         self.builder.add_data('Test2', 0x00000001, MsgType.MVT_U32)
         message, size = self.builder.build_message()
-        message = PackFlags.LL_NONE + '\x00\x00\x00\x01' + '\x00' + message
+        message = '\x00' + '\x00\x00\x00\x01' + '\x00' + message
         size = len(message)
         assert self.reader.validate_message(message, size), "Multiple invalid"
         assert self.reader.read_message(message), "Multiple read fail"
@@ -235,7 +235,7 @@ class TestTemplateReader(unittest.TestCase):
         self.builder.add_data('EstateID', 0x00000001, MsgType.MVT_U32)
         self.builder.add_data('SimAccess', 0x01, MsgType.MVT_U8)
         message, size = self.builder.build_message()
-        message = PackFlags.LL_NONE + '\x00\x00\x00\x01' + '\x00' + message
+        message = '\x00' + '\x00\x00\x00\x01' + '\x00' + message
         size = len(message)
         assert self.reader.validate_message(message, size), "Variable invalid"
         assert self.reader.read_message(message), "Variable read fail"
@@ -256,7 +256,7 @@ class TestTemplateReader(unittest.TestCase):
         self.builder.add_data('SimAccess', 0x01, MsgType.MVT_U8)
         self.builder.add_data('TeleportFlags', 0x00000001, MsgType.MVT_U32)
         message, size = self.builder.build_message()
-        message = PackFlags.LL_NONE + '\x00\x00\x00\x01' + '\x00' + message
+        message = '\x00' + '\x00\x00\x00\x01' + '\x00' + message
         size = len(message)
         assert self.reader.validate_message(message, size), "Variable invalid"
         assert self.reader.read_message(message), "Variable read fail"
@@ -272,7 +272,7 @@ class TestTemplateReader(unittest.TestCase):
         self.builder.add_data('AgentID', UUID("550e8400-e29b-41d4-a716-446655440000"), MsgType.MVT_LLUUID)
         self.builder.add_data('SessionID', UUID("550e8400-e29b-41d4-a716-446655440000"), MsgType.MVT_LLUUID)
         message, size = self.builder.build_message()
-        message = PackFlags.LL_NONE + '\x00\x00\x00\x01' + '\x00' + message
+        message = '\x00' + '\x00\x00\x00\x01' + '\x00' + message
         size = len(message)
         
         assert self.reader.validate_message(message, size), "Variable invalid"
@@ -284,7 +284,7 @@ class TestTemplateReader(unittest.TestCase):
         self.builder.next_block('PingID')
         self.builder.add_data('PingID', 0x01, MsgType.MVT_U8)
         message, size = self.builder.build_message()
-        message = PackFlags.LL_NONE + '\x00\x00\x00\x01' + '\x00' + message
+        message = '\x00' + '\x00\x00\x00\x01' + '\x00' + message
         size = len(message)
         self.reader.validate_message(message, size)
         self.reader.read_message(message)

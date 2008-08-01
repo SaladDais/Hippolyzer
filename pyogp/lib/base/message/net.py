@@ -4,10 +4,9 @@ import socket
 #maybe put this isnt' a class
 
 #returns true if packet was sent successfully
-def send_packet(socket, send_buffer, size, ip_addr, port):
-    pass
-
-#returns message and size, or None if error
+def send_packet(sock, send_buffer, host):
+    sock.sendto(send_buffer, (host.ip_addr, host.port))
+    
 def receive_packet(socket):
     buf = 10000
     data, addr = socket.recvfrom(buf)
@@ -20,5 +19,3 @@ def start_udp_connection(port):
 
     #will probably be other setup for this
     return sock
-
-

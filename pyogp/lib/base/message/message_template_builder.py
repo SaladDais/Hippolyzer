@@ -24,6 +24,10 @@ class MessageTemplateBuilder(object):
         self.cur_block_name = ''
 
         self.packer = DataPacker()
+        self.has_been_built = False
+        
+    def is_built(self):
+        return self.has_been_built
 
     def build_message(self):
         """ Builds the message by serializing the data. Creates a packet ready
@@ -54,7 +58,9 @@ class MessageTemplateBuilder(object):
             packed_block, block_size = self.build_block(block, self.current_msg)
             msg_buffer += packed_block
             bytes += block_size
-        
+
+        self.has_been_built = True
+
         return msg_buffer, bytes
 
     def build_block(self, template_block, message_data):
@@ -121,6 +127,7 @@ class MessageTemplateBuilder(object):
         """ Creates a new packet where data can be added to it. Note, the variables
             are added when they are used, or data added to them, so to make sure
             no bad data is sent over the network. """
+        self.has_been_built = False
         self.current_template = self.template_list[message_name]
         #error check
         if self.current_template == None:
@@ -133,6 +140,7 @@ class MessageTemplateBuilder(object):
             self.current_msg.add_block(block_data)
 
     def next_block(self, block_name):
+        self.has_been_built = False
         if block_name not in self.current_template.block_map:
             #error: 
             return
@@ -176,6 +184,7 @@ class MessageTemplateBuilder(object):
     def add_data(self, var_name, data, data_type):
         """ the data type is passed in to make sure that the programmer is aware of
             what type (and therefore size) of the data that is being passed in. """
+        self.has_been_built = False
         if self.current_template == None:
             raise Exception('Attempting to add data to a null message')
 

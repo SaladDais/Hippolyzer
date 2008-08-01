@@ -6,7 +6,7 @@ from pyogp.lib.base.message.message_template import MsgData, MsgBlockData, \
      MsgVariableData
 #import pyogp.lib.base.message_types
 from pyogp.lib.base.message.message_types import MsgType, MsgBlockType, \
-     MsgFrequency, MsgHeader, sizeof
+     MsgFrequency, PacketLayout, sizeof
 from pyogp.lib.base.message.data_unpacker import DataUnpacker
 
 class MessageTemplateReader(object):
@@ -61,12 +61,12 @@ class MessageTemplateReader(object):
     def __decode_template(self, message_buffer, buffer_size):
         """ Determines the template that the message in the buffer
             appears to be using. """
-        if MsgHeader.PACKET_ID_LENGTH >= buffer_size:
-            raise Exception("Reading " + str(MsgHeader.PACKET_ID_LENGTH) + \
+        if PacketLayout.PACKET_ID_LENGTH >= buffer_size:
+            raise Exception("Reading " + str(PacketLayout.PACKET_ID_LENGTH) + \
                             " bytes from a buffer that is only " + \
                             str(buffer_size) + " bytes long")
         
-        header = message_buffer[MsgHeader.PACKET_ID_LENGTH:]
+        header = message_buffer[PacketLayout.PACKET_ID_LENGTH:]
         self.current_template = self.__decode_header(header)
         if self.current_template != None:
             return True
@@ -82,14 +82,14 @@ class MessageTemplateReader(object):
 
         #at the offset position, the messages stores the offset to where the
         #payload begins (may be extra header information)
-        offset = self.unpacker.unpack_data(data[MsgHeader.PHL_OFFSET:MsgHeader.PHL_OFFSET+1], MsgType.MVT_U8)
+        offset = self.unpacker.unpack_data(data[PacketLayout.PHL_OFFSET:PacketLayout.PHL_OFFSET+1], MsgType.MVT_U8)
 
         freq_bytes = self.current_template.frequency
         #HACK: fixed case
         if freq_bytes == -1:
             freq_bytes = 4
 
-        decode_pos = MsgHeader.PACKET_ID_LENGTH + \
+        decode_pos = PacketLayout.PACKET_ID_LENGTH + \
                      freq_bytes + \
                      offset
         

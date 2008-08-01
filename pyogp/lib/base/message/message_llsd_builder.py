@@ -16,6 +16,10 @@ class LLSDMessageBuilder(object):
 
         self.cur_msg_name = ''
         self.cur_block_name = ''
+        self.has_been_built = False
+
+    def is_built(self):
+        return self.has_been_built
                  
     def build_message(self):
         """ this does not serialize it for this type of builder. The message
@@ -40,20 +44,24 @@ class LLSDMessageBuilder(object):
                     #the variable holds the key-value pairs of data
                     #for the block
                     block[variable.name] = variable.data
-
+                    
+        self.has_been_built = True
         return msg, len(msg)
 
     def new_message(self, message_name):
+        self.has_been_built = False
         self.current_msg = MsgData(message_name)
         self.cur_msg_name = message_name
 
     def next_block(self, block_name):
+        self.has_been_built = False
         block = MsgBlockData(block_name)
         self.current_msg.add_block(block)
         self.current_block = block
         self.cur_block_name = block_name
 
     def add_data(self, var_name, data, data_type):
+        self.has_been_built = False
         var = MsgVariableData(var_name, data_type)
         self.current_block.add_variable(var)
         #size doesn't matter for llsd, formatter will take care of it
