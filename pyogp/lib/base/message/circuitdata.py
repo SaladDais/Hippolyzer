@@ -23,12 +23,12 @@ class Circuit(object):
         self.allow_timeout = True
         self.last_packet_out_id  = 0  #id of the packet we last sent
         self.last_packet_in_id   = 0  #id of the packet we last received
-        #packets waiting to be acked, can be resent
-        self.unacked_packets     = {} #map of packet_id to packet
+
+        self.acks                = [] #packets we need to ack        
+        self.unacked_packets     = {} #packets we want acked, can be resent
         self.unack_packet_count  = 0
-        self.unack_packet_bytes  = 9
-        #packets waiting to be acked, can't be resent
-        self.final_retry_packets = {} #map of packet_id to packet
+        self.unack_packet_bytes  = 0
+        self.final_retry_packets = {} #packets we want acked, can't be resent
         self.final_packet_count  = 0
         
     def next_packet_id(self):
@@ -39,7 +39,15 @@ class Circuit(object):
         #go through the packets waiting to be acked, and set them as acked
         pass
 
+    def collect_ack(self, packet_id):
+        """ set a packet_id that this circuit needs to eventually ack
+            (need to send ack out)"""
+        self.acks.append(packet_id)
+        
+
     def add_reliable_packet(self, sock, message_buffer, buffer_length, **kwds):
+        """ add a packet that we want to be acked
+            (want an incoming ack) """
         packet = Packet(sock, message_buffer, buffer_length, kwds)
         self.unack_packet_count += 1
         self.unack_packet_bytes += buffer_length
@@ -61,11 +69,17 @@ class CircuitManager(object):
         #to a list
         pass
 
+    def get_circuit(self, host):
+        if host in self.circuit_map:
+            return self.circuit_map[host]
+
+        return None
     
     def add_circuit(self, host, packet_in_id):
         circuit = Circuit(host, packet_in_id)
         
         self.circuit_map[host] = circuit
+        return circuit
         
     def remove_circuit_data(self, host):
         pass

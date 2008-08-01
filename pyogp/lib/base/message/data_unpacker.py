@@ -1,7 +1,7 @@
 import struct
 from uuid import UUID
 
-from pyogp.lib.base.message.message_types import MsgType
+from pyogp.lib.base.message.message_types import MsgType, sizeof
 
 class DataUnpacker(object):
     def __init__(self):
@@ -24,9 +24,12 @@ class DataUnpacker(object):
         self.unpacker[MsgType.MVT_LLUUID]       = self.__unpack_uuid
         self.unpacker[MsgType.MVT_BOOL]         = '>B'
         self.unpacker[MsgType.MVT_IP_ADDR]      = self.__unpack_string
-        self.unpacker[MsgType.MVT_IP_PORT]      = '>H'
+        self.unpacker[MsgType.MVT_IP_PORT]      = '>H'    
 
-    def unpack_data(self, data, data_type):
+    def unpack_data(self, data, data_type, start_index = 0):
+        if start_index != 0:
+            data = data[start_index:start_index+sizeof(data_type)]
+            
         if data_type in self.unpacker:
             unpack = self.unpacker[data_type]
             if callable(unpack):

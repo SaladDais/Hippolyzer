@@ -11,7 +11,7 @@ class TestMessageSystem(unittest.TestCase):
         pass
 
     def setUp(self):
-        self.message_system = MessageSystem()
+        self.message_system = MessageSystem(80)
 
     def test_init(self):
         assert self.message_system.message_dict.get_message_flavor('UseCircuitCode') \
