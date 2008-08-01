@@ -44,7 +44,9 @@ class AgentDomain(object):
         elif self.request.path=="/seed_cap":
             return self.handle_seedcap(data)
         elif self.request.path=="/seed_cap_wrong_content_type":
-            return self.handle_seedcap(data,content_type="text/html")
+            return self.handle_seedcap(data,content_type="text/foobar")
+        elif self.request.path=="/cap/error":
+            return self.send_response(500,'error')
         elif self.request.path=="/cap/place_avatar":
             return self.place_avatar(data)
         elif self.request.path=="/cap/some_capability":

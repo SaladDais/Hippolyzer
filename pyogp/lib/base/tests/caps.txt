@@ -53,12 +53,23 @@ Testing errors
 ==============
 
 Now we can test what happens to our code when the server returns a wrong content type.
-In this case it should not find a deserializer and say so:
->>> seed = SeedCapability('seed', 'http://127.0.0.1:12345/seed_cap_wrong_content_type')
->>> cap = seed.get(['some_capability'])
-Traceback (most recent call last):
-...
-deserialization for text/html not supported
+In this case it should not find a deserializer and say so::
+
+    >>> seed = SeedCapability('seed', 'http://127.0.0.1:12345/seed_cap_wrong_content_type')
+    >>> cap = seed.get(['some_capability'])
+    Traceback (most recent call last):
+    ...
+    deserialization for text/foobar not supported
+
+
+Now we test if network errors are handled correctly::
+
+    >>> cap = Capability('test','http://127.0.0.1:12345/cap/error')
+    >>> cap.POST({'test':'testing'})
+    Traceback (most recent call last):
+    ...
+    HTTPError: 500 Internal Server Error
+    
 
 
 
