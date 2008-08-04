@@ -54,7 +54,7 @@ class Circuit(object):
     def add_reliable_packet(self, sock, message_buffer, buffer_length, params):
         """ add a packet that we want to be acked
             (want an incoming ack) """
-        packet = Packet(sock, message_buffer, buffer_length, kwds)
+        packet = Packet(sock, message_buffer, buffer_length, params)
         self.unack_packet_count += 1
         self.unack_packet_bytes += buffer_length
         #if it can be resent/retried (not final) add it to the unack list

@@ -1,5 +1,5 @@
-from zope.component import getGlobalSiteManager
-gsm = getGlobalSiteManager()
+from zope.component import getUtility
+from pyogp.lib.base.network.interfaces import IUDPClient
 
 from pyogp.lib.base.data import msg_tmpl, msg_details
 from pyogp.lib.base.message.message_llsd_builder import LLSDMessageBuilder
@@ -13,7 +13,6 @@ from pyogp.lib.base.message.message_types import PacketLayout, PackFlags,\
                  MsgType, sizeof
 from pyogp.lib.base.message.data_unpacker import DataUnpacker
 from pyogp.lib.base.message.data_packer import DataPacker
-from pyogp.lib.base.message.net import *
 
 class MessageSystem(object):
     def __init__(self, port):
@@ -21,7 +20,7 @@ class MessageSystem(object):
         #built, and read
         self.send_buffer        = ''
         self.send_flags         = PackFlags.LL_NONE
-        self.send_reliable      = False
+        self.reliable_msg       = False
         self.reliable_params    = {}
 
         self.message_details    = None
@@ -40,7 +39,8 @@ class MessageSystem(object):
         self.template_builder               = MessageTemplateBuilder(template_dict)
         self.template_reader                = MessageTemplateReader(template_dict)
 
-        self.socket = start_udp_connection(self.port)
+        self.udp_client         = getUtility(IUDPClient)
+        self.socket = self.udp_client.start_udp_connection(self.port)
         self.unpacker = DataUnpacker()
         self.packer = DataPacker()
 
@@ -149,11 +149,12 @@ class MessageSystem(object):
         """ Wants to be acked """
         #sets up the message so send_message will add the RELIABLE flag to
         #the message
-        self.send_reliable = True
-        unacked_packet.buffer[PacketLayout.PHL_FLAGS] |= PackFlags.LL_RELIABLE_FLAG
+        self.reliable_msg = True
+        self.send_flags |= PackFlags.LL_RELIABLE_FLAG
         self.reliable_params = {}
         self.reliable_params['retries'] = retries
-        send_message(host)
+        self.reliable_params['host'] = host
+        self.send_message(host)
     
     def send_retry(self, host, message_buf=None):
         """ This is a retry because we didn't get acked """
@@ -195,7 +196,6 @@ class MessageSystem(object):
             append_ack_count = self.packer.pack_data(ack_count, MsgType.MVT_U8)
             message_buf += append_ack_count
 
-
         self.send_buffer = ''
 
         #put the flags in the begining of the data
@@ -205,20 +205,23 @@ class MessageSystem(object):
         self.send_buffer += self.packer.pack_data(circuit.next_packet_id(), \
                                                   MsgType.MVT_S32)
 
-        if self.send_reliable == True:
+        #pack in the offset to the data
+        self.send_buffer += self.packer.pack_data(0, MsgType.MVT_U8)
+
+        #now that the pre-message data is added, add the real data to the end
+        self.send_buffer += message_buf
+
+        if self.reliable_msg == True:
             if circuit.unack_packet_count <= 0:
                 self.circuit_manager.unacked_circuits[host] = circuit
 
             circuit.add_reliable_packet(self.socket, self.send_buffer, \
                                         len(self.send_buffer), \
                                         self.reliable_params)
-            
-        #now that the pre-message data is added, add the real data to the end
-        self.send_buffer += message_buf
 
         #TODO: remove this when testing a network
-        #send_packet(self.socket, self.send_buffer, host)
-        self.send_reliable = False
+        self.udp_client.send_packet(self.socket, self.send_buffer, host)
+        self.reliable_msg = False
         self.reliable_params = {}
                         
     def process_acks(self):
@@ -285,7 +288,7 @@ class MessageSystem(object):
         elif flavor == 'llsd':
             self.builder = self.llsd_builder
 
-        self.send_reliable = False
+        self.reliable_msg = False
         self.builder.new_message(message_name)
 
     def next_block(self, block_name):
@@ -293,4 +296,3 @@ class MessageSystem(object):
 
     def add_data(self, var_name, data, data_type):
         self.builder.add_data(var_name, data, data_type)
-            

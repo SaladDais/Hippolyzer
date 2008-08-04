@@ -1,5 +1,16 @@
 from zope.interface import Interface, Attribute
 
+class IUDPClient(Interface):
+    """ a way to send and receive UDP messages """
+    def start_udp_connection(port):
+        """ creates a socket for the udp connection and returns it """
+        
+    def receive_packet(socket):
+        """ checks the socket for any messages that are waiting """
+        
+    def send_packet(sock, send_buffer, host):
+        """ sends a message on the socket to the host """
+        
 class IRESTClient(Interface):
     """a RESTful client"""
     

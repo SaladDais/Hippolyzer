@@ -22,7 +22,7 @@ class IMessageBuilder(Interface):
     def is_built():
         """ returns true if the message has been built """
 
-    def build_message():
+    def build_message(offset_size):
         """ returns the message and its size in serialized form. """
 
     def new_message(message_name):
