@@ -72,17 +72,17 @@ class MessageSystem(object):
         
         while True:
             recv_reliable = False
-            msg_buf, msg_size = receive_packet(self.socket)
-            
+            msg_buf, msg_size = self.udp_client.receive_packet(self.socket)
+
             #we have a message
             if msg_size > 0:
                 #determine packet flags
                 flag = ord(msg_buf[0])
                 self.receive_packet_id = \
-                    self.unpacker.unpack_data(msg_buf,MsgType.U32, 1)
+                    self.unpacker.unpack_data(msg_buf,MsgType.MVT_U32, 1)
                 
                 #determine sender
-                host = get_sender()
+                host = self.udp_client.get_sender()
                 circuit = self.find_circuit(host)
 
                 #ACK_FLAG - means the incoming packet is acking some old packets of ours
@@ -111,7 +111,7 @@ class MessageSystem(object):
                     pass
 
                 valid_packet = self.template_reader.validate_message(msg_buf, msg_size)
-                
+                    
                 #make sure packet validated correctly
                 if valid_packet ==  True:
                     #Case - UseCircuitCode - only packet allowed to be valid on an unprotected circuit
@@ -119,15 +119,15 @@ class MessageSystem(object):
                         valid_packet = False
                         continue
                     #Case - trusted packets can only come in over trusted circuits
-                    elif circuit.is_trusted() and \
+                    elif circuit.is_trusted and \
                         self.template_reader.is_trusted() == False:
                         valid_packet = False
                         continue
                     #Case - make sure its not a banned packet
                     #...
-                        
+
                     valid_packet = self.template_reader.read_message(msg_buf)
-    
+
                 #make sure packet was read correctly (still valid)
                 if valid_packet ==  True:
                     if recv_reliable == True:
@@ -135,9 +135,11 @@ class MessageSystem(object):
                         
             #we are attempting to get a single packet, so break once we get it
             #or we have no more messages to read
-            if valid_packet == True and msg_size > 0:
+            #if valid_packet == True and msg_size > 0:
+            #    break
+            if valid_packet == False or msg_size <= 0:
                 break
-
+                
         #now determine if the packet we got was valid (and therefore is stored
         #in the reader)
         if valid_packet == False:
@@ -296,3 +298,9 @@ class MessageSystem(object):
 
     def add_data(self, var_name, data, data_type):
         self.builder.add_data(var_name, data, data_type)
+
+    def get_received_message(self):
+        return self.reader.current_msg
+
+    def get_data(self, block_name, var_name, data_type, block_number=0):
+        return self.reader.get_data(block_name, var_name, data_type, block_number=0)

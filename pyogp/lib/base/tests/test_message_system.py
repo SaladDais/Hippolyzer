@@ -94,6 +94,17 @@ class TestMessageSystem(unittest.TestCase):
                test_str ,\
                'Received: ' + repr(self.message_system.send_buffer) + '  ' + \
                'Expected: ' + repr(test_str)
+
+    def test_receive(self):
+        self.message_system.udp_client.set_response(self.message_system.socket, \
+            '\x00' + '\x00\x00\x00\x01' + '\x00' + \
+            '\xff\xff\xff\xfb' + '\x01' + '\x00\x00\x00\x01')
+        self.message_system.receive_check()
+        msg = self.message_system.get_received_message()
+        assert msg.name == 'PacketAck'
+        data = self.message_system.get_data('Packets', 'ID', MsgType.MVT_U32)
+        assert data == 1, "ID Data incorrect: " + str(data)
+        
         
 def test_suite():
     from unittest import TestSuite, makeSuite

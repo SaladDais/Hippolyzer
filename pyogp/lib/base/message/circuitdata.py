@@ -26,6 +26,7 @@ class Circuit(object):
         self.circuit_code = 0
         self.session_id = 0
         self.is_alive = True
+        self.is_trusted = False
         self.is_blocked = False
         self.allow_timeout = True
         self.last_packet_out_id  = 0  #id of the packet we last sent
@@ -78,23 +79,24 @@ class CircuitManager(object):
         pass
 
     def get_circuit(self, host):
-        if host in self.circuit_map:
-            return self.circuit_map[host]
+        if (host.ip, host.port) in self.circuit_map:
+            return self.circuit_map[(host.ip, host.port)]
 
         return None
     
     def add_circuit(self, host, packet_in_id):
         circuit = Circuit(host, packet_in_id)
         
-        self.circuit_map[host] = circuit
+        self.circuit_map[(host.ip, host.port)] = circuit
         return circuit
         
     def remove_circuit_data(self, host):
-        pass
+        if (host.ip, host.port) in self.circuit_map:
+            del self.circuit_map[(host.ip, host.port)]
 
     def is_circuit_alive(self, host):
-        if host not in self.circuit_map:
+        if (host.ip, host.port) not in self.circuit_map:
             return False
 
-        circuit = self.circuit_map[host]
+        circuit = self.circuit_map[(host.ip, host.port)]
         return circuit.is_alive

@@ -1,7 +1,10 @@
 import socket
-from zope.interface import implements
-from pyogp.lib.base.network.interfaces import IUDPClient
 import random
+
+from zope.interface import implements
+
+from pyogp.lib.base.network.interfaces import IUDPClient
+from pyogp.lib.base.message.circuitdata import Host
 
 #returns true if packet was sent successfully
 class MockupUDPClient(object):
@@ -9,6 +12,10 @@ class MockupUDPClient(object):
 
     def __init__(self):
         self.rec = {}
+        self.sender = None
+
+    def get_sender(self):
+        return Host(1, 1)
     
     def set_response(self, socket, response):
         self.rec[socket] = response
@@ -18,7 +25,13 @@ class MockupUDPClient(object):
         return True
     
     def receive_packet(self, socket):
-        data = self.rec[socket]
+        data = ''
+        
+        if socket in self.rec:
+            data = self.rec[socket]
+            del self.rec[socket]
+
+        #print 'Receiving data: ' + repr(data)
         return data, len(data)
 
     def start_udp_connection(self, port):

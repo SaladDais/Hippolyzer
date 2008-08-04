@@ -2,6 +2,11 @@ from zope.interface import Interface, Attribute
 
 class IUDPClient(Interface):
     """ a way to send and receive UDP messages """
+    sender = Attribute("""sender host information""")
+
+    def get_sender():
+        """ returns the sender in the form of a Host. """
+        
     def start_udp_connection(port):
         """ creates a socket for the udp connection and returns it """
         

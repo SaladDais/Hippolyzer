@@ -82,7 +82,7 @@ class MessageTemplateReader(object):
 
         #at the offset position, the messages stores the offset to where the
         #payload begins (may be extra header information)
-        offset = self.unpacker.unpack_data(data[PacketLayout.PHL_OFFSET:PacketLayout.PHL_OFFSET+1], MsgType.MVT_U8)
+        offset = self.unpacker.unpack_data(data, MsgType.MVT_U8, PacketLayout.PHL_OFFSET)
 
         freq_bytes = self.current_template.frequency
         #HACK: fixed case
@@ -106,12 +106,13 @@ class MessageTemplateReader(object):
             elif block.type == MsgBlockType.MBT_VARIABLE:
                 #if the block type is VARIABLE, then the current position
                 #will be the repeat count written in
-                repeat_count = self.unpacker.unpack_data(data[decode_pos:decode_pos+1], MsgType.MVT_U8)
+                repeat_count = self.unpacker.unpack_data(data, \
+                                                         MsgType.MVT_U8, \
+                                                         decode_pos)
                 
                 decode_pos += 1
             else:
-                #error
-                return False
+                raise Exception("Unknown block type")
 
             for i in range(repeat_count):
                 block_data = MsgBlockData(block.name)
@@ -132,11 +133,18 @@ class MessageTemplateReader(object):
                         #afterwards
                         data_size = var_size
                         if data_size == 1:
-                            var_size = struct.unpack('>B', data[decode_pos:decode_pos+1])[0]
+                            var_size = self.unpacker.unpack_data(data, \
+                                                                 MsgType.MVT_U8, \
+                                                                 decode_pos)
                         elif data_size == 2:
-                            var_size = struct.unpack('>H', data[decode_pos:decode_pos+2])[0]
+                            var_size = self.unpacker.unpack_data(data, \
+                                                                 MsgType.MVT_U16, \
+                                                                 decode_pos)
                         elif data_size == 4:
-                            var_size = struct.unpack('>I', data[decode_pos:decode_pos+4])[0]
+                            var_size = self.unpacker.unpack_data(data, \
+                                                                 MsgType.MVT_U32, \
+                                                                 decode_pos)
+
                         else:
                             raise Exception('Attempting to read variable with unknown size \
                                               of ' + str(data_size))
@@ -148,9 +156,7 @@ class MessageTemplateReader(object):
                     decode_pos += var_size
 
         if len(self.current_msg.block_map) <= 0 and len(self.current_template.blocks) > 0:
-            #error, blank message
-            return False
-
+            raise Exception("Read message is empty")
         return True
  
     def __decode_header(self, header):
