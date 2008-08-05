@@ -21,6 +21,31 @@ class Capability(object):
         self.name = name
         self.public_url = public_url
         
+    def GET(self,custom_headers={}):
+        """call this capability, return the parsed result"""
+        
+
+        # TODO: better errorhandling with own exceptions
+        try:
+            restclient = getUtility(IRESTClient)
+            response = restclient.GET(self.public_url)
+        except HTTPError, e:
+            print "** failure while calling cap:",
+            print e.fp.read()
+            raise
+  
+        # now deserialize the data again, we ask for a utility with the content type
+        # as the name
+        content_type_charset = response.headers['Content-Type']
+        content_type = content_type_charset.split(";")[0] # remove the charset part
+        
+        deserializer = queryUtility(IDeserialization,name=content_type)
+        if deserializer is None:
+            # TODO: do better error handling here
+            raise "deserialization for %s not supported" %(content_type)
+        return deserializer.deserialize_string(response.body)
+
+
     def POST(self,payload,custom_headers={}):
         """call this capability, return the parsed result"""
         
