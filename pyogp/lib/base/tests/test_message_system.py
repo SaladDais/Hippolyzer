@@ -8,6 +8,7 @@ from pyogp.lib.base.registration import init
 from pyogp.lib.base.message.message_system import MessageSystem
 from pyogp.lib.base.message.message_types import MsgType
 from pyogp.lib.base.message.circuitdata import Host
+from pyogp.lib.base.network.mockup_net import MockupUDPServer
 
 class TestMessageSystem(unittest.TestCase):
     
@@ -17,15 +18,15 @@ class TestMessageSystem(unittest.TestCase):
     def setUp(self):
         init()
         self.message_system = MessageSystem(80)
-        self.host = Host(0x101210120, 80)
+        self.host = Host(MockupUDPServer(), 80)
         
     def test_init(self):
         assert self.message_system.message_dict.get_message_flavor('UseCircuitCode') \
                    == 'template', "Parsing message.xml failed"
         
     def test_find_circuit(self):
-        host  = Host(0x101010101, 80)
-        host2 = Host(0x010101010, 80)
+        host  = Host(MockupUDPServer(), 80)
+        host2 = Host(MockupUDPServer(), 80)
         message_system = MessageSystem(80)
         assert len(message_system.circuit_manager.circuit_map) == 0, \
                "Circuit map has incorrect circuits"
@@ -86,7 +87,7 @@ class TestMessageSystem(unittest.TestCase):
                self.message_system.template_builder, "Builder incorrect"
         self.message_system.next_block('Packets')
         self.message_system.add_data('ID', 0x00000003, MsgType.MVT_U32)
-        host = Host(0x000000011, 80)
+        host = Host(MockupUDPServer(), 80)
         self.message_system.send_reliable(host, 10)
         test_str = '\x40' + '\x00\x00\x00\x01' + '\x00' + '\xff\xff\xff\xfb' + \
                '\x01' + '\x00\x00\x00\x03'
@@ -96,9 +97,11 @@ class TestMessageSystem(unittest.TestCase):
                'Expected: ' + repr(test_str)
 
     def test_receive(self):
-        self.message_system.udp_client.set_response(self.message_system.socket, \
-            '\x00' + '\x00\x00\x00\x01' + '\x00' + \
-            '\xff\xff\xff\xfb' + '\x01' + '\x00\x00\x00\x01')
+        out_message = '\x00' + '\x00\x00\x00\x01' + '\x00' + \
+            '\xff\xff\xff\xfb' + '\x01' + '\x00\x00\x00\x01'
+        server = MockupUDPServer()
+        server.send_message(self.message_system.udp_client, out_message)
+        
         self.message_system.receive_check()
         msg = self.message_system.get_received_message()
         assert msg.name == 'PacketAck'
@@ -106,15 +109,44 @@ class TestMessageSystem(unittest.TestCase):
         assert data == 1, "ID Data incorrect: " + str(data)
         
     def test_receive_zero(self):
-        self.message_system.udp_client.set_response(self.message_system.socket, \
-            '\x80' + '\x00\x00\x00\x01' + '\x00' + \
-            '\xff\xff\xff\xfb' + '\x01' + '\x00\x03\x01')
+        out_message = '\x80' + '\x00\x00\x00\x01' + '\x00' + \
+            '\xff\xff\xff\xfb' + '\x01' + '\x00\x03\x01'
+        server = MockupUDPServer()
+        server.send_message(self.message_system.udp_client, out_message)
 
         self.message_system.receive_check()
         msg = self.message_system.get_received_message()
         assert msg.name == 'PacketAck'
         data = self.message_system.get_data('Packets', 'ID', MsgType.MVT_U32)
         assert data == 1, "ID Data incorrect: " + str(data)
+
+    def test_receive_reliable(self):
+        out_message = '\x40' + '\x00\x00\x00\x05' + '\x00' + \
+            '\xff\xff\xff\xfb' + '\x01' + '\x00\x00\x00\x01'
+        server = MockupUDPServer()
+        server.send_message(self.message_system.udp_client, out_message)
+
+        self.message_system.receive_check()
+        sender_host = self.message_system.udp_client.get_sender()
+        circuit = self.message_system.circuit_manager.get_circuit(sender_host)
+        assert len(circuit.acks) == 1, "Ack not collected"
+        assert circuit.acks[0] == 5, "Ack ID not correct"
+        
+    def test_acks(self):
+        out_message = '\x40' + '\x00\x00\x00\x05' + '\x00' + \
+            '\xff\xff\xff\xfb' + '\x01' + '\x00\x00\x00\x01'
+        server = MockupUDPServer()
+        server.send_message(self.message_system.udp_client, out_message)
+
+        self.message_system.receive_check()
+        assert server.rec_buffer == '', "ERROR: server has message without " + \
+                    "receiving one"
+        self.message_system.process_acks()
+        assert server.rec_buffer != '', "Ack not sent"
+        test_msg = '\x00' + '\x00\x00\x00\x01' + '\x00' + \
+            '\xff\xff\xff\xfb' + '\x01' + '\x00\x00\x00\x05'
+        assert server.rec_buffer == test_msg, "Ack received incorrect, got " + \
+               repr(server.rec_buffer)
         
 def test_suite():
     from unittest import TestSuite, makeSuite

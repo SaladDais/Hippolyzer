@@ -183,7 +183,7 @@ class MessageSystem(object):
             if self.builder.is_built() == False:
                 message_buf, message_size = self.builder.build_message()
             else:
-                message_buf = self.self.builder.current_msg
+                message_buf = self.builder.message_buffer
 
         #use circuit manager to get the circuit to send on
         circuit = self.find_circuit(host)
@@ -191,7 +191,7 @@ class MessageSystem(object):
         #also, sends as many acks as we can onto the end of the packet
         #acks are just the packet_id that we are acking
         ack_count = len(circuit.acks)
-        if ack_count > 0:
+        if ack_count > 0 and self.builder.cur_msg_name != "PacketAck":
             self.send_flags |= PackFlags.LL_ACK_FLAG
             for packet_id in circuit.acks:
                 pack_id = self.packer.pack_data(packet_id, MsgType.MVT_S32)
@@ -233,11 +233,11 @@ class MessageSystem(object):
             the messages that others are waiting to be acked. """
         
         #send the ones we didn't get acked
-        resend_all_unacked()
+        self.__resend_all_unacked()
         #send the acks we didn't reply to
-        send_acks()
+        self.__send_acks()
         
-    def resend_all_unacked(self):
+    def __resend_all_unacked(self):
         """ Resends all packets sent that haven't yet been acked. """
         #now_time = get_time_now()
         
@@ -259,25 +259,25 @@ class MessageSystem(object):
             #    if now_time > unacked_packet.expiration_time:
             #        del circuit.final_retry_packets[unacked_packet.packet_id] 
 
-    def send_acks(self, host):
+    def __send_acks(self):
         """ Acks all packets received that we haven't acked yet. """
         for circuit in self.circuit_manager.circuit_map.values():
             acks_this_packet = 0
             for packet_id in circuit.acks:
                 if acks_this_packet == 0:
-                    new_message("PacketAck")
+                    self.new_message("PacketAck")
 
-                next_block("Packets")
-                add_data("ID", packet_id, MsgType.U32)
+                self.next_block("Packets")
+                self.add_data("ID", packet_id, MsgType.MVT_U32)
                 acks_this_packet += 1
                 if acks_this_packet > 250:
-                    send_message(circuit.host)
+                    self.send_message(circuit.host)
                     acks_this_packet = 0
 
             if acks_this_packet > 0:
-                    send_message(circuit.host)
-
-            circuit.acks.clear()
+                self.send_message(circuit.host)
+                
+            circuit.acks = []
 
     #the following methods are for a higher-level api
     #new_message is important because it selects the correct builder

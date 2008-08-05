@@ -19,6 +19,7 @@ class MessageTemplateBuilder(object):
         self.current_template = None
         self.current_msg = None
         self.current_block = None
+        self.message_buffer = ''
 
         self.cur_msg_name = ''
         self.cur_block_name = ''
@@ -60,7 +61,8 @@ class MessageTemplateBuilder(object):
             bytes += block_size
 
         self.has_been_built = True
-
+        self.message_buffer = msg_buffer
+        
         return msg_buffer, bytes
 
     def build_block(self, template_block, message_data):
