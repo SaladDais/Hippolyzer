@@ -39,8 +39,15 @@ class TestPacketDecode(unittest.TestCase):
         message = AGENT_DATA_UPDATE
         self.reader.clear_message()
         size = len(message)
-        assert self.reader.validate_message(message, size), "Validation failed for test_read"
-        assert self.reader.read_message(message), "Read failed"    
+        message = MessageSystem(80).zero_code_expand(message, size)
+        try:
+            assert self.reader.validate_message(message, size), "Validation failed for test_read"
+        except:
+            assert False, "Validation got error"
+        try:
+            assert self.reader.read_message(message), "Read failed"
+        except:
+            assert False, "Read got error"
         
     def test_agent_animation(self):
         """test if the agent data update packet can be decoded"""

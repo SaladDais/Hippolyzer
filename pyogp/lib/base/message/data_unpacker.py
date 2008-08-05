@@ -26,9 +26,12 @@ class DataUnpacker(object):
         self.unpacker[MsgType.MVT_IP_ADDR]      = self.__unpack_string
         self.unpacker[MsgType.MVT_IP_PORT]      = '>H'    
 
-    def unpack_data(self, data, data_type, start_index = 0):
+    def unpack_data(self, data, data_type, start_index=0, var_size=0):
         if start_index != 0:
-            data = data[start_index:start_index+sizeof(data_type)]
+            if var_size != 0:
+                data = data[start_index:start_index+var_size]
+            else:
+                data = data[start_index:start_index+sizeof(data_type)]
             
         if data_type in self.unpacker:
             unpack = self.unpacker[data_type]

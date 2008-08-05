@@ -76,6 +76,8 @@ class MessageSystem(object):
 
             #we have a message
             if msg_size > 0:
+                msg_buf = self.zero_code_expand(msg_buf, msg_size)
+    
                 #determine packet flags
                 flag = ord(msg_buf[0])
                 self.receive_packet_id = \
@@ -304,3 +306,27 @@ class MessageSystem(object):
 
     def get_data(self, block_name, var_name, data_type, block_number=0):
         return self.reader.get_data(block_name, var_name, data_type, block_number=0)
+
+    def zero_code_expand(self, msg_buf, msg_size):
+        if ord(msg_buf[0]) & PackFlags.LL_ZERO_CODE_FLAG == 0:
+            return msg_buf
+
+        header = msg_buf[0:PacketLayout.PACKET_ID_LENGTH]
+        inputbuf = msg_buf[PacketLayout.PACKET_ID_LENGTH:]
+        newstring = ""
+        in_zero = False
+        for c in inputbuf:
+            if c != '\0':
+                if in_zero == True:
+                    zero_count = ord(c)
+                    zero_count = zero_count -1
+                    while zero_count>0:
+                        newstring = newstring + '\x00'
+                        zero_count = zero_count -1
+                    in_zero = False
+                else:
+                    newstring = newstring + c
+            else:
+                newstring = newstring + c
+                in_zero = True
+        return header + newstring

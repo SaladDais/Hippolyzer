@@ -82,6 +82,7 @@ class MessageTemplateReader(object):
 
         #at the offset position, the messages stores the offset to where the
         #payload begins (may be extra header information)
+        #print "Decoding offset"
         offset = self.unpacker.unpack_data(data, MsgType.MVT_U8, PacketLayout.PHL_OFFSET)
 
         freq_bytes = self.current_template.frequency
@@ -106,6 +107,7 @@ class MessageTemplateReader(object):
             elif block.type == MsgBlockType.MBT_VARIABLE:
                 #if the block type is VARIABLE, then the current position
                 #will be the repeat count written in
+                #print "Reading VARIABLE block repeat count" 
                 repeat_count = self.unpacker.unpack_data(data, \
                                                          MsgType.MVT_U8, \
                                                          decode_pos)
@@ -133,14 +135,17 @@ class MessageTemplateReader(object):
                         #afterwards
                         data_size = var_size
                         if data_size == 1:
+                            #print "Reading VARIABLE variable size 1 byte" 
                             var_size = self.unpacker.unpack_data(data, \
                                                                  MsgType.MVT_U8, \
                                                                  decode_pos)
                         elif data_size == 2:
+                            #print "Reading VARIABLE variable size 2 bytes" 
                             var_size = self.unpacker.unpack_data(data, \
                                                                  MsgType.MVT_U16, \
                                                                  decode_pos)
                         elif data_size == 4:
+                            #print "Reading VARIABLE variable size 4 bytes"
                             var_size = self.unpacker.unpack_data(data, \
                                                                  MsgType.MVT_U32, \
                                                                  decode_pos)
@@ -151,7 +156,10 @@ class MessageTemplateReader(object):
                         
                         decode_pos += data_size
 
-                    unpacked_data = self.unpacker.unpack_data(data[decode_pos:decode_pos+var_size],variable.type)
+                    unpacked_data = self.unpacker.unpack_data(data, \
+                                                              variable.type, \
+                                                              decode_pos, \
+                                                              var_size=var_size)
                     self.current_block.add_data(variable.name, unpacked_data, var_size)
                     decode_pos += var_size
 
