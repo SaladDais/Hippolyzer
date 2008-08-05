@@ -31,7 +31,7 @@ class Capability(object):
             response = restclient.GET(self.public_url)
         except HTTPError, e:
             print "** failure while calling cap:",
-            print e.fp.read()
+            print e.fp.read(), e.code
             raise
   
         # now deserialize the data again, we ask for a utility with the content type
@@ -63,7 +63,7 @@ class Capability(object):
             response = restclient.POST(self.public_url, serialized_payload, headers=headers)
         except HTTPError, e:
             print "** failure while calling cap:",
-            print e.fp.read()
+            print e.fp.read(), e.code            
             raise
             
         # now deserialize the data again, we ask for a utility with the content type
