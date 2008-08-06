@@ -16,7 +16,7 @@ class NetUDPClient(object):
         return Host(self.sender.host, self.sender.port)
     
     def send_packet(self, sock, send_buffer, host):
-        sock.sendto(send_buffer, (host.ip_addr, host.port))
+        sock.sendto(send_buffer, (host.ip, host.port))
     
     def receive_packet(self, socket):
         buf = 10000
