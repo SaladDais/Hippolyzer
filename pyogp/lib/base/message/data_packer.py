@@ -4,7 +4,7 @@ from pyogp.lib.base.message.message_types import MsgType, EndianType
 
 class DataPacker(object):
     def __init__(self):
-        self.endian = EndianType.LITTLE
+        self.endian = EndianType.BIG
         self.packer = {}
         self.packer[MsgType.MVT_VARIABLE]       = self.__pack_string
         self.packer[MsgType.MVT_U8]             = 'B'
@@ -26,8 +26,9 @@ class DataPacker(object):
         self.packer[MsgType.MVT_IP_ADDR]        = self.__pack_string
         self.packer[MsgType.MVT_IP_PORT]        = 'H'
 
-    def pack_data(self, data, data_type, endian_type=EndianType.BIG):
-        self.endian = endian_type
+    def pack_data(self, data, data_type, endian_type=EndianType.NONE):
+        if endian_type != EndianType.NONE:
+            self.endian = endian_type
         
         if data_type in self.packer:
             pack = self.packer[data_type]

@@ -14,6 +14,7 @@ class EndianType(object):
     LITTLE  = '<'
     BIG     = '>'
     NETWORK = '!'
+    NONE    = ''
 
 class MsgBlockType(object):
     MBT_SINGLE, \

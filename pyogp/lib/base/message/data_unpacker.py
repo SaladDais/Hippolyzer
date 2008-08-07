@@ -5,7 +5,7 @@ from pyogp.lib.base.message.message_types import MsgType, EndianType, sizeof
 
 class DataUnpacker(object):
     def __init__(self):
-        self.endian = EndianType.LITTLE
+        self.endian = EndianType.BIG
         self.unpacker = {}
         self.unpacker[MsgType.MVT_VARIABLE]     = self.__unpack_string
         self.unpacker[MsgType.MVT_U8]           = 'B'
@@ -28,8 +28,9 @@ class DataUnpacker(object):
         self.unpacker[MsgType.MVT_IP_PORT]      = 'H'    
 
     def unpack_data(self, data, data_type, start_index=0, \
-                    var_size=0, endian_type=EndianType.BIG):
-        self.endian = endian_type
+                    var_size=0, endian_type=EndianType.NONE):
+        if endian_type != EndianType.NONE:
+            self.endian = endian_type
 
         if start_index != 0:
             if var_size != 0:
