@@ -76,8 +76,6 @@ class MessageSystem(object):
 
             #we have a message
             if msg_size > 0:
-                msg_buf = self.zero_code_expand(msg_buf, msg_size)
-    
                 #determine packet flags
                 flag = ord(msg_buf[0])
                 self.receive_packet_id = \
@@ -86,6 +84,10 @@ class MessageSystem(object):
                 #determine sender
                 host = self.udp_client.get_sender()
                 circuit = self.find_circuit(host)
+
+                if flag & PackFlags.LL_ZERO_CODE_FLAG:
+                    msg_buf = self.zero_code_expand(msg_buf, msg_size)
+    
 
                 #ACK_FLAG - means the incoming packet is acking some old packets of ours
                 if flag & PackFlags.LL_ACK_FLAG:
@@ -139,8 +141,8 @@ class MessageSystem(object):
             #or we have no more messages to read
             #if valid_packet == True and msg_size > 0:
             #    break
-            if valid_packet == False or msg_size <= 0:
-                break
+            #if valid_packet == False or msg_size <= 0:
+            break
                 
         #now determine if the packet we got was valid (and therefore is stored
         #in the reader)

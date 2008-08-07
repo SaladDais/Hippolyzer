@@ -23,7 +23,7 @@ class NetUDPClient(object):
         buf = 10000
         try:
             data, addr = sock.recvfrom(buf)
-            print "Received data: " + repr(data)
+            #print "Received data: " + repr(data)
         except:
             return '', 0
         self.sender.ip = addr[0]
