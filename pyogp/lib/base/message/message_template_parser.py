@@ -77,17 +77,17 @@ class MessageTemplateParser(object):
                 if frequency == MsgFrequency.FIXED_FREQUENCY_MESSAGE:   
                     #have to do this because Fixed messages are stored as a long in the template
                     binTemp = struct.pack('>L', string.atol(parts[2],0))
-                    msg_num_hex = binTemp
+                    #msg_num_hex = binTemp
                     msg_num = struct.unpack('>h','\x00' + binTemp[3])[0]
-                elif frequency == MsgFrequency.LOW_FREQUENCY_MESSAGE:
+                """elif frequency == MsgFrequency.LOW_FREQUENCY_MESSAGE:
                     msg_num_hex = struct.pack('>BBh',0xff,0xff, msg_num)
                 elif frequency == MsgFrequency.MEDIUM_FREQUENCY_MESSAGE:
                     msg_num_hex = struct.pack('>BB',0xff, msg_num)
                 elif frequency == MsgFrequency.HIGH_FREQUENCY_MESSAGE:
-                    msg_num_hex = struct.pack('>B', msg_num)
+                    msg_num_hex = struct.pack('>B', msg_num)"""
 
                 current_template.msg_num = msg_num
-                current_template.msg_num_hex = msg_num_hex
+                #current_template.msg_num_hex = msg_num_hex
 
                 msg_trust = None
                 if parts[3] == 'Trusted':

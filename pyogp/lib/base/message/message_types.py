@@ -10,6 +10,11 @@ class PacketLayout(object):
     #1 byte flags, 4 bytes sequence, 1 byte offset + 1 byte message name (high)
     MINIMUM_VALID_PACKET_SIZE = PACKET_ID_LENGTH + 1
 
+class EndianType(object):
+    LITTLE  = '<'
+    BIG     = '>'
+    NETWORK = '!'
+
 class MsgBlockType(object):
     MBT_SINGLE, \
     MBT_MULTIPLE, \

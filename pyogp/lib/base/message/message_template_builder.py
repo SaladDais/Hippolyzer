@@ -5,7 +5,8 @@ import struct
 from pyogp.lib.base.message.message_template import MsgData, MsgBlockData, \
      MsgVariableData
 #import pyogp.lib.base.message_types
-from pyogp.lib.base.message.message_types import MsgType, MsgBlockType, MsgFrequency, sizeof
+from pyogp.lib.base.message.message_types import MsgType, MsgBlockType, \
+                             MsgFrequency, EndianType, sizeof
 from pyogp.lib.base.message.data_packer import DataPacker
 
 class MessageTemplateBuilder(object):
@@ -26,6 +27,32 @@ class MessageTemplateBuilder(object):
 
         self.packer = DataPacker()
         self.has_been_built = False
+
+        self.build_message_ids()
+
+    def build_message_ids(self):
+        packer = DataPacker()
+        for template in self.template_list.message_templates.values():
+            frequency = template.frequency
+            if frequency == MsgFrequency.FIXED_FREQUENCY_MESSAGE:   
+                #have to do this because Fixed messages are stored as a long in the template
+                template.msg_num_hex = '\xff\xff\xff' + \
+                                       packer.pack_data(template.msg_num, \
+                                                        MsgType.MVT_U8)
+            elif frequency == MsgFrequency.LOW_FREQUENCY_MESSAGE:
+                template.msg_num_hex = '\xff\xff' + \
+                                packer.pack_data(template.msg_num, \
+                                                 MsgType.MVT_U16, \
+                                                 EndianType.BIG)
+            elif frequency == MsgFrequency.MEDIUM_FREQUENCY_MESSAGE:
+                template.msg_num_hex = '\xff' + \
+                                packer.pack_data(template.msg_num, \
+                                                 MsgType.MVT_U8, \
+                                                 EndianType.BIG)
+            elif frequency == MsgFrequency.HIGH_FREQUENCY_MESSAGE:
+                template.msg_num_hex = packer.pack_data(template.msg_num, \
+                                                         MsgType.MVT_U8, \
+                                                         EndianType.BIG)
         
     def is_built(self):
         return self.has_been_built
@@ -52,8 +79,6 @@ class MessageTemplateBuilder(object):
         pack_freq_num = self.current_template.msg_num_hex
         msg_buffer += pack_freq_num
         bytes += len(pack_freq_num)
-
-        #add some offset?
 
         for block in self.current_template.get_blocks():
             packed_block, block_size = self.build_block(block, self.current_msg)

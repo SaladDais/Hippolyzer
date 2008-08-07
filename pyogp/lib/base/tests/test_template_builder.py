@@ -280,7 +280,7 @@ class TestTemplateBuilder(unittest.TestCase):
         builder.next_block('PingID')
         builder.add_data('PingID', 0x01, MsgType.MVT_U8)
         msg, size = builder.build_message()
-        assert msg == "\x02\x01", "U8 not packed correctly"
+        assert msg == "\x02\x01", "U8 not packed correctly, got: " + repr(msg)
         assert size == 2, "U8 size not correct"
         
 def test_suite():

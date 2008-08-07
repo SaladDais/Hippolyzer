@@ -10,7 +10,7 @@ from pyogp.lib.base.message.message_template_dict import TemplateDictionary
 from pyogp.lib.base.message.message_dict import MessageDictionary
 from pyogp.lib.base.message.circuitdata import CircuitManager
 from pyogp.lib.base.message.message_types import PacketLayout, PackFlags,\
-                 MsgType, sizeof
+                 MsgType, EndianType, sizeof
 from pyogp.lib.base.message.data_unpacker import DataUnpacker
 from pyogp.lib.base.message.data_packer import DataPacker
 
@@ -188,6 +188,19 @@ class MessageSystem(object):
         #use circuit manager to get the circuit to send on
         circuit = self.find_circuit(host)
 
+        self.send_buffer = ''
+
+        #put the flags in the begining of the data. NOTE: for 1 byte, endian doesn't matter
+        self.send_buffer += self.packer.pack_data(self.send_flags, MsgType.MVT_U8)
+
+        #set packet ID
+        self.send_buffer += self.packer.pack_data(circuit.next_packet_id(), \
+                                                  MsgType.MVT_S32, \
+                                                  endian_type=EndianType.BIG)
+
+        #pack in the offset to the data. NOTE: for 1 byte, endian doesn't matter
+        self.send_buffer += self.packer.pack_data(0, MsgType.MVT_U8)
+
         #also, sends as many acks as we can onto the end of the packet
         #acks are just the packet_id that we are acking
         ack_count = len(circuit.acks)
@@ -199,18 +212,6 @@ class MessageSystem(object):
 
             append_ack_count = self.packer.pack_data(ack_count, MsgType.MVT_U8)
             message_buf += append_ack_count
-
-        self.send_buffer = ''
-
-        #put the flags in the begining of the data
-        self.send_buffer += self.packer.pack_data(self.send_flags, MsgType.MVT_U8)
-
-        #set packet ID
-        self.send_buffer += self.packer.pack_data(circuit.next_packet_id(), \
-                                                  MsgType.MVT_S32)
-
-        #pack in the offset to the data
-        self.send_buffer += self.packer.pack_data(0, MsgType.MVT_U8)
 
         #now that the pre-message data is added, add the real data to the end
         self.send_buffer += message_buf
