@@ -10,10 +10,10 @@ class NetUDPClient(object):
     implements(IUDPClient)
 
     def __init__(self):
-        self.sender = None
+        self.sender = Host(None, None)
 
     def get_sender(self):
-        return Host(self.sender.host, self.sender.port)
+        return self.sender
     
     def send_packet(self, sock, send_buffer, host):
         print 'Sending to: ' + str(host.ip) + ":" + str(host.port)
@@ -21,9 +21,13 @@ class NetUDPClient(object):
     
     def receive_packet(self, sock):
         buf = 10000
-        data, addr = sock.recvfrom(buf)
-        self.sender.ip_addr = addr
-        self.sender.port()
+        try:
+            data, addr = sock.recvfrom(buf)
+            print "Received data: " + repr(data)
+        except:
+            return '', 0
+        self.sender.ip = addr[0]
+        self.sender.port = addr[1]
         return data, len(data)
 
     def start_udp_connection(self, port):
