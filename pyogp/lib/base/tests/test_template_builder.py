@@ -134,7 +134,7 @@ class TestTemplateBuilder(unittest.TestCase):
         builder.add_data('ID', 0x00000001, MsgType.MVT_U32)
         msg, size = builder.build_message()
         assert msg == '\xff\xff\xff\xfb' + '\x02' + \
-                    '\x00\x00\x00\x01\x00\x00\x00\x01', \
+                    '\x01\x00\x00\x00\x01\x00\x00\x00', \
                     "Building variable block failed"
         
     def test_build_empty_var(self):
@@ -158,7 +158,7 @@ class TestTemplateBuilder(unittest.TestCase):
         msg, size = builder.build_message()
 
         assert_string = '\xff\xff\x00\x11' + UUID("550e8400-e29b-41d4-a716-446655440000").bytes + \
-                    '\x07' + 'Testing' + '\x00\x00\x00\x01' + '\x01'
+                    '\x07' + 'Testing' + '\x01\x00\x00\x00' + '\x01'
         assert msg == assert_string, "Building variable block failed"
 
 
@@ -267,11 +267,11 @@ class TestTemplateBuilder(unittest.TestCase):
         except Exception, e:
             assert False, "Multiple blocks not working correctly"
 
-        assert msg == '\xff\xff\x00\x01' + '\x00\x00\x00\x01' + \
-                    '\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x01' + \
-                    '\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x01' + \
-                    '\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x01' + \
-                    '\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x01', \
+        assert msg == '\xff\xff\x00\x01' + '\x01\x00\x00\x00' + \
+                    '\x01\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00' + \
+                    '\x01\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00' + \
+                    '\x01\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00' + \
+                    '\x01\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00', \
                     'TestMessage data not built correctly'
         
     def test_serialize_u8(self):

@@ -155,7 +155,6 @@ class MessageTemplateReader(object):
                                               of ' + str(data_size))
                         
                         decode_pos += data_size
-
                     unpacked_data = self.unpacker.unpack_data(data, \
                                                               variable.type, \
                                                               decode_pos, \

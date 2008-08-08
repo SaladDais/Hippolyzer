@@ -131,11 +131,14 @@ class MessageTemplateBuilder(object):
                 if variable.type == MsgType.MVT_VARIABLE:
                     data_size = template_block.get_variable(variable.name).size
                     if data_size == 1:
-                        block_buffer += struct.pack('>B', var_size)
+                        block_buffer += self.packer.pack_data(var_size, MsgType.MVT_U8)
+                        #block_buffer += struct.pack('>B', var_size)
                     elif data_size == 2:
-                        block_buffer += struct.pack('>H', var_size)
+                        block_buffer += self.packer.pack_data(var_size, MsgType.MVT_U16)
+                        #block_buffer += struct.pack('>H', var_size)
                     elif data_size == 4:
-                        block_buffer += struct.pack('>I', var_size)
+                        block_buffer += self.packer.pack_data(var_size, MsgType.MVT_U32)
+                        #block_buffer += struct.pack('>I', var_size)
                     else:
                         raise Exception('Attempting to build variable with unknown size \
                                           of ' + str(var_size))
