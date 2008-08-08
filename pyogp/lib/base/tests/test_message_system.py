@@ -52,10 +52,10 @@ class TestMessageSystem(unittest.TestCase):
         self.message_system.send_message(self.host)
         assert self.message_system.send_buffer == \
                '\x00' + '\x00\x00\x00\x01' + '\x00' + '\xff\xff\xff\xfb' + \
-               '\x01' + '\x00\x00\x00\x03', \
+               '\x01' + '\x03\x00\x00\x00', \
                'Received: ' + repr(self.message_system.send_buffer) + '  ' + \
                'Expected: ' + repr('\x00' + '\x00\x00\x00\x01' + '\x00' + \
-                            '\xff\xff\xff\xfb' + '\x01' + '\x00\x00\x00\x03')
+                            '\xff\xff\xff\xfb' + '\x01' + '\x03\x00\x00\x00')
 
     def test_send_same_host(self):
         self.message_system.new_message('PacketAck')
@@ -71,7 +71,7 @@ class TestMessageSystem(unittest.TestCase):
         self.message_system.add_data('ID', 0x00000003, MsgType.MVT_U32)
         self.message_system.send_message(self.host)
         test_str = '\x00' + '\x00\x00\x00\x02' + '\x00' + '\xff\xff\xff\xfb' + \
-               '\x01' + '\x00\x00\x00\x03'
+               '\x01' + '\x03\x00\x00\x00'
 
         assert self.message_system.send_buffer == \
                test_str, \
@@ -90,7 +90,7 @@ class TestMessageSystem(unittest.TestCase):
         host = Host(MockupUDPServer(), 80)
         self.message_system.send_reliable(host, 10)
         test_str = '\x40' + '\x00\x00\x00\x01' + '\x00' + '\xff\xff\xff\xfb' + \
-               '\x01' + '\x00\x00\x00\x03'
+               '\x01' + '\x03\x00\x00\x00'
         assert self.message_system.send_buffer == \
                test_str ,\
                'Received: ' + repr(self.message_system.send_buffer) + '  ' + \
@@ -98,7 +98,7 @@ class TestMessageSystem(unittest.TestCase):
 
     def test_receive(self):
         out_message = '\x00' + '\x00\x00\x00\x01' + '\x00' + \
-            '\xff\xff\xff\xfb' + '\x01' + '\x00\x00\x00\x01'
+            '\xff\xff\xff\xfb' + '\x01' + '\x01\x00\x00\x00'
         server = MockupUDPServer()
         server.send_message(self.message_system.udp_client, out_message)
         
@@ -110,7 +110,7 @@ class TestMessageSystem(unittest.TestCase):
         
     def test_receive_zero(self):
         out_message = '\x80' + '\x00\x00\x00\x01' + '\x00' + \
-            '\xff\xff\xff\xfb' + '\x01' + '\x00\x03\x01'
+            '\xff\xff\xff\xfb' + '\x01' + '\x01\x00\x03'
         server = MockupUDPServer()
         server.send_message(self.message_system.udp_client, out_message)
 
@@ -122,7 +122,7 @@ class TestMessageSystem(unittest.TestCase):
 
     def test_receive_reliable(self):
         out_message = '\x40' + '\x00\x00\x00\x05' + '\x00' + \
-            '\xff\xff\xff\xfb' + '\x01' + '\x00\x00\x00\x01'
+            '\xff\xff\xff\xfb' + '\x01' + '\x01\x00\x00\x00'
         server = MockupUDPServer()
         server.send_message(self.message_system.udp_client, out_message)
 
@@ -130,7 +130,7 @@ class TestMessageSystem(unittest.TestCase):
         sender_host = self.message_system.udp_client.get_sender()
         circuit = self.message_system.circuit_manager.get_circuit(sender_host)
         assert len(circuit.acks) == 1, "Ack not collected"
-        assert circuit.acks[0] == 5, "Ack ID not correct"
+        assert circuit.acks[0] == 5, "Ack ID not correct, got " + str(circuit.acks[0])
         
     def test_acks(self):
         out_message = '\x40' + '\x00\x00\x00\x05' + '\x00' + \
@@ -144,7 +144,7 @@ class TestMessageSystem(unittest.TestCase):
         self.message_system.process_acks()
         assert server.rec_buffer != '', "Ack not sent"
         test_msg = '\x00' + '\x00\x00\x00\x01' + '\x00' + \
-            '\xff\xff\xff\xfb' + '\x01' + '\x00\x00\x00\x05'
+            '\xff\xff\xff\xfb' + '\x01' + '\x05\x00\x00\x00'
         assert server.rec_buffer == test_msg, "Ack received incorrect, got " + \
                repr(server.rec_buffer)
         

@@ -79,7 +79,7 @@ class MessageSystem(object):
                 #determine packet flags
                 flag = ord(msg_buf[0])
                 self.receive_packet_id = \
-                    self.unpacker.unpack_data(msg_buf,MsgType.MVT_U32, 1)
+                    self.unpacker.unpack_data(msg_buf,MsgType.MVT_U32, 1, endian_type=EndianType.BIG)
                 
                 #determine sender
                 host = self.udp_client.get_sender()
