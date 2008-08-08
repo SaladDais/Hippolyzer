@@ -163,7 +163,6 @@ class MessageSystem(object):
     def send_retry(self, host, message_buf=None):
         """ This is a retry because we didn't get acked """
         #sets up the message so send_message will add the RETRY flag to it
-        print 'Sending retry'
         self.send_flags |= PackFlags.LL_RESENT_FLAG
         self.send_message(host, message_buf)                
 
@@ -217,9 +216,9 @@ class MessageSystem(object):
 
             append_ack_count = self.packer.pack_data(ack_count, MsgType.MVT_U8)
             message_buf += append_ack_count
-            print 'Adding ack count: ' + append_ack_count
+            #print 'Adding ack count: ' + append_ack_count
 
-        print "Message buf: " + repr(message_buf)
+        #print "Message buf: " + repr(message_buf)
 
         #now that the pre-message data is added, add the real data to the end
         self.send_buffer += message_buf
@@ -301,13 +300,13 @@ class MessageSystem(object):
             
     def new_message(self, message_name):
         if self.message_dict[message_name] == None:
-            return
-
-        flavor = self.message_dict.get_message_flavor(message_name)
-        if flavor == 'template':
             self.builder = self.template_builder
-        elif flavor == 'llsd':
-            self.builder = self.llsd_builder
+        else:
+            flavor = self.message_dict.get_message_flavor(message_name)
+            if flavor == 'template':
+                self.builder = self.template_builder
+            elif flavor == 'llsd':
+                self.builder = self.llsd_builder
 
         self.reliable_msg = False
         self.builder.new_message(message_name)
