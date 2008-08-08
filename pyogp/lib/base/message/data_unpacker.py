@@ -64,9 +64,9 @@ class DataUnpacker(object):
 
     def __unpack_quat(self, endian, quat):
         #first, pack to vector3
-        print "WARNING: UNPACKING A QUAT...."
-        vec = quat_to_vec3(quat)
-        return self.__unpack_vector3(endian, vec)
+        #print "WARNING: UNPACKING A QUAT...."
+        #vec = quat_to_vec3(quat)
+        return self.__unpack_vector3(endian, quat)
 
     def __unpack_uuid(self, endian, uuid_data):
         return UUID(bytes=uuid_data)

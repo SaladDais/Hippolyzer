@@ -91,18 +91,16 @@ class MessageSystem(object):
 
                 #ACK_FLAG - means the incoming packet is acking some old packets of ours
                 if flag & PackFlags.LL_ACK_FLAG:
-                    #apparently, the number of acks is stored at the end
-                    #msg_size -= 1
-                    #acks += msg_buf[msg_size]
-                    #2 == packet ID size, 6 = min packet size
-                    #msg_size -= acks * 2 + 6
-                    
-                    #looop
-                        #read the packet ID of the packets that the incoming packet is acking
-                        #tell the circuit that the packet with ID has been acked
-                    #end loop
+                    acks += msg_buf[msg_size]
+                    ack_pos = acks * sizeof(MsgType.MVT_S32) + 1
+                    ack_data = msg_buf[msg_size-ack_pos:]
+
+                    while True:
+                        ack_packet_id = self.unpacker.unpack_data(ack_data, MsgType.MVT_S32, ack_pos)
+                        print 'Acking packet: ' + str(ack_packet_id)
+                        ack_pos += sizeof(MsgType.MVT_S32)
+                        circuit.ack_reliable_packet(ack_packet_id)
                     #if the circuit has no unacked packets, remove it from unacked circuits
-                    pass
                 
                 #RELIABLE - means the message wants to be acked by us
                 if flag & PackFlags.LL_RELIABLE_FLAG:
@@ -165,8 +163,9 @@ class MessageSystem(object):
     def send_retry(self, host, message_buf=None):
         """ This is a retry because we didn't get acked """
         #sets up the message so send_message will add the RETRY flag to it
-        unacked_packet.buffer[PacketLayout.PHL_FLAGS] |= PackFlags.LL_RESENT_FLAG
-        send_message(host, message_buf)                
+        print 'Sending retry'
+        self.send_flags |= PackFlags.LL_RESENT_FLAG
+        self.send_message(host, message_buf)                
 
     def send_message_llsd(self, host, name, message):
         """ sends an llsd message without going through builder """
@@ -175,6 +174,7 @@ class MessageSystem(object):
     def send_message(self, host, message_buf=None):
         """ Sends the message that is currently built to the desired host """
         message_size = -1
+        has_acks = False
         
         #make sure host is OK (ip and address aren't null)
         if host.is_ok() == False:
@@ -192,6 +192,11 @@ class MessageSystem(object):
 
         self.send_buffer = ''
 
+        ack_count = len(circuit.acks)
+        if ack_count > 0 and self.builder.cur_msg_name != "PacketAck":
+            self.send_flags |= PackFlags.LL_ACK_FLAG
+            has_acks = True
+
         #put the flags in the begining of the data. NOTE: for 1 byte, endian doesn't matter
         self.send_buffer += self.packer.pack_data(self.send_flags, MsgType.MVT_U8)
 
@@ -205,15 +210,16 @@ class MessageSystem(object):
 
         #also, sends as many acks as we can onto the end of the packet
         #acks are just the packet_id that we are acking
-        ack_count = len(circuit.acks)
-        if ack_count > 0 and self.builder.cur_msg_name != "PacketAck":
-            self.send_flags |= PackFlags.LL_ACK_FLAG
+        if has_acks == True:
             for packet_id in circuit.acks:
                 pack_id = self.packer.pack_data(packet_id, MsgType.MVT_S32)
                 message_buf += pack_id
 
             append_ack_count = self.packer.pack_data(ack_count, MsgType.MVT_U8)
             message_buf += append_ack_count
+            print 'Adding ack count: ' + append_ack_count
+
+        print "Message buf: " + repr(message_buf)
 
         #now that the pre-message data is added, add the real data to the end
         self.send_buffer += message_buf
@@ -249,12 +255,13 @@ class MessageSystem(object):
             for unacked_packet in circuit.unacked_packets.values():
                 unacked_packet.retries -= 1
                 #is this correct? should it be serialized or something?
-                self.reset_send_buffer()
+                #self.reset_send_buffer()
+                self.send_buffer = ''
                 self.send_buffer += unacked_packet.buffer
-                send_retry(unacked_packet.host, unacked_packet.retries)
+                self.send_retry(unacked_packet.host, unacked_packet.buffer)
 
                 if unacked_packet.retries <= 0:
-                    circuit.final_retry_packets[packet.packet_id] = unacked_packet
+                    circuit.final_retry_packets[unacked_packet.packet_id] = unacked_packet
                     del circuit.unacked_packets[unacked_packet.packet_id]
 
             #final retries aren't resent, they are just forgotten about. boo
@@ -281,6 +288,13 @@ class MessageSystem(object):
                 self.send_message(circuit.host)
                 
             circuit.acks = []
+
+    def has_unacked(self):
+        for circuit in self.circuit_manager.circuit_map.values():
+            if len(circuit.acks) > 0:
+                return True
+
+        return False
 
     #the following methods are for a higher-level api
     #new_message is important because it selects the correct builder

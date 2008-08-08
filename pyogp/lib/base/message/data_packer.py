@@ -46,18 +46,18 @@ class DataPacker(object):
         return struct.pack(endian + str(size) + tp, *tup)
 
     def __pack_vector3(self, endian, vec):
-        return __pack_tuple(endian, vec, 'f')
+        return self.__pack_tuple(endian, vec, 'f')
 
     def __pack_vector3d(self, endian, vec):
-        return __pack_tuple(endian,vec, 'd')
+        return self.__pack_tuple(endian,vec, 'd')
 
     def __pack_vector4(self, endian, vec):
-        return __pack_tuple(endian, vec, 'f')
+        return self.__pack_tuple(endian, vec, 'f')
 
     def __pack_quat(self, endian, quat):
         #first, pack to vector3
-        vec = quat_to_vec3(quat)
-        return __pack_vector3(vendian, ec)
+        #vec = quat_to_vec3(quat)
+        return self.__pack_vector3(endian, quat)
 
     def __pack_uuid(self, endian, uuid):
         return uuid.bytes

@@ -45,7 +45,13 @@ class Circuit(object):
 
     def ack_reliable_packet(self, packet_id):
         #go through the packets waiting to be acked, and set them as acked
-        pass
+        if packet_id in self.unacked_packets:
+            del self.unacked_packets[packet_id]
+            self.unack_packet_count -= 1
+        
+        if packet_id in self.final_retry_packets:
+            del self.final_retry_packets[packet_id]
+            self.final_packet_count -= 1
 
     def collect_ack(self, packet_id):
         """ set a packet_id that this circuit needs to eventually ack
