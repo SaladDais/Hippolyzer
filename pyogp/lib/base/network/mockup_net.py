@@ -9,6 +9,7 @@ from pyogp.lib.base.message.circuitdata import Host
 class MockupUDPServer(object):
     def __init__(self):
         self.rec_buffer = ''
+        self.ip = 'MockupUDPServer'
         
     def receive_message(self, client, receive_buffer):
         #print 'SERVER receive'

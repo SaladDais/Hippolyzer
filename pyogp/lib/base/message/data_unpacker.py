@@ -26,10 +26,10 @@ class DataUnpacker(object):
         self.unpacker[MsgType.MVT_LLVector4]      = ('<',self.__unpack_vector4)
         self.unpacker[MsgType.MVT_LLQuaternion]   = ('<',self.__unpack_quat)
 
-    def unpack_data(self, data, data_type, start_index=0, \
-                    var_size=0, endian_type=EndianType.NONE):
-        if start_index != 0:
-            if var_size != 0:
+    def unpack_data(self, data, data_type, start_index=-1, \
+                    var_size=-1, endian_type=EndianType.NONE):
+        if start_index != -1:
+            if var_size != -1:
                 data = data[start_index:start_index+var_size]
             else:
                 data = data[start_index:start_index+sizeof(data_type)]

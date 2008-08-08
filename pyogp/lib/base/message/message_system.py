@@ -73,9 +73,11 @@ class MessageSystem(object):
         while True:
             recv_reliable = False
             msg_buf, msg_size = self.udp_client.receive_packet(self.socket)
-
+            
             #we have a message
             if msg_size > 0:
+                #print 'Received: ' + repr(msg_buf)
+                #print 'Length: ' + str(len(msg_buf))
                 #determine packet flags
                 flag = ord(msg_buf[0])
                 self.receive_packet_id = \
@@ -91,15 +93,17 @@ class MessageSystem(object):
 
                 #ACK_FLAG - means the incoming packet is acking some old packets of ours
                 if flag & PackFlags.LL_ACK_FLAG:
-                    acks += msg_buf[msg_size]
-                    ack_pos = acks * sizeof(MsgType.MVT_S32) + 1
-                    ack_data = msg_buf[msg_size-ack_pos:]
-
-                    while True:
-                        ack_packet_id = self.unpacker.unpack_data(ack_data, MsgType.MVT_S32, ack_pos)
-                        print 'Acking packet: ' + str(ack_packet_id)
+                    msg_size -= 1
+                    acks += self.unpacker.unpack_data(msg_buf, MsgType.MVT_U8, msg_size)
+                    ack_start = acks * sizeof(MsgType.MVT_S32)
+                    ack_data = msg_buf[msg_size-ack_start:]
+                    ack_pos = 0
+                    while acks > 0:
+                        ack_packet_id = self.unpacker.unpack_data(ack_data, MsgType.MVT_S32, \
+                                                                  start_index=ack_pos)
                         ack_pos += sizeof(MsgType.MVT_S32)
                         circuit.ack_reliable_packet(ack_packet_id)
+                        acks -= 1
                     #if the circuit has no unacked packets, remove it from unacked circuits
                 
                 #RELIABLE - means the message wants to be acked by us
@@ -113,9 +117,10 @@ class MessageSystem(object):
                     pass
 
                 valid_packet = self.template_reader.validate_message(msg_buf, msg_size)
-                    
                 #make sure packet validated correctly
                 if valid_packet ==  True:
+                    print 'Received: ' + self.template_reader.current_template.name
+                    
                     #Case - UseCircuitCode - only packet allowed to be valid on an unprotected circuit
                     if circuit == None:
                         valid_packet = False
@@ -127,7 +132,7 @@ class MessageSystem(object):
                         continue
                     #Case - make sure its not a banned packet
                     #...
-
+                    #print "Msg: " + repr(msg_buf)
                     valid_packet = self.template_reader.read_message(msg_buf)
 
                 #make sure packet was read correctly (still valid)
