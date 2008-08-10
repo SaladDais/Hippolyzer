@@ -27,6 +27,7 @@ def test_suite():
             doctest.DocFileSuite(
                 "login.txt",
                 "caps.txt",
+                "credentials.txt",
                 package="pyogp.lib.base.tests",
                 setUp = setUp,
                 tearDown = tearDown,
