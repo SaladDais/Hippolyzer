@@ -59,7 +59,7 @@ In this case it should not find a deserializer and say so::
     >>> cap = seed.get(['some_capability'])
     Traceback (most recent call last):
     ...
-    deserialization for text/foobar not supported
+    Exception: deserialization for text/foobar not supported
 
 
 Now we test if network errors are handled correctly::
