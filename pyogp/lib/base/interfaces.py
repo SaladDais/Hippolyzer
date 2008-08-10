@@ -9,6 +9,14 @@ class IPlainPasswordCredential(ICredential):
     firstname = Attribute("""first name of avatar""")
     lastname = Attribute("""last name of avatar""")
     password = Attribute("""plain password""")
+
+class IMD5PasswordCredential(ICredential):
+    """an md5 password credential"""
+    
+    firstname = Attribute("""first name of avatar""")
+    lastname = Attribute("""last name of avatar""")
+    password = Attribute("""password as md5 hexdigest""")
+   
     
 class ISerialization(Interface):
     """serialization functions"""
