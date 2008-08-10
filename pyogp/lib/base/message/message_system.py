@@ -119,7 +119,7 @@ class MessageSystem(object):
                 valid_packet = self.template_reader.validate_message(msg_buf, msg_size)
                 #make sure packet validated correctly
                 if valid_packet ==  True:
-                    print 'Received: ' + self.template_reader.current_template.name
+                    #print 'Received: ' + self.template_reader.current_template.name
                     
                     #Case - UseCircuitCode - only packet allowed to be valid on an unprotected circuit
                     if circuit == None:
