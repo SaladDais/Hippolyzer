@@ -110,4 +110,3 @@ class UserNotAuthorized(AgentDomainError):
         self.credentials = credentials
     
 
-class     
