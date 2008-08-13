@@ -103,9 +103,13 @@ class PlaceAvatar(grok.Adapter):
         payload = {'region_url' : region_uri } 
         result = self.place_avatar_cap.POST(payload)
         
-        region.details = result
         avatar = Avatar(region)
-
+        #extract some data out of the results and put into region
+        seed_cap_url = result['seed_capability']
+        region.seed_cap = SeedCapability('seed_cap', seed_cap_url)
+        
+        #AND THE REST
+        region.details = result
         return avatar
     
 from interfaces import IEventQueueGet
