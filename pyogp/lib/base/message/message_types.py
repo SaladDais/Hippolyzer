@@ -1,3 +1,4 @@
+
 #represents how much of a message is taken up by packet ID things, such as
 #the packet flags and the sequence number. After the ID, then comes the header
 #NOTE: This will be moved into a messaging system eventually
