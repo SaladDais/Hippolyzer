@@ -2,6 +2,8 @@ from zope.interface import implements
 import grokcore.component as grok
 
 from interfaces import IRegion
+from pyogp.lib.base.interfaces import ISeedCapability
+from pyogp.lib.base.caps import Capability
 
 class Region(object):
     """models a region endpoint"""
@@ -11,8 +13,35 @@ class Region(object):
     def __init__(self, uri):
         """initialize the region with the region uri"""
         self.uri = uri
+        self.seed_cap_url = ''
         self.seed_cap = None
         self.details = {}
+
+    def set_seed_cap_url(self, url):
+        self.seed_cap_url = url
+        self.seed_cap = RegionSeedCapability('seed_cap', self.seed_cap_url)
+
+class RegionSeedCapability(Capability):
+    """a seed capability which is able to retrieve other capabilities"""
+    
+    implements(ISeedCapability)
+        
+    def get(self, names=[]):
+        """if this is a seed cap we can retrieve other caps here"""
+        payload = names
+        parsed_result = self.POST(payload)  #['caps']
+        print parsed_result
+        
+        caps = {}
+        for name in names:
+            # TODO: some caps might be seed caps, how do we know? 
+            caps[name]=Capability(name, parsed_result[name])
+            
+        return caps
+             
+        
+    def __repr__(self):
+        return "<RegionSeedCapability for %s>" %self.public_url
     
 from interfaces import IEventQueueGet
 class EventQueueGet(grok.Adapter):

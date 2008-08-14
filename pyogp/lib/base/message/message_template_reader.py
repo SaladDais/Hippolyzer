@@ -114,7 +114,8 @@ class MessageTemplateReader(object):
                 
                 decode_pos += 1
             else:
-                print "ERROR: Unknown block type: " + str(block.type)
+                print "ERROR: Unknown block type: " + str(block.type) + \
+                      " for message " + self.current_msg.name
                 return False
 
             for i in range(repeat_count):
@@ -138,7 +139,8 @@ class MessageTemplateReader(object):
                         #HACK: this is a slow procedure, should passed in
                         if (decode_pos + data_size) > len(data):
                             print "ERROR: trying to read " +  str(decode_pos + var_size) + \
-                                  " from a buffer of len " + str(len(data))
+                                  " from a buffer of len " + str(len(data)) + " for message " + \
+                                  self.current_msg.name
                             return False
                         if data_size == 1:
                             #print "Reading VARIABLE variable size 1 byte" 
@@ -164,7 +166,8 @@ class MessageTemplateReader(object):
                     #HACK: this is a slow procedure, should passed in
                     if (decode_pos + var_size) > len(data):
                         print "ERROR 2: trying to read " +  str(decode_pos + var_size) + \
-                              " from a buffer of len " + str(len(data))
+                              " from a buffer of len " + str(len(data)) + " for message " + \
+                                  self.current_msg.name
                         return False
                     unpacked_data = self.unpacker.unpack_data(data, \
                                                               variable.type, \

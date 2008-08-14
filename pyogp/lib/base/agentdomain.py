@@ -100,13 +100,14 @@ class PlaceAvatar(grok.Adapter):
     def __call__(self, region):
         """initiate the placing process"""
         region_uri = region.uri
-        payload = {'region_url' : region_uri } 
+        payload = {'region_url' : region_uri, 'position':[117,73,21]} 
         result = self.place_avatar_cap.POST(payload)
         
         avatar = Avatar(region)
         #extract some data out of the results and put into region
         seed_cap_url = result['seed_capability']
-        region.seed_cap = SeedCapability('seed_cap', seed_cap_url)
+        region.set_seed_cap_url(seed_cap_url)
+        #region.seed_cap = SeedCapability('seed_cap', seed_cap_url)
         
         #AND THE REST
         region.details = result

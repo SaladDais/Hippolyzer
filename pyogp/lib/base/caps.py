@@ -100,11 +100,36 @@ class SeedCapability(Capability):
         
     def __repr__(self):
         return "<SeedCapability for %s>" %self.public_url
-
         
 ####
 #### Serialization adapters
 ####
+class ListLLSDSerializer(grok.Adapter):
+    """adapter for serializing a dictionary to LLSD
+    
+    An example:
+    >>> d={'foo':'bar', 'test':1234}
+    >>> serializer = ISerialization(d)
+    >>> serializer.serialize()
+    '<?xml version="1.0" ?><llsd><map><key>test</key><integer>1234</integer><key>foo</key><string>bar</string></map></llsd>'
+    >>> serializer.content_type
+    'application/llsd+xml'
+    
+    """
+    grok.implements(ISerialization)
+    grok.context(list)
+    
+    def __init__(self, context):
+        self.context = context
+        
+    def serialize(self):
+        """convert the payload to LLSD"""
+        return llsd.format_xml(self.context)
+        
+    @property
+    def content_type(self):
+        """return the content type of this serializer"""
+        return "application/llsd+xml"
 
 
 class DictLLSDSerializer(grok.Adapter):

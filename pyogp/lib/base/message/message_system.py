@@ -238,6 +238,7 @@ class MessageSystem(object):
 
         #TODO: remove this when testing a network
         self.udp_client.send_packet(self.socket, self.send_buffer, host)
+        self.send_flags = PackFlags.LL_NONE
         self.reliable_msg = False
         self.reliable_params = {}
                         
