@@ -51,8 +51,8 @@ class EventQueueGet(grok.Adapter):
     
     def __init__(self, context):
         """initialize this adapter"""
-        self.context = context 
-        
+        self.context = context
+        self.last_id = -1
         # let's retrieve the cap we need
         self.seed_cap = self.context.seed_cap # ISeedCapability
         print self.seed_cap
@@ -61,5 +61,8 @@ class EventQueueGet(grok.Adapter):
         
     def __call__(self, data = {}):
         """initiate the event queue get request"""
+        if self.last_id != -1:
+            data = {'ack':self.last_id, 'done':False}
         result = self.cap.POST(data)
+        self.last_id = result['id']
         return result
