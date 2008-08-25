@@ -73,8 +73,7 @@ class AgentDomain(object):
         """place the avatar in a dummy way"""
         url = data.get("region_url",'')
         d={'sim_ip':'127.0.0.1',
-           'sim_port' : 12345,
-	   'seed_capability': '/region_seed_cap'}
+           'sim_port' : 12345}
         data = llsd.format_xml(d)
         self.response.status=200
         self.response.content_type='application/llsd+xml'

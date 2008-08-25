@@ -2,15 +2,15 @@ import socket
 import random
 
 from zope.interface import implements
+from pyogp.lib.base.message.interfaces import IHost
 
 from pyogp.lib.base.network.interfaces import IUDPClient
-from pyogp.lib.base.message.circuitdata import Host
 
 class MockupUDPServer(object):
     def __init__(self):
         self.rec_buffer = ''
         self.ip = 'MockupUDPServer'
-        
+        self.port = 80
     def receive_message(self, client, receive_buffer):
         #print 'SERVER receive'
         self.rec_buffer = receive_buffer
@@ -18,7 +18,7 @@ class MockupUDPServer(object):
     def send_message(self, client, send_message):
         #print 'SERVER send'
         client.rec = send_message
-        client.sender = self
+        client.sender = IHost((self, self.port))
         
 #returns true if packet was sent successfully
 class MockupUDPClient(object):
@@ -29,7 +29,7 @@ class MockupUDPClient(object):
         self.sender = None
 
     def get_sender(self):
-        return Host(self.sender, 1)
+        return self.sender
     
     def set_response(self, socket, response):
         self.rec[socket] = response
@@ -50,7 +50,7 @@ class MockupUDPClient(object):
         
         return '', 0
 
-    def start_udp_connection(self, port):
+    def start_udp_connection(self):
         """ Starts a udp connection, returning socket and port. """
         sock = random.randint(0,80)
         return sock

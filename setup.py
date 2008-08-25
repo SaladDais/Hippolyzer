@@ -28,8 +28,6 @@ setup(name='pyogp.lib.base',
           'zope.interface>=3.4',
           'zope.component [zcml]',
           'WebOb',
-	  'uuid',
-	  'indra.base',
           'wsgiref',
           'grokcore.component',
           

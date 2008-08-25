@@ -1,9 +1,16 @@
-from pyogp.lib.base.message.packet import Packet
+import grokcore.component as grok
+from zope.interface import implements
 
-class Host(object):
-    def __init__(self, ip_addr, port):
-        self.ip = ip_addr
-        self.port = port
+from pyogp.lib.base.message.interfaces import IHost
+from pyogp.lib.base.message.message_types import PackFlags
+
+class Host(grok.Adapter):
+    grok.implements(IHost)
+    grok.context(tuple)
+
+    def __init__(self, context):
+        self.ip = context[0]
+        self.port = context[1]
 
     def is_ok(self):
         if self.ip == None or self.port == None or \
@@ -43,6 +50,34 @@ class Circuit(object):
         self.last_packet_out_id += 1
         return self.last_packet_out_id
 
+    def prepare_packet(self, packet, flag=PackFlags.LL_NONE, retries=0):
+        packet.send_flags = flag
+        packet.retries = retries
+
+        packet.packet_id = self.next_packet_id()
+
+        #if we have acks that we can add on, add them
+        ack_count = len(self.acks)
+        if ack_count > 0 and packet.name != "PacketAck":
+            packet.send_flags |= PackFlags.LL_ACK_FLAG
+
+            #also, sends as many acks as we can onto the end of the packet
+            #acks are just the packet_id that we are acking
+            for packet_id in self.acks:
+                packet.add_ack(packet_id)
+
+        if flag == PackFlags.LL_RELIABLE_FLAG:
+            self.add_reliable_packet(packet)
+
+    def handle_packet(self, packet):
+        #if its a reliable packet, get all acks from packet, set them to be acked
+        for ack_packet_id in packet.acks:
+            self.ack_reliable_packet(ack_packet_id)
+
+        if packet.reliable == True:
+            self.collect_ack(packet.packet_id)
+
+
     def ack_reliable_packet(self, packet_id):
         #go through the packets waiting to be acked, and set them as acked
         if packet_id in self.unacked_packets:
@@ -58,19 +93,18 @@ class Circuit(object):
             (need to send ack out)"""
         self.acks.append(packet_id)
         
-    def add_reliable_packet(self, sock, message_buffer, buffer_length, params):
+    def add_reliable_packet(self, packet):
         """ add a packet that we want to be acked
             (want an incoming ack) """
-        packet = Packet(sock, message_buffer, buffer_length, params)
         self.unack_packet_count += 1
-        self.unack_packet_bytes += buffer_length
+        #self.unack_packet_bytes += buffer_length
         #if it can be resent/retried (not final) add it to the unack list
-        if 'retries' in params:
-            packet.retries = params['retries']
-            self.unacked_packets[packet.packet_id] = packet
+        #if 'retries' in params:
+        #    packet.retries = params['retries']
+        self.unacked_packets[packet.packet_id] = packet
         #otherwise, it can't be resent to get acked
-        else:
-            self.final_retry_packets[packet.packet_id] = packet
+        #else:
+        #self.final_retry_packets[packet.packet_id] = packet
 
 class CircuitManager(object):
     """ Manages a collection of circuits and provides some higher-level

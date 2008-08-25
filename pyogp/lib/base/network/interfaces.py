@@ -7,7 +7,7 @@ class IUDPClient(Interface):
     def get_sender():
         """ returns the sender in the form of a Host. """
         
-    def start_udp_connection(port):
+    def start_udp_connection():
         """ creates a socket for the udp connection and returns it """
         
     def receive_packet(socket):

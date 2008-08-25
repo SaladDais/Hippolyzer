@@ -1,5 +1,59 @@
 from zope.interface import Interface, Attribute
 
+class ITemplateDictionary(Interface):
+    """the template dictionary
+    
+    This component is a utility which knows about all the templates
+    and can return the necessary template for each
+    """
+    
+    def get_template(template_name):
+        """return the template with this name or None if not found
+        
+        TODO: Discuss if KeyError is better
+        """
+    
+    def get_template_by_pair(self, frequency, num):
+        """return a template by frequency and number"""
+        
+    def __getitem__(name):
+        """alias for get_template"""
+
+class IHost(Interface):
+    ip          = Attribute("""address of the host""")
+    port        = Attribute("""port of the host""")
+
+    def is_ok():
+        """ determines if the host is valid """
+    
+class IUDPDispatcher(Interface):
+    def receive_check(host, msg_buf, msg_size):
+        """ gets a raw message and tries to handle it """
+    
+class IPacket(Interface):
+    name                = Attribute("""name of the message""")
+    message_data        = Attribute("""name of the message""")
+
+class IUDPPacket(IPacket):
+    send_flags          = Attribute("""name of the message""")
+    reliable_params     = Attribute("""name of the message""")
+    packet_id           = Attribute("""name of the message""")
+    
+    acks                = Attribute("""name of the message""")
+    num_acks            = Attribute("""name of the message""")
+
+    trusted             = Attribute("""name of the message""")
+    reliable            = Attribute("""name of the message""")
+    resent              = Attribute("""name of the message""")
+    
+    socket              = Attribute("""name of the message""")
+    retries             = Attribute("""name of the message""")
+    host                = Attribute("""name of the message""")
+    expiration_time     = Attribute("""name of the message""")
+
+class ILLSDPacket(IPacket):
+    pass
+
 class IMessageData(Interface):
     """base interface for data that can be serialized to be sent over
        a network, or deserialized from networked received data. """

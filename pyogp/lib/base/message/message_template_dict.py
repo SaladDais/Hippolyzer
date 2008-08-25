@@ -1,18 +1,37 @@
 from pyogp.lib.base.data import msg_tmpl
 from pyogp.lib.base.message.message_types import MsgFrequency
+from interfaces import ITemplateDictionary
+import grokcore.component as grok
+from grokcore.component import GlobalUtility
 
-class TemplateDictionary(object):
-    def __init__(self, template_list):
+from pyogp.lib.base.data import msg_tmpl, msg_details
+from message_template_parser import MessageTemplateParser
+from data_packer import DataPacker
+from message_types import MsgType, EndianType
+
+
+class TemplateDictionary(GlobalUtility):
+    """the dictionary with all known templates"""
+    
+    grok.implements(ITemplateDictionary)
+    
+    def __init__(self, template_list=None):
+
         if template_list == None:
-            raise Exception('Template list null')
-        #maps name to template
+            parser = MessageTemplateParser(msg_tmpl)
+            template_list = parser.message_templates
+            template_dict = TemplateDictionary(template_list)
+
+        # maps name to template
         self.message_templates = {}
-        #maps (freq,num) to template
+        
+        # maps (freq,num) to template
         self.message_dict = {}
 
-        self.buildDictionaries(template_list)
+        self.build_dictionaries(template_list)
+        self.build_message_ids()
 
-    def buildDictionaries(self, template_list):
+    def build_dictionaries(self, template_list):
         for template in template_list:
             self.message_templates[template.name] = template
 
@@ -30,6 +49,31 @@ class TemplateDictionary(object):
             self.message_dict[(frequency_str, \
                                template.msg_num)] = template
 
+
+    def build_message_ids(self):
+        packer = DataPacker()
+        for template in self.message_templates.values():
+            frequency = template.frequency
+            if frequency == MsgFrequency.FIXED_FREQUENCY_MESSAGE:   
+                #have to do this because Fixed messages are stored as a long in the template
+                template.msg_num_hex = '\xff\xff\xff' + \
+                                       packer.pack_data(template.msg_num, \
+                                                        MsgType.MVT_U8)
+            elif frequency == MsgFrequency.LOW_FREQUENCY_MESSAGE:
+                template.msg_num_hex = '\xff\xff' + \
+                                packer.pack_data(template.msg_num, \
+                                                 MsgType.MVT_U16, \
+                                                 EndianType.BIG)
+            elif frequency == MsgFrequency.MEDIUM_FREQUENCY_MESSAGE:
+                template.msg_num_hex = '\xff' + \
+                                packer.pack_data(template.msg_num, \
+                                                 MsgType.MVT_U8, \
+                                                 EndianType.BIG)
+            elif frequency == MsgFrequency.HIGH_FREQUENCY_MESSAGE:
+                template.msg_num_hex = packer.pack_data(template.msg_num, \
+                                                         MsgType.MVT_U8, \
+                                                         EndianType.BIG)
+
     def get_template(self, template_name):
         if template_name in self.message_templates:
             return self.message_templates[template_name]
@@ -44,3 +88,5 @@ class TemplateDictionary(object):
 
     def __getitem__(self, i):
         return self.get_template(i)
+    
+

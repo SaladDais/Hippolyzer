@@ -1,20 +1,30 @@
-from pyogp.lib.base.message.data_unpacker import DataUnpacker
-from pyogp.lib.base.message.message_types import PacketLayout, MsgType
+import grokcore.component as grok
 
-class Packet(object):
-    def __init__(self, sock, packet_buffer, buffer_length, params):
-        self.name = ''
-        self.socket             = sock
-        self.buffer             = packet_buffer
-        self.buffer_length      = buffer_length
-        self.retries            = 0
+from pyogp.lib.base.message.message_types import PackFlags
+from pyogp.lib.base.message.interfaces import IUDPPacket, IMessageData
+
+class UDPPacket(grok.Adapter):
+    grok.implements(IUDPPacket)
+    grok.context(IMessageData)
+    
+    def __init__(self, context):
+        self.name = context.name
+        self.send_flags         = PackFlags.LL_NONE
+        self.packet_id          = 0 #aka, sequence number
+
+        self.message_data       = context
+        self.acks               = [] #may change
+        self.num_acks           = 0
+
+        self.trusted            = False
+        self.reliable           = False
+        self.resent             = False
+        
+        self.socket             = 0
+        self.retries            = 1 #by default
         self.host               = None
         self.expiration_time    = 0
-        
-        if params != {}:
-            self.host = params['host']
-            self.retries = params['retries']
 
-        self.packet_id = DataUnpacker().unpack_data(packet_buffer, \
-                                                    MsgType.MVT_U32, \
-                                                    PacketLayout.PACKET_ID_LENGTH)
+    def add_ack(self, packet_id):
+        self.acks.append(packet_id)
+        self.num_acks += 1

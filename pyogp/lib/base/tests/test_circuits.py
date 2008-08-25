@@ -3,7 +3,12 @@ import unittest, doctest
 import pprint
 
 #local libraries
-from pyogp.lib.base.message.circuitdata import Host, CircuitManager, Circuit
+from pyogp.lib.base.registration import init
+
+from pyogp.lib.base.message.circuit import CircuitManager, Circuit
+from pyogp.lib.base.message.interfaces import IHost
+from pyogp.lib.base.message.message import Message, Block
+from pyogp.lib.base.message.interfaces import IUDPPacket
 
 class TestHost(unittest.TestCase):
     
@@ -11,14 +16,14 @@ class TestHost(unittest.TestCase):
         pass
 
     def setUp(self):
-        pass
+        init()
 
     def test(self):
-        host = Host(0x00000001, 80)
+        host = IHost((0x00000001, 80))
         assert host.is_ok() == True, "Good host thinks it is bad"
 
     def test_fail(self):
-        host = Host(None, 80)
+        host = IHost((None, None))
         assert host.is_ok() == False, "Bad host thinks it is good"
 
 class TestCircuit(unittest.TestCase):
@@ -27,7 +32,8 @@ class TestCircuit(unittest.TestCase):
         pass
 
     def setUp(self):
-        self.host = Host(0x00000001, 80)
+        init()
+        self.host = IHost((0x00000001, 80))
 
     def test(self):
         circuit = Circuit(self.host, 1)
@@ -39,10 +45,14 @@ class TestCircuit(unittest.TestCase):
         assert circuit.unack_packet_count == 0, "Has incorrect unack count"
         assert len(circuit.unacked_packets) == 0, "Has incorrect unack"
         assert len(circuit.final_retry_packets) == 0, "Has incorrect final unacked"
-        circuit.add_reliable_packet(90, 'we are only testing', 10, \
-                                    {'retries':1, 'host':self.host})
+        msg = Message('PacketAck',
+                      Block('Packets', ID=0x00000003)
+                      )
+        packet = IUDPPacket(msg)
+        circuit.add_reliable_packet(packet)
         assert circuit.unack_packet_count == 1, "Has incorrect unack count"
-        assert len(circuit.unacked_packets) == 1, "Has incorrect unack"
+        assert len(circuit.unacked_packets) == 1, "Has incorrect unack, " + \
+               str(len(circuit.unacked_packets))
         assert len(circuit.final_retry_packets) == 0, "Has incorrect final unacked"
 
 class TestCircuitManager(unittest.TestCase):
@@ -51,14 +61,15 @@ class TestCircuitManager(unittest.TestCase):
         pass
 
     def setUp(self):
-        self.host = Host(0x00000001, 80)
+        init()
+        self.host = IHost((0x00000001, 80))
 
     def test_(self):
         manager = CircuitManager()
         assert len(manager.circuit_map) == 0, "Circuit list incorrect"
         manager.add_circuit(self.host, 1)
         assert len(manager.circuit_map) == 1, "Circuit list incorrect 2"
-        host = Host(0x00000011, 80)
+        host = IHost((0x00000011, 80))
         manager.add_circuit(host, 10)
         assert len(manager.circuit_map) == 2, "Circuit list incorrect 4"
         circuit = manager.get_circuit(self.host)
