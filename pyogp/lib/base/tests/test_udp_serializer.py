@@ -4,7 +4,7 @@ from uuid import UUID
 
 #local libraries
 from pyogp.lib.base.message.message_types import MsgType
-#import pyogp.lib.base.message.udpdeserializer
+from pyogp.lib.base.message.interfaces import IPacket
 from pyogp.lib.base.interfaces import ISerialization, IDeserialization
 from pyogp.lib.base.registration import init
 
@@ -32,7 +32,7 @@ class TestSerializer(unittest.TestCase):
         packed_data = serializer.serialize()
         print repr(packed_data)
         assert packed_data == message, "Incorrect serialization"
-                    
+        
         
 def test_suite():
     from unittest import TestSuite, makeSuite
