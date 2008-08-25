@@ -177,7 +177,7 @@ class UDPPacketDeserializer(grok.Adapter):
                 decode_pos += 1
             else:
                 print "ERROR: Unknown block type: " + str(block.type)
-                return False
+                return None
 
             for i in range(repeat_count):
                 block_data = MsgBlockData(block.name)
@@ -199,7 +199,7 @@ class UDPPacketDeserializer(grok.Adapter):
                         if (decode_pos + data_size) > len(data):
                             print "ERROR: trying to read " +  str(decode_pos + var_size) + \
                                   " from a buffer of len " + str(len(data))
-                            return False
+                            return None
                         if data_size == 1:
                             #print "Reading VARIABLE variable size 1 byte"
                             var_size = self.unpacker.unpack_data(data, \
@@ -229,7 +229,7 @@ class UDPPacketDeserializer(grok.Adapter):
                     if (decode_pos + var_size) > len(data):
                         print "ERROR 2: trying to read " +  str(decode_pos + var_size) + \
                               " from a buffer of len " + str(len(data))
-                        return False
+                        return None
                     unpacked_data = self.unpacker.unpack_data(data, \
                                                               variable.type, \
                                                               decode_pos, \
