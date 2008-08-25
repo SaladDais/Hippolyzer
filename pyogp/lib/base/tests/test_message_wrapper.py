@@ -18,7 +18,6 @@ class TestMessage(unittest.TestCase):
         init()
 
     def test_block(self):
-        print 'Test block'
         block = Block('CircuitCode', ID=1234,Code=531)
         
     def test_build(self):

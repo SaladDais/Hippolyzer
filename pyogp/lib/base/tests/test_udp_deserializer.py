@@ -41,7 +41,6 @@ class TestDeserializer(unittest.TestCase):
         deserializer = IDeserialization(packed_data)
         packet = deserializer.deserialize()
         data = packet.message_data
-        print data.blocks['ChatData'][0].vars['Message'].data
         assert data.blocks['ChatData'][0].vars['Message'].data == 'Hi Locklainn Tester',\
                'Message for chat is incorrect'
 

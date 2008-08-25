@@ -30,7 +30,6 @@ class TestSerializer(unittest.TestCase):
 
         serializer = ISerialization(packet)
         packed_data = serializer.serialize()
-        print repr(packed_data)
         assert packed_data == message, "Incorrect serialization"
         
         
