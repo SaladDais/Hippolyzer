@@ -204,17 +204,20 @@ class UDPPacketDeserializer(grok.Adapter):
                             #print "Reading VARIABLE variable size 1 byte"
                             var_size = self.unpacker.unpack_data(data, \
                                                                  MsgType.MVT_U8, \
-                                                                 decode_pos)
+                                                                 decode_pos,
+                                                                 endian_type=EndianType.BIG)
                         elif data_size == 2:
                             #print "Reading VARIABLE variable size 2 bytes" 
                             var_size = self.unpacker.unpack_data(data, \
                                                                  MsgType.MVT_U16, \
-                                                                 decode_pos)
+                                                                 decode_pos,
+                                                                 endian_type=EndianType.BIG)
                         elif data_size == 4:
                             #print "Reading VARIABLE variable size 4 bytes"
                             var_size = self.unpacker.unpack_data(data, \
                                                                  MsgType.MVT_U32, \
-                                                                 decode_pos)
+                                                                 decode_pos,
+                                                                 endian_type=EndianType.BIG)
 
                         else:
                             raise Exception('Attempting to read variable with unknown size \
