@@ -2,7 +2,7 @@ from agent import Agent
 from interfaces import ISerialization
 from caps import SeedCapability
 
-USE_REDIRECT=True
+USE_REDIRECT=False
 
 import urllib2
 
