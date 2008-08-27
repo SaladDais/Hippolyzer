@@ -120,12 +120,10 @@ class UDPPacketSerializer(grok.Adapter):
                         block_buffer += self.packer.pack_data(len(var_data), MsgType.MVT_U8)
                         #block_buffer += struct.pack('>B', var_size)
                     elif var_size == 2:
-                        block_buffer += self.packer.pack_data(len(var_data), MsgType.MVT_U16,
-                                                              endian_type=EndianType.BIG)
+                        block_buffer += self.packer.pack_data(len(var_data), MsgType.MVT_U16)
                         #block_buffer += struct.pack('>H', var_size)
                     elif var_size == 4:
-                        block_buffer += self.packer.pack_data(len(var_data), MsgType.MVT_U32,
-                                                              endian_type=EndianType.BIG)
+                        block_buffer += self.packer.pack_data(len(var_data), MsgType.MVT_U32)
                         #block_buffer += struct.pack('>I', var_size)
                     else:
                         raise Exception('Attempting to build variable with unknown size \

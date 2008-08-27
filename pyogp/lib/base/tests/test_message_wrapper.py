@@ -51,6 +51,21 @@ class TestMessage(unittest.TestCase):
                "Incorrect data in block Test ID"
         assert msg.blocks['Test'][0].vars['Code'].data == 123, \
                "Incorrect data in block Test ID"
+
+    def test_build_chat(self):
+        import uuid
+        msg = Message('ChatFromViewer',
+                      Block('AgentData', AgentID=uuid.UUID('550e8400-e29b-41d4-a716-446655440000'),
+                            SessionID=uuid.UUID('550e8400-e29b-41d4-a716-446655440000')),
+                       Block('ChatData', Message="Chatting\n", Type=1, Channel=0))
+        assert msg.blocks['ChatData'][0].vars['Type'].data == 1, "Bad type sent"
+        assert msg.blocks['ChatData'][0].vars['Channel'].data == 0, "Bad Channel sent"
+
+        from pyogp.lib.base.interfaces import ISerialization
+        from pyogp.lib.base.message.interfaces import IPacket
+        packet = IPacket(msg)
+        serial = ISerialization(packet)
+        msg = serial.serialize()
             
 def test_suite():
     from unittest import TestSuite, makeSuite
