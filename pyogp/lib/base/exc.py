@@ -21,6 +21,9 @@ class ResourceNotFound(NetworkError):
     """
     def __init__(self, url = ''):
         self.url = url
+
+    def __str__(self):
+	return self.url
         
 class ResourceError(NetworkError):
     """raised if any other error occurred (usually a 500)
@@ -29,12 +32,16 @@ class ResourceError(NetworkError):
     
     """
     
-    def __init__(self, url='', code='', message='', body=''):
+    def __init__(self, url='', code='', message='', body='', method='GET'):
         self.url = url
         self.code = code
         self.message = message
         self.body = body
+	self.method = method
 
+    def __str__(self):
+	"""return a printable version"""
+	return "Error using '%s' on resource '%s': %s (%s)" %(self.method, self.url, self.message, self.code)
 
 
 ### Serialization errors
@@ -58,6 +65,9 @@ class DeserializerNotFound(DeserializationError):
     def __init__(self, content_type=''):
         self.content_type = content_type
 
+    def __str__(self):
+	return "deserialization for %s not supported" %self.content_type
+
 class DeserializationFailed(DeserializationError):
     """raised if a deserializer couldn't deserialize a payload
     
@@ -68,7 +78,9 @@ class DeserializationFailed(DeserializationError):
     def __init__(self, payload='', reason=''):
         self.payload = payload
         self.reason = reason
-      
+
+    def __str__(self):
+	return "deserialization failed for '%s', reason: %s" %(self.payload, self.reason)
         
         
 ### Message System related errors
