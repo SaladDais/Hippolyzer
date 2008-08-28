@@ -30,7 +30,7 @@ We could ask this seed capability now to retrieve another cap for us::
 
     >>> caps = agentdomain.seed_cap.get(['place_avatar'])
     >>> caps
-    {'place_avatar': <Capability for http://localhost:12345/cap/place_avatar>}
+    {'place_avatar': <Capability 'place_avatar' for http://localhost:12345/cap/place_avatar>}
 
 Now we want to place out avatar somewhere on a region. To do so we first need a Region object::
     

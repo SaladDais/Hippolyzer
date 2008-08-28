@@ -27,6 +27,8 @@ class AgentDomain(object):
         # TODO: check headers
         try:
             data = llsd.parse(data)
+	    if data is False:	# might happen with GET
+		data={}
         except:
             self.response.status=500
             return self.response(self.environ, self.start)
@@ -45,6 +47,8 @@ class AgentDomain(object):
             return self.handle_seedcap(data)
         elif self.request.path=="/seed_cap_wrong_content_type":
             return self.handle_seedcap(data,content_type="text/foobar")
+        elif self.request.path=="/cap_wrong_content_type":
+            return self.some_capability({},content_type="text/foobar")
         elif self.request.path=="/cap/error":
             return self.send_response(500,'error')
         elif self.request.path=="/cap/place_avatar":
@@ -81,13 +85,14 @@ class AgentDomain(object):
         self.response.body = data
         return self.response(self.environ, self.start)
 
-    def some_capability(self, data):
+    def some_capability(self, data, content_type="application/llsd+xml"):
         """handle a dummy test capabilty"""
         d={'something':'else',
            'some' : 12345}
+	d.update(data)
         data = llsd.format_xml(d)
         self.response.status=200
-        self.response.content_type='application/llsd+xml'
+        self.response.content_type=content_type
         self.response.body = data
         return self.response(self.environ, self.start)
 

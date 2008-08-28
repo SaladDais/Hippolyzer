@@ -1,14 +1,23 @@
+# std lib
 import urllib2
+from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 
+# ZCA
 from zope.interface import implements
 from zope.component import queryUtility, adapts, getUtility
 import grokcore.component as grok
+
+# related
 from indra.base import llsd
 
+# pyogp
 from interfaces import ICapability, ISeedCapability
 from interfaces import ISerialization, IDeserialization
 from network import IRESTClient, HTTPError
+import exc
 
+logger = getLogger('pyogp.lib.base.caps')
+log = logger.log
 
 class Capability(object):
     """models a capability"""
@@ -20,19 +29,21 @@ class Capability(object):
         
         self.name = name
         self.public_url = public_url
+        log(DEBUG, 'instantiated cap %s' %self)
         
     def GET(self,custom_headers={}):
         """call this capability, return the parsed result"""
         
+        log(INFO, '%s: GETing %s' %(self.name, self.public_url))
 
-        # TODO: better errorhandling with own exceptions
         try:
             restclient = getUtility(IRESTClient)
             response = restclient.GET(self.public_url)
         except HTTPError, e:
-            print "** failure while calling cap:",
-            print e.fp.read(), e.code
-            raise
+	    if e.code==404:
+		raise exc.ResourceNotFound(self.public_url)
+	    else:
+		raise exc.ResourceError(self.public_url, e.code, e.msg, e.fp.read(), method="GET")
   
         # now deserialize the data again, we ask for a utility with the content type
         # as the name
@@ -41,8 +52,8 @@ class Capability(object):
         
         deserializer = queryUtility(IDeserialization,name=content_type)
         if deserializer is None:
-            # TODO: do better error handling here
-            raise "deserialization for %s not supported" %(content_type)
+	    raise exc.DeserializerNotFound(content_type)
+
         return deserializer.deserialize_string(response.body)
 
 
@@ -57,14 +68,14 @@ class Capability(object):
         headers = {"Content-type" : content_type}
         headers.update(custom_headers)  # give the user the ability to add headers 
         
-        # TODO: better errorhandling with own exceptions
         try:
             restclient = getUtility(IRESTClient)
             response = restclient.POST(self.public_url, serialized_payload, headers=headers)
         except HTTPError, e:
-            print "** failure while calling cap:",
-            print e.fp.read(), e.code            
-            raise
+	    if e.code==404:
+		raise exc.ResourceNotFound(self.public_url)
+	    else:
+		raise exc.ResourceError(self.public_url, e.code, e.msg, e.fp.read(), method="POST")
             
         # now deserialize the data again, we ask for a utility with the content type
         # as the name
@@ -73,12 +84,11 @@ class Capability(object):
         
         deserializer = queryUtility(IDeserialization,name=content_type)
         if deserializer is None:
-            # TODO: do better error handling here
-            raise Exception("deserialization for %s not supported" %(content_type))
+	    raise exc.DeserializerNotFound(content_type)
         return deserializer.deserialize_string(response.body)
         
     def __repr__(self):
-        return "<Capability for %s>" %self.public_url
+        return "<Capability '%s' for %s>" %(self.name, self.public_url)
         
 class SeedCapability(Capability):
     """a seed capability which is able to retrieve other capabilities"""
@@ -183,6 +193,19 @@ class LLSDDeserializer(grok.GlobalUtility):
     >>> llsd = deserializer.deserialize_string(s)
     >>> llsd
     {'test': 1234, 'foo': 'bar'}
+
+    We can also test this with some non-LLSD string:
+
+    >>> llsd = deserializer.deserialize_string('mumpitz')   # this is not LLSD
+    Traceback (most recent call last):
+    ...
+    DeserializationFailed: deserialization failed for 'mumpitz', reason: invalid token at index 0: 109
+
+    >>> llsd = deserializer.deserialize_string('barfoo') 
+    Traceback (most recent call last):
+    ...
+    DeserializationFailed: deserialization failed for 'barfoo', reason: binary notation not yet supported
+
     
     """
     grok.implements(IDeserialization)
@@ -190,7 +213,13 @@ class LLSDDeserializer(grok.GlobalUtility):
     
     def deserialize_string(self, data):
         """deserialize a string"""
-        return llsd.parse(data)
+	try:
+	    r = llsd.parse(data)
+	except llsd.LLSDParseError, e:
+	    raise exc.DeserializationFailed(data, str(e))
+	if r==False:
+	    raise exc.DeserializationFailed(data, 'result was False')
+	return r
         
     def deserialize_file(self, fp):
         """deserialize a file"""
@@ -208,6 +237,5 @@ grok.global_utility(LLSDDeserializer,
                                   provides=IDeserialization,
                                   name='application/xml',
                                   direct=False)
-
 
 
