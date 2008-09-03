@@ -11,6 +11,9 @@ from types import MsgFrequency, MsgTrust, MsgEncoding
 from types import MsgDeprecation, MsgBlockType, MsgType, sizeof
 
 class MessageTemplateParser(object):
+    """a parser which parses the message template and creates MessageTemplate objects
+       which are stored in self.message_templates
+    """
     def __init__(self, template_file):
         if template_file == None:
             raise Exception('Template file cannot be None')
@@ -19,13 +22,13 @@ class MessageTemplateParser(object):
         self.message_templates = []
         self.version = ''
         self.count = 0        
-        self.__parse_template_file()
+        self._parse_template_file()
 
-    def __add_template(self, new_template):
+    def _add_template(self, new_template):
         self.count += 1
         self.message_templates.append(new_template)
 
-    def __parse_template_file(self):
+    def _parse_template_file(self):
         count = 0
         
         self.template_file.seek(0)
@@ -41,8 +44,6 @@ class MessageTemplateParser(object):
         while(True):
             try:
                 line = lines.next()
-                #print line
-                #raw_input()
             except StopIteration:
                 break
 
@@ -117,7 +118,7 @@ class MessageTemplateParser(object):
 
                 current_template.msg_deprecation = msg_dep
 
-                self.__add_template(current_template)
+                self._add_template(current_template)
 
             block_header = re.match("^\t\t([^{}]+.+)",line) #gets packet block header
             if block_header != None:

@@ -22,7 +22,6 @@ class MsgBlockType(object):
     MBT_MULTIPLE, \
     MBT_VARIABLE = range(3)
 
-#pack flags
 class PackFlags(object):
     LL_ZERO_CODE_FLAG = 0x80
     LL_RELIABLE_FLAG  = 0x40
