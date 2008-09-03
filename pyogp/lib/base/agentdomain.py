@@ -43,7 +43,7 @@ class AgentDomain(object):
 	    print "error", error.code, error.msg
 	    print error.fp.read()
 	    raise
-    
+   
 	seed_cap_url_data = response.body
 	seed_cap_url = llsd.parse(seed_cap_url_data)['agent_seed_capability']
 	self.seed_cap = SeedCapability('seed_cap', seed_cap_url)
