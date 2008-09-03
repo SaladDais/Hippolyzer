@@ -5,61 +5,72 @@ from pyogp.lib.base import registration
 
 from pyogp.lib.base.interfaces import IPlaceAvatar, IEventQueueGet
 
-import getpass, sys
+import getpass, sys, logging
 from optparse import OptionParser
 
 
-class ExampleLogin(object):
+
+def login():
+    """login an agent and place it on a region"""    
+    registration.init()
+    parser = OptionParser()
     
-    def login(self):
-        registration.init()
-        parser = OptionParser()
+    logger = logging.getLogger("pyogp.lib.base.example")
 
-        parser.add_option("-a", "--agentdomain", dest="loginuri", default="https://login1.aditi.lindenlab.com/cgi-bin/auth.cgi",
-                          help="URI of Agent Domain")
-        parser.add_option("-r", "--region", dest="regionuri", default="http://sim1.vaak.lindenlab.com:13000",
-                          help="URI of Region to connect to")
+    parser.add_option("-a", "--agentdomain", dest="loginuri", default="https://login1.aditi.lindenlab.com/cgi-bin/auth.cgi",
+                      help="URI of Agent Domain")
+    parser.add_option("-r", "--region", dest="regionuri", default="http://sim1.vaak.lindenlab.com:13000",
+                      help="URI of Region to connect to")
+    parser.add_option("-q", "--quiet", dest="verbose", default=True, action="store_false",
+                    help="enable verbose mode")
+                      
 
-        (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args()
+    
+    if options.verbose:
+        console = logging.StreamHandler()
+        console.setLevel(logging.DEBUG) # seems to be a no op, set it for the logger
+        formatter = logging.Formatter('%(name)-30s: %(levelname)-8s %(message)s')
+        console.setFormatter(formatter)
+        logging.getLogger('').addHandler(console)
 
-        firstname = args[0]
-        lastname = args[1]
-        password = getpass.getpass()
+        # setting the level for the handler above seems to be a no-op
+        # it needs to be set for the logger, here the root logger
+        # otherwise it is NOTSET(=0) which means to log nothing.
+        logging.getLogger('').setLevel(logging.DEBUG)
+    else:
+        print "Attention: This script will print nothing if you use -q. So it might be boring to use it like that ;-)"
 
-        credentials = PlainPasswordCredential(firstname, lastname, password)
+    firstname = args[0]
+    lastname = args[1]
+    password = getpass.getpass()
 
-        agentdomain = AgentDomain(options.loginuri)
-        agent = agentdomain.login(credentials)
+    credentials = PlainPasswordCredential(firstname, lastname, password)
 
-        print "logged in, we now have an agent: ", agent
+    agentdomain = AgentDomain(options.loginuri)
+    agent = agentdomain.login(credentials)
 
-        place = IPlaceAvatar(agentdomain)
-        region = Region(options.regionuri)
+    logger.info("logged in, we now have an agent: %s" %agent)
 
-        print "now we try to place the avatar on a region"
-        avatar = place(region)
-        
-        # now get an event_queue_get cap
-        eqg = IEventQueueGet(agentdomain)
-        print "we got an event queue cap: ", eqg.cap
+    place = IPlaceAvatar(agentdomain)
+    region = Region(options.regionuri)
 
-        print "calling it!"
+    
+    logger.info("now we try to place the avatar on a region")
+    avatar = place(region)
+    logger.info("got region details: %s", avatar.region.details)
+    
+    # now get an event_queue_get cap
+    eqg = IEventQueueGet(agentdomain)
+    logger.info("received an event queue cap: %s", eqg.cap)
+
+    for i in range(1,4):
+        logger.info("calling EQG cap")
         result = eqg()
-        print "returned: %s" %result
+        logger.info("it returned: %s", result)
 
-        print "calling it!"
-        result = eqg()
-        print "returned: %s" %result
-
-        print "calling it!"
-        result = eqg()
-        print "returned: %s" %result
-        
-        
-        #avatar.establish_presence()
-        # 
 def main():
-    return ExampleLogin().login()    
+    return login()    
 
 if __name__=="__main__":
     main()
