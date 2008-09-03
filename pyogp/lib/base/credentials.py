@@ -14,6 +14,8 @@ class PlainPasswordCredential(object):
     """a plain password credential"""
     
     implements(IPlainPasswordCredential)
+
+    PW_TYPE = "plain"
     
     def __init__(self, firstname, lastname, password):
         """initialize this credential"""
@@ -29,6 +31,8 @@ class MD5PasswordCredential(object):
     """a md5 password credential"""
     
     implements(IMD5PasswordCredential)
+
+    PW_TYPE = "md5"
     
     def __init__(self, firstname, lastname, plainpw='', md5pw=None):
         """initialize this credential"""
@@ -122,3 +126,4 @@ class CredentialLLSDDeserializer(grok.GlobalUtility):
             elif payload.has_key("md5-password"):
                 return MD5PasswordCredential(payload['firstname'], payload['lastname'], md5pw=payload['md5-password'])
         raise Exception("couldn't deserialize credential payload '%s' because no matching format was found!" %str(payload))
+
