@@ -5,14 +5,11 @@ from zope.component import getUtility
 from interfaces import ITemplateDictionary
 
 #pyogp libs
-from pyogp.lib.base.message.interfaces import IUDPPacket
-from pyogp.lib.base.message.message_template import MsgData, MsgBlockData, \
-     MsgVariableData
-#import pyogp.lib.base.message_types
-from pyogp.lib.base.message.message_types import MsgType, MsgBlockType, \
-                             MsgFrequency, EndianType, sizeof
-from pyogp.lib.base.message.data_packer import DataPacker
-#from pyogp.lib.base.message.packet import Packet
+from interfaces import IUDPPacket
+from template import MsgData, MsgBlockData, MsgVariableData
+from types import MsgType, MsgBlockType, MsgFrequency, EndianType, sizeof
+from data_packer import DataPacker
+
 from pyogp.lib.base.interfaces import ISerialization
 
 class UDPPacketSerializer(grok.Adapter):

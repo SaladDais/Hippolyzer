@@ -6,11 +6,11 @@ import binascii
 from zope.component import getUtility
 
 #local libraries
-from pyogp.lib.base.data import msg_tmpl
+from pyogp.lib.base.message.data import msg_tmpl
 from pyogp.lib.base.message.interfaces import IUDPDispatcher
 from pyogp.lib.base.interfaces import IDeserialization
-from pyogp.lib.base.message.message_template_parser import MessageTemplateParser
-from pyogp.lib.base.message.message_template_dict import TemplateDictionary
+from pyogp.lib.base.message.template_parser import MessageTemplateParser
+from pyogp.lib.base.message.template_dict import TemplateDictionary
 from pyogp.lib.base.registration import init
 
 AGENT_DATA_UPDATE="C0 00 00 00 02 00 FF FF 01 83 1C 8A 77 67 E3 7B 42 2E AF B3 85 09 31 97 CA D1 03 4A 42 00 01 06 4B 72 61 66 74 00 01 01 00 1A"

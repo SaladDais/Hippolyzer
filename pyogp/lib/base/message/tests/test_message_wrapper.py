@@ -3,8 +3,8 @@ import unittest, doctest
 from uuid import UUID
 
 #local libraries
-from pyogp.lib.base.data import msg_tmpl
-from pyogp.lib.base.message.message_types import MsgType
+from pyogp.lib.base.message.data import msg_tmpl
+from pyogp.lib.base.message.types import MsgType
 from pyogp.lib.base.message.message import Message, Block
 from pyogp.lib.base.interfaces import IDeserialization
 from pyogp.lib.base.registration import init

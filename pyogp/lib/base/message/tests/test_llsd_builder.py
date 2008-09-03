@@ -5,8 +5,8 @@ import unittest, doctest
 from indra.base import llsd
 
 #local libraries
-from pyogp.lib.base.message.message_llsd_builder import LLSDMessageBuilder
-from pyogp.lib.base.message.message_types import MsgType
+from pyogp.lib.base.message.llsd_builder import LLSDMessageBuilder
+from pyogp.lib.base.message.types import MsgType
 
 class TestLLSDBuilder(unittest.TestCase):
     

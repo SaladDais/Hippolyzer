@@ -1,7 +1,7 @@
 import struct
 from uuid import UUID
 
-from pyogp.lib.base.message.message_types import MsgType, EndianType, sizeof
+from types import MsgType, EndianType, sizeof
 
 class DataUnpacker(object):
     def __init__(self):

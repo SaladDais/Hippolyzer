@@ -31,7 +31,7 @@ import pprint
 from zope.interface import implements
 import grokcore.component as grok
 
-from pyogp.lib.base.message.interfaces import IMessageData
+from interfaces import IMessageData
 
 #this probably needs to implement an interface so it can be serialized
 class MsgData(object):

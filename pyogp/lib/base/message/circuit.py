@@ -1,8 +1,8 @@
 import grokcore.component as grok
 from zope.interface import implements
 
-from pyogp.lib.base.message.interfaces import IHost
-from pyogp.lib.base.message.message_types import PackFlags
+from interfaces import IHost
+from types import PackFlags
 
 class Host(grok.Adapter):
     grok.implements(IHost)

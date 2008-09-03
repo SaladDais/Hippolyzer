@@ -2,15 +2,14 @@ from zope.interface import implements
 from zope.component import getUtility
 from pyogp.lib.base.network.interfaces import IUDPClient
 
-from pyogp.lib.base.data import msg_tmpl, msg_details
-from pyogp.lib.base.message.circuit import CircuitManager
-from pyogp.lib.base.message.message_types import PacketLayout, PackFlags,\
-                 MsgType, EndianType, sizeof
-from pyogp.lib.base.message.data_unpacker import DataUnpacker
-from pyogp.lib.base.message.data_packer import DataPacker
+from data import msg_tmpl, msg_details
+from circuit import CircuitManager
+from types import PacketLayout, PackFlags, MsgType, EndianType, sizeof
+from data_unpacker import DataUnpacker
+from data_packer import DataPacker
 from pyogp.lib.base.interfaces import ISerialization, IDeserialization
-from pyogp.lib.base.message.interfaces import IUDPDispatcher, IUDPPacket
-from pyogp.lib.base.message.message import Message, Block
+from interfaces import IUDPDispatcher, IUDPPacket
+from message import Message, Block
 
 #maybe make a global utility
 class UDPDispatcher(object):

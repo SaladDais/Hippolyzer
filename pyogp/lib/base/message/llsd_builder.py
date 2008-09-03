@@ -2,9 +2,8 @@
 from zope.interface import implements
 
 #local
-from pyogp.lib.base.message.interfaces import IMessageBuilder
-from pyogp.lib.base.message.message_template import MsgData, MsgBlockData, \
-     MsgVariableData
+from interfaces import IMessageBuilder
+from template import MsgData, MsgBlockData, MsgVariableData
 
 class LLSDMessageBuilder(object):
     implements(IMessageBuilder)

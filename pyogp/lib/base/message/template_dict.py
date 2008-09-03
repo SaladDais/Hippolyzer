@@ -1,13 +1,12 @@
-from pyogp.lib.base.data import msg_tmpl
-from pyogp.lib.base.message.message_types import MsgFrequency
+from types import MsgFrequency
 from interfaces import ITemplateDictionary
 import grokcore.component as grok
 from grokcore.component import GlobalUtility
 
-from pyogp.lib.base.data import msg_tmpl, msg_details
-from message_template_parser import MessageTemplateParser
+from data import msg_tmpl, msg_details
+from template_parser import MessageTemplateParser
 from data_packer import DataPacker
-from message_types import MsgType, EndianType
+from types import MsgType, EndianType
 
 
 class TemplateDictionary(GlobalUtility):

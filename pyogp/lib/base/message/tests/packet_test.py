@@ -1,7 +1,7 @@
 import unittest
-import message_template
 
 class PacketTest(unittest.TestCase):
+    pass
 """
     #testing each component
     def test_freqLow(self):

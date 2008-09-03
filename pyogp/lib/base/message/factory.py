@@ -1,3 +1,4 @@
+
 class MessageFactory(object):
     #not here, this goes somewhere else
     def new_message(self, message_name):

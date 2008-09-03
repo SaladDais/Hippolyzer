@@ -5,10 +5,10 @@ import re
 import pprint
 
 #local libraries
-import message_template
-from pyogp.lib.base.data import msg_tmpl
-from pyogp.lib.base.message.message_types import MsgFrequency, MsgTrust, \
-     MsgEncoding, MsgDeprecation, MsgBlockType, MsgType, sizeof
+import template
+from data import msg_tmpl
+from types import MsgFrequency, MsgTrust, MsgEncoding
+from types import MsgDeprecation, MsgBlockType, MsgType, sizeof
 
 class MessageTemplateParser(object):
     def __init__(self, template_file):
@@ -23,7 +23,6 @@ class MessageTemplateParser(object):
 
     def __add_template(self, new_template):
         self.count += 1
-        #self.message_templates[new_template.get_name()] = new_template
         self.message_templates.append(new_template)
 
     def __parse_template_file(self):
@@ -60,7 +59,7 @@ class MessageTemplateParser(object):
                 parts = packet_header.group(1)
                 parts = parts.split()
                 
-                current_template = message_template.MessageTemplate(parts[0])
+                current_template = template.MessageTemplate(parts[0])
                 frequency = None
                 if parts[1] == 'Low':
                     frequency = MsgFrequency.LOW_FREQUENCY_MESSAGE
@@ -125,7 +124,7 @@ class MessageTemplateParser(object):
                 parts = block_header.group(1)
                 parts = parts.split()
 
-                current_block = message_template.MessageTemplateBlock(parts[0])
+                current_block = template.MessageTemplateBlock(parts[0])
 
                 block_type = None
                 block_num = 0
@@ -201,7 +200,7 @@ class MessageTemplateParser(object):
                 if var_size == -1:
                     var_size = sizeof(var_type)
                 
-                current_var = message_template.MessageTemplateVariable(parts[0], var_type, var_size)
+                current_var = template.MessageTemplateVariable(parts[0], var_type, var_size)
                 current_block.add_variable(current_var)
 
         self.template_file.seek(0)

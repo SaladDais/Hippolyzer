@@ -1,5 +1,4 @@
-from pyogp.lib.base.message.message_template import MsgData, MsgBlockData, \
-     MsgVariableData
+from template import MsgData, MsgBlockData, MsgVariableData
 
 #NOTE: right now there is no checking with the template
 class Message(MsgData):

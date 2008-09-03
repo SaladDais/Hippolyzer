@@ -7,13 +7,10 @@ from zope.component import getUtility
 #pyogp libs
 from interfaces import ITemplateDictionary
 from pyogp.lib.base.interfaces import IDeserialization
-from pyogp.lib.base.message.message_template import MsgData, MsgBlockData, \
-     MsgVariableData
-#import pyogp.lib.base.message_types
-from pyogp.lib.base.message.message_types import MsgType, MsgBlockType, \
-     MsgFrequency, PacketLayout, EndianType, PackFlags, sizeof
-from pyogp.lib.base.message.data_unpacker import DataUnpacker
-from pyogp.lib.base.message.interfaces import IUDPPacket
+from template import MsgData, MsgBlockData, MsgVariableData
+from types import MsgType, MsgBlockType, MsgFrequency, PacketLayout, EndianType, PackFlags, sizeof
+from data_unpacker import DataUnpacker
+from interfaces import IUDPPacket
 
 class UDPPacketDeserializer(grok.Adapter):
     grok.implements(IDeserialization)

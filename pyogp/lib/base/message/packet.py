@@ -1,7 +1,7 @@
 import grokcore.component as grok
 
-from pyogp.lib.base.message.message_types import PackFlags
-from pyogp.lib.base.message.interfaces import IUDPPacket, IMessageData
+from types import PackFlags
+from interfaces import IUDPPacket, IMessageData
 
 class UDPPacket(grok.Adapter):
     grok.implements(IUDPPacket)

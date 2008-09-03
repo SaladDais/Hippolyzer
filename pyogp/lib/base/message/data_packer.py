@@ -1,6 +1,6 @@
 import struct
 
-from pyogp.lib.base.message.message_types import MsgType, EndianType
+from types import MsgType, EndianType
 
 class DataPacker(object):
     def __init__(self):

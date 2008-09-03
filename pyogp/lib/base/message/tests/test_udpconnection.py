@@ -8,7 +8,7 @@ from pyogp.lib.base.registration import init
 
 #local libraries
 #from pyogp.lib.base.message.udp_connection import MessageSystem
-from pyogp.lib.base.message.message_types import MsgType
+from pyogp.lib.base.message.types import MsgType
 from pyogp.lib.base.network.mockup_net import MockupUDPServer
 from pyogp.lib.base.message.message import Message, Block
 from pyogp.lib.base.message.interfaces import IHost
