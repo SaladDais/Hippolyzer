@@ -13,25 +13,24 @@ from data_packer import DataPacker
 from pyogp.lib.base.interfaces import ISerialization
 
 class UDPPacketSerializer(grok.Adapter):
-    grok.implements(ISerialization)
-    grok.context(IUDPPacket)
+    """ an adpater for serializing a IUDPPacket into the UDP message format
     
-    """ This class builds messages at its high level, that is, keeping
+	This class builds messages at its high level, that is, keeping
         that data in data structure form. A serializer should be used on
         the message produced by this so that it can be sent over a network. """
+
+    grok.implements(ISerialization)
+    grok.context(IUDPPacket)
+
     def __init__(self, context):
-        #when a message is being built, uses this template
-        #to add blocks and variables
-        self.context = context
+	"""initialize the adapter"""
+        self.context = context	# the UDPPacket
 
         template_dict = getUtility(ITemplateDictionary)
         self.current_template = template_dict.get_template(context.name)
         self.packer = DataPacker()
 
     def serialize(self):
-        return self.build_message()
-        
-    def build_message(self):
         """ Builds the message by serializing the data. Creates a packet ready
             to be sent. """
 
