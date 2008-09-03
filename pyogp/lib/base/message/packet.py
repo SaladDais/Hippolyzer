@@ -4,6 +4,8 @@ from types import PackFlags
 from interfaces import IUDPPacket, IMessageData
 
 class UDPPacket(grok.Adapter):
+    """a UDP packet"""
+
     grok.implements(IUDPPacket)
     grok.context(IMessageData)
     
