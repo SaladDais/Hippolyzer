@@ -33,13 +33,12 @@ import grokcore.component as grok
 
 from interfaces import IMessageData
 
-#this probably needs to implement an interface so it can be serialized
 class MsgData(object):
-    
-    implements(IMessageData)
-        
     """ Used as a Message that is being created that will be
         serialized and sent. """
+
+    implements(IMessageData)
+
     def __init__(self, name):
         self.name = name
         self.size = 0
@@ -57,10 +56,10 @@ class MsgData(object):
     def add_data(self, block_name, var_name, data, data_size):
         get_block(block_name).add_data(var_name, data, data_size)
 
-#this probably needs to implement an interface so it can be serialized
 class MsgBlockData(object):
     """ Used as a Message block that is being created that will be
         serialized and sent. """
+
     def __init__(self, name):
         self.name = name
         self.size = 0
@@ -87,12 +86,17 @@ class MsgVariableData(object):
         self.data = data
 
 class MessageTemplateVariable(object):
+    """TODO: Add docstring"""
+
     def __init__(self, name, tp, size):
         self.name = name
         self.type = tp
         self.size = size
 
 class MessageTemplateBlock(object):
+    """TODO: Add docstring"""
+
+
     def __init__(self, name):
         self.variables = []
         self.variable_map = {}
@@ -111,9 +115,11 @@ class MessageTemplateBlock(object):
         return self.variable_map[name]
 
 class MessageTemplate(object):
+
     def __init__(self, name):
         self.blocks = []
         self.block_map = {}
+
         #this is the function or object that will handle this type of message
         self.received_count = 0
         
