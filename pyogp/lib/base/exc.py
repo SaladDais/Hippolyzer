@@ -120,5 +120,31 @@ class UserNotAuthorized(AgentDomainError):
     def __init__(self, credentials = None):
         """initialize this exception"""
         self.credentials = credentials
+        
+class UserRezFailed(AgentDomainError):
+    """an error raised in case a user couldn't rez on a sim
+        
+    stores the credentials used inside a ``credentials`` attribute
+    stores the region used inside a ``region`` attribute
     
+    
+    """
 
+    def __init__(self, region = None):
+        """initialize this exception"""
+        self.region = region
+    
+class RegionDomainError(Error):
+    """base exception for all errors which can occur on an region domain"""
+    
+class RegionCapNotAvailable(RegionDomainError):
+    """an error raised in case a user couldn't be authorized
+    
+    stores the cap used inside a ``cap`` attribute
+    
+    """
+    
+    def __init__(self, cap = None):
+        """initialize this exception"""
+        
+        self.cap = cap   

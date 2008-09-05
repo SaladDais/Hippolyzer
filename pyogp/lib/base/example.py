@@ -1,3 +1,7 @@
+import uuid
+from threading import Thread
+import signal
+
 from pyogp.lib.base.credentials import PlainPasswordCredential
 from pyogp.lib.base.agentdomain import AgentDomain
 from pyogp.lib.base.regiondomain import Region
@@ -5,13 +9,27 @@ from pyogp.lib.base import registration
 
 from pyogp.lib.base.interfaces import IPlaceAvatar, IEventQueueGet
 
+from pyogp.lib.base.message.udpdispatcher import UDPDispatcher
+from pyogp.lib.base.message.message import Message, Block
+from pyogp.lib.base.message.interfaces import IHost
+from pyogp.lib.base.message.types import MsgType
+
 import getpass, sys, logging
 from optparse import OptionParser
 
-
+Running = None
 
 def login():
-    """login an agent and place it on a region"""    
+    """login an agent and place it on a region""" 
+
+    global Running
+    RUNNING = True
+	    
+    # would be nice to be able to kill threads with Ctrl-C now wouldnt it?
+    # i have yet to see this actually kill a thread tho....
+
+    signal.signal(signal.SIGINT, sigint_handler) 
+       
     registration.init()
     parser = OptionParser()
     
@@ -63,11 +81,37 @@ def login():
     # now get an event_queue_get cap
     eqg = IEventQueueGet(agentdomain)
     logger.info("received an event queue cap: %s", eqg.cap)
+    
+    # spawn the AD event queue thread
+    eventQueueGet(eqg, logger).start()
+    
+    # establish sim presence
+    logger.debug("kinda need to establish sim presence here")
 
-    for i in range(1,4):
-        logger.info("calling EQG cap")
-        result = eqg()
-        logger.info("it returned: %s", result)
+class eventQueueGet(Thread):
+    """ spawns a thread in which to run the eventqueueget """
+    
+    def __init__ (self, eqg, logger):
+        
+        self.eqg = eqg
+        self.logger = logger
+        Thread.__init__(self)
+        
+    def run(self):
+
+        self.logger.debug("spawning agent domain event queue thread")
+        
+        for i in range(1,4):
+            self.logger.debug("calling EQG cap")
+            result = self.eqg()
+            self.logger.debug("it returned: %s", result)   
+
+def sigint_handler(signal, frame):
+    global RUNNING
+    RUNNING = False
+    print
+    print "Caught signal... %d" % signal
+    sys.exit(1)        
 
 def main():
     return login()    
