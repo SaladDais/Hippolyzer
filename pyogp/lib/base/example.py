@@ -28,7 +28,7 @@ def login():
     # would be nice to be able to kill threads with Ctrl-C now wouldnt it?
     # i have yet to see this actually kill a thread tho....
 
-    signal.signal(signal.SIGINT, sigint_handler) 
+    #signal.signal(signal.SIGINT, sigint_handler) 
        
     registration.init()
     parser = OptionParser()
@@ -105,6 +105,8 @@ class eventQueueGet(Thread):
             self.logger.debug("calling EQG cap")
             result = self.eqg()
             self.logger.debug("it returned: %s", result)   
+
+
 
 def sigint_handler(signal, frame):
     global RUNNING

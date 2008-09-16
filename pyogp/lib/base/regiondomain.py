@@ -77,7 +77,7 @@ class EventQueueGet(grok.Adapter):
         # let's retrieve the cap we need
         self.seed_cap = self.context.seed_cap # ISeedCapability
         
-        log(DEBUG, 'intitializing region domain event queue via the seed cap: %s' % (self.seed_cap_url))
+        log(DEBUG, 'intitializing region domain event queue via the seed cap: %s' % (self.seed_cap))
         
         self.cap = self.seed_cap.get(['EventQueueGet'])['EventQueueGet']
         

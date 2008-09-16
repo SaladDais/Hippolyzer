@@ -33,12 +33,24 @@ class AgentDomain(object):
     def __init__(self,uri):
         """initialize the agent domain endpoint"""
         self.uri = uri
+        self.credentials = None
+        self.loginStatus = False
         log(DEBUG, 'initializing agent domain: %s' %self)
         
     def login(self, credentials):
         """login to the agent domain and return an agent object"""
         
-        log(INFO, 'logging in to %s as %s %s' % (self.uri, credentials.firstname, credentials.lastname))
+        response = self.post_to_loginuri(credentials)
+        
+        self.eval_login_response(response)   
+	
+        return Agent(self)
+        
+    def post_to_loginuri(self, credentials):
+        """post to login_uri and return response"""
+        
+        self.credentials = credentials
+        log(INFO, 'logging in to %s as %s %s' % (self.uri, self.credentials.firstname, self.credentials.lastname))
         
         serializer = ISerialization(credentials) # convert to string via adapter
         payload = serializer.serialize()
@@ -53,23 +65,43 @@ class AgentDomain(object):
         try:
             response = restclient.POST(self.uri, payload, headers=headers)
         except HTTPError, error:
-            if e.code==404:
+            if error.code==404:
                 raise exc.ResourceNotFound(self.uri)
             else:
                 raise exc.ResourceError(self.uri, error.code, error.msg, error.fp.read(), method="POST")
-   
-        seed_cap_url_data = response.body
-        seed_cap_url = llsd.parse(seed_cap_url_data)['agent_seed_capability']
-        self.seed_cap = SeedCapability('seed_cap', seed_cap_url)
-	
-        if self.seed_cap is None:
-            raise exc.UserNotAuthorized(self.credentials)
-        else:
+        
+        return response
+
+    def eval_login_response(self, response):
+        """ parse the login uri response and return an agent object """
+    
+        seed_cap_url_data = self.parse_login_response(response)
+        try:
+            seed_cap_url = seed_cap_url_data['agent_seed_capability']
+            self.seed_cap = SeedCapability('seed_cap', seed_cap_url)
+            self.loginStatus = True
             log(INFO, 'logged in to %s' % (self.uri))
+        except KeyError:
+            raise exc.UserNotAuthorized(self.credentials)
 	
         return Agent(self)
         
+    def parse_login_response(self, response):   
+        """ parse the login uri response and returns deserialized data """
+       
+        data = llsd.parse(response.body)
         
+        log(DEBUG, 'deserialized login response body = %s' % (data))
+        try:
+            seed_cap_url = data['agent_seed_capability']
+            self.seed_cap = SeedCapability('seed_cap', seed_cap_url)
+            self.loginStatus = True
+            log(INFO, 'logged in to %s' % (self.uri))
+        except KeyError:
+            pass
+            
+        return data
+                
 class PlaceAvatar(grok.Adapter):
     """handles placing an avatar for an agent object"""
     grok.implements(IPlaceAvatar)
@@ -105,6 +137,9 @@ class PlaceAvatar(grok.Adapter):
         
         #AND THE REST
         region.details = result
+        
+        log(DEBUG, 'Full rez_avatar/place response is: %s' % (result))
+        
         return avatar
     
 from interfaces import IEventQueueGet
