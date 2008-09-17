@@ -71,7 +71,7 @@ class AgentDomain(object):
             return self.some_capability({},content_type="text/foobar")
         elif self.request.path=="/cap/error":
             return self.send_response(500,'error')
-        elif self.request.path=="/cap/place_avatar":
+        elif self.request.path=="/cap/rez_avatar/place":
             return self.place_avatar(data)
         elif self.request.path=="/cap/some_capability":
             return self.some_capability(data)        
