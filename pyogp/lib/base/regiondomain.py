@@ -68,7 +68,7 @@ class RegionSeedCapability(Capability):
         
         payload = names
         parsed_result = self.POST(payload)  #['caps']
-        log(INFO, 'reques for caps returned: %s' % (names))
+        log(INFO, 'request for caps returned: %s' % (names))
         
         caps = {}
         for name in names:
