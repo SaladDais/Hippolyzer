@@ -36,7 +36,7 @@ class NetUDPClient(object):
         return self.sender
     
     def send_packet(self, sock, send_buffer, host):
-        print "Sending to " + str(host.ip) + ":" + str(host.port)
+        #print "Sending to " + str(host.ip) + ":" + str(host.port)
         if send_buffer == None:
             raise Exception("No data specified")
         bytes = sock.sendto(send_buffer, (host.ip, host.port))
@@ -48,7 +48,7 @@ class NetUDPClient(object):
             #print "Received data: " + repr(data)
         except:
             return '', 0
-        print self.sender
+        #print self.sender
         self.sender.ip = addr[0]
         self.sender.port = addr[1]
         return data, len(data)
