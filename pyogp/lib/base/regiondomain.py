@@ -26,7 +26,7 @@ from urlparse import urlparse, urljoin
 
 # ZCA
 from zope.interface import implements
-from zope.component import getUtility
+from zope.component import getUtility, queryUtility
 import grokcore.component as grok
 
 # pyogp
@@ -73,18 +73,22 @@ class Region(object):
         if (re.search('lindenlab', urlparse(uri)[1])):
             region_uri = uri + '/public_seed'
         else:
-            region_uri = urljoin(uri, quote(urlparse(uri)[2]))
+            # this is a crappy test to see if it's already been urlencoded, it only checkes for spaces
+            if re.search('%20', urlparse(uri)[2]):
+                region_uri = uri
+            else:
+                region_uri = urljoin(uri, quote(urlparse(uri)[2]))
         
         return region_uri
 
-    def get_region_public_seed(self,custom_headers={}):
+    def get_region_public_seed(self,custom_headers={'Accept' : 'application/llsd+xml'}):
         """call this capability, return the parsed result"""
         
         log(DEBUG, 'Getting region public_seed %s' %(self.uri))
 
         try:
             restclient = getUtility(IRESTClient)
-            response = restclient.GET(self.uri)
+            response = restclient.GET(self.uri, custom_headers)
         except HTTPError, e:
 	        if e.code==404:
 		        raise exc.ResourceNotFound(self.uri)
@@ -102,7 +106,7 @@ class Region(object):
 	        raise exc.DeserializerNotFound(content_type)
 
         data = deserializer.deserialize_string(response.body)
-        log(DEBUG, 'Get of cap %s response is: %s' % (self.public_url, data))        
+        log(DEBUG, 'Get of cap %s response is: %s' % (self.uri, data))        
         
         return data
 
