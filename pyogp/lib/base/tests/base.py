@@ -80,13 +80,13 @@ class AgentDomain(object):
 
     def handle_seedcap(self, data, content_type="application/llsd+xml"):
         """return some other caps"""
-        caps = data.get("caps",[])
+        caps = data.get("capabilities",[])
         d = {'lastname': 'lastname', 'firstname': 'firstname'}
         return_caps = {}
         for cap in caps:
             # simple mapping from capname => host/cap/<capname> instead of UUIDs
             return_caps[cap]="http://localhost:12345/cap/%s" %cap
-        d['caps'] = return_caps
+        d['capabilities'] = return_caps
         data = llsd.format_xml(d)
         self.response.status=200
         self.response.content_type=content_type
@@ -98,7 +98,7 @@ class AgentDomain(object):
         url = data.get("region_url",'')
         d={'sim_ip':'127.0.0.1',
            'sim_port' : 12345,
-           'seed_capability':'/region_seed_cap'}
+           'region_seed_capability':'/region_seed_cap'}
         data = llsd.format_xml(d)
         self.response.status=200
         self.response.content_type='application/llsd+xml'

@@ -127,9 +127,14 @@ class SeedCapability(Capability):
     implements(ISeedCapability)
         
     def get(self, names=[]):
-        """if this is a seed cap we can retrieve other caps here"""
-        payload = {'caps':names} 
-        parsed_result = self.POST(payload)['caps']
+        """ if this is a seed cap we can retrieve other caps here
+
+        Note: changing post key from 'caps' to 'capabilities' for OGP spec updates in Draft 3
+        see http://wiki.secondlife.com/wiki/OGP_Base_Draft_3#Seed_Capability_.28Resource_Class.29
+        """
+
+        payload = {'capabilities':names} 
+        parsed_result = self.POST(payload)['capabilities']
         
         caps = {}
         for name in names:

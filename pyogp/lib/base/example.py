@@ -57,7 +57,7 @@ def login():
 
     parser.add_option("-a", "--agentdomain", dest="loginuri", default="https://login1.aditi.lindenlab.com/cgi-bin/auth.cgi",
                       help="URI of Agent Domain")
-    parser.add_option("-r", "--region", dest="regionuri", default="http://sim1.vaak.lindenlab.com:13000",
+    parser.add_option("-r", "--region", dest="regionuri", default="http://ascent.bluewallgroup.com:9300/BlueWall Isle",
                       help="URI of Region to connect to")
     parser.add_option("-q", "--quiet", dest="verbose", default=True, action="store_false",
                     help="enable verbose mode")

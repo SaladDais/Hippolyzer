@@ -20,15 +20,20 @@ $/LicenseInfo$
 
 # std lib
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
+import re
+from urllib import quote
+from urlparse import urlparse, urljoin
 
 # ZCA
 from zope.interface import implements
+from zope.component import getUtility
 import grokcore.component as grok
 
 # pyogp
 from interfaces import IRegion
-from pyogp.lib.base.interfaces import ISeedCapability
+from pyogp.lib.base.interfaces import ISeedCapability, ISerialization, IDeserialization
 from pyogp.lib.base.caps import Capability
+from network import IRESTClient, HTTPError
 import exc
 
 logger = getLogger('pyogp.lib.base.regiondomain')
@@ -42,7 +47,7 @@ class Region(object):
     def __init__(self, uri):
         """initialize the region with the region uri"""
         
-        self.uri = uri
+        self.uri = self.parse_region_uri(uri)
         self.seed_cap_url = ''
         self.seed_cap = None
         self.details = {}
@@ -55,6 +60,52 @@ class Region(object):
         self.seed_cap = RegionSeedCapability('seed_cap', self.seed_cap_url)
         
         log(DEBUG, 'setting region domain seed cap: %s' % (self.seed_cap_url))
+    
+    def parse_region_uri(self, uri):     
+        """ parse a region uri and returns one formatted appropriately
+        
+        Note: new region name requirements when posting region_uri moving from Draft 2 to Draft 3
+        see http://wiki.secondlife.com/wiki/Open_Grid_Public_Beta/Changes_20080923
+        
+        """
+        
+        # test if it is a lindenlab.com domain name
+        if (re.search('lindenlab', urlparse(uri)[1])):
+            region_uri = uri + '/public_seed'
+        else:
+            region_uri = urljoin(uri, quote(urlparse(uri)[2]))
+        
+        return region_uri
+
+    def get_region_public_seed(self,custom_headers={}):
+        """call this capability, return the parsed result"""
+        
+        log(DEBUG, 'Getting region public_seed %s' %(self.uri))
+
+        try:
+            restclient = getUtility(IRESTClient)
+            response = restclient.GET(self.uri)
+        except HTTPError, e:
+	        if e.code==404:
+		        raise exc.ResourceNotFound(self.uri)
+	        else:
+		        raise exc.ResourceError(self.uri, e.code, e.msg, e.fp.read(), method="GET")
+  
+        # now deserialize the data again, we ask for a utility with the content type
+        # as the name
+        content_type_charset = response.headers['Content-Type']
+        content_type = content_type_charset.split(";")[0] # remove the charset part
+        
+        deserializer = queryUtility(IDeserialization,name=content_type)
+        
+        if deserializer is None:
+	        raise exc.DeserializerNotFound(content_type)
+
+        data = deserializer.deserialize_string(response.body)
+        log(DEBUG, 'Get of cap %s response is: %s' % (self.public_url, data))        
+        
+        return data
+
 
 class RegionSeedCapability(Capability):
     """a seed capability which is able to retrieve other capabilities"""

@@ -22,10 +22,6 @@ $/LicenseInfo$
 import urllib2
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 
-from agent import Agent
-from interfaces import ISerialization
-from caps import SeedCapability
-
 # ZCA
 from zope.component import queryUtility, adapts, getUtility
 from zope.interface import implements
@@ -35,7 +31,7 @@ import grokcore.component as grok
 from indra.base import llsd
 
 # pyogp
-from interfaces import IPlaceAvatar, IAgentDomain
+from interfaces import IPlaceAvatar, IAgentDomain, ISerialization
 from network import IRESTClient, HTTPError
 from agent import Agent
 from avatar import Avatar
@@ -139,14 +135,21 @@ class PlaceAvatar(grok.Adapter):
         
     def __call__(self, region, position=[117,73,21]):
         """initiate the placing process"""
-        
+
         region_uri = region.uri
+        
         payload = {'region_url' : region_uri, 'position':position} 
         result = self.place_avatar_cap.POST(payload)
         
         avatar = Avatar(region)
         #extract some data out of the results and put into region
-        seed_cap_url = result['seed_capability']
+        
+        ''' 
+        Note: Changed 'seed_capability' to 'region_seed_capability' per changes moving from Draft 2 to Draft 3 of the OGP spec.
+        see http://wiki.secondlife.com/wiki/OGP_Teleport_Draft_3#POST_Interface
+        '''
+        
+        seed_cap_url = result['region_seed_capability']
         region.set_seed_cap_url(seed_cap_url)
         #region.seed_cap = SeedCapability('seed_cap', seed_cap_url)
         
@@ -161,7 +164,7 @@ class PlaceAvatar(grok.Adapter):
         log(DEBUG, 'Full rez_avatar/place response is: %s' % (result))
         
         return avatar
-    
+   
 from interfaces import IEventQueueGet
 class EventQueueGet(grok.Adapter):
     """an event queue get capability"""

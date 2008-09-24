@@ -71,7 +71,7 @@ def place_avatar(agent, region_url):
     
     and this in turn the region details:
     >>> avatar.region.details
-    {'sim_port': 12345, 'seed_capability': '/region_seed_cap', 'sim_ip': '127.0.0.1'}
+    {'sim_port': 12345, 'region_seed_capability': '/region_seed_cap', 'sim_ip': '127.0.0.1'}
     
     """    
     place = IPlaceAvatar(agent.agentdomain)
