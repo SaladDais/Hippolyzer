@@ -46,6 +46,17 @@ class PlainPasswordCredential(object):
     def __repr__(self):
         """return a string represenation"""
         return "PlainPasswordCredential for '%s %s'" %(self.firstname, self.lastname)
+    
+    def get_xmlrpc_login_params(self):
+        """ return a dictionary of login params """
+        
+        login_params = {
+		    'first': self.firstname,
+		    'last': self.lastname,
+		    'passwd': self.password
+        }
+        
+        return login_params
 
 class MD5PasswordCredential(object):
     """a md5 password credential"""
