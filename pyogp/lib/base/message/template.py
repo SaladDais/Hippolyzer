@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """
-@file packet.py
+@file template.py
 @author Linden Lab
 @date 2008-06-13
 @brief Iniitializes path directories

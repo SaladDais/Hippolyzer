@@ -36,7 +36,7 @@ class MessageTemplateParser(object):
     """
     def __init__(self, template_file):
         if template_file == None:
-            raise Exception('Template file cannot be None')
+            raise exc.MessageTemplateNotFound("initializing template parser")
 
         self.template_file = template_file
         self.message_templates = []
@@ -216,7 +216,7 @@ class MessageTemplateParser(object):
 
                     var_size = int(parts[2])
                     if var_size <= 0:
-                        raise Exception('Bad variable size')
+                        raise exc.MessageTemplateParsingError("variable size %s does not match %s" % (var_size, type_string))
                 #if the size hasn't been read yet, then read it from message_types
                 if var_size == -1:
                     var_size = sizeof(var_type)

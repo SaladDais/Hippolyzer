@@ -31,6 +31,7 @@ from types import MsgType, MsgBlockType, MsgFrequency, EndianType, sizeof
 from data_packer import DataPacker
 
 from pyogp.lib.base.interfaces import ISerialization
+from pyogp.lib.base import exc
 
 class UDPPacketSerializer(grok.Adapter):
     """ an adpater for serializing a IUDPPacket into the UDP message format
@@ -105,9 +106,7 @@ class UDPPacketSerializer(grok.Adapter):
         #receieve this know how many to read automatically
         if template_block.type == MsgBlockType.MBT_MULTIPLE:
             if template_block.number != block_count:
-                raise Exception('Block ' + template_block.name + ' is type MBT_MULTIPLE \
-                          but only has data stored for ' + str(block_count) + ' out of its ' + \
-                          template_block.number + ' blocks')
+                raise exc.MessageSerializationError(template_block.name, "block data mismatch")
                                   
         #variable means the block variables can repeat, so we have to
         #mark how many blocks there are of this type that repeat, stored in
@@ -125,9 +124,8 @@ class UDPPacketSerializer(grok.Adapter):
                 var_data  = variable.data
                 
                 if variable == None:
-                    raise Exception('Variable ' + variable.name + ' in block ' + \
-                        message_block.name + ' of message ' + message_data.name + \
-                        " wasn't set prior to buildMessage call")
+                    raise exc.MessageSerializationError(variable.name, "variable value is not set")
+
 
                 #if its a VARIABLE type, we have to write in the size of the data
                 if v.type == MsgType.MVT_VARIABLE:
@@ -142,8 +140,7 @@ class UDPPacketSerializer(grok.Adapter):
                         block_buffer += self.packer.pack_data(len(var_data), MsgType.MVT_U32)
                         #block_buffer += struct.pack('>I', var_size)
                     else:
-                        raise Exception('Attempting to build variable with unknown size \
-                                          of ' + str(var_size))
+                        raise exc.MessageSerializationError("variable size", "unrecognized variable size")
 
                     bytes += var_size
                 

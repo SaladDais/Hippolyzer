@@ -86,7 +86,7 @@ class DeserializerNotFound(DeserializationError):
         self.content_type = content_type
 
     def __str__(self):
-	return "deserialization for %s not supported" %self.content_type
+	return "deserialization for '%s' not supported" % (self.content_type)
 
 class CredentialDeserializerNotFound(DeserializationError):
     """raised if a deserializer for a certain content type couldn't be found
@@ -112,15 +112,91 @@ class DeserializationFailed(DeserializationError):
         self.reason = reason
 
     def __str__(self):
-	return "deserialization failed for '%s', reason: %s" %(self.payload, self.reason)
+	return "deserialization failed for '%s', reason: '%s'" %(self.payload, self.reason)
         
         
 ### Message System related errors
 
 class MessageSystemError(Error):
     """message system related exception"""
-    
 
+class MessageTemplateNotFound(MessageSystemError):
+    """ message template file not found
+
+    stores the context in a ``context`` attribute
+    """
+
+    def __init__(self, context='',template=''):
+        self.context = context
+        self.template = template
+
+    def __str__(self):   
+        return "No message template found, context: '%s'" % (self.context)
+
+class MessageTemplateParsingError(MessageSystemError):
+    """ message template parsing error
+
+    stores the context in a ``context`` attribute
+    """
+
+    def __init__(self, context='',template=''):
+        self.context = context
+        self.template = template
+
+    def __str__(self):   
+        return "Error parsing message template, context: '%s'" % (self.context)
+
+class CircuitNotFound(MessageSystemError):
+    """ circuit to host could not be found
+
+    stores the host missing a circuit in a ``host`` attribute
+    """
+
+    def __init__(self, host='', reason=''):
+        self.host = host
+        self.reason = reason
+
+    def __str__(self):   
+        return "No circuit to '%s' found, reason: '%s'" % (self.host, self.reason)
+
+class MessageBuildingError(MessageSystemError):
+    """ problem serializing packet data
+
+    stores the label and reason in ``label`` and ``reason`` attributes
+    """
+
+    def __init__(self, label='', reason=''):
+        self.label = label
+        self.reason = reason
+
+    def __str__(self):   
+        return "Error serializing '%s' due to reason: '%s'" % (self.label, self.reason)
+
+class MessageSerializationError(MessageSystemError):
+    """ problem serializing packet data
+
+    stores the label and reason in ``label`` and ``reason`` attributes
+    """
+
+    def __init__(self, label='', reason=''):
+        self.label = label
+        self.reason = reason
+
+    def __str__(self):   
+        return "Error serializing '%s' due to reason: '%s'" % (self.label, self.reason)    
+
+class MessageDeserializationError(MessageSystemError):
+    """ problem deserializing packet data
+
+    stores the label and reason in ``label`` and ``reason`` attributes
+    """
+
+    def __init__(self, label='', reason=''):
+        self.label = label
+        self.reason = reason
+
+    def __str__(self):   
+        return "Error serializing '%s' due to reason: '%s'" % (self.label, self.reason) 
 
 ##########################
 ### high level exceptions
@@ -156,7 +232,6 @@ class UserNotAuthorized(AgentDomainError):
 class UserRezFailed(AgentDomainError):
     """an error raised in case a user couldn't rez on a sim
         
-    stores the credentials used inside a ``credentials`` attribute
     stores the region used inside a ``region`` attribute
     
     

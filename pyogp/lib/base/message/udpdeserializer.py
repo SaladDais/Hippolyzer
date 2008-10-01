@@ -32,6 +32,8 @@ from types import MsgType, MsgBlockType, MsgFrequency, PacketLayout, EndianType,
 from data_unpacker import DataUnpacker
 from interfaces import IUDPPacket
 
+from pyogp.lib.base import exc
+
 class UDPPacketDeserializer(grok.Adapter):
     grok.implements(IDeserialization)
     grok.context(str)
@@ -60,9 +62,7 @@ class UDPPacketDeserializer(grok.Adapter):
         """ Determines the template that the message in the buffer
             appears to be using. """
         if PacketLayout.PACKET_ID_LENGTH >= len(message_buffer):
-            raise Exception("Reading " + str(PacketLayout.PACKET_ID_LENGTH) + \
-                            " bytes from a buffer that is only " + \
-                            str(len(message_buffer)) + " bytes long")
+            raise exc.MessageDeserializationError("packet length", "template mismatch")
         
         header = message_buffer[PacketLayout.PACKET_ID_LENGTH:]
         self.current_template = self.__decode_header(header)
@@ -119,7 +119,7 @@ class UDPPacketDeserializer(grok.Adapter):
 
     def __decode_data(self, data):
         if self.current_template == None:
-            raise Exception('Attempting to decode data without validating it')
+            raise exc.MessageTemplateNotFound("deserializing data")
 
         msg_data = MsgData(self.current_template.name)
 
@@ -234,8 +234,7 @@ class UDPPacketDeserializer(grok.Adapter):
                                                                  decode_pos)
 
                         else:
-                            raise Exception('Attempting to read variable with unknown size \
-                                              of ' + str(data_size))
+                            raise exc.MessageDeserializationError("variable", "unknown data size")
                         
                         decode_pos += data_size
                         
@@ -255,7 +254,7 @@ class UDPPacketDeserializer(grok.Adapter):
 
 
         if len(msg_data.blocks) <= 0 and len(self.current_template.blocks) > 0:
-            raise Exception("Read message is empty")
+            raise exc.MessageDeserializationError("message", "message is empty")
         
         packet.message_data = msg_data
         return packet

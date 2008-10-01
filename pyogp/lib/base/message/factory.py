@@ -16,8 +16,10 @@ or in
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 
 $/LicenseInfo$
+
 """
 
+from pyogp.lib.base import exc
 
 class MessageFactory(object):
     #not here, this goes somewhere else
@@ -64,11 +66,12 @@ class MessageFactory(object):
         else:
             #make sure it isn't SINGLE and trying to create a new block
             if template_block.type == MsgBlockType.MBT_SINGLE:
-                raise Exception('ERROR: can"t have more than 1 block when its supposed to be 1')
+                raise exc.MessageBuildingError("block count", "exceding intended block count of 1")
+
 
             elif template_block.type == MsgBlockType.MBT_MULTIPLE and \
                  template_block.number == block_data.block_number:
-                raise Exception('ERROR: we are about to exceed block total')
+                raise exc.MessageBuildingError("block count", "exceeding intended block count")
 
             block_data.block_number += 1
             self.current_block = MsgBlockData(block_name)
@@ -84,14 +87,14 @@ class MessageFactory(object):
             what type (and therefore size) of the data that is being passed in. """
         self.has_been_built = False
         if self.current_template == None:
-            raise Exception('Attempting to add data to a null message')
+            raise exc.MessageBuildingError("data", "invalid context")
 
         if self.current_block == None:
-            raise Exception('Attempting to add data to a null block')
+            raise exc.MessageBuildingError("data", "adding to what should be a null block")
 
         template_variable = self.current_template.get_block(self.cur_block_name).get_variable(var_name)
         if template_variable == None:
-            raise Exception('Variable is not in the block')
+            raise exc.MessageBuildingError("data", "variable is not appropriate for block")
 
         #this should be the size of the actual data
         size = sizeof(data_type)
@@ -110,7 +113,7 @@ class MessageFactory(object):
         else:
             #size check can't be done on VARIABLE sized variables
             if self.__check_size(var_name, data, size) == False:
-                raise Exception('Variable size isn"t the same as the template size')
+                raise exc.MessageBuildingError("data", "invalid variable size")
             
             self.current_block.add_data(var_name, data, size)
 

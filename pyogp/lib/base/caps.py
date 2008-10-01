@@ -235,12 +235,12 @@ class LLSDDeserializer(grok.GlobalUtility):
     >>> llsd = deserializer.deserialize_string('mumpitz')   # this is not LLSD
     Traceback (most recent call last):
     ...
-    DeserializationFailed: deserialization failed for 'mumpitz', reason: invalid token at index 0: 109
+    DeserializationFailed: deserialization failed for 'mumpitz', reason: 'invalid token at index 0: 109'
 
     >>> llsd = deserializer.deserialize_string('barfoo') 
     Traceback (most recent call last):
     ...
-    DeserializationFailed: deserialization failed for 'barfoo', reason: binary notation not yet supported
+    DeserializationFailed: deserialization failed for 'barfoo', reason: 'binary notation not yet supported'
 
     
     """

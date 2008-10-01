@@ -30,6 +30,7 @@ from data_packer import DataPacker
 from pyogp.lib.base.interfaces import ISerialization, IDeserialization
 from interfaces import IUDPDispatcher, IUDPPacket
 from message import Message, Block
+from pyogp.lib.base import exc
 
 #maybe make a global utility
 class UDPDispatcher(object):
@@ -76,7 +77,7 @@ class UDPDispatcher(object):
             #host = self.udp_client.get_sender()
             circuit = self.find_circuit(host)
             if circuit == None:
-                raise Exception("No circuit found")
+                raise exc.CircuitNotFound(host, 'preparing to check for packets')
 
             #Case - trusted packets can only come in over trusted circuits
             if circuit.is_trusted and \

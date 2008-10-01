@@ -79,14 +79,14 @@ In this case it should not find a deserializer and say so::
     >>> cap = seed.get(['some_capability'])
     Traceback (most recent call last):
     ...
-    DeserializerNotFound: deserialization for text/foobar not supported
+    DeserializerNotFound: deserialization for 'text/foobar' not supported
 
 Try the same for GET:
     >>> cap = Capability('test','http://127.0.0.1:12345/cap_wrong_content_type')
     >>> cap.GET()
     Traceback (most recent call last):
     ...
-    DeserializerNotFound: deserialization for text/foobar not supported
+    DeserializerNotFound: deserialization for 'text/foobar' not supported
 
 
 

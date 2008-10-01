@@ -28,6 +28,7 @@ from template_parser import MessageTemplateParser
 from data_packer import DataPacker
 from types import MsgType, EndianType
 
+from pyogp.lib.base import exc
 
 class TemplateDictionary(GlobalUtility):
     """the dictionary with all known templates"""
