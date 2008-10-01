@@ -93,16 +93,16 @@ class Capability(object):
         
         headers = {"Content-type" : content_type}
         headers.update(custom_headers)  # give the user the ability to add headers 
-        
+
         try:
             restclient = getUtility(IRESTClient)
             response = restclient.POST(self.public_url, serialized_payload, headers=headers)
         except HTTPError, e:
-	        if e.code==404:
-		        raise exc.ResourceNotFound(self.public_url)
-	        else:
-		        raise exc.ResourceError(self.public_url, e.code, e.msg, e.fp.read(), method="POST")
-            
+            if e.code==404:
+                raise exc.ResourceNotFound(self.public_url)
+            else:
+                raise exc.ResourceError(self.public_url, e.code, e.msg, e.fp.read(), method="POST")
+ 
         # now deserialize the data again, we ask for a utility with the content type
         # as the name
         content_type_charset = response.headers['Content-Type']

@@ -29,6 +29,7 @@ import grokcore.component as grok
 
 from interfaces import IPlainPasswordCredential, IMD5PasswordCredential
 from interfaces import ISerialization, ICredentialDeserialization
+import exc
 
 class PlainPasswordCredential(object):
     """a plain password credential"""
@@ -156,5 +157,5 @@ class CredentialLLSDDeserializer(grok.GlobalUtility):
                 return PlainPasswordCredential(payload['firstname'], payload['lastname'], payload['password'])
             elif payload.has_key("md5-password"):
                 return MD5PasswordCredential(payload['firstname'], payload['lastname'], md5pw=payload['md5-password'])
-        raise Exception("couldn't deserialize credential payload '%s' because no matching format was found!" %str(payload))
+        raise exc.CredentialDeserializerNotFound(str(payload))
 

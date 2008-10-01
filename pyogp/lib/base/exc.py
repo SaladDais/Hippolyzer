@@ -88,6 +88,18 @@ class DeserializerNotFound(DeserializationError):
     def __str__(self):
 	return "deserialization for %s not supported" %self.content_type
 
+class CredentialDeserializerNotFound(DeserializationError):
+    """raised if a deserializer for a certain content type couldn't be found
+    
+    stores the content type inside a ``content_type`` attribute.
+    """
+    
+    def __init__(self, payload=''):
+        self.payload = payload
+
+    def __str__(self):
+	return "deserialization for payload '%s' not supported" % (self.payload)
+
 class DeserializationFailed(DeserializationError):
     """raised if a deserializer couldn't deserialize a payload
     
