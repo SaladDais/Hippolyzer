@@ -86,8 +86,8 @@ class LegacyLogin(object):
         try:
             login = xmlrpclib.Server(self.uri)
             results = login.login_to_simulator(self.credentials)
-        except:
-           raise exc.ResourceError(self.uri, "42", "stuff", "", method="XMLRPC") 
+        except ProtocolError, error:
+           raise exc.ResourceError(self.uri, error.errcode, error.errmsg, error.headers, method="XMLRPC") 
            results = {}       
         
         return results
