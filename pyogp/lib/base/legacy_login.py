@@ -76,8 +76,9 @@ class LegacyLogin(object):
         self.credentials['mac'] = default_login_params['mac']
         self.credentials['agree_to_tos'] = default_login_params['agree_to_tos']
         self.credentials['read_critical'] = default_login_params['read_critical']
-                          
-        log(DEBUG, 'initializing legacy login parameters %s' % (self.credentials))
+        self.credentials['id0'] = default_login_params['id0']
+                 
+        log(DEBUG, 'initializing legacy login parameters for %s %s' % (self.credentials['first'], self.credentials['last']))
        
     def post_to_loginuri(self, login_params):
         """ post to a login uri and return the results """
@@ -91,7 +92,7 @@ class LegacyLogin(object):
            results = {}       
         
         return results
-    
+         
     def eval_login_response(self, response, region):
         """ parse the login uri response and return an avatar object """
     
