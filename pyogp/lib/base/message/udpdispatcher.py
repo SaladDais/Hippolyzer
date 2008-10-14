@@ -17,6 +17,7 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 
 $/LicenseInfo$
 """
+from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 
 from zope.interface import implements
 from zope.component import getUtility
@@ -31,6 +32,9 @@ from pyogp.lib.base.interfaces import ISerialization, IDeserialization
 from interfaces import IUDPDispatcher, IUDPPacket
 from message import Message, Block
 from pyogp.lib.base import exc
+
+logger = getLogger('...base.message.udpdispatcher')
+log = logger.log
 
 #maybe make a global utility
 class UDPDispatcher(object):
@@ -86,6 +90,8 @@ class UDPDispatcher(object):
 
             circuit.handle_packet(recv_packet)
 
+            log(DEBUG, 'Received packet: %s' % (recv_packet.name))
+
         return recv_packet
                                                                              
     def send_reliable(self, message, host, retries):
@@ -127,6 +133,7 @@ class UDPDispatcher(object):
 
         #TODO: remove this when testing a network
         self.udp_client.send_packet(self.socket, send_buffer, host)
+        log(DEBUG, 'Sent packet: %s' % (message.name))
 
         return send_buffer
                         

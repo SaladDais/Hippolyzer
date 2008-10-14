@@ -20,6 +20,7 @@ $/LicenseInfo$
 
 #standard libs
 import struct
+from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 
 import grokcore.component as grok
 from zope.component import getUtility
@@ -33,6 +34,9 @@ from data_unpacker import DataUnpacker
 from interfaces import IUDPPacket
 
 from pyogp.lib.base import exc
+
+logger = getLogger('...base.message.udpdeserializer')
+log = logger.log
 
 class UDPPacketDeserializer(grok.Adapter):
     grok.implements(IDeserialization)
@@ -68,6 +72,8 @@ class UDPPacketDeserializer(grok.Adapter):
         self.current_template = self.__decode_header(header)
         if self.current_template != None:
             return True
+
+        log(INFO, "Received unknown packet: '%s', packet is not in our message_template" % (header))
 
         return False
 
