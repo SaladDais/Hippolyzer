@@ -66,6 +66,7 @@ class AgentDomain(object):
         """post to login_uri and return response"""
         
         self.credentials = credentials
+        self.credentials.agent_url = "http://10.2.231.3:12040"
         log(INFO, 'logging in to %s as %s %s' % (self.uri, self.credentials.firstname, self.credentials.lastname))
         
         serializer = ISerialization(credentials) # convert to string via adapter
@@ -77,6 +78,8 @@ class AgentDomain(object):
         # TODO: make this pluggable so we can use other transports like eventlet in the future
         # TODO: add logging and error handling
         restclient = getUtility(IRESTClient)
+
+        print "Payload is %s" % payload
 
         try:
             response = restclient.POST(self.uri, payload, headers=headers)
@@ -117,7 +120,54 @@ class AgentDomain(object):
             pass
             
         return data
-                
+
+class AD_EventQueue(AgentDomain):
+    """ handles the agent domain event queue """
+
+    def __init__(self, context):
+        """ initialize the event queue for the agent domain """
+  
+        self.connected = False
+        self.polling = False
+        self.ad_seed_cap = context.seed_cap 
+        self.event_queue_cap = self.ad_seed_cap.get(['event_queue'])['event_queue']
+
+        log(DEBUG, 'Initializing the event queue: %s' % (self.event_queue_cap.public_url))
+ 
+    def attach(self):
+        """ start the connection to the ad eq """
+	
+        self.connected = True
+        self._attach()
+
+    def _attach(self, data = {}):
+        """ initiate the event queue get request """
+        
+        self.polling = True
+  
+        while self.connected:
+            result = self.poll_event_queue()
+
+            if result != {}:
+                self.event_queue_handler(result)
+      
+    def poll_event_queue(self, data = {}):
+        """ post to the event queue """ 
+  
+        result = self.event_queue_cap.POST(data)
+        return result
+
+    def event_queue_handler(self):
+        """ let's see what we have """
+
+        log(DEBUG, 'Event Queue returned %s' % (result))
+
+    def detach(self):
+        """ disconnect from the ad eq """
+
+        self.connected = False
+        self.polling = False
+		                
 class PlaceAvatar(grok.Adapter):
     """handles placing an avatar for an agent object"""
     grok.implements(IPlaceAvatar)
@@ -138,7 +188,8 @@ class PlaceAvatar(grok.Adapter):
 
         region_uri = region.uri
         
-        payload = {'region_url' : region_uri, 'position':position} 
+        # moved region_url param with public_region_seed_capability per http://wiki.secondlife.com/wiki/OGP_Teleport_Draft_5
+        payload = {'public_region_seed_capability' : region_uri, 'position':position} 
         result = self.place_avatar_cap.POST(payload)
         
         avatar = Avatar(region)
