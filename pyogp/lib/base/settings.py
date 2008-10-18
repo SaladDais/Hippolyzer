@@ -18,7 +18,7 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 $/LicenseInfo$
 """
 
-class Settings():
+class Settings(object):
     
     # parameters for xmplrpc login
     def get_default_xmlrpc_login_parameters(self):
