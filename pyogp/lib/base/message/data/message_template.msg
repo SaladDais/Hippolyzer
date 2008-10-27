@@ -738,7 +738,7 @@ version 2.0
 	}
 	{
 		QueryReplies            Variable
- 		{	AgentID	  	 	    LLUUID			}
+		{	AgentID	  	 	    LLUUID			}
 		{	FirstName	        Variable	1	}
 		{	LastName	        Variable	1	}
 		{	Group		        Variable	1	}
@@ -899,11 +899,11 @@ version 2.0
 // reliable
 {
 	ClassifiedInfoReply Low 44 Trusted Unencoded
-    {
-        AgentData    Single
-        {	AgentID			LLUUID		}
-    }
-    {
+	{
+		AgentData    Single
+		{	AgentID			LLUUID		}
+	}
+	{
 		Data        Single
 		{	ClassifiedID	LLUUID		}
 		{	CreatorID		LLUUID		}
@@ -911,16 +911,16 @@ version 2.0
 		{	ExpirationDate	U32			}
 		{	Category		U32			}
 		{	Name			Variable 1	}
-        {	Desc			Variable 2	}
+		{	Desc			Variable 2	}
 		{	ParcelID		LLUUID		}
 		{	ParentEstate	U32			}
-        {	SnapshotID		LLUUID		}
-        {	SimName			Variable 1	}
-        {	PosGlobal		LLVector3d	}
-        {	ParcelName		Variable 1	}
+		{	SnapshotID		LLUUID		}
+		{	SimName			Variable 1	}
+		{	PosGlobal		LLVector3d	}
+		{	ParcelName		Variable 1	}
 		{	ClassifiedFlags	U8			}
 		{	PriceForListing	S32			}
-    }
+	}
 }
 
 
@@ -2669,56 +2669,56 @@ version 2.0
 // end viewer to simulator section
 
 {
-       ViewerStats Low 131 NotTrusted Zerocoded
-       {
-               AgentData                       Single
-               {       AgentID                 LLUUID      }
-               {       SessionID               LLUUID      }
-               {       IP                      IPADDR       }
-               {       StartTime               U32       }
-               {       RunTime                 F32       }  // F32
-               {       SimFPS                  F32       }  // F32
-               {       FPS                     F32       }  // F32
-               {       AgentsInView			   U8 } //
-               {       Ping                    F32       }  // F32
-               {       MetersTraveled  F64       }
-               {       RegionsVisited  S32       }
-               {       SysRAM                  U32       }
-               {       SysOS                   Variable        1       }  // String
-               {       SysCPU                  Variable        1       }  // String
-               {       SysGPU                  Variable        1       }  // String
-       }
+	ViewerStats Low 131 NotTrusted Zerocoded
+	{
+		AgentData                       Single
+		{       AgentID                 LLUUID      }
+		{       SessionID               LLUUID      }
+		{       IP                      IPADDR       }
+		{       StartTime               U32       }
+		{       RunTime                 F32       }  // F32
+		{       SimFPS                  F32       }  // F32
+		{       FPS                     F32       }  // F32
+		{       AgentsInView			   U8 } //
+		{       Ping                    F32       }  // F32
+		{       MetersTraveled  F64       }
+		{       RegionsVisited  S32       }
+		{       SysRAM                  U32       }
+		{       SysOS                   Variable        1       }  // String
+		{       SysCPU                  Variable        1       }  // String
+		{       SysGPU                  Variable        1       }  // String
+	}
 
-       {
-               DownloadTotals          Single
-               {       World                   U32       }
-               {       Objects                 U32       }
-               {       Textures                U32       }
-       }
+	{
+		DownloadTotals          Single
+		{       World                   U32       }
+		{       Objects                 U32       }
+		{       Textures                U32       }
+	}
 
-       {
-               NetStats                        Multiple        2
-               {       Bytes                   U32       }
-               {       Packets                 U32       }
-               {       Compressed              U32       }
-               {       Savings                 U32       }
-       }
+	{
+		NetStats                        Multiple        2
+		{       Bytes                   U32       }
+		{       Packets                 U32       }
+		{       Compressed              U32       }
+		{       Savings                 U32       }
+	}
 
-       {       
-               FailStats                       Single
-               {       SendPacket              U32       }
-               {       Dropped                 U32       }
-               {       Resent                  U32       }
-               {       FailedResends   U32       }
-               {       OffCircuit              U32       }
-               {       Invalid                 U32       }
-       }
+	{       
+		FailStats                       Single
+		{       SendPacket              U32       }
+		{       Dropped                 U32       }
+		{       Resent                  U32       }
+		{       FailedResends   U32       }
+		{       OffCircuit              U32       }
+		{       Invalid                 U32       }
+	}
 
-       {
-               MiscStats                       Variable
-               {       Type                    U32       }
-               {       Value                   F64       }
-       }
+	{
+		MiscStats                       Variable
+		{       Type                    U32       }
+		{       Value                   F64       }
+	}
 }
 		
 // ScriptAnswerYes
@@ -3072,10 +3072,10 @@ version 2.0
 		{	You		S16	}
 		{	Prey	S16	}
 	}
-    {
-         AgentData       Variable
-         {       AgentID                 LLUUID                  }
-    }
+	{
+		AgentData       Variable
+		{       AgentID                 LLUUID                  }
+	}
 }
 
 // ImageData - sent to viewer to transmit information about an image 
@@ -3137,7 +3137,7 @@ version 2.0
 	{
 		RegionData			Single
 		{	RegionHandle	U64	}
-		{   TimeDilation	U16   }
+		{	TimeDilation	U16   }
 	}
 	{
 		ObjectData			Variable
@@ -3183,23 +3183,23 @@ version 2.0
 		{	TextColor		Fixed		4	}	// actually, a LLColor4U
 		{	MediaURL		Variable	1	}	// URL for web page, movie, etc.
 
-		// Info for particle systems
+// Info for particle systems
 		{	PSBlock			Variable	1	}
 		
-		// Extra parameters
+// Extra parameters
 		{	ExtraParams		Variable	1	}
 		
-		// info for looped attached sounds
-        // because these are almost always all zero
-		// the hit after zero-coding is only 2 bytes
-		// not the 42 you see here
+// info for looped attached sounds
+// because these are almost always all zero
+// the hit after zero-coding is only 2 bytes
+// not the 42 you see here
 		{	Sound           LLUUID  }
 		{	OwnerID			LLUUID	}	// HACK object's owner id, only set if non-null sound, for muting
 		{	Gain            F32		}
 		{	Flags           U8		}
 		{	Radius          F32		}  // cutoff radius
 
-		// joint info -- is sent in the update of each joint-child-root
+// joint info -- is sent in the update of each joint-child-root
 		{	JointType 			U8		}
 		{	JointPivot			LLVector3	}
 		{	JointAxisOrAnchor 	LLVector3	}
@@ -4030,26 +4030,26 @@ version 2.0
 // reliable
 {
 	PickInfoReply Low 184 Trusted Unencoded
-    {
-        AgentData    Single
-        {    AgentID        LLUUID    }
-    }
-    {
+	{
+		AgentData    Single
+		{    AgentID        LLUUID    }
+	}
+	{
 		Data        Single
 		{	PickID			LLUUID		}
 		{	CreatorID		LLUUID		}
 		{	TopPick			BOOL		}
 		{	ParcelID		LLUUID		}
 		{	Name			Variable 1	}
-        {	Desc			Variable 2	}
-        {	SnapshotID		LLUUID		}
-        {	User			Variable 1	}
-        {	OriginalName	Variable 1	}
-        {	SimName			Variable 1	}
-        {	PosGlobal		LLVector3d	}
-        {	SortOrder		S32			}
-        {	Enabled			BOOL		}
-    }
+		{	Desc			Variable 2	}
+		{	SnapshotID		LLUUID		}
+		{	User			Variable 1	}
+		{	OriginalName	Variable 1	}
+		{	SimName			Variable 1	}
+		{	PosGlobal		LLVector3d	}
+		{	SortOrder		S32			}
+		{	Enabled			BOOL		}
+	}
 }
 
 
@@ -4077,8 +4077,8 @@ version 2.0
 		{	Desc			Variable 2	}
 		{	SnapshotID		LLUUID		}
 		{	PosGlobal		LLVector3d	}
-        {	SortOrder		S32			}
-        {	Enabled			BOOL		}
+		{	SortOrder		S32			}
+		{	Enabled			BOOL		}
 	}
 }
 
@@ -4512,7 +4512,7 @@ version 2.0
 // viewer -> sim
 // reliable
 {
-    EstateCovenantRequest Low 203 NotTrusted Unencoded
+	EstateCovenantRequest Low 203 NotTrusted Unencoded
 	{
 		AgentData			Single
 		{	AgentID			LLUUID	}
@@ -4524,14 +4524,14 @@ version 2.0
 // sim -> viewer
 // reliable
 {
-    EstateCovenantReply Low 204 Trusted Unencoded
+	EstateCovenantReply Low 204 Trusted Unencoded
 	{
 		Data        Single
 		{	CovenantID		    LLUUID		    }
 		{	CovenantTimestamp	U32 		    }
 		{	EstateName		    Variable    1	}   // string
-        {   EstateOwnerID       LLUUID          }
-    }
+		{   EstateOwnerID       LLUUID          }
+	}
 }
 
 
@@ -5170,7 +5170,7 @@ version 2.0
 		{	Far					F32	}
 		{	Aspect				F32	}
 		{	Throttles			Variable 1	}
- 		{	LocomotionState		U32	}
+		{	LocomotionState		U32	}
 		{	HeadRotation		LLQuaternion	}
 		{	BodyRotation		LLQuaternion	}
 		{	ControlFlags		U32	}
@@ -5269,8 +5269,8 @@ version 2.0
 
 // This message is sent how objects get passed between regions.
 {
-    AtomicPassObject High 28 Trusted Unencoded
-    {
+	AtomicPassObject High 28 Trusted Unencoded
+	{
 		TaskData		Single
 		{	TaskID				LLUUID	}
 		{	AttachmentNeedsSave	BOOL	}	// true iff is attachment and needs asset saved
@@ -5575,7 +5575,7 @@ version 2.0
 // GodlikeMessage - generalized construct for Gods to send messages
 // around the system. Each Request has it's own internal protocol.
 {
-    GodlikeMessage Low 259 NotTrusted Zerocoded
+	GodlikeMessage Low 259 NotTrusted Zerocoded
 	{
 		AgentData 		Single
 		{   AgentID     LLUUID  }
@@ -5596,7 +5596,7 @@ version 2.0
 // EstateOwnerMessage
 // format must be identical to above
 {
-    EstateOwnerMessage	Low 260 NotTrusted Zerocoded
+	EstateOwnerMessage	Low 260 NotTrusted Zerocoded
 	{
 		AgentData 		Single
 		{   AgentID     LLUUID  	}
@@ -5618,7 +5618,7 @@ version 2.0
 // format must be identical to above
 // As above, but don't have to be god or estate owner to send.
 {
-    GenericMessage	Low 261 NotTrusted Zerocoded
+	GenericMessage	Low 261 NotTrusted Zerocoded
 	{
 		AgentData 		Single
 		{   AgentID     LLUUID  	}
@@ -8438,7 +8438,7 @@ version 2.0
 // Generalized system message. Each Requst has its own protocol for
 // the StringData block format and contents.
 {
-    SystemMessage Low 404 Trusted Zerocoded
+	SystemMessage Low 404 Trusted Zerocoded
 	{
 		MethodData	 	Single
 		{	Method		Variable 1	}
@@ -8626,27 +8626,27 @@ version 2.0
 // Script on simulator requests rpc channel from rpcserver
 // simulator -> dataserver -> MySQL
 {
-    RpcChannelRequest Low 413 Trusted Unencoded
-    {
+	RpcChannelRequest Low 413 Trusted Unencoded
+	{
 		DataBlock		Single
 		{	GridX		U32 }
 		{	GridY		U32 }
-        {   TaskID      LLUUID }
-        {   ItemID		LLUUID }
-    }
+		{   TaskID      LLUUID }
+		{   ItemID		LLUUID }
+	}
 }
 
 // RpcServer allocated a session for the script
 // ChannelID will be the NULL UUID if unable to register
 // dataserver -> simulator
 {
-    RpcChannelReply Low 414 Trusted Unencoded
-    {
-        DataBlock   Single
-        {   TaskID      LLUUID }
-        {   ItemID		LLUUID }
-        {   ChannelID   LLUUID }
-    }
+	RpcChannelReply Low 414 Trusted Unencoded
+	{
+		DataBlock   Single
+		{   TaskID      LLUUID }
+		{   ItemID		LLUUID }
+		{   ChannelID   LLUUID }
+	}
 }
 
 // Inbound RPC requests follow this path:
