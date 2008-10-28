@@ -149,6 +149,7 @@ class MessageTemplateParser(object):
 
                 block_type = None
                 block_num = 0
+                
                 if parts[1] == 'Single':
                     block_type = MsgBlockType.MBT_SINGLE
                 elif parts[1] == 'Multiple':
@@ -157,11 +158,12 @@ class MessageTemplateParser(object):
                 elif parts[1] == 'Variable':
                     block_type = MsgBlockType.MBT_VARIABLE
 
-                current_block.type = block_type
+                #LDE 230ct2008 block_type vs block.type issues...
+                current_block.block_type = block_type
                 current_block.number = block_num
-                    
+
                 current_template.add_block(current_block)
-                
+              
             block_data  = re.match("^\t\t([{}]+.+)",line)  #gets block data
             if block_data != None:
                 parts = block_data.group(1)
@@ -221,42 +223,59 @@ class MessageTemplateParser(object):
                 if var_size == -1:
                     var_size = sizeof(var_type)
                 
+                #LDE 23oct2008 add var+type to creation of MTV object for subsequent formmating goodness
                 current_var = template.MessageTemplateVariable(parts[0], var_type, var_size)
                 current_block.add_variable(current_var)
 
         self.template_file.seek(0)
-
+def print_packet_names(packet_list):
+    frequency_counter = {"low":0, 'medium':0, "high":0, 'fixed':0}
+    counter = 0
+    for packet in packet_list:
+        print '================================================================================='
+        counter += 1
+        frequency_counter[packet.get_frequency_as_string()]+=1
+        #if packet.get_frequency_as_string() == "low":
+        print counter, packet.get_name() + ' ' + packet.get_frequency_as_string()
+        print '================================================================================='
+    print
+    for counters in frequency_counter:
+        print counters, frequency_counter[counters]
+    print
+    
 def print_packet_list(packet_list):
     for packet in packet_list:
-        print '======================================'
-        print packet.get_name() + ' ' + packet.get_frequency() + ' ' + \
-                str(packet.get_message_number()) + ' ' + str(packet.get_message_hex_num()) + \
-                ' ' + packet.get_message_trust() + ' ' + \
-                packet.get_message_encoding() + ' ' + packet.get_deprecation()
+        print '================================================================================='
+        print packet.get_name() + ' ' + packet.get_frequency_as_string() + ' ' + \
+                str(packet.get_message_number()) + ' ' + packet.get_message_hex_num() + \
+                ' ' + packet.get_message_trust_as_string() + ' ' + \
+                packet.get_message_encoding_as_string() + ' ' + packet.get_deprecation_as_string()
         
         for block in packet.get_blocks():
-            print '\t' + block.get_name() + ' ' + block.get_block_type() + ' ' + \
+
+            print '\t' + str(block.get_name()) + ' ' + block.get_block_type_as_string() + ' ' + \
                   str(block.get_block_number())
             for variable in block.get_variables():
                 sz = len(variable.get_name())
-                print '\t\t' + variable.get_name() + variable.get_type().rjust(30 - sz)
+                print '\t\t' + variable.get_name().ljust(20) +"\t" + variable.get_type_as_string()
 
 def get_all_types(packet_list):
     type_set = set([])
     for packet in packet_list:
         for block in packet.get_blocks():
             for variable in block.get_variables():
-                type_set.add(variable.get_type())
+                type_set.add(variable.get_type_as_string())  #LDE 23oct2008 display using _as_string call
 
     type_list = list(type_set)
     type_list.sort()
     return type_list
 
 def main():
-    parser = MessageTemplateParser()
-    parser.parse_template_file(msg_tmpl)
+    """tidied up this test which didn't seem to be working for me at first til I made a few changes"""
+    parser = MessageTemplateParser(msg_tmpl)
+    #parser._parse_template_file()  #LDE 23oct2008 part of tidying up thing above
     templates = parser.message_templates
-    
+    print_packet_names(templates)
     print_packet_list(templates)
 
     p_typelist = get_all_types(templates)
