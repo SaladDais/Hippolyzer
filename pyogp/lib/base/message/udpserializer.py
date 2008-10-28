@@ -104,14 +104,14 @@ class UDPPacketSerializer(grok.Adapter):
         #that make up this message, with the number stored in the template
         #don't need to add it to the buffer, because the message handlers that
         #receieve this know how many to read automatically
-        if template_block.type == MsgBlockType.MBT_MULTIPLE:
+        if template_block.block_type == MsgBlockType.MBT_MULTIPLE: #LDE 230ct2008 block_type vs block.type issue
             if template_block.number != block_count:
                 raise exc.MessageSerializationError(template_block.name, "block data mismatch")
                                   
         #variable means the block variables can repeat, so we have to
         #mark how many blocks there are of this type that repeat, stored in
         #the data
-        if template_block.type == MsgBlockType.MBT_VARIABLE:
+        if template_block.block_type == MsgBlockType.MBT_VARIABLE: #LDE 230ct2008 block_type vs block.type issue
             block_buffer += struct.pack('>B', block_count)
             bytes += 1            
 
