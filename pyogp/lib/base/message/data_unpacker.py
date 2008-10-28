@@ -26,6 +26,7 @@ from types import MsgType, EndianType, sizeof
 class DataUnpacker(object):
     def __init__(self):
         self.unpacker = {}
+        self.unpacker[MsgType.MVT_FIXED]          = ('<',self.__unpack_fixed)  #LDE 230ct2008 handler for MVT_FIXED
         self.unpacker[MsgType.MVT_VARIABLE]       = ('>', self.__unpack_string)
         self.unpacker[MsgType.MVT_S8]             = ('>', 'b')
         self.unpacker[MsgType.MVT_U8]             = ('>','B')
@@ -93,3 +94,7 @@ class DataUnpacker(object):
 
     def __unpack_string(self, endian, pack_string):
         return pack_string
+    
+    def __unpack_fixed(self, endian, data): #LDE 23oct2008 handler for MVT_FIXED
+        return data
+            
