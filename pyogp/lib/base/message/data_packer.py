@@ -25,6 +25,7 @@ from types import MsgType, EndianType
 class DataPacker(object):
     def __init__(self):
         self.packer = {}
+        self.packer[MsgType.MVT_FIXED]        = ('>',self.__pack_string)  #:DE 23oct2008 added handler for MVT_FIXED
         self.packer[MsgType.MVT_VARIABLE]       = ('>', self.__pack_string)
         self.packer[MsgType.MVT_S8]             = ('>', 'b')
         self.packer[MsgType.MVT_U8]             = ('>','B')
