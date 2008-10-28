@@ -41,6 +41,14 @@ class MsgBlockType(object):
     MBT_SINGLE, \
     MBT_MULTIPLE, \
     MBT_VARIABLE = range(3)
+    #LDE 230ct2008 added string array and class method for display of vartypes 
+    MBT_String_List = [ 'Single', 'Multiple', 'Variable']
+    @classmethod
+    def MBT_as_string(cls,typenum):
+        if typenum == None:
+            return "None"
+        return cls.MBT_String_List[typenum]
+    
 
 class PackFlags(object):
     LL_ZERO_CODE_FLAG = 0x80
@@ -102,6 +110,16 @@ class MsgType(object):
     MVT_BOOL, \
     MVT_IP_ADDR, \
     MVT_IP_PORT = range(20)
+    #LDE 23oct2008 added string array and class method to output more readable version of MVT var type.
+    MVT_String_List = [ 'MVT_FIXED', 'MVT_VARIABLE', 'MVT_U8', 'MVT_U16', 'MVT_U32', 'MVT_U64',\
+                 'MVT_S8', 'MVT_S16', 'MVT_S32', 'MVT_S64', 'MVT_F32', 'MVT_F64',\
+                 'MVT_LLVector3', 'MVT_LLVector3d', 'MVT_LLVector4', 'MVT_LLQuaternion', 'MVT_LLUUID', \
+                 'MVT_BOOL', 'MVT_IP_ADDR', 'MVT_IP_PORT' ]
+    @classmethod
+    def MVT_as_string(cls,typenum):
+        return cls.MVT_String_List[typenum]
+    
+    
 
 #TODO should this be changed? Less switch-style and more object-style?
 def sizeof(var):
