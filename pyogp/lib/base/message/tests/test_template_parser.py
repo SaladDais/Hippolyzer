@@ -120,14 +120,14 @@ class TestTemplates(unittest.TestCase):
 
     def test_block(self):
         block = self.msg_dict['OpenCircuit'].get_block('CircuitInfo')
-        tp = block.type
+        tp = block.block_type             #block.block_type vs block.type issue
         num = block.number
         assert tp == MsgBlockType.MBT_SINGLE, "Expected:   Single   Returned: " + tp       
         assert num == 0, "Expected:   0  Returned: " + str(num)               
         
     def test_block_multiple(self):
         block = self.msg_dict['NeighborList'].get_block('NeighborBlock')
-        tp = block.type
+        tp = block.block_type   #block.block_type vs block.type issue
         num = block.number
         assert tp == MsgBlockType.MBT_MULTIPLE, "Expected:   Multiple   Returned: " + tp
         assert num == 4, "Expected:   4  Returned: " + str(num)               
