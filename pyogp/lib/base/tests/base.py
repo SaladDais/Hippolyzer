@@ -47,8 +47,8 @@ class AgentDomain(object):
         # TODO: check headers
         try:
             data = llsd.parse(data)
-	    if data is False:	# might happen with GET
-		data={}
+        if data is False:    # might happen with GET
+        data={}
         except:
             self.response.status=500
             return self.response(self.environ, self.start)
@@ -109,7 +109,7 @@ class AgentDomain(object):
         """handle a dummy test capabilty"""
         d={'something':'else',
            'some' : 12345}
-	d.update(data)
+    d.update(data)
         data = llsd.format_xml(d)
         self.response.status=200
         self.response.content_type=content_type

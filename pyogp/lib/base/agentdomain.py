@@ -59,7 +59,7 @@ class AgentDomain(object):
         response = self.post_to_loginuri(credentials)
         
         self.eval_login_response(response)   
-	
+    
         return Agent(self)
         
     def post_to_loginuri(self, credentials):
@@ -99,7 +99,7 @@ class AgentDomain(object):
             log(INFO, 'logged in to %s' % (self.uri))
         except KeyError:
             raise exc.UserNotAuthorized(self.credentials)
-	
+    
         return Agent(self)
         
     def parse_login_response(self, response):   
@@ -117,7 +117,7 @@ class AgentDomain(object):
             pass
             
         return data
-		                
+                        
 class PlaceAvatar(grok.Adapter):
     """handles placing an avatar for an agent object"""
     grok.implements(IPlaceAvatar)

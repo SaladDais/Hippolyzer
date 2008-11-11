@@ -90,10 +90,10 @@ class Region(object):
             restclient = getUtility(IRESTClient)
             response = restclient.GET(self.uri, custom_headers)
         except HTTPError, e:
-	        if e.code==404:
-		        raise exc.ResourceNotFound(self.uri)
-	        else:
-		        raise exc.ResourceError(self.uri, e.code, e.msg, e.fp.read(), method="GET")
+            if e.code==404:
+                raise exc.ResourceNotFound(self.uri)
+            else:
+                raise exc.ResourceError(self.uri, e.code, e.msg, e.fp.read(), method="GET")
   
         # now deserialize the data again, we ask for a utility with the content type
         # as the name
@@ -103,7 +103,7 @@ class Region(object):
         deserializer = queryUtility(IDeserialization,name=content_type)
         
         if deserializer is None:
-	        raise exc.DeserializerNotFound(content_type)
+            raise exc.DeserializerNotFound(content_type)
 
         data = deserializer.deserialize_string(response.body)
         log(DEBUG, 'Get of cap %s response is: %s' % (self.uri, data))        

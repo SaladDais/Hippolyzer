@@ -60,10 +60,10 @@ class Capability(object):
             restclient = getUtility(IRESTClient)
             response = restclient.GET(self.public_url)
         except HTTPError, e:
-	        if e.code==404:
-		        raise exc.ResourceNotFound(self.public_url)
-	        else:
-		        raise exc.ResourceError(self.public_url, e.code, e.msg, e.fp.read(), method="GET")
+            if e.code==404:
+                raise exc.ResourceNotFound(self.public_url)
+            else:
+                raise exc.ResourceError(self.public_url, e.code, e.msg, e.fp.read(), method="GET")
   
         # now deserialize the data again, we ask for a utility with the content type
         # as the name
@@ -73,7 +73,7 @@ class Capability(object):
         deserializer = queryUtility(IDeserialization,name=content_type)
         
         if deserializer is None:
-	        raise exc.DeserializerNotFound(content_type)
+            raise exc.DeserializerNotFound(content_type)
 
         data = deserializer.deserialize_string(response.body)
         log(DEBUG, 'Get of cap %s response is: %s' % (self.public_url, data))        
@@ -111,7 +111,7 @@ class Capability(object):
         deserializer = queryUtility(IDeserialization,name=content_type)
         
         if deserializer is None:
-	        raise exc.DeserializerNotFound(content_type)
+            raise exc.DeserializerNotFound(content_type)
 
         data = deserializer.deserialize_string(response.body)
         log(DEBUG, 'Post to cap %s response is: %s' % (self.public_url, data))        
@@ -249,13 +249,13 @@ class LLSDDeserializer(grok.GlobalUtility):
     
     def deserialize_string(self, data):
         """deserialize a string"""
-	try:
-	    r = llsd.parse(data)
-	except llsd.LLSDParseError, e:
-	    raise exc.DeserializationFailed(data, str(e))
-	if r==False:
-	    raise exc.DeserializationFailed(data, 'result was False')
-	return r
+    try:
+        r = llsd.parse(data)
+    except llsd.LLSDParseError, e:
+        raise exc.DeserializationFailed(data, str(e))
+    if r==False:
+        raise exc.DeserializationFailed(data, 'result was False')
+    return r
         
     def deserialize_file(self, fp):
         """deserialize a file"""

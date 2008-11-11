@@ -36,7 +36,7 @@ from pyogp.lib.base import exc
 class UDPPacketSerializer(grok.Adapter):
     """ an adpater for serializing a IUDPPacket into the UDP message format
     
-	This class builds messages at its high level, that is, keeping
+    This class builds messages at its high level, that is, keeping
         that data in data structure form. A serializer should be used on
         the message produced by this so that it can be sent over a network. """
 
@@ -44,8 +44,8 @@ class UDPPacketSerializer(grok.Adapter):
     grok.context(IUDPPacket)
 
     def __init__(self, context):
-	"""initialize the adapter"""
-        self.context = context	# the UDPPacket
+    """initialize the adapter"""
+        self.context = context    # the UDPPacket
 
         template_dict = getUtility(ITemplateDictionary)
         self.current_template = template_dict.get_template(context.name)

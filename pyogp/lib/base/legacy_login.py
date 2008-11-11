@@ -60,7 +60,7 @@ class LegacyLogin(object):
         login_params = self.get_extended_credentials(credentials)
         response = self.post_to_loginuri(login_params)
         avatar = self.eval_login_response(response, region)   
-	
+    
         return avatar
         
     def get_extended_credentials(self, credentials):
@@ -105,7 +105,7 @@ class LegacyLogin(object):
             log(INFO, 'logged in to %s' % (self.uri))
         except KeyError:
             raise exc.UserNotAuthorized(self.credentials)
-	
+    
         avatar = Avatar(region)       
         
         if seed_cap_url is None:
