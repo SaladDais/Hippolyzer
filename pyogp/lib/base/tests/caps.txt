@@ -4,10 +4,13 @@ The Capabilities component
 The Capabilities component basically gives us two objects: a Capability 
 and a SeedCapability.
 
-We can instaniate a SeedCapability like this:
+We can instantiate a SeedCapability like this:
 
+    >>> from pyogp.lib.base.network.mockup_client import MockupClient
     >>> from pyogp.lib.base.caps import SeedCapability, Capability
-    >>> seed = SeedCapability('seed', 'http://127.0.0.1:12345/seed_cap')
+    >>> from pyogp.lib.base.tests.base import AgentDomain
+    >>> client = MockupClient(AgentDomain())
+    >>> seed = SeedCapability('seed', 'http://127.0.0.1:12345/seed_cap', client)
 
 We assume that we got the seed capability URL itself from login or some other service.
 
@@ -19,6 +22,12 @@ The result is a dictionary object:
 
     >>> len(caps.keys())
     2
+
+whose contents are:
+    >>> caps['some_capability']
+    <Capability 'some_capability' for http://localhost:12345/cap/some_capability>
+    >>> caps['some_other']
+    <Capability 'some_other' for http://localhost:12345/cap/some_other>
 
 Let's store the some_capability cap in a variable:
 
@@ -55,7 +64,7 @@ As we can see, it's not a secret URL in this mockup case but in production it wi
 
 We can of course also just instantiate some capability directly:
 
-    >>> cap = Capability("cap", "http://localhost:12345/cap/some_capability")
+    >>> cap = Capability("cap", "http://localhost:12345/cap/some_capability", client)
 
 and retrieve it via GET:
 
@@ -75,14 +84,14 @@ Testing errors
 Now we can test what happens to our code when the server returns a wrong content type.
 In this case it should not find a deserializer and say so::
 
-    >>> seed = SeedCapability('seed', 'http://127.0.0.1:12345/seed_cap_wrong_content_type')
+    >>> seed = SeedCapability('seed', 'http://127.0.0.1:12345/seed_cap_wrong_content_type', client)
     >>> cap = seed.get(['some_capability'])
     Traceback (most recent call last):
     ...
     DeserializerNotFound: deserialization for 'text/foobar' not supported
 
 Try the same for GET:
-    >>> cap = Capability('test','http://127.0.0.1:12345/cap_wrong_content_type')
+    >>> cap = Capability('test','http://127.0.0.1:12345/cap_wrong_content_type', client)
     >>> cap.GET()
     Traceback (most recent call last):
     ...
@@ -92,7 +101,7 @@ Try the same for GET:
 
 Now we test if network errors are handled correctly::
 
-    >>> cap = Capability('test','http://127.0.0.1:12345/cap/error')
+    >>> cap = Capability('test','http://127.0.0.1:12345/cap/error', client)
     >>> cap.POST({'test':'testing'})
     Traceback (most recent call last):
     ...
@@ -101,7 +110,7 @@ Now we test if network errors are handled correctly::
 
 And some 404:
 
-    >>> cap = Capability('test','http://127.0.0.1:12345/cap/unkown')
+    >>> cap = Capability('test','http://127.0.0.1:12345/cap/unkown', client)
     >>> cap.POST({'test':'testing'})
     Traceback (most recent call last):
     ...

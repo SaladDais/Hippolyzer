@@ -18,15 +18,10 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 $/LicenseInfo$
 """
 
-#third party
-from zope.interface import implements
-
-#local
-from interfaces import IMessageBuilder
 from template import MsgData, MsgBlockData, MsgVariableData
 
 class LLSDMessageBuilder(object):
-    implements(IMessageBuilder)
+    #implements(IMessageBuilder)
 
     def __init__(self):
         self.current_template = None

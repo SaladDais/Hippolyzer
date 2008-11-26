@@ -22,85 +22,77 @@ $/LicenseInfo$
 import urllib2
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 
-# ZCA
-from zope.component import queryUtility, adapts, getUtility
-from zope.interface import implements
-import grokcore.component as grok
-
 # related
 from indra.base import llsd
 
 # pyogp
-from interfaces import IPlaceAvatar, IAgentDomain, ISerialization
-from network import IRESTClient, HTTPError
-from agent import Agent
-from avatar import Avatar
+from network.stdlib_client import StdLibClient, HTTPError
 from caps import SeedCapability
 import exc
 
+# initialize logging
 logger = getLogger('pyogp.lib.base.agentdomain')
 log = logger.log
 
 class AgentDomain(object):
     """an agent domain endpoint"""
     
-    implements(IAgentDomain)
-    
-    def __init__(self,uri):
-        """initialize the agent domain endpoint"""
-        self.uri = uri
+    def __init__(self, uri, restclient = None):
+        """ initialize the agent domain endpoint """
+
+        if restclient == None: 
+            self.restclient = StdLibClient() 
+        else:
+            self.restclient = restclient 
+
+        self.login_uri = uri
         self.credentials = None
-        self.loginStatus = False
+        self.connectedStatus = False
+        self.seed_cap = None
         log(DEBUG, 'initializing agent domain: %s' %self)
         
     def login(self, credentials):
-        """login to the agent domain and return an agent object"""
+        """ login to the agent domain """
         
         response = self.post_to_loginuri(credentials)
         
         self.eval_login_response(response)   
-    
-        return Agent(self)
         
     def post_to_loginuri(self, credentials):
-        """post to login_uri and return response"""
+        """ post to login_uri and return response """
         
         self.credentials = credentials
-        log(INFO, 'logging in to %s as %s %s' % (self.uri, self.credentials.firstname, self.credentials.lastname))
+        log(INFO, 'Logging in to %s as %s %s' % (self.login_uri, self.credentials.firstname, self.credentials.lastname))
         
-        serializer = ISerialization(credentials) # convert to string via adapter
-        payload = serializer.serialize()
-        content_type = serializer.content_type
+        payload = credentials.serialize()
+        content_type = credentials.content_type
         headers = {'Content-Type': content_type}
         
         # now create the request. We assume for now that self.uri is the login uri
         # TODO: make this pluggable so we can use other transports like eventlet in the future
         # TODO: add logging and error handling
-        restclient = getUtility(IRESTClient)
 
         try:
-            response = restclient.POST(self.uri, payload, headers=headers)
+            response = self.restclient.POST(self.login_uri, payload, headers=headers)
         except HTTPError, error:
             if error.code==404:
-                raise exc.ResourceNotFound(self.uri)
+                raise exc.ResourceNotFound(self.login_uri)
             else:
-                raise exc.ResourceError(self.uri, error.code, error.msg, error.fp.read(), method="POST")
+                raise exc.ResourceError(self.login_uri, error.code, error.msg, error.fp.read(), method="POST")
         
         return response
 
     def eval_login_response(self, response):
-        """ parse the login uri response and return an agent object """
+        """ parse the login uri response """
     
         seed_cap_url_data = self.parse_login_response(response)
         try:
             seed_cap_url = seed_cap_url_data['agent_seed_capability']
-            self.seed_cap = SeedCapability('seed_cap', seed_cap_url)
-            self.loginStatus = True
-            log(INFO, 'logged in to %s' % (self.uri))
+            self.seed_cap = SeedCapability('seed_cap', seed_cap_url, self.restclient)
+            self.connectedStatus = True
+            log(INFO, 'logged in to %s' % (self.login_uri))
         except KeyError:
             raise exc.UserNotAuthorized(self.credentials)
-    
-        return Agent(self)
         
     def parse_login_response(self, response):   
         """ parse the login uri response and returns deserialized data """
@@ -108,76 +100,39 @@ class AgentDomain(object):
         data = llsd.parse(response.body)
         
         log(DEBUG, 'deserialized login response body = %s' % (data))
-        try:
-            seed_cap_url = data['agent_seed_capability']
-            self.seed_cap = SeedCapability('seed_cap', seed_cap_url)
-            self.loginStatus = True
-            log(INFO, 'logged in to %s' % (self.uri))
-        except KeyError:
-            pass
             
         return data
-                        
-class PlaceAvatar(grok.Adapter):
-    """handles placing an avatar for an agent object"""
-    grok.implements(IPlaceAvatar)
-    grok.context(IAgentDomain)
-    
-    def __init__(self, context):
-        """initialize this adapter"""
-        self.context = context 
-        
-        # let's retrieve the cap we need
-        self.seed_cap = self.context.seed_cap # ISeedCapability
-        self.place_avatar_cap = self.seed_cap.get(['rez_avatar/place'])['rez_avatar/place']
-        
-        log(DEBUG, 'initializing rez_avatar/place: %s' % (self.place_avatar_cap))
-        
-    def __call__(self, region, position=[117,73,21]):
-        """initiate the placing process"""
+                
+    def place_avatar(self, region_uri, position=[117,73,21]):
+        """ handles the rez_avatar/place cap on the agent domain, populates some initial region attributes """
 
-        region_uri = region.uri
-        
-        # moved region_url param with public_region_seed_capability per http://wiki.secondlife.com/wiki/OGP_Teleport_Draft_5
+        place_avatar_cap = self.seed_cap.get(['rez_avatar/place'])['rez_avatar/place']
+
         payload = {'public_region_seed_capability' : region_uri, 'position':position} 
-        result = self.place_avatar_cap.POST(payload)
-        
-        avatar = Avatar(region)
-        #extract some data out of the results and put into region
-        
-        ''' 
-        Note: Changed 'seed_capability' to 'region_seed_capability' per changes moving from Draft 2 to Draft 3 of the OGP spec.
-        see http://wiki.secondlife.com/wiki/OGP_Teleport_Draft_3#POST_Interface
-        '''
-        
-        seed_cap_url = result['region_seed_capability']
-        region.set_seed_cap_url(seed_cap_url)
-        #region.seed_cap = SeedCapability('seed_cap', seed_cap_url)
-        
-        if seed_cap_url is None:
+        result = place_avatar_cap.POST(payload)
+
+        if result['region_seed_capability'] is None:
             raise exc.UserRezFailed(region)
         else:
-            log(INFO, 'Region_uri %s returned a seed_cap of %s' % (region_uri, seed_cap_url))
-        
-        #AND THE REST
-        region.details = result
-        
+            log(INFO, 'Region_uri %s returned a seed_cap of %s' % (region_uri, result['region_seed_capability']))
+
         log(DEBUG, 'Full rez_avatar/place response is: %s' % (result))
         
-        return avatar
-   
-from interfaces import IEventQueueGet
-class EventQueueGet(grok.Adapter):
-    """an event queue get capability"""
-    grok.implements(IEventQueueGet)
-    grok.context(IAgentDomain)
-    
+        return result
+
+class EventQueue(AgentDomain):
+    """ an event queue get capability 
+
+    this is a temporary solution. ideally we'd have a generic event queue object
+    that would be integrated into the ad and region separately
+    """
+
     def __init__(self, context):
         """initialize this adapter"""
         self.context = context 
         
         # let's retrieve the cap we need
-        self.seed_cap = self.context.seed_cap # ISeedCapability
+        self.seed_cap = self.context.seed_cap
         self.cap = self.seed_cap.get(['event_queue'])['event_queue']
         
         log(DEBUG, 'initializing event_queue for agent domain: %s' % (self.cap.public_url))

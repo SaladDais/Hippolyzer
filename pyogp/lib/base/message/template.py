@@ -29,18 +29,11 @@ import re
 import pprint
 import binascii
 
-from zope.interface import implements
-import grokcore.component as grok
-
-from interfaces import IMessageData
-
 from types import MsgType, MsgBlockType
 
 class MsgData(object):
     """ Used as a Message that is being created that will be
         serialized and sent. """
-
-    implements(IMessageData)
 
     def __init__(self, name):
         self.name = name
@@ -83,7 +76,7 @@ class MsgBlockData(object):
 class MsgVariableData(object):
     """ Used as a Message Block variable that is being created that will be
         serialized and sent """
-    def __init__(self, name, data, var_type):   #LDE 23oct2008 added var_type for display issues
+    def __init__(self, name, data, var_type=None):   #LDE 23oct2008 added var_type for display issues
         self.name = name
         #data_size holds info whether or not the variable is of type
         #MVT_VARIABLE

@@ -18,10 +18,8 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 $/LicenseInfo$
 """
 
-from zope.interface import implements
 import urllib2
 
-from pyogp.lib.base.network.interfaces import IRESTClient
 from exc import HTTPError
 
 from webob import Request, Response
@@ -56,7 +54,7 @@ class StdLibClient(object):
         status = "%s %s" %(result.code, result.msg)
         response = Response(body = result.read(), status = status, headerlist = headerlist)
         return response
-        
+
         
         
         

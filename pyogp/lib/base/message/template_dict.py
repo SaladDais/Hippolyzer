@@ -19,10 +19,6 @@ $/LicenseInfo$
 """
 
 from types import MsgFrequency
-from interfaces import ITemplateDictionary
-import grokcore.component as grok
-from grokcore.component import GlobalUtility
-
 from data import msg_tmpl, msg_details
 from template_parser import MessageTemplateParser
 from data_packer import DataPacker
@@ -30,10 +26,10 @@ from types import MsgType, EndianType
 
 from pyogp.lib.base import exc
 
-class TemplateDictionary(GlobalUtility):
+class TemplateDictionary(object):
     """the dictionary with all known templates"""
     
-    grok.implements(ITemplateDictionary)
+    #grok.implements(ITemplateDictionary)
     
     def __init__(self, template_list=None):
 

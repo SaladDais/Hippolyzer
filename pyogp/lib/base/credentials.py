@@ -18,23 +18,18 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 $/LicenseInfo$
 """
 
-from zope.interface import implements
-from zope.component import adapts
-
+# standard python libs
 import md5
 
+# related
 from indra.base import llsd
 
-import grokcore.component as grok
-
-from interfaces import IPlainPasswordCredential, IMD5PasswordCredential
-from interfaces import ISerialization, ICredentialDeserialization
+# pyogp
 import exc
 
 class PlainPasswordCredential(object):
     """a plain password credential"""
     
-    implements(IPlainPasswordCredential)
 
     PW_TYPE = "plain"
     
@@ -45,7 +40,7 @@ class PlainPasswordCredential(object):
         self.password = password
     
     def __repr__(self):
-        """return a string represenation"""
+        """return a string representation"""
         return "PlainPasswordCredential for '%s %s'" %(self.firstname, self.lastname)
     
     def get_xmlrpc_login_params(self):
@@ -59,10 +54,25 @@ class PlainPasswordCredential(object):
         
         return login_params
 
+    def serialize(self):
+        """return the credential as a string"""
+        
+        loginparams={
+                'password'     : self.password,
+                'lastname'     : self.lastname,
+                'firstname'    : self.firstname
+        }
+
+        llsdlist = llsd.format_xml(loginparams)
+        return llsdlist
+
+    @property
+    def content_type(self):
+        """return HTTP headers needed here"""
+        return "application/llsd+xml"
+
 class MD5PasswordCredential(object):
     """a md5 password credential"""
-    
-    implements(IMD5PasswordCredential)
 
     PW_TYPE = "md5"
     
@@ -81,21 +91,18 @@ class MD5PasswordCredential(object):
 
 
 
-class PlainPasswordLLSDSerializer(grok.Adapter):
+class LLSDSerializer(PlainPasswordCredential):
     """converts a plain password credential to LLSD
     
     Here is how you can use it:
     >>> credential = PlainPasswordCredential('Firstname','Lastname','password')
-    >>> serializer = ISerialization(credential)
+    >>> serializer = LLSDSerializer(credential)
     >>> serializer.serialize()
     '<?xml version="1.0" ?><llsd><map><key>lastname</key><string>Lastname</string><key>password</key><string>password</string><key>firstname</key><string>Firstname</string></map></llsd>'
     >>> serializer.content_type
     'application/llsd+xml'
     """
-    
-    grok.implements(ISerialization)
-    grok.context(IPlainPasswordCredential)
-    
+
     def __init__(self, context):
         """initialize this adapter by storing the context (the credential)"""
         self.context = context
@@ -117,14 +124,14 @@ class PlainPasswordLLSDSerializer(grok.Adapter):
         """return HTTP headers needed here"""
         return "application/llsd+xml"
 
-class MD5PasswordLLSDSerializer(PlainPasswordLLSDSerializer):
+class MD5PasswordLLSDSerializer(MD5PasswordCredential):
     """converts a md5 credential object to LLSD XML
     """
-    
-    grok.implements(ISerialization)
-    grok.context(IMD5PasswordCredential)
-    
-    
+
+    def __init__(self, context):
+        """initialize this adapter by storing the context (the credential)"""
+        self.context = context
+
     def serialize(self):
         """return the credential as a string"""
         
@@ -137,14 +144,16 @@ class MD5PasswordLLSDSerializer(PlainPasswordLLSDSerializer):
         llsdlist = llsd.format_xml(loginparams)
         return llsdlist
 
+    @property
+    def content_type(self):
+        """return HTTP headers needed here"""
+        return "application/llsd+xml"
 
-class CredentialLLSDDeserializer(grok.GlobalUtility):
+class CredentialLLSDDeserializer(object):
     """take an LLSD string and create a credential object
 
     This is a utility
     """
-    grok.implements(ICredentialDeserialization)
-    grok.name('application/llsd+xml')
 
     def deserialize(self, s):
         payload = llsd.parse(s)

@@ -18,6 +18,6 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 $/LicenseInfo$
 """
 
-from interfaces import IUDPDispatcher
-from udpdispatcher import UDPDispatcher
-from zope.component import provideUtility
+#from interfaces import IUDPDispatcher
+#from udpdispatcher import UDPDispatcher
+#from zope.component import provideUtility

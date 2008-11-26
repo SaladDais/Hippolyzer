@@ -20,23 +20,21 @@ $/LicenseInfo$
 
 #standard libs
 import struct
-
-import grokcore.component as grok
-from zope.component import getUtility
+from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG 
 
 #pyogp libs
-from interfaces import ITemplateDictionary
-from pyogp.lib.base.interfaces import IDeserialization
+from template_dict import TemplateDictionary
 from template import MsgData, MsgBlockData, MsgVariableData
 from types import MsgType, MsgBlockType, MsgFrequency, PacketLayout, EndianType, PackFlags, sizeof
 from data_unpacker import DataUnpacker
-from interfaces import IUDPPacket
+from packet import UDPPacket
 
 from pyogp.lib.base import exc
 
-class UDPPacketDeserializer(grok.Adapter):
-    grok.implements(IDeserialization)
-    grok.context(str)
+logger = getLogger('...base.message.udpdeserializer') 
+log = logger.log 
+
+class UDPPacketDeserializer(object):
 
     def __init__(self, context):
         self.context = context
@@ -60,25 +58,24 @@ class UDPPacketDeserializer(grok.Adapter):
             acks = ord(msg_buff[msg_len-1])
             ack_offset = msg_len - 1 - 4*acks
             temp_acks = msg_buff[:ack_offset]
-
+            
         #Now zero decode the entire msg except the acks, in order to get the correct evaluation of the template
 
         if ord(msg_buff[0]) & PackFlags.LL_ZERO_CODE_FLAG:
-            #offset = ord(msg_buff[5]) 
-            #header = msg_buff[:6+offset]   #offset will be zero unless the header has extra data
-            header = msg_buf[:6]
-            #inputbuf = msg_buff[6+offset:]  #not yet implemented because we can't test right now
-            inputbuf = msg_buff[6:]      
+            offset = ord(msg_buff[5])
+            header = msg_buff[:6+offset]   #disregard#offset will be zero unless the header has extra data
+            #header = msg_buff[:6]
+            inputbuf = msg_buff[6+offset:]  #disregard#not yet implemented because we can't test right now
+            #inputbuf = msg_buff[6:]
+            # debugger code commented out 
+            #''.join( [ "%02X " % ord( x ) for x in byteStr ] ).strip() 
+            #print "just did zerodecode " + ''.join( [ "%02X " % ord( x ) for x in header ] ).strip() + ' ' \ 
+                        #+ ''.join( [ "%02X " % ord( x ) for x in msg_buff[:12] ] ).strip() 
             input_len = len(inputbuf)
             msg_buff = self.zero_code_expand(inputbuf, input_len)
-            # debugger code commented out
-            #''.join( [ "%02X " % ord( x ) for x in byteStr ] ).strip()
-            #print "just did zerodecode " + ''.join( [ "%02X " % ord( x ) for x in header ] ).strip() + ' ' \
-                    #+ ''.join( [ "%02X " % ord( x ) for x in msg_buff[:12] ] ).strip()
             msg_buff = header + msg_buff
-
-
-
+            
+        
         if self.__validate_message(msg_buff) == True:
             msg_buff = msg_buff + ''.join(temp_acks)      #go ahead an merge the acks back in in order for the decode to work
             return self.__decode_data(msg_buff)
@@ -103,6 +100,8 @@ class UDPPacketDeserializer(grok.Adapter):
         if self.current_template != None:
             return True
 
+        log(INFO, "Received unknown packet: '%s', packet is not in our message_template" % (header)) 
+
         return False
 
     def __decode_header(self, header):
@@ -110,13 +109,13 @@ class UDPPacketDeserializer(grok.Adapter):
         num = self.__decode_num(header)
 
         #NEED TO GET THE GLOBAL TEMPLATE DICT
-        template_dict = getUtility(ITemplateDictionary)
+        template_dict = TemplateDictionary()
         result = template_dict.get_template_by_pair(frequency, num)
+        
         return result
 
     def __decode_frequency(self, header):
         #if it is not a high
-
         if header[0] == '\xFF':
             #if it is not a medium frequency message
             if header[1] == '\xFF':
@@ -159,7 +158,7 @@ class UDPPacketDeserializer(grok.Adapter):
 
         msg_data = MsgData(self.current_template.name)
 
-        packet = IUDPPacket(msg_data)
+        packet = UDPPacket(msg_data)
         msg_size = len(data)
 
         packet.name = self.current_template.name
@@ -242,6 +241,7 @@ class UDPPacketDeserializer(grok.Adapter):
                 self.current_block = block_data
 
                 msg_data.add_block(self.current_block)
+
                 for variable in block.variables:
 
                     var_size = variable.size
@@ -297,12 +297,11 @@ class UDPPacketDeserializer(grok.Adapter):
             raise exc.MessageDeserializationError("message", "message is empty")
 
         packet.message_data = msg_data
-
         return packet
 
     def zero_code_expand(self, msg_buf, msg_size):
-        """made this call more generic due to changes in how zero_code_expand is called.
-        no more header issues in actual call. Its taken care of earlier in process"""
+        """made this call more generic due to changes in how zero_code_expand is called. 
+        no more header issues in actual call. Its taken care of earlier in process""" 
         #if ord(msg_buf[0]) & PackFlags.LL_ZERO_CODE_FLAG == 0:
             #return msg_buf
 
@@ -327,3 +326,4 @@ class UDPPacketDeserializer(grok.Adapter):
                 in_zero = True
         #return header + newstring
         return newstring
+

@@ -26,8 +26,19 @@ Exceptions for the pyogp library
 
 class Error(Exception):
     """base exception for all pyogp related exceptions"""
-    
-    
+
+class AgentError(Error):
+    """ general Agent exception """   
+
+class CredentialError(AgentError):
+    """ raised if credentials are inadequate for login """
+
+    def __init__(self, content_type=''):
+        self.error = error
+
+    def __str__(self):
+        return "Agent credential error: %s" % (self.error)   
+	 
 #### Network errors
     
 class NetworkError(Error):
@@ -43,7 +54,7 @@ class ResourceNotFound(NetworkError):
         self.url = url
 
     def __str__(self):
-    return self.url
+        return self.url
         
 class ResourceError(NetworkError):
     """raised if any other error occurred (usually a 500)
@@ -57,11 +68,11 @@ class ResourceError(NetworkError):
         self.code = code
         self.message = message
         self.body = body
-    self.method = method
+        self.method = method
 
     def __str__(self):
-    """return a printable version"""
-    return "Error using '%s' on resource '%s': %s (%s)" %(self.method, self.url, self.message, self.code)
+        """return a printable version"""
+        return "Error using '%s' on resource '%s': %s (%s)" %(self.method, self.url, self.message, self.code)
 
 
 ### Serialization errors
@@ -86,7 +97,7 @@ class DeserializerNotFound(DeserializationError):
         self.content_type = content_type
 
     def __str__(self):
-    return "deserialization for '%s' not supported" % (self.content_type)
+        return "deserialization for '%s' not supported" % (self.content_type)
 
 class CredentialDeserializerNotFound(DeserializationError):
     """raised if a deserializer for a certain content type couldn't be found
@@ -98,7 +109,7 @@ class CredentialDeserializerNotFound(DeserializationError):
         self.payload = payload
 
     def __str__(self):
-    return "deserialization for payload '%s' not supported" % (self.payload)
+        return "deserialization for payload '%s' not supported" % (self.payload)
 
 class DeserializationFailed(DeserializationError):
     """raised if a deserializer couldn't deserialize a payload
@@ -112,7 +123,7 @@ class DeserializationFailed(DeserializationError):
         self.reason = reason
 
     def __str__(self):
-    return "deserialization failed for '%s', reason: '%s'" %(self.payload, self.reason)
+        return "deserialization failed for '%s', reason: '%s'" %(self.payload, self.reason)
         
         
 ### Message System related errors

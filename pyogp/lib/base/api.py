@@ -21,12 +21,14 @@ $/LicenseInfo$
 """
 High level API
 """
-
+# ToDo: fix this up if needed
+pass
+'''
 from pyogp.lib.base.credentials import PlainPasswordCredential
 from pyogp.lib.base.agentdomain import AgentDomain
 from pyogp.lib.base.regiondomain import Region
 
-from pyogp.lib.base.interfaces import IPlaceAvatar
+#from pyogp.lib.base.interfaces import IPlaceAvatar
 
 ### login methods
 def login_with_plainpassword(agentdomain_url, firstname, lastname, password):
@@ -92,5 +94,5 @@ def run_loop(avatar):
     
     
     """
-    
+ '''   
     

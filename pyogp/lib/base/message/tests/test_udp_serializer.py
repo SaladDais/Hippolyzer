@@ -24,9 +24,9 @@ from uuid import UUID
 
 #local libraries
 from pyogp.lib.base.message.types import MsgType
-from pyogp.lib.base.message.interfaces import IPacket
-from pyogp.lib.base.interfaces import ISerialization, IDeserialization
-from pyogp.lib.base.registration import init
+from pyogp.lib.base.message.packet import UDPPacket
+from pyogp.lib.base.message.udpdeserializer import UDPPacketDeserializer
+from pyogp.lib.base.message.udpserializer import UDPPacketSerializer
 
 #from indra.base.lluuid import UUID
 
@@ -36,19 +36,19 @@ class TestSerializer(unittest.TestCase):
         pass
 
     def setUp(self):
-        init()
+        pass
         
     def test_serialize(self):
         message = '\xff\xff\xff\xfb' + '\x03' + \
                   '\x01\x00\x00\x00' + '\x02\x00\x00\x00' + '\x03\x00\x00\x00'
         message = '\x00' + '\x00\x00\x00\x01' +'\x00' + message
-        deserializer = IDeserialization(message)
+        deserializer = UDPPacketDeserializer(message)
         packet = deserializer.deserialize()
         #print packet.send_flags
         #print packet.packet_id
         data = packet.message_data
 
-        serializer = ISerialization(packet)
+        serializer = UDPPacketSerializer(packet)
         packed_data = serializer.serialize()
         assert packed_data == message, "Incorrect serialization"
         

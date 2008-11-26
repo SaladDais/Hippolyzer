@@ -18,9 +18,4 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 $/LicenseInfo$
 """
 
-from zope.configuration.xmlconfig import xmlconfig
-
-def init():
-    from pkg_resources import resource_stream
-    fp = resource_stream(__name__, 'configure.zcml')
-    xmlconfig(fp)
+pass

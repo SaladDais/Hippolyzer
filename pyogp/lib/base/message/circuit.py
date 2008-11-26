@@ -18,19 +18,17 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 $/LicenseInfo$
 """
 
-import grokcore.component as grok
-from zope.interface import implements
-
-from interfaces import IHost
 from types import PackFlags
 
-class Host(grok.Adapter):
-    grok.implements(IHost)
-    grok.context(tuple)
+class Host(object):
 
     def __init__(self, context):
         self.ip = context[0]
         self.port = context[1]
+
+    def __repr__(self):                                                              
+        """return a string representation"""
+        return "Host is '%s:%s'" %(self.ip, self.port)
 
     def is_ok(self):
         if self.ip == None or self.port == None or \

@@ -17,30 +17,33 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 
 $/LicenseInfo$
 """
+
+# standard python libs
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
+#from types import *
 
-from zope.interface import implements
-from zope.component import getUtility
-from pyogp.lib.base.network.interfaces import IUDPClient
-
+# pyogp
 from data import msg_tmpl, msg_details
 from circuit import CircuitManager
 from types import PacketLayout, PackFlags, MsgType, EndianType, sizeof
 from data_unpacker import DataUnpacker
 from data_packer import DataPacker
-from pyogp.lib.base.interfaces import ISerialization, IDeserialization
-from interfaces import IUDPDispatcher, IUDPPacket
+from udpserializer import UDPPacketSerializer
+from udpdeserializer import UDPPacketDeserializer
+from packet import UDPPacket
 from message import Message, Block
+from pyogp.lib.base.network.net import NetUDPClient
 from pyogp.lib.base import exc
 
+# initialize logging
 logger = getLogger('...base.message.udpdispatcher')
 log = logger.log
 
 #maybe make a global utility
 class UDPDispatcher(object):
-    implements(IUDPDispatcher)
+    #implements(IUDPDispatcher)
 
-    def __init__(self):
+    def __init__(self, udp_client = None):
         #holds the details of the message, or how the messages should be sent,
         #built, and read
         self.circuit_manager    = CircuitManager()
@@ -48,7 +51,10 @@ class UDPDispatcher(object):
         self.receive_packet_id  = -1
 
         self.socket             = None
-        self.udp_client         = getUtility(IUDPClient)
+        if udp_client == None:
+            self.udp_client = NetUDPClient()
+        else:
+	    self.udp_client = udp_client
         self.socket = self.udp_client.start_udp_connection()
         self.unpacker = DataUnpacker()
         self.packer = DataPacker()
@@ -70,7 +76,7 @@ class UDPDispatcher(object):
         
         #we have a message
         if msg_size > 0:
-            udp_deserializer = IDeserialization(msg_buf)
+            udp_deserializer = UDPPacketDeserializer(msg_buf)
             recv_packet = udp_deserializer.deserialize()
 
             #couldn't deserialize
@@ -114,7 +120,7 @@ class UDPDispatcher(object):
         if host.is_ok() == False:
             return
 
-        packet = IUDPPacket(message)
+        packet = UDPPacket(message)
 
         #use circuit manager to get the circuit to send on
         circuit = self.find_circuit(host)
@@ -128,7 +134,10 @@ class UDPDispatcher(object):
         else:
             circuit.prepare_packet(packet)
 
-        serializer = ISerialization(packet)
+        # serialize the data
+        serializer = UDPPacketSerializer(packet)
+
+        #serializer = ISerialization(packet)
         send_buffer = serializer.serialize()
 
         #TODO: remove this when testing a network

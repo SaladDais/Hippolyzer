@@ -18,6 +18,10 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 $/LicenseInfo$
 """
 
+# preserving contents as comments
+pass
+
+'''
 from zope.interface import Interface, Attribute
 
 class ITemplateDictionary(Interface):
@@ -136,3 +140,4 @@ delgated to the sender, rather than sent directly by the messaging system.
 """
 class HTTPSender(Interface):
     pass
+'''

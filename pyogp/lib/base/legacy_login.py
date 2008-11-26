@@ -26,12 +26,11 @@ from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 from indra.base import llsd, lluuid
 
 # pyogp.lib.base
-#from pyogp.lib.base.agent import Agent
-from avatar import Avatar
 import exc
 from pyogp.lib.base.settings import Settings
 from caps import SeedCapability
 
+# initialize logging
 logger = getLogger('pyogp.lib.base.legacy_login')
 log = logger.log
 
@@ -42,6 +41,7 @@ enable login via xmlrpc
 populate region with the return value
 '''
 
+# ToDo: update this in the post ZCA context
 class LegacyLogin(object):
     """ enables login to an environment not implementing the OGP protocols """
 
@@ -56,12 +56,12 @@ class LegacyLogin(object):
         
     def login(self, credentials, region):
         """ login to the environment and return an agent object via xmlrpc """
-        
+
         login_params = self.get_extended_credentials(credentials)
         response = self.post_to_loginuri(login_params)
-        avatar = self.eval_login_response(response, region)   
-    
-        return avatar
+        data = self.eval_login_response(response, region) 
+
+        return data
         
     def get_extended_credentials(self, credentials):
         """ get the extra bits needed for login """
@@ -79,10 +79,15 @@ class LegacyLogin(object):
         self.credentials['id0'] = default_login_params['id0']
                  
         log(DEBUG, 'initializing legacy login parameters for %s %s' % (self.credentials['first'], self.credentials['last']))
+
+        return self.credentials
        
     def post_to_loginuri(self, login_params):
         """ post to a login uri and return the results """
 
+        login = xmlrpclib.Server(self.uri)
+        results = login.login_to_simulator(self.credentials)
+        '''
         # this should move to a utility
         try:
             login = xmlrpclib.Server(self.uri)
@@ -90,7 +95,7 @@ class LegacyLogin(object):
         except ProtocolError, error:
            raise exc.ResourceError(self.uri, error.errcode, error.errmsg, error.headers, method="XMLRPC") 
            results = {}       
-        
+        '''
         return results
          
     def eval_login_response(self, response, region):
@@ -106,7 +111,7 @@ class LegacyLogin(object):
         except KeyError:
             raise exc.UserNotAuthorized(self.credentials)
     
-        avatar = Avatar(region)       
+        #agent = Agent(region)       
         
         if seed_cap_url is None:
             raise exc.UserRezFailed(region)
@@ -114,6 +119,6 @@ class LegacyLogin(object):
             log(INFO, 'Region_uri %s returned a seed_cap of %s' % (region.uri, seed_cap_url))
         
         #AND THE REST
-        region.details = response
+        #region.details = response
         
-        return avatar
+        return response

@@ -18,6 +18,10 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 $/LicenseInfo$
 """
 
+# preserving contents as comments
+pass
+
+'''
 from zope.interface import Interface, Attribute
 
 class ICredential(Interface):
@@ -122,3 +126,4 @@ class ISeedCapability(ICapability):
         """retrieve the given set of named capabilities
         
         returns a dict of ICapabilty objects keyed by their name"""
+'''

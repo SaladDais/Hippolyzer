@@ -23,12 +23,9 @@ import unittest, doctest
 import pprint
 
 #local libraries
-from pyogp.lib.base.registration import init
-
-from pyogp.lib.base.message.circuit import CircuitManager, Circuit
-from pyogp.lib.base.message.interfaces import IHost
+from pyogp.lib.base.message.circuit import CircuitManager, Circuit, Host
 from pyogp.lib.base.message.message import Message, Block
-from pyogp.lib.base.message.interfaces import IUDPPacket
+from pyogp.lib.base.message.packet import UDPPacket
 
 class TestHost(unittest.TestCase):
     
@@ -36,14 +33,14 @@ class TestHost(unittest.TestCase):
         pass
 
     def setUp(self):
-        init()
+        pass
 
     def test(self):
-        host = IHost((0x00000001, 80))
+        host = Host((0x00000001, 80))
         assert host.is_ok() == True, "Good host thinks it is bad"
 
     def test_fail(self):
-        host = IHost((None, None))
+        host = Host((None, None))
         assert host.is_ok() == False, "Bad host thinks it is good"
 
 class TestCircuit(unittest.TestCase):
@@ -52,8 +49,7 @@ class TestCircuit(unittest.TestCase):
         pass
 
     def setUp(self):
-        init()
-        self.host = IHost((0x00000001, 80))
+        self.host = Host((0x00000001, 80))
 
     def test(self):
         circuit = Circuit(self.host, 1)
@@ -68,7 +64,7 @@ class TestCircuit(unittest.TestCase):
         msg = Message('PacketAck',
                       Block('Packets', ID=0x00000003)
                       )
-        packet = IUDPPacket(msg)
+        packet = UDPPacket(msg)
         circuit.add_reliable_packet(packet)
         assert circuit.unack_packet_count == 1, "Has incorrect unack count"
         assert len(circuit.unacked_packets) == 1, "Has incorrect unack, " + \
@@ -81,15 +77,14 @@ class TestCircuitManager(unittest.TestCase):
         pass
 
     def setUp(self):
-        init()
-        self.host = IHost((0x00000001, 80))
+        self.host = Host((0x00000001, 80))
 
     def test_(self):
         manager = CircuitManager()
         assert len(manager.circuit_map) == 0, "Circuit list incorrect"
         manager.add_circuit(self.host, 1)
         assert len(manager.circuit_map) == 1, "Circuit list incorrect 2"
-        host = IHost((0x00000011, 80))
+        host = Host((0x00000011, 80))
         manager.add_circuit(host, 10)
         assert len(manager.circuit_map) == 2, "Circuit list incorrect 4"
         circuit = manager.get_circuit(self.host)

@@ -26,11 +26,11 @@ optionflags = doctest.REPORT_ONLY_FIRST_FAILURE | doctest.ELLIPSIS
 # setup functions
 
 def setUp(self):
+    pass
     # override the default
-    from pyogp.lib.base.network import IRESTClient, MockupClient
-    from zope.component import provideUtility
-    from pyogp.lib.base.tests.base import AgentDomain
-    provideUtility(MockupClient(AgentDomain()), IRESTClient)
+    #from pyogp.lib.base.network.mockup_client import MockupClient
+    #from pyogp.lib.base.network.stdlib_client import StdLibClient
+    #from pyogp.lib.base.tests.base import AgentDomain
     
 def tearDown(self):
     print "down"

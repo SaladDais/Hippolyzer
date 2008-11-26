@@ -20,34 +20,27 @@ $/LicenseInfo$
 
 #standard libs
 import struct
-import grokcore.component as grok
-from zope.component import getUtility
-from interfaces import ITemplateDictionary
 
-#pyogp libs
-from interfaces import IUDPPacket
+# pygop
+from packet import UDPPacket
 from template import MsgData, MsgBlockData, MsgVariableData
 from types import MsgType, MsgBlockType, MsgFrequency, EndianType, sizeof
 from data_packer import DataPacker
-
-from pyogp.lib.base.interfaces import ISerialization
+from template_dict import TemplateDictionary
 from pyogp.lib.base import exc
 
-class UDPPacketSerializer(grok.Adapter):
+class UDPPacketSerializer(object):
     """ an adpater for serializing a IUDPPacket into the UDP message format
     
-    This class builds messages at its high level, that is, keeping
+        This class builds messages at its high level, that is, keeping
         that data in data structure form. A serializer should be used on
         the message produced by this so that it can be sent over a network. """
 
-    grok.implements(ISerialization)
-    grok.context(IUDPPacket)
-
     def __init__(self, context):
-    """initialize the adapter"""
-        self.context = context    # the UDPPacket
+        """initialize the adapter"""
+        self.context = context	# the UDPPacket
 
-        template_dict = getUtility(ITemplateDictionary)
+        template_dict = TemplateDictionary()
         self.current_template = template_dict.get_template(context.name)
         self.packer = DataPacker()
 
@@ -104,14 +97,14 @@ class UDPPacketSerializer(grok.Adapter):
         #that make up this message, with the number stored in the template
         #don't need to add it to the buffer, because the message handlers that
         #receieve this know how many to read automatically
-        if template_block.block_type == MsgBlockType.MBT_MULTIPLE: #LDE 230ct2008 block_type vs block.type issue
+        if template_block.block_type == MsgBlockType.MBT_MULTIPLE:
             if template_block.number != block_count:
                 raise exc.MessageSerializationError(template_block.name, "block data mismatch")
                                   
         #variable means the block variables can repeat, so we have to
         #mark how many blocks there are of this type that repeat, stored in
         #the data
-        if template_block.block_type == MsgBlockType.MBT_VARIABLE: #LDE 230ct2008 block_type vs block.type issue
+        if template_block.block_type == MsgBlockType.MBT_VARIABLE:
             block_buffer += struct.pack('>B', block_count)
             bytes += 1            
 

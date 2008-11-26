@@ -18,7 +18,8 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 $/LicenseInfo$
 """
 
-
+pass
+'''
 class Avatar(object):
     """an avatar - the agent representation in 3D on a region"""
     
@@ -28,3 +29,4 @@ class Avatar(object):
         we need to instantiate the avatar after place_avatar
         """
         self.region = region
+'''

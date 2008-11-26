@@ -22,16 +22,12 @@ $/LicenseInfo$
 import unittest, doctest
 import pprint
 
-from zope.component import getUtility
-
-from pyogp.lib.base.registration import init
-
 #local libraries
 #from pyogp.lib.base.message.udp_connection import MessageSystem
 from pyogp.lib.base.message.types import MsgType
-from pyogp.lib.base.network.mockup_net import MockupUDPServer
+from pyogp.lib.base.network.mockup_net import MockupUDPServer, MockupUDPClient
 from pyogp.lib.base.message.message import Message, Block
-from pyogp.lib.base.message.interfaces import IHost
+from pyogp.lib.base.message.circuit import Host
 from pyogp.lib.base.message.udpdispatcher import UDPDispatcher
 
 class TestUDPConnection(unittest.TestCase):
@@ -40,14 +36,13 @@ class TestUDPConnection(unittest.TestCase):
         pass
 
     def setUp(self):
-        init()
-        
-        self.udp_connection = UDPDispatcher()
-        self.host = IHost( (MockupUDPServer(), 80) )
+
+        self.udp_connection = UDPDispatcher(MockupUDPClient())
+        self.host = Host( (MockupUDPServer(), 80) )
         
     def test_find_circuit(self):
-        host  = IHost((MockupUDPServer(), 80))
-        host2 = IHost((MockupUDPServer(), 80))
+        host  = Host((MockupUDPServer(), 80))
+        host2 = Host((MockupUDPServer(), 80))
         udp_connection = UDPDispatcher()
         assert len(udp_connection.circuit_manager.circuit_map) == 0, \
                "Circuit map has incorrect circuits"
@@ -106,7 +101,7 @@ class TestUDPConnection(unittest.TestCase):
         msg = Message('PacketAck',
                       Block('Packets', ID=0x00000003)
                       )
-        host = IHost((MockupUDPServer(), 80))
+        host = Host((MockupUDPServer(), 80))
         ret_msg = self.udp_connection.send_reliable(msg, host, 10)
         test_str = '\x40' + '\x00\x00\x00\x01' + '\x00' + '\xff\xff\xff\xfb' + \
                '\x01' + '\x03\x00\x00\x00'

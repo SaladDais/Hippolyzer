@@ -18,6 +18,10 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 $/LicenseInfo$
 """
 
+# preserving contents as comments
+pass
+
+'''
 from zope.interface import Interface, Attribute
 
 class IUDPClient(Interface):
@@ -77,3 +81,4 @@ class IRESTClient(Interface):
         """
         
     
+'''

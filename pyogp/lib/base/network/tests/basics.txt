@@ -2,13 +2,14 @@ Networking Basics
 =================
 
 The networking layer is basically a replaceable REST client. It is defined as a utility
-with the interface IRESTClient provinding methods such as GET, POST etc.
+providing methods such as GET, POST etc.
 
 Let's retrieve the standard utility (this is overridden here in this test to use a mockup network library):
 
->>> from pyogp.lib.base.network import IRESTClient, HTTPError
->>> from zope.component import getUtility
->>> client = getUtility(IRESTClient)
+>>> from pyogp.lib.base.network.exc import HTTPError
+>>> from pyogp.lib.base.network.mockup_client import MockupClient
+>>> from pyogp.lib.base.tests.base import AgentDomain
+>>> client = MockupClient(AgentDomain())
 
 Now we can use it. Let's post something to our test server:
 

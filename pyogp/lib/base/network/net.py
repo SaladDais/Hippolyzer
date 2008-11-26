@@ -17,28 +17,25 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 
 $/LicenseInfo$
 """
-
+# std python libs
 import socket
 
-from zope.interface import implements
-
-from pyogp.lib.base.network.interfaces import IUDPClient
-from pyogp.lib.base.message.interfaces import IHost
+from pyogp.lib.base.message.circuit import Host
 
 #returns true if packet was sent successfully
 class NetUDPClient(object):
-    implements(IUDPClient)
 
     def __init__(self):
-        self.sender = IHost((None, None))
+        self.sender = Host((None, None))
 
     def get_sender(self):
         return self.sender
     
     def send_packet(self, sock, send_buffer, host):
-        #print "Sending to " + str(host.ip) + ":" + str(host.port)
+        #print "Sending to " + str(host.ip) + ":" + str(host.port) + ":" + send_buffer
         if send_buffer == None:
             raise Exception("No data specified")
+
         bytes = sock.sendto(send_buffer, (host.ip, host.port))
     
     def receive_packet(self, sock):

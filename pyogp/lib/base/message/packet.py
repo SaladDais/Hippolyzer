@@ -18,17 +18,11 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 $/LicenseInfo$
 """
 
-import grokcore.component as grok
-
 from types import PackFlags
-from interfaces import IUDPPacket, IMessageData
 
-class UDPPacket(grok.Adapter):
+class UDPPacket(object):
     """a UDP packet"""
 
-    grok.implements(IUDPPacket)
-    grok.context(IMessageData)
-    
     def __init__(self, context):
         self.name = context.name
         self.send_flags         = PackFlags.LL_NONE

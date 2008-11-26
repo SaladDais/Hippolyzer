@@ -26,8 +26,8 @@ from uuid import UUID
 from pyogp.lib.base.message.data import msg_tmpl
 from pyogp.lib.base.message.types import MsgType
 from pyogp.lib.base.message.message import Message, Block
-from pyogp.lib.base.interfaces import IDeserialization
-from pyogp.lib.base.registration import init
+from pyogp.lib.base.message.udpdeserializer import UDPPacketDeserializer
+
 
 class TestMessage(unittest.TestCase):
     
@@ -35,7 +35,7 @@ class TestMessage(unittest.TestCase):
         pass
 
     def setUp(self):
-        init()
+        pass
 
     def test_block(self):
         block = Block('CircuitCode', ID=1234,Code=531)
@@ -81,10 +81,10 @@ class TestMessage(unittest.TestCase):
         assert msg.blocks['ChatData'][0].vars['Type'].data == 1, "Bad type sent"
         assert msg.blocks['ChatData'][0].vars['Channel'].data == 0, "Bad Channel sent"
 
-        from pyogp.lib.base.interfaces import ISerialization
-        from pyogp.lib.base.message.interfaces import IPacket
-        packet = IPacket(msg)
-        serial = ISerialization(packet)
+        from pyogp.lib.base.message.udpserializer import UDPPacketSerializer
+        from pyogp.lib.base.message.packet import UDPPacket
+        packet = UDPPacket(msg)
+        serial = UDPPacketSerializer(packet)
         msg = serial.serialize()
             
 def test_suite():

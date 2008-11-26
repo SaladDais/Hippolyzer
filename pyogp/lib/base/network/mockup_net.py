@@ -21,10 +21,7 @@ $/LicenseInfo$
 import socket
 import random
 
-from zope.interface import implements
-from pyogp.lib.base.message.interfaces import IHost
-
-from pyogp.lib.base.network.interfaces import IUDPClient
+from pyogp.lib.base.message.circuit import Host
 
 class MockupUDPServer(object):
     def __init__(self):
@@ -38,11 +35,10 @@ class MockupUDPServer(object):
     def send_message(self, client, send_message):
         #print 'SERVER send'
         client.rec = send_message
-        client.sender = IHost((self, self.port))
+        client.sender = Host((self, self.port))
         
 #returns true if packet was sent successfully
 class MockupUDPClient(object):
-    implements(IUDPClient)
 
     def __init__(self):
         self.rec = ''

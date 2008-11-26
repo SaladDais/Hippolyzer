@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """
-@file example.py
+@file legacy_login_example.py
 @date 2008-09-16
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
@@ -24,17 +24,13 @@ from threading import Thread
 import signal
 
 from credentials import PlainPasswordCredential
-from agentdomain import AgentDomain, EventQueue
+from legacy_login import LegacyLogin
 from regiondomain import Region
 from agent import Agent
 
-
-#from pyogp.lib.base.interfaces import IPlaceAvatar, IEventQueueGet
-#from pyogp.lib.base.interfaces import IEventQueueGet
-
 from message.udpdispatcher import UDPDispatcher
 from message.message import Message, Block
-#from message.circuit import Host
+from message.circuit import Host
 from message.types import MsgType
 
 import getpass, sys, logging
@@ -53,15 +49,14 @@ def login():
 
     #signal.signal(signal.SIGINT, sigint_handler) 
        
-    #registration.init()
     parser = OptionParser()
     
     logger = logging.getLogger("pyogp.lib.base.example")
 
-    parser.add_option("-l", "--loginuri", dest="loginuri", default="https://login1.aditi.lindenlab.com/cgi-bin/auth.cgi",
+    parser.add_option("-l", "--loginuri", dest="loginuri", default="https://login.aditi.lindenlab.com/cgi-bin/login.cgi",
                       help="URI of Agent Domain")
-    parser.add_option("-r", "--region", dest="regionuri", default="http://ec2-75-101-203-98.compute-1.amazonaws.com:9000",
-                      help="URI of Region to connect to")
+    parser.add_option("-r", "--region", dest="region", default="Ahern",
+                      help="Name of Region to connect to")
     parser.add_option("-q", "--quiet", dest="verbose", default=True, action="store_false",
                     help="enable verbose mode")
                       
@@ -97,17 +92,16 @@ def login():
     #agent.credentials = PlainPasswordCredential(agent.firstname, agent.lastname, agent.password)
 
     # let's log in an agent to the agentdomain shall we
-    agent.login(options.loginuri, options.regionuri)
+    agent.login(options.loginuri, regionname=options.region)
 
-    print "got agentdomain info: %s" % agent.agentdomain.__dict__
     print "got region details: %s" % agent.region.details
     
     # now get an event_queue_get cap
-    eqg = EventQueue(agent.agentdomain)
-    logger.info("received an event queue cap: %s", eqg.cap)
+    #eqg = EventQueue(agent.agentdomain)
+    #logger.info("received an event queue cap: %s", eqg.cap)
     
     # spawn the AD event queue thread
-    eventQueueGet(eqg, logger).start()
+    #eventQueueGet(eqg, logger).start()
     
     # establish sim presence
     logger.debug("kinda need to establish sim presence here")

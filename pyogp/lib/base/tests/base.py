@@ -35,7 +35,6 @@ class AgentDomain(object):
         self.start = start_response
         self.request = Request(environ)
         self.response = Response()
-
         
         l = self.request.headers.get('Content-Length','0')
         if l=='':
@@ -47,12 +46,12 @@ class AgentDomain(object):
         # TODO: check headers
         try:
             data = llsd.parse(data)
-        if data is False:    # might happen with GET
-        data={}
+            if data is False:	# might happen with GET
+                data={}
         except:
             self.response.status=500
             return self.response(self.environ, self.start)
-        if self.request.path=="/":
+        if self.request.path=="/auth.cgi":
             return self.handle_login(data)
         elif self.request.path=="/network/get" and self.request.method=="GET":
             self.response.status=200
@@ -109,7 +108,7 @@ class AgentDomain(object):
         """handle a dummy test capabilty"""
         d={'something':'else',
            'some' : 12345}
-    d.update(data)
+        d.update(data)
         data = llsd.format_xml(d)
         self.response.status=200
         self.response.content_type=content_type

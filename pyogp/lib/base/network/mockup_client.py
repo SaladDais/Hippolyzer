@@ -18,10 +18,8 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 $/LicenseInfo$
 """
 
-from zope.interface import implements
 import urlparse
 
-from pyogp.lib.base.network.interfaces import IRESTClient
 from exc import HTTPError
 
 from webob import Request, Response
@@ -67,3 +65,7 @@ class MockupClient(object):
             msg = " ".join(parts[1:])
             raise HTTPError(response.status_int, msg, StringIO(response.body))
         return response
+
+    def __repr__(self):
+	    """ return a representation of itself """
+	    return "Restclient is MockupClient using webob and wsgi for %s" % (self.app)
