@@ -23,7 +23,6 @@ import uuid
 from threading import Thread
 import signal
 
-from credentials import PlainPasswordCredential
 from agentdomain import AgentDomain, EventQueue
 from regiondomain import Region
 from agent import Agent
@@ -94,7 +93,6 @@ def login():
     agent.firstname = args[0]
     agent.lastname = args[1]
     agent.password = password
-    #agent.credentials = PlainPasswordCredential(agent.firstname, agent.lastname, agent.password)
 
     # let's log in an agent to the agentdomain shall we
     agent.login(options.loginuri, options.regionuri)

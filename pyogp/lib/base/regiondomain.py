@@ -24,6 +24,9 @@ import re
 from urllib import quote
 from urlparse import urlparse, urljoin
 
+# related
+from indra.base import llsd
+
 # pyogp
 from pyogp.lib.base.caps import Capability
 from network.stdlib_client import StdLibClient, HTTPError
@@ -79,18 +82,20 @@ class Region(object):
     def get_region_public_seed(self,custom_headers={'Accept' : 'application/llsd+xml'}):
         """call this capability, return the parsed result"""
         
-        log(DEBUG, 'Getting region public_seed %s' %(self.uri))
+        log(DEBUG, 'Getting region public_seed %s' %(self.region_uri))
 
         try:
             restclient = StdLibClient()
-            response = restclient.GET(self.uri, custom_headers)
+            response = restclient.GET(self.region_uri, custom_headers)
         except HTTPError, e:
             if e.code==404:
-                raise exc.ResourceNotFound(self.uri)
+                raise exc.ResourceNotFound(self.region_uri)
             else:
-                raise exc.ResourceError(self.uri, e.code, e.msg, e.fp.read(), method="GET")
+                raise exc.ResourceError(self.region_uri, e.code, e.msg, e.fp.read(), method="GET")
 
-        log(DEBUG, 'Get of cap %s response is: %s' % (self.uri, response))        
+        data = llsd.parse(response.body)
+
+        log(DEBUG, 'Get of cap %s response is: %s' % (self.region_uri, data))        
         
         return data
 

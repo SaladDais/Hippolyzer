@@ -25,10 +25,11 @@ from exc import HTTPError
 from webob import Request, Response
 
 class StdLibClient(object):
-    """implement a REST client on top of urllib2"""
+    """ implement a REST client on top of urllib2 """
     
     def GET(self, url, headers={}):
-        """GET a resource"""        
+        """ GET a resource """ 
+       
         request = urllib2.Request(url, headers=headers)
         try:
             result = urllib2.urlopen(request)
@@ -42,7 +43,8 @@ class StdLibClient(object):
         return response
 
     def POST(self, url, data, headers={}):
-        """POST data to a resource"""        
+        """ POST data to a resource """
+       
         request = urllib2.Request(url, data, headers=headers)
         try:
             result = urllib2.urlopen(request)
