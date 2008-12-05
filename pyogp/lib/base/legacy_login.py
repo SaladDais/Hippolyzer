@@ -116,7 +116,7 @@ class LegacyLogin(object):
         if seed_cap_url is None:
             raise exc.UserRezFailed(region)
         else:
-            log(INFO, 'Region_uri %s returned a seed_cap of %s' % (region.uri, seed_cap_url))
+            log(INFO, 'Region %s returned a seed_cap of %s' % (region.regionname, seed_cap_url))
         
         #AND THE REST
         #region.details = response

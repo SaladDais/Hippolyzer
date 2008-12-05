@@ -109,7 +109,7 @@ class Capability(object):
         content_type = content_type_charset.split(";")[0] # remove the charset part
 
         # ToDo: write a generic serializer/deserializer
-        if (content_type == 'application/llsd+xml'):
+        if (content_type == 'application/llsd+xml') or (content_type == 'application/xml'):
         	deserializer = LLSDDeserializer()
         else:
 	        raise exc.DeserializerNotFound(content_type)
