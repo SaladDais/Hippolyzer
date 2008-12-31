@@ -23,6 +23,23 @@ from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import re
 from urllib import quote
 from urlparse import urlparse, urljoin
+import time
+import uuid
+import os
+
+# eventlet
+import sys
+lib_dir = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..', 'src/lib'))
+if lib_dir not in sys.path:
+    sys.path.insert(0, lib_dir)
+
+from eventlet import api, coros
+
+try:
+    from eventlet import api, coros
+except ImportError:
+	print "Error importing eventlet"
+    sys.exit()
 
 # related
 from indra.base import llsd
@@ -31,6 +48,12 @@ from indra.base import llsd
 from pyogp.lib.base.caps import Capability
 from network.stdlib_client import StdLibClient, HTTPError
 import exc
+
+# messaging
+from pyogp.lib.base.message.udpdispatcher import UDPDispatcher
+from pyogp.lib.base.message.message import Message, Block
+from pyogp.lib.base.message.circuit import Host
+from pyogp.lib.base.message.types import MsgType
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.regiondomain')
@@ -99,6 +122,114 @@ class Region(object):
         
         return data
 
+    def connect(self):
+        """ connect to the udp circuit code """
+
+        self.messenger = UDPDispatcher()
+        self.host = None
+
+        self.host = Host((self.details['sim_ip'],
+                    self.details['sim_port']))
+
+        msg = Message('UseCircuitCode',
+                      Block('CircuitCode', Code=self.details['circuit_code'],
+                            SessionID=uuid.UUID(self.details['session_id']),
+                            ID=uuid.UUID(self.details['agent_id'])))
+        self.messenger.send_reliable(msg, self.host, 0)
+
+        time.sleep(1)
+
+        #SENDS CompleteAgentMovement
+        msg = Message('CompleteAgentMovement',
+                      Block('AgentData', AgentID=uuid.UUID(self.details['agent_id']),
+                            SessionID=uuid.UUID(self.details['session_id']),
+                            CircuitCode=self.details['circuit_code']))
+        self.messenger.send_reliable(msg, self.host, 0)
+
+        #SENDS UUIDNameRequest
+        msg = Message('UUIDNameRequest',
+                      Block('UUIDNameBlock', ID=uuid.UUID(self.details['agent_id'])
+                            )
+                      )
+        self.messenger.send_message(msg, self.host)
+
+        msg = Message('AgentUpdate',
+              Block('AgentData', AgentID=uuid.UUID(self.details['agent_id']),
+                    SessionID=uuid.UUID(self.details['session_id']),
+                    BodyRotation=(0.0,0.0,0.0,0.0),
+                    HeadRotation=(0.0,0.0,0.0,0.0),
+                    State=0x00,
+                    CameraCenter=(0.0,0.0,0.0),
+                    CameraAtAxis=(0.0,0.0,0.0),
+                    CameraLeftAxis=(0.0,0.0,0.0),
+                    CameraUpAxis=(0.0,0.0,0.0),
+                    Far=0,
+                    ControlFlags=0x00,
+                    Flags=0x00))
+
+        self.messenger.send_message(msg, self.host)
+
+       #print "Entering loop"
+        last_ping = 0
+        start = time.time()
+        now = start
+        packets = {}
+        
+        # run for 45 seonds
+        while ((now - start) < 45):
+            msg_buf, msg_size = self.messenger.udp_client.receive_packet(self.messenger.socket)
+            packet = self.messenger.receive_check(self.messenger.udp_client.get_sender(),
+                                            msg_buf, msg_size)
+            if packet != None:
+                #print 'Received: ' + packet.name + ' from  ' + self.messenger.udp_client.sender.ip + ":" + \
+                                                  #str(self.messenger.udp_client.sender.port)
+
+                #MESSAGE HANDLERS
+                if packet.name == 'RegionHandshake':
+
+                    msg = Message('RegionHandshakeReply',
+                      [Block('AgentData', AgentID=uuid.UUID(self.details['agent_id']),
+                            SessionID=uuid.UUID(self.details['session_id'])),
+                       Block('RegionInfo', Flags=0x00)])
+
+                    self.messenger.send_message(msg, self.host)
+
+                elif packet.name == 'StartPingCheck':
+                    msg = Message('CompletePingCheck',
+                      Block('PingID', PingID=last_ping))
+
+                    self.messenger.send_message(msg, self.host)
+                    last_ping += 1
+                   
+                if packet.name not in packets:
+                    packets[packet.name] = 1
+                else: 
+                    packets[packet.name] += 1                   
+                
+            else:
+                #print 'No message'
+                pass
+                
+            now = time.time()
+                
+            if self.messenger.has_unacked():
+                #print 'Acking'
+                self.messenger.process_acks()
+                msg = Message('AgentUpdate',
+                      Block('AgentData', AgentID=uuid.UUID(self.details['agent_id']),
+                            SessionID=uuid.UUID(self.details['session_id']),
+                            BodyRotation=(0.0,0.0,0.0,0.0),
+                            HeadRotation=(0.0,0.0,0.0,0.0),
+                            State=0x00,
+                            CameraCenter=(0.0,0.0,0.0),
+                            CameraAtAxis=(0.0,0.0,0.0),
+                            CameraLeftAxis=(0.0,0.0,0.0),
+                            CameraUpAxis=(0.0,0.0,0.0),
+                            Far=0,
+                            ControlFlags=0x00,
+                            Flags=0x00))
+
+                self.messenger.send_message(msg, self.host)
 
 class RegionSeedCapability(Capability):
     """ a seed capability which is able to retrieve other capabilities """
