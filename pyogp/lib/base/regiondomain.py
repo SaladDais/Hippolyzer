@@ -172,42 +172,22 @@ class Region(object):
 
         self.messenger.send_message(msg, self.host)
 
-        #self.udpconnection = UDPConnection(self.details, self.messenger, self.host)
-
-        #api.spawn(self.udp_listener)
-
-        #api.sleep()
-
-        #while self.udpconnection._mailbox:
-            #api.sleep()
-        #self.udp_listener()
-
-        udpProcess = UDPConnection(self.details, self.messenger, self.host)
-        #UDPConnection(self.details, self.messenger, self.host).start()
-        #print 'Here I am'
-
-#class UDPConnection(threading.Thread):
-
-class UDPConnection(object):
-    def __init__(self, details, messenger, host):
-
-        #print "Entering loop"
         self.last_ping = 0
         self.start = time.time()
         self.now = self.start
         self.packets = {}
-        self.host = host
-        self.messenger = messenger
-        self.details = details
+        
         log(DEBUG, 'Spawning region UDP connection')
-        #coros.Actor.__init__(self)
-        api.spawn(self._connect(), 1)
-        #threading.Thread.__init__(self)
+        api.spawn(self._processUDP)
 
-    def _connect(self):
-    #def run(self):
+        #ToDo: lots to do. work with the eventqueue via eventlet coros, object model clieanup, all that jazz
+
+    def _processUDP(self):
 
         while True:
+            
+            # free up resources for other stuff to happen
+            api.sleep(0)
 
             msg_buf, msg_size = self.messenger.udp_client.receive_packet(self.messenger.socket)
             packet = self.messenger.receive_check(self.messenger.udp_client.get_sender(),
@@ -263,10 +243,8 @@ class UDPConnection(object):
                             Flags=0x00))
 
                 self.messenger.send_message(msg, self.host)
-          
-            if self.now - self.start > 30: break
-            api.sleep(0.5)
 
+    def _processEventQueue(self):
 
 
 class RegionSeedCapability(Capability):
