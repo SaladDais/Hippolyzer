@@ -54,7 +54,7 @@ class UDPPacketDeserializer(object):
         msg_len = len(msg_buff)
 
         if ord(msg_buff[0]) & PackFlags.LL_ACK_FLAG:
-            print "have acks! that number: "
+            #print "have acks! that number: "
             acks = ord(msg_buff[msg_len-1])
             ack_offset = msg_len - 1 - 4*acks
             temp_acks = msg_buff[:ack_offset]

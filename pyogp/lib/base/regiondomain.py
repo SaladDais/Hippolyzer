@@ -26,6 +26,7 @@ from urlparse import urlparse, urljoin
 import time
 import uuid
 import os
+import threading
 
 # eventlet
 import sys
@@ -33,12 +34,12 @@ lib_dir = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..', 'src/
 if lib_dir not in sys.path:
     sys.path.insert(0, lib_dir)
 
-from eventlet import api, coros
+#from eventlet import api, coros
 
 try:
     from eventlet import api, coros
 except ImportError:
-	print "Error importing eventlet"
+    print "Error importing eventlet"
     sys.exit()
 
 # related
@@ -71,6 +72,8 @@ class Region(object):
         self.seed_cap = None
         self.details = {}
         
+        self.actor = None
+
         log(DEBUG, 'initializing region domain: %s' %self)
 
     def set_seed_cap_url(self, url):
@@ -124,7 +127,7 @@ class Region(object):
 
     def connect(self):
         """ connect to the udp circuit code """
-
+        
         self.messenger = UDPDispatcher()
         self.host = None
 
@@ -169,14 +172,43 @@ class Region(object):
 
         self.messenger.send_message(msg, self.host)
 
-       #print "Entering loop"
-        last_ping = 0
-        start = time.time()
-        now = start
-        packets = {}
-        
-        # run for 45 seonds
-        while ((now - start) < 45):
+        #self.udpconnection = UDPConnection(self.details, self.messenger, self.host)
+
+        #api.spawn(self.udp_listener)
+
+        #api.sleep()
+
+        #while self.udpconnection._mailbox:
+            #api.sleep()
+        #self.udp_listener()
+
+        udpProcess = UDPConnection(self.details, self.messenger, self.host)
+        #UDPConnection(self.details, self.messenger, self.host).start()
+        #print 'Here I am'
+
+#class UDPConnection(threading.Thread):
+
+class UDPConnection(object):
+    def __init__(self, details, messenger, host):
+
+        #print "Entering loop"
+        self.last_ping = 0
+        self.start = time.time()
+        self.now = self.start
+        self.packets = {}
+        self.host = host
+        self.messenger = messenger
+        self.details = details
+        log(DEBUG, 'Spawning region UDP connection')
+        #coros.Actor.__init__(self)
+        api.spawn(self._connect(), 1)
+        #threading.Thread.__init__(self)
+
+    def _connect(self):
+    #def run(self):
+
+        while True:
+
             msg_buf, msg_size = self.messenger.udp_client.receive_packet(self.messenger.socket)
             packet = self.messenger.receive_check(self.messenger.udp_client.get_sender(),
                                             msg_buf, msg_size)
@@ -196,21 +228,22 @@ class Region(object):
 
                 elif packet.name == 'StartPingCheck':
                     msg = Message('CompletePingCheck',
-                      Block('PingID', PingID=last_ping))
+                      Block('PingID', PingID=self.last_ping))
 
                     self.messenger.send_message(msg, self.host)
-                    last_ping += 1
-                   
-                if packet.name not in packets:
-                    packets[packet.name] = 1
+                    self.last_ping += 1
+                
+                # ToDo: REMOVE ME: self.packets will jsut grow and grow, this is here for testing purposes
+                if packet.name not in self.packets:
+                    self.packets[packet.name] = 1
                 else: 
-                    packets[packet.name] += 1                   
+                    self.packets[packet.name] += 1                   
                 
             else:
                 #print 'No message'
                 pass
                 
-            now = time.time()
+            self.now = time.time()
                 
             if self.messenger.has_unacked():
                 #print 'Acking'
@@ -230,6 +263,11 @@ class Region(object):
                             Flags=0x00))
 
                 self.messenger.send_message(msg, self.host)
+          
+            if self.now - self.start > 30: break
+            api.sleep(0.5)
+
+
 
 class RegionSeedCapability(Capability):
     """ a seed capability which is able to retrieve other capabilities """
