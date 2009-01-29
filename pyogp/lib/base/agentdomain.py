@@ -26,9 +26,10 @@ from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 from indra.base import llsd
 
 # pyogp
-from network.stdlib_client import StdLibClient, HTTPError
-from caps import SeedCapability
-import exc
+from pyogp.lib.base.network.stdlib_client import StdLibClient, HTTPError
+from pyogp.lib.base.caps import SeedCapability
+import pyogp.lib.base.exc
+from pyogp.lib.base.settings import Settings
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.agentdomain')
@@ -45,9 +46,17 @@ class AgentDomain(object):
         else:
             self.restclient = restclient 
 
+
+        self.settings = Settings()
         self.login_uri = uri
         self.credentials = None
+
         self.connectedStatus = False
+        
+        self.capabilities = {}
+        self.agentdomain_caps_list = ['rez_avatar/place']
+        self._isEventQueueRunning = False
+
         self.seed_cap = None
         log(DEBUG, 'initializing agent domain: %s' %self)
         
@@ -106,10 +115,13 @@ class AgentDomain(object):
     def place_avatar(self, region_uri, position=[117,73,21]):
         """ handles the rez_avatar/place cap on the agent domain, populates some initial region attributes """
 
-        place_avatar_cap = self.seed_cap.get(['rez_avatar/place'])['rez_avatar/place']
+        # wow, this needs some thought... place avatar should really move to the region domain...
+
+        if not self.capabilities.has_key('rez_avatar/place'):
+            self.capabilities['rez_avatar/place'] = self.seed_cap.get(['rez_avatar/place'])['rez_avatar/place']
 
         payload = {'public_region_seed_capability' : region_uri, 'position':position} 
-        result = place_avatar_cap.POST(payload)
+        result = self.capabilities['rez_avatar/place'].POST(payload)
 
         if result['region_seed_capability'] is None:
             raise exc.UserRezFailed(region)
@@ -119,6 +131,47 @@ class AgentDomain(object):
         log(DEBUG, 'Full rez_avatar/place response is: %s' % (result))
         
         return result
+
+    def get_agentdomain_capabilities(self):
+        """ queries the region seed cap for capabilities """
+
+        if (self.seed_cap == None):
+            raise exc.RegionSeedCapNotAvailable("querying for agents's agent domain capabilities")
+            # well then get it
+            # return something?
+        else:
+
+            log(INFO, 'Getting caps from agent domain seed cap %s' % (self.seed_cap))
+
+            # use self.region_caps.keys() to pass a list to be parsed into LLSD            
+            self.capabilities = self.seed_cap.get(self.agentdomain_caps_list)
+
+    def _processEventQueue(self):
+
+        self._isEventQueueRunning = True
+
+        
+        if self.capabilities['event_queue'] == None:
+            raise exc.RegionCapNotAvailable('event_queue')
+            # change the exception here (add a new one)
+        else:
+            while self._isEventQueueRunning:
+
+                # need to be able to pull data from a queue somewhere
+                data = {}
+                api.sleep(self.settings.agentdomain_event_queue_interval)
+
+                #if self.last_id != -1:
+                    #data = {'ack':self.last_id, 'done':False}
+
+                result = self.capabilities['event_queue'].POST(data)
+
+                self.last_id = result['id']
+
+                #log(DEBUG, 'region event queue cap called, returned id: %s' % (self.last_id))
+
+                log(DEBUG, 'AgentDomain EventQueueGet result: %s' % (result))
+
 
 class EventQueue(AgentDomain):
     """ an event queue get capability 

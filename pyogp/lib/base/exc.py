@@ -254,7 +254,22 @@ class UserRezFailed(AgentDomainError):
     
 class RegionDomainError(Error):
     """base exception for all errors which can occur on an region domain"""
+
+class RegionSeedCapNotAvailable(RegionDomainError):
+    """an error raised in case a user couldn't be authorized
     
+    stores the cap used inside a ``cap`` attribute
+    
+    """
+    
+    def __init__(self, reason = None):
+        """initialize this exception"""
+        
+        self.reason = reason
+
+    def __str__(self):   
+        return "Region seed capability not found when %s'" % (self.reason)  
+   
 class RegionCapNotAvailable(RegionDomainError):
     """an error raised in case a user couldn't be authorized
     

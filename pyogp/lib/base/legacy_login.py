@@ -19,6 +19,7 @@ $/LicenseInfo$
 """
 
 # standard python modules
+from time import sleep
 import xmlrpclib
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 
@@ -28,7 +29,7 @@ from indra.base import llsd, lluuid
 # pyogp.lib.base
 import exc
 from pyogp.lib.base.settings import Settings
-from caps import SeedCapability
+from pyogp.lib.base.caps import SeedCapability
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.legacy_login')
@@ -50,16 +51,18 @@ class LegacyLogin(object):
 
         self.uri = uri
         self.credentials = None
-        self.loginStatus = False
+        self.loginStatus = None
+        self.login_response = {}
         
-        log(DEBUG, 'initializing legacy login to legacy endpoint %s' % (self.uri))
+        #log(DEBUG, 'initializing legacy login to legacy endpoint %s' % (self.uri))
         
     def login(self, credentials, region):
         """ login to the environment and return an agent object via xmlrpc """
 
         login_params = self.get_extended_credentials(credentials)
-        response = self.post_to_loginuri(login_params)
-        data = self.eval_login_response(response, region) 
+        #response = self.post_to_loginuri(login_params)
+        self.post_to_loginuri(self.uri)
+        data = self.eval_login_response(self.login_response, region) 
 
         return data
         
@@ -78,26 +81,27 @@ class LegacyLogin(object):
         self.credentials['read_critical'] = default_login_params['read_critical']
         self.credentials['id0'] = default_login_params['id0']
                  
-        log(DEBUG, 'initializing legacy login parameters for %s %s' % (self.credentials['first'], self.credentials['last']))
+        log(DEBUG, 'Initializing legacy login parameters for %s %s' % (self.credentials['first'], self.credentials['last']))
 
         return self.credentials
        
-    def post_to_loginuri(self, login_params):
+    def post_to_loginuri(self, login_uri, login_method='login_to_simulator'):
         """ post to a login uri and return the results """
 
-        login = xmlrpclib.Server(self.uri)
-        results = login.login_to_simulator(self.credentials)
-        '''
-        # this should move to a utility
-        try:
-            login = xmlrpclib.Server(self.uri)
-            results = login.login_to_simulator(self.credentials)
-        except ProtocolError, error:
-           raise exc.ResourceError(self.uri, error.errcode, error.errmsg, error.headers, method="XMLRPC") 
-           results = {}       
-        '''
-        return results
-         
+        log(DEBUG, 'Logging %s %s into %s' % (self.credentials['first'], self.credentials['last'], login_uri))
+
+        login = xmlrpclib.Server(login_uri)
+        login_handler = login.__getattr__(login_method)
+        results = login_handler(self.credentials)
+
+        if results['login'] in ('true', 'false'):
+            self.login_response = results
+        else:
+            # handle transformation
+
+            log(INFO, 'Following a login redirect to %s with method %s. Message: %s' % (results['next_url'], results['next_method'], results['message']))
+            self.login_response = self.post_to_loginuri(results['next_url'], results['next_method'])
+
     def eval_login_response(self, response, region):
         """ parse the login uri response and return an avatar object """
     

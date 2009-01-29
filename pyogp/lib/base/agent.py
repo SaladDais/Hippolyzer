@@ -21,7 +21,6 @@ import re
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 
 from credentials import PlainPasswordCredential
-from agentdomain import AgentDomain
 from legacy_login import LegacyLogin
 from regiondomain import Region
 
@@ -82,6 +81,8 @@ class Agent(object):
         if (re.search('auth.cgi$', login_uri)):
 
             log(INFO, "Login context is OGP")
+
+            from agentdomain import AgentDomain
 
             self.agentdomain = AgentDomain(login_uri, restclient)
             self.agentdomain.login(self.credentials)

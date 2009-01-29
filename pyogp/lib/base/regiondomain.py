@@ -46,9 +46,10 @@ except ImportError:
 from indra.base import llsd
 
 # pyogp
-from pyogp.lib.base.caps import Capability
-from network.stdlib_client import StdLibClient, HTTPError
-import exc
+from pyogp.lib.base.caps import Capability, SeedCapability
+from pyogp.lib.base.network.stdlib_client import StdLibClient, HTTPError
+import pyogp.lib.base.exc
+from pyogp.lib.base.settings import Settings
 
 # messaging
 from pyogp.lib.base.message.udpdispatcher import UDPDispatcher
@@ -70,9 +71,54 @@ class Region(object):
         self.regionname = regionname
         self.seed_cap_url = ''
         self.seed_cap = None
+        self.settings = Settings()
+
+        # details is currently a catchall for things that need to be split out...
         self.details = {}
-        
-        self.actor = None
+
+        self._isUDPRunning = False
+        self._isEventQueueRunning = False
+
+        self.capabilities = {}
+        self.region_caps_list = ['ChatSessionRequest',
+                            'CopyInventoryFromNotecard',
+                            'DispatchRegionInfo',
+                            'EstateChangeInfo',
+                            'EventQueueGet',
+                            'FetchInventory',
+                            'WebFetchInventoryDescendents',
+                            'FetchLib',
+                            'FetchLibDescendents',
+                            'GroupProposalBallot',
+                            'HomeLocation',
+                            'MapLayer',
+                            'MapLayerGod',
+                            'NewFileAgentInventory',
+                            'ParcelPropertiesUpdate',
+                            'ParcelVoiceInfoRequest',
+                            'ProvisionVoiceAccountRequest',
+                            'RemoteParcelRequest',
+                            'RequestTextureDownload',
+                            'SearchStatRequest',
+                            'SearchStatTracking',
+                            'SendPostcard',
+                            'SendUserReport',
+                            'SendUserReportWithScreenshot',
+                            'ServerReleaseNotes',
+                            'StartGroupProposal',
+                            'UpdateAgentLanguage',
+                            'UpdateGestureAgentInventory',
+                            'UpdateNotecardAgentInventory',
+                            'UpdateScriptAgent',
+                            'UpdateGestureTaskInventory',
+                            'UpdateNotecardTaskInventory',
+                            'UpdateScriptTask',
+                            'ViewerStartAuction',
+                            'UntrustedSimulatorMessage',
+                            'ViewerStats'
+        ]
+
+        #self.actor = None
 
         log(DEBUG, 'initializing region domain: %s' %self)
 
@@ -80,12 +126,12 @@ class Region(object):
     
         self.seed_cap_url = url
         self.seed_cap = RegionSeedCapability('seed_cap', self.seed_cap_url)
-        
+
         log(DEBUG, 'setting region domain seed cap: %s' % (self.seed_cap_url))
-    
+
     def parse_region_uri(self, uri):     
         """ parse a region uri and returns one formatted appropriately """
-        
+ 
         region_uri = urljoin(uri, quote(urlparse(uri)[2]))
 
         # test if it is a lindenlab.com domain name
@@ -102,12 +148,12 @@ class Region(object):
             else:
                 region_uri = urljoin(uri, quote(urlparse(uri)[2]))
         '''
-        
+
         return region_uri
 
     def get_region_public_seed(self,custom_headers={'Accept' : 'application/llsd+xml'}):
         """call this capability, return the parsed result"""
-        
+
         log(DEBUG, 'Getting region public_seed %s' %(self.region_uri))
 
         try:
@@ -122,17 +168,60 @@ class Region(object):
         data = llsd.parse(response.body)
 
         log(DEBUG, 'Get of cap %s response is: %s' % (self.region_uri, data))        
-        
+
         return data
 
+    def get_region_capabilities(self):
+        """ queries the region seed cap for capabilities """
+
+        if (self.seed_cap == None):
+            raise exc.RegionSeedCapNotAvailable("querying for agent capabilities")
+            return
+        else:
+
+            log(INFO, 'Getting caps from region seed cap %s' % (self.seed_cap))
+
+            # use self.region_caps.keys() to pass a list to be parsed into LLSD            
+            self.capabilities = self.seed_cap.get(self.region_caps_list)
+
     def connect(self):
-        """ connect to the udp circuit code """
-        
+        """ connect to the udp circuit code and event queue"""
+
         self.messenger = UDPDispatcher()
         self.host = None
 
         self.host = Host((self.details['sim_ip'],
                     self.details['sim_port']))
+
+        self.init_agent_in_region()
+
+
+        self.last_ping = 0
+        #self.start = time.time()
+        #self.now = self.start
+        self.packets = {}
+
+        log(DEBUG, 'Spawning region UDP connection')
+        api.spawn(self._processUDP)
+
+        log(DEBUG, 'Spawning region event queue connection')
+        self.get_region_capabilities()
+        api.spawn(self._processEventQueue)
+
+    def logout(self):
+        """ send a logout packet """
+
+        # this should move to a handled method
+
+        msg = Message('LogoutRequest',
+                  Block('AgentData', AgentID=uuid.UUID(self.details['agent_id']),
+                        SessionID=uuid.UUID(self.details['session_id'])
+                        )
+                  )
+        self.messenger.send_message(msg, self.host)
+
+    def init_agent_in_region(self):
+        """ send a few packets to set things up """
 
         msg = Message('UseCircuitCode',
                       Block('CircuitCode', Code=self.details['circuit_code'],
@@ -172,20 +261,12 @@ class Region(object):
 
         self.messenger.send_message(msg, self.host)
 
-        self.last_ping = 0
-        self.start = time.time()
-        self.now = self.start
-        self.packets = {}
-        
-        log(DEBUG, 'Spawning region UDP connection')
-        api.spawn(self._processUDP)
-
-        #ToDo: lots to do. work with the eventqueue via eventlet coros, object model clieanup, all that jazz
-
     def _processUDP(self):
 
-        while True:
-            
+        self._isUDPRunning = True
+
+        while self._isUDPRunning:
+
             # free up resources for other stuff to happen
             api.sleep(0)
 
@@ -212,19 +293,19 @@ class Region(object):
 
                     self.messenger.send_message(msg, self.host)
                     self.last_ping += 1
-                
+
                 # ToDo: REMOVE ME: self.packets will jsut grow and grow, this is here for testing purposes
                 if packet.name not in self.packets:
                     self.packets[packet.name] = 1
                 else: 
                     self.packets[packet.name] += 1                   
-                
+
             else:
                 #print 'No message'
                 pass
-                
-            self.now = time.time()
-                
+
+            #self.now = time.time()
+
             if self.messenger.has_unacked():
                 #print 'Acking'
                 self.messenger.process_acks()
@@ -246,67 +327,54 @@ class Region(object):
 
     def _processEventQueue(self):
 
+        self._isEventQueueRunning = True
+
+        self.last_id = -1
+        
+        if self.capabilities['EventQueueGet'] == None:
+            raise exc.RegionCapNotAvailable('EventQueueGet')
+            # well then get it...
+        else:
+            while self._isEventQueueRunning:
+
+                # need to be able to pull data from a queue somewhere
+                data = {}
+                api.sleep(self.settings.region_event_queue_interval)
+
+                if self.last_id != -1:
+                    data = {'ack':self.last_id, 'done':False}
+
+                result = self.capabilities['EventQueueGet'].POST(data)
+
+                self.last_id = result['id']
+
+                #log(DEBUG, 'region event queue cap called, returned id: %s' % (self.last_id))
+
+                log(DEBUG, 'Region EventQueueGet result: %s' % (result))
+
 
 class RegionSeedCapability(Capability):
     """ a seed capability which is able to retrieve other capabilities """
 
     def get(self, names=[]):
         """if this is a seed cap we can retrieve other caps here"""
-        
-        log(INFO, 'requesting from the region domain the following caps: %s' % (names))
-        
+
+        #log(INFO, 'requesting from the region domain the following caps: %s' % (names))
+
         payload = names
         parsed_result = self.POST(payload)  #['caps']
-        log(INFO, 'request for caps returned: %s' % (names))
-        
+        log(INFO, 'Request for caps returned: %s' % (parsed_result.keys()))
+
         caps = {}
         for name in names:
             # TODO: some caps might be seed caps, how do we know? 
-            caps[name]=Capability(name, parsed_result[name])
+            if parsed_result.has_key(name):
+                caps[name]=Capability(name, parsed_result[name])
+            else:
+                log(DEBUG, 'Requested capability \'%s\' is not available' %  (name))
             #log(INFO, 'got cap: %s' % (name))
-            
+
         return caps
                      
     def __repr__(self):
-        return "<RegionSeedCapability for %s>" %self.public_url
-    
-
-class EventQueueGet(Region):
-    """ an event queue capability 
-
-    this is a temporary solution. ideally we'd have a generic event queue object
-    that would be integrated into the ad and region separately
-    """
-
-    def __init__(self, context):
-        """initialize this adapter"""
-        
-        self.context = context
-        self.last_id = -1
-        
-        # let's retrieve the cap we need
-        self.seed_cap = self.context.seed_cap
-        
-        log(DEBUG, 'intitializing region domain event queue via the seed cap: %s' % (self.seed_cap))
-        
-        self.cap = self.seed_cap.get(['EventQueueGet'])['EventQueueGet']
-        
-        if self.cap == {}:
-            raise exc.RegionCapNotAvailable('EventQueueGet')
-        else:
-            log(DEBUG, 'region event queue cap is: %s' % (self.cap.public_url))
-
-        
-    def __call__(self, data = {}):
-        """initiate the event queue get request"""
-        
-        if self.last_id != -1:
-            data = {'ack':self.last_id, 'done':False}
-            
-        result = self.cap.POST(data)
-        
-        self.last_id = result['id']
-        
-        log(DEBUG, 'region event queue cap called, returned id: %s' % (self.last_id))
-        
-        return result
+        return "<RegionSeedCapability for %s>" % (self.public_url)

@@ -45,7 +45,7 @@ class Capability(object):
 
         self.name = name
         self.public_url = public_url
-        log(INFO, 'instantiated cap %s' %self)
+        #log(DEBUG, 'instantiated cap %s' %self)
 
     def GET(self,custom_headers={}):
         """call this capability, return the parsed result"""
@@ -66,9 +66,9 @@ class Capability(object):
 
         # ToDo: write a generic serializer/deserializer
         if (content_type == 'application/llsd+xml'):
-        	deserializer = LLSDDeserializer()
+            deserializer = LLSDDeserializer()
         else:
-	        raise exc.DeserializerNotFound(content_type)
+            raise exc.DeserializerNotFound(content_type)
 	
         data = deserializer.deserialize_string(response.body)
         log(DEBUG, 'Get of cap %s response is: %s' % (self.public_url, data))        
@@ -110,9 +110,9 @@ class Capability(object):
 
         # ToDo: write a generic serializer/deserializer
         if (content_type == 'application/llsd+xml') or (content_type == 'application/xml'):
-        	deserializer = LLSDDeserializer()
+            deserializer = LLSDDeserializer()
         else:
-	        raise exc.DeserializerNotFound(content_type)
+            raise exc.DeserializerNotFound(content_type)
 	
         data = deserializer.deserialize_string(response.body)
         log(DEBUG, 'Post to cap %s response is: %s' % (self.public_url, data))        

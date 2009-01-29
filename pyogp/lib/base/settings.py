@@ -19,7 +19,18 @@ $/LicenseInfo$
 """
 
 class Settings(object):
-    
+
+    def __init__(self):
+        """ some lovely configurable settings """
+
+        # how many seconds to wait between polling
+        # a region's event queue
+        self.region_event_queue_interval = 1
+
+        # how many seconds to wait between polling
+        # a agent doamins's event queue
+        self.agentdomain_event_queue_interval = 15
+
     # parameters for xmplrpc login
     def get_default_xmlrpc_login_parameters(self):
         """ returns some default login params """
