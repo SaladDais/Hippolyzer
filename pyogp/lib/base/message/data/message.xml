@@ -360,7 +360,23 @@
 					<boolean>true</boolean>
 				</map>
 				
+				<key>ParcelObjectOwnersReply</key>
+				<map>
+					<key>flavor</key>
+					<string>llsd</string>
+					<key>trusted-sender</key>
+					<boolean>true</boolean>
+				</map>
+
 				<key>ParcelProperties</key>
+				<map>
+					<key>flavor</key>
+					<string>llsd</string>
+					<key>trusted-sender</key>
+					<boolean>true</boolean>
+				</map>
+
+				<key>LandStatReply</key>
 				<map>
 					<key>flavor</key>
 					<string>llsd</string>
@@ -425,8 +441,40 @@
 					<boolean>true</boolean>
 				</map>
 				
+				<key>EnableSimulator</key>
+				<map>
+					<key>flavor</key>
+					<string>llsd</string>
+					<key>trusted-sender</key>
+					<boolean>true</boolean>
+				</map>
+				
+				<key>TeleportFinish</key>
+				<map>
+					<key>flavor</key>
+					<string>llsd</string>
+					<key>trusted-sender</key>
+					<boolean>true</boolean>
+				</map>
+				
+				<key>CrossedRegion</key>
+				<map>
+					<key>flavor</key>
+					<string>llsd</string>
+					<key>trusted-sender</key>
+					<boolean>true</boolean>
+				</map>
+				
 				<!-- UDPDeprecated Messages -->
 				<key>ScriptRunningReply</key>
+				<map>
+					<key>flavor</key>
+					<string>llsd</string>
+					<key>trusted-sender</key>
+					<boolean>false</boolean>
+				</map>
+				
+				<key>LandStatReply</key>
 				<map>
 					<key>flavor</key>
 					<string>llsd</string>
@@ -477,7 +525,7 @@
 			<boolean>false</boolean>
 
 			<key>UpdateScriptAgentInventory</key>
-			<boolean>true</boolean>
+			<boolean>false</boolean>
 
 			<key>UpdateGestureTaskInventory</key>
 			<boolean>false</boolean>
@@ -486,7 +534,7 @@
 			<boolean>true</boolean>
 
 			<key>UpdateScriptTaskInventory</key>
-			<boolean>true</boolean>
+			<boolean>false</boolean>
 
 			<key>ViewerStartAuction</key>
 			<boolean>true</boolean>
@@ -540,6 +588,18 @@
 			<boolean>true</boolean>
 		
 			<key>FetchInventoryDescendents</key>
+			<boolean>false</boolean>
+		
+			<key>WebFetchInventoryDescendents</key>
+			<boolean>true</boolean>
+		
+			<key>FetchInventory</key>
+			<boolean>true</boolean>
+		
+			<key>FetchLibDescendents</key>
+			<boolean>true</boolean>
+		
+			<key>FetchLib</key>
 			<boolean>true</boolean>
 		</map>
 
