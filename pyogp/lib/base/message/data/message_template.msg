@@ -899,11 +899,11 @@ version 2.0
 // reliable
 {
 	ClassifiedInfoReply Low 44 Trusted Unencoded
-    {
-        AgentData    Single
-        {	AgentID			LLUUID		}
-    }
-    {
+	{
+		AgentData    Single
+		{	AgentID			LLUUID		}
+		}
+		{
 		Data        Single
 		{	ClassifiedID	LLUUID		}
 		{	CreatorID		LLUUID		}
@@ -911,16 +911,16 @@ version 2.0
 		{	ExpirationDate	U32			}
 		{	Category		U32			}
 		{	Name			Variable 1	}
-        {	Desc			Variable 2	}
+		{	Desc			Variable 2	}
 		{	ParcelID		LLUUID		}
 		{	ParentEstate	U32			}
-        {	SnapshotID		LLUUID		}
-        {	SimName			Variable 1	}
-        {	PosGlobal		LLVector3d	}
-        {	ParcelName		Variable 1	}
+		{	SnapshotID		LLUUID		}
+		{	SimName			Variable 1	}
+		{	PosGlobal		LLVector3d	}
+		{	ParcelName		Variable 1	}
 		{	ClassifiedFlags	U8			}
 		{	PriceForListing	S32			}
-    }
+	}
 }
 
 
@@ -2697,7 +2697,7 @@ version 2.0
 // end viewer to simulator section
 
 {
-       ViewerStats Low 131 NotTrusted Zerocoded
+	ViewerStats Low 131 NotTrusted Zerocoded
        {
                AgentData                       Single
                {       AgentID                 LLUUID      }
@@ -3116,10 +3116,10 @@ version 2.0
 		{	You		S16	}
 		{	Prey	S16	}
 	}
-    {
-         AgentData       Variable
-         {       AgentID                 LLUUID                  }
-    }
+	{
+		AgentData       Variable
+		{       AgentID                 LLUUID                  }
+	}
 }
 
 // ImageData - sent to viewer to transmit information about an image 
@@ -4074,26 +4074,26 @@ version 2.0
 // reliable
 {
 	PickInfoReply Low 184 Trusted Unencoded
-    {
-        AgentData    Single
-        {    AgentID        LLUUID    }
-    }
-    {
+	{
+		AgentData    Single
+		{    AgentID        LLUUID    }
+	}
+	{
 		Data        Single
 		{	PickID			LLUUID		}
 		{	CreatorID		LLUUID		}
 		{	TopPick			BOOL		}
 		{	ParcelID		LLUUID		}
 		{	Name			Variable 1	}
-        {	Desc			Variable 2	}
-        {	SnapshotID		LLUUID		}
-        {	User			Variable 1	}
-        {	OriginalName	Variable 1	}
-        {	SimName			Variable 1	}
-        {	PosGlobal		LLVector3d	}
-        {	SortOrder		S32			}
-        {	Enabled			BOOL		}
-    }
+		{	Desc			Variable 2	}
+		{	SnapshotID		LLUUID		}
+		{	User			Variable 1	}
+		{	OriginalName	Variable 1	}
+		{	SimName			Variable 1	}
+		{	PosGlobal		LLVector3d	}
+		{	SortOrder		S32			}
+		{	Enabled			BOOL		}
+	}
 }
 
 
@@ -4556,7 +4556,7 @@ version 2.0
 // viewer -> sim
 // reliable
 {
-    EstateCovenantRequest Low 203 NotTrusted Unencoded
+	EstateCovenantRequest Low 203 NotTrusted Unencoded
 	{
 		AgentData			Single
 		{	AgentID			LLUUID	}
@@ -4568,7 +4568,7 @@ version 2.0
 // sim -> viewer
 // reliable
 {
-    EstateCovenantReply Low 204 Trusted Unencoded
+	EstateCovenantReply Low 204 Trusted Unencoded
 	{
 		Data        Single
 		{	CovenantID		    LLUUID		    }
@@ -5313,8 +5313,8 @@ version 2.0
 
 // This message is sent how objects get passed between regions.
 {
-    AtomicPassObject High 28 Trusted Unencoded
-    {
+	AtomicPassObject High 28 Trusted Unencoded
+	{
 		TaskData		Single
 		{	TaskID				LLUUID	}
 		{	AttachmentNeedsSave	BOOL	}	// true iff is attachment and needs asset saved
@@ -5620,7 +5620,7 @@ version 2.0
 // GodlikeMessage - generalized construct for Gods to send messages
 // around the system. Each Request has it's own internal protocol.
 {
-    GodlikeMessage Low 259 NotTrusted Zerocoded
+	GodlikeMessage Low 259 NotTrusted Zerocoded
 	{
 		AgentData 		Single
 		{   AgentID     LLUUID  }
@@ -5641,7 +5641,7 @@ version 2.0
 // EstateOwnerMessage
 // format must be identical to above
 {
-    EstateOwnerMessage	Low 260 NotTrusted Zerocoded
+	EstateOwnerMessage	Low 260 NotTrusted Zerocoded
 	{
 		AgentData 		Single
 		{   AgentID     LLUUID  	}
@@ -5663,7 +5663,7 @@ version 2.0
 // format must be identical to above
 // As above, but don't have to be god or estate owner to send.
 {
-    GenericMessage	Low 261 NotTrusted Zerocoded
+	GenericMessage	Low 261 NotTrusted Zerocoded
 	{
 		AgentData 		Single
 		{   AgentID     LLUUID  	}
@@ -8483,7 +8483,7 @@ version 2.0
 // Generalized system message. Each Requst has its own protocol for
 // the StringData block format and contents.
 {
-    SystemMessage Low 404 Trusted Zerocoded
+	SystemMessage Low 404 Trusted Zerocoded
 	{
 		MethodData	 	Single
 		{	Method		Variable 1	}
@@ -8671,27 +8671,27 @@ version 2.0
 // Script on simulator requests rpc channel from rpcserver
 // simulator -> dataserver -> MySQL
 {
-    RpcChannelRequest Low 413 Trusted Unencoded
-    {
+	RpcChannelRequest Low 413 Trusted Unencoded
+	{
 		DataBlock		Single
 		{	GridX		U32 }
 		{	GridY		U32 }
-        {   TaskID      LLUUID }
-        {   ItemID		LLUUID }
-    }
+		{   TaskID      LLUUID }
+		{   ItemID		LLUUID }
+	}
 }
 
 // RpcServer allocated a session for the script
 // ChannelID will be the NULL UUID if unable to register
 // dataserver -> simulator
 {
-    RpcChannelReply Low 414 Trusted Unencoded
-    {
-        DataBlock   Single
-        {   TaskID      LLUUID }
-        {   ItemID		LLUUID }
-        {   ChannelID   LLUUID }
-    }
+	RpcChannelReply Low 414 Trusted Unencoded
+	{
+		DataBlock   Single
+		{   TaskID      LLUUID }
+		{   ItemID		LLUUID }
+		{   ChannelID   LLUUID }
+	}
 }
 
 // Inbound RPC requests follow this path:
