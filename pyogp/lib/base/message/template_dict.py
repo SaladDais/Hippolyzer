@@ -17,6 +17,7 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 
 $/LicenseInfo$
 """
+#import sys
 
 from types import MsgFrequency
 from data import msg_tmpl, msg_details
@@ -37,6 +38,8 @@ class TemplateDictionary(object):
             parser = MessageTemplateParser(msg_tmpl)
             template_list = parser.message_templates
             template_dict = TemplateDictionary(template_list)
+            # adding below so we can check how many packets we can parse easily len(self.template_list)
+            self.template_list = template_list
 
         # maps name to template
         self.message_templates = {}
@@ -46,6 +49,12 @@ class TemplateDictionary(object):
 
         self.build_dictionaries(template_list)
         self.build_message_ids()
+
+    def get_template_list(self):
+        names = []
+        for i in self.template_list:
+            names.append(i.name)
+        return names
 
     def build_dictionaries(self, template_list):
         for template in template_list:
@@ -64,7 +73,6 @@ class TemplateDictionary(object):
                 
             self.message_dict[(frequency_str, \
                                template.msg_num)] = template
-
 
     def build_message_ids(self):
         packer = DataPacker()

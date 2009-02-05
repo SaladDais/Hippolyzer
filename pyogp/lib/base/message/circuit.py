@@ -19,6 +19,7 @@ $/LicenseInfo$
 """
 
 from types import PackFlags
+#from packet_handler import PacketHandler
 
 class Host(object):
 
@@ -94,7 +95,6 @@ class Circuit(object):
 
         if packet.reliable == True:
             self.collect_ack(packet.packet_id)
-
 
     def ack_reliable_packet(self, packet_id):
         #go through the packets waiting to be acked, and set them as acked

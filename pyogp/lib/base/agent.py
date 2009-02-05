@@ -89,6 +89,7 @@ class Agent(object):
 
             self.region = Region(region_uri)
             self.region.details = self.agentdomain.place_avatar(self.region.region_uri)
+            self.region.set_seed_cap_url(self.region.details['region_seed_capability'])
         else:
             self.thingy = LegacyLogin(login_uri)
 

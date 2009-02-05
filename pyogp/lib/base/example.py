@@ -32,6 +32,9 @@ from pyogp.lib.base.message.message import Message, Block
 from pyogp.lib.base.message.circuit import Host
 from pyogp.lib.base.message.types import MsgType
 
+import sys
+sys.path.insert(0, '/Users/enus/svn/pyogp/trunk/src/lib')
+from eventlet import api
 
 #from pyogp.lib.base.interfaces import IPlaceAvatar, IEventQueueGet
 #from pyogp.lib.base.interfaces import IEventQueueGet
@@ -103,9 +106,13 @@ def login():
     # let's log in an agent to the agentdomain shall we
     agent.login(options.loginuri, options.regionuri)
 
-    print "got agentdomain info: %s" % agent.agentdomain.__dict__
-    print "got region details: %s" % agent.region.details
-    
+    agent.region.connect()
+    #print "got agentdomain info: %s" % agent.agentdomain.__dict__
+    #print "got region details: %s" % agent.region.details
+
+    while True:
+        api.sleep(0)
+    '''
     # now get an event_queue_get cap
     eqg = EventQueue(agent.agentdomain)
     logger.info("received an event queue cap: %s", eqg.cap)
@@ -187,7 +194,7 @@ def login():
             #print 'Acking'
             messenger.process_acks()
             send_agent_update(agent_id, session_id, messenger, host)
-
+        '''    
 class eventQueueGet(Thread):
     """ spawns a thread in which to run the eventqueueget """
     

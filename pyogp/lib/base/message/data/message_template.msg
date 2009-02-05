@@ -3187,7 +3187,6 @@ version 2.0
 		ObjectData			Variable
 		{	ID				U32	}
 		{	State			U8	}
-
 		{	FullID			LLUUID	}
 		{	CRC				U32	}	// TEMPORARY HACK FOR JAMES
 		{	PCode			U8	}
@@ -3195,10 +3194,8 @@ version 2.0
 		{	ClickAction		U8	}
 		{	Scale			LLVector3	}
 		{	ObjectData		Variable	1	}
-
 		{	ParentID		U32	}
 		{	UpdateFlags		U32	}	// U32, see object_flags.h
-
 		{	PathCurve		U8	}
 		{	ProfileCurve	U8	}
 		{	PathBegin		U16	}	// 0 to 1, quanta = 0.01
@@ -3217,33 +3214,20 @@ version 2.0
 		{	ProfileBegin	U16	}	// 0 to 1, quanta = 0.01
 		{	ProfileEnd		U16	}	// 0 to 1, quanta = 0.01
 		{	ProfileHollow	U16	}	// 0 to 1, quanta = 0.01
-
 		{	TextureEntry	Variable	2	}
 		{	TextureAnim		Variable	1	}
-
 		{	NameValue		Variable	2	}
 		{	Data			Variable	2	}
 		{	Text			Variable	1	}	// llSetText() hovering text
 		{	TextColor		Fixed		4	}	// actually, a LLColor4U
 		{	MediaURL		Variable	1	}	// URL for web page, movie, etc.
-
-		// Info for particle systems
 		{	PSBlock			Variable	1	}
-		
-		// Extra parameters
 		{	ExtraParams		Variable	1	}
-		
-		// info for looped attached sounds
-        // because these are almost always all zero
-		// the hit after zero-coding is only 2 bytes
-		// not the 42 you see here
 		{	Sound           LLUUID  }
 		{	OwnerID			LLUUID	}	// HACK object's owner id, only set if non-null sound, for muting
 		{	Gain            F32		}
 		{	Flags           U8		}
 		{	Radius          F32		}  // cutoff radius
-
-		// joint info -- is sent in the update of each joint-child-root
 		{	JointType 			U8		}
 		{	JointPivot			LLVector3	}
 		{	JointAxisOrAnchor 	LLVector3	}

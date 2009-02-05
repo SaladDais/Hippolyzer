@@ -26,7 +26,6 @@ from urlparse import urlparse, urljoin
 import time
 import uuid
 import os
-import threading
 
 # eventlet
 import sys
@@ -56,6 +55,7 @@ from pyogp.lib.base.message.udpdispatcher import UDPDispatcher
 from pyogp.lib.base.message.message import Message, Block
 from pyogp.lib.base.message.circuit import Host
 from pyogp.lib.base.message.types import MsgType
+from pyogp.lib.base.message.packets import *
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.regiondomain')
@@ -206,7 +206,7 @@ class Region(object):
 
         log(DEBUG, 'Spawning region event queue connection')
         self.get_region_capabilities()
-        api.spawn(self._processEventQueue)
+        api.spawn(self._processEventQueue) 
 
     def logout(self):
         """ send a logout packet """
@@ -222,12 +222,17 @@ class Region(object):
 
     def init_agent_in_region(self):
         """ send a few packets to set things up """
-
+        
+        packet = UseCircuitCodePacket()
+        packet.CircuitCode['Code'] = self.details['circuit_code']
+        packet.CircuitCode['SessionID'] = uuid.UUID(self.details['session_id'])    # MVT_LLUUID
+        packet.CircuitCode['ID'] = uuid.UUID(self.details['agent_id'])    # MVT_LLUUID
+        
         msg = Message('UseCircuitCode',
                       Block('CircuitCode', Code=self.details['circuit_code'],
                             SessionID=uuid.UUID(self.details['session_id']),
                             ID=uuid.UUID(self.details['agent_id'])))
-        self.messenger.send_reliable(msg, self.host, 0)
+        self.messenger.send_reliable(packet(), self.host, 0)
 
         time.sleep(1)
 
@@ -279,15 +284,24 @@ class Region(object):
 
                 #MESSAGE HANDLERS
                 if packet.name == 'RegionHandshake':
+                    # ToDo: move these guys elsewhere
+                    log(WARNING, "MOVE ME NOW")
 
-                    msg = Message('RegionHandshakeReply',
-                      [Block('AgentData', AgentID=uuid.UUID(self.details['agent_id']),
-                            SessionID=uuid.UUID(self.details['session_id'])),
-                       Block('RegionInfo', Flags=0x00)])
+                    #msg = Message('RegionHandshakeReply',
+                      #[Block('AgentData', AgentID=uuid.UUID(self.details['agent_id']),
+                            #SessionID=uuid.UUID(self.details['session_id'])),
+                       #Block('RegionInfo', RegionInfo=0x00)])
 
-                    self.messenger.send_message(msg, self.host)
+                    packet = RegionHandshakeReplyPacket()
+                    packet.AgentData['SessionID'] = uuid.UUID(self.details['session_id'])    # MVT_LLUUID
+                    packet.AgentData['AgentID'] = uuid.UUID(self.details['agent_id']) 
+                    packet.RegionInfo['Flags'] = 0x00
+
+                    for i in range(0,10):
+                        self.messenger.send_reliable(packet(), self.host, 0)
 
                 elif packet.name == 'StartPingCheck':
+                    log(WARNING, "MOVE ME NOW")
                     msg = Message('CompletePingCheck',
                       Block('PingID', PingID=self.last_ping))
 
@@ -295,10 +309,10 @@ class Region(object):
                     self.last_ping += 1
 
                 # ToDo: REMOVE ME: self.packets will jsut grow and grow, this is here for testing purposes
-                if packet.name not in self.packets:
-                    self.packets[packet.name] = 1
-                else: 
-                    self.packets[packet.name] += 1                   
+                #if packet.name not in self.packets:
+                    #self.packets[packet.name] = 1
+                #else: 
+                    #self.packets[packet.name] += 1                   
 
             else:
                 #print 'No message'
@@ -342,11 +356,12 @@ class Region(object):
                 api.sleep(self.settings.region_event_queue_interval)
 
                 if self.last_id != -1:
-                    data = {'ack':self.last_id, 'done':False}
+                    data = {'ack':self.last_id, 'done':True}
 
+                # ToDo: this is blocking, we need to break this
                 result = self.capabilities['EventQueueGet'].POST(data)
 
-                self.last_id = result['id']
+                if result != None: self.last_id = result['id']
 
                 #log(DEBUG, 'region event queue cap called, returned id: %s' % (self.last_id))
 

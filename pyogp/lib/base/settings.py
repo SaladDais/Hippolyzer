@@ -31,6 +31,10 @@ class Settings(object):
         # a agent doamins's event queue
         self.agentdomain_event_queue_interval = 15
 
+        # Application behavior settings
+        self.HANDLE_PACKETS = True
+        self.ENABLE_BYTES_TO_HEX_LOGGING = True
+
     # parameters for xmplrpc login
     def get_default_xmlrpc_login_parameters(self):
         """ returns some default login params """

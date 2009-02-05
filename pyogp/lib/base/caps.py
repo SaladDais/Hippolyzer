@@ -99,7 +99,8 @@ class Capability(object):
             response = self.restclient.POST(self.public_url, serialized_payload, headers=headers)
         except HTTPError, e:
             if e.code==404:
-                raise exc.ResourceNotFound(self.public_url)
+                pass
+                #raise exc.ResourceNotFound(self.public_url)
             else:
                 raise exc.ResourceError(self.public_url, e.code, e.msg, e.fp.read(), method="POST")
  

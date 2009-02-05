@@ -34,6 +34,9 @@ from packet import UDPPacket
 from message import Message, Block
 from pyogp.lib.base.network.net import NetUDPClient
 from pyogp.lib.base import exc
+from packet_handler import PacketHandler
+from pyogp.lib.base.settings import Settings
+from pyogp.lib.base.utilities.helpers import Helpers
 
 # initialize logging
 logger = getLogger('...base.message.udpdispatcher')
@@ -58,6 +61,10 @@ class UDPDispatcher(object):
         self.socket = self.udp_client.start_udp_connection()
         self.unpacker = DataUnpacker()
         self.packer = DataPacker()
+
+        self.settings = Settings()
+        self.helpers = Helpers()
+        self.packet_handler = PacketHandler()
 
     def find_circuit(self, host):
         circuit = self.circuit_manager.get_circuit(host)
@@ -96,7 +103,10 @@ class UDPDispatcher(object):
 
             circuit.handle_packet(recv_packet)
 
-            log(DEBUG, 'Received packet: %s' % (recv_packet.name))
+            if self.settings.HANDLE_PACKETS:
+                self.packet_handler._handle(recv_packet)
+
+            #log(DEBUG, 'Received packet: %s' % (recv_packet.name))
 
         return recv_packet
                                                                              
@@ -140,9 +150,14 @@ class UDPDispatcher(object):
         #serializer = ISerialization(packet)
         send_buffer = serializer.serialize()
 
+        if self.settings.ENABLE_BYTES_TO_HEX_LOGGING:
+            hex_string = '<=>' + self.helpers.bytes_to_hex(send_buffer)
+        else:
+            hex_string = ''
+
         #TODO: remove this when testing a network
         self.udp_client.send_packet(self.socket, send_buffer, host)
-        log(DEBUG, 'Sent packet: %s' % (message.name))
+        log(DEBUG, 'Sent packet: %s%s' % (message.name, hex_string))
 
         return send_buffer
                         

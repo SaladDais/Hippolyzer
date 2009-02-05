@@ -75,6 +75,7 @@ class MessageTemplateParser(object):
                     self.version = float(parts[0])
             
             #get packet header, starting a new packet
+            # ToDo: this regex needs to accomodate the case where 4 spaces are used in place of a tab and start of line
             packet_header = re.match("^\t([^\t{}]+.+)",line) #gets packet headers
             if packet_header != None:
                 parts = packet_header.group(1)

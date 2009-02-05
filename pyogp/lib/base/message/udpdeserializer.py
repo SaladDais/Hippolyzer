@@ -58,10 +58,19 @@ class UDPPacketDeserializer(object):
             acks = ord(msg_buff[msg_len-1])
             ack_offset = msg_len - 1 - 4*acks
             temp_acks = msg_buff[:ack_offset]
-            
+
         #Now zero decode the entire msg except the acks, in order to get the correct evaluation of the template
 
         if ord(msg_buff[0]) & PackFlags.LL_ZERO_CODE_FLAG:
+            '''
+            #offset = ord(msg_buff[5]) 
+            #header = msg_buff[:6+offset]   #offset will be zero unless the header has extra data
+            header = msg_buff[:6]
+            #inputbuf = msg_buff[6+offset:]  #not yet implemented because we can't test right now
+            inputbuf = msg_buff[6:]      
+            input_len = len(inputbuf)
+            msg_buff = self.zero_code_expand(inputbuf, input_len)
+            '''
             offset = ord(msg_buff[5])
             header = msg_buff[:6+offset]   #disregard#offset will be zero unless the header has extra data
             #header = msg_buff[:6]
@@ -74,8 +83,7 @@ class UDPPacketDeserializer(object):
             input_len = len(inputbuf)
             msg_buff = self.zero_code_expand(inputbuf, input_len)
             msg_buff = header + msg_buff
-            
-        
+
         if self.__validate_message(msg_buff) == True:
             msg_buff = msg_buff + ''.join(temp_acks)      #go ahead an merge the acks back in in order for the decode to work
             return self.__decode_data(msg_buff)
@@ -232,7 +240,7 @@ class UDPPacketDeserializer(object):
 
                 decode_pos += 1
             else:
-                print "ERROR: Unknown block type: " + str(block.block_type)
+                log(WARNING, "ERROR: Unknown block type: %s in %s packet." % (str(block.block_type), packet.name))
                 return None
 
             for i in range(repeat_count):
@@ -254,8 +262,7 @@ class UDPPacketDeserializer(object):
                         #HACK: this is a slow procedure, should passed in
                         templen = len(data)
                         if (decode_pos + data_size) > templen:
-                            print "ERROR: trying to read " +  str(decode_pos + var_size) + \
-                                  " from a buffer of len " + str(len(data))
+                            log(WARNING, "ERROR: trying to read %s from a buffer of len %s in %s" % (str(decode_pos + var_size), str(len(data)), packet.name))
                             return None
                         if data_size == 1:
                             #print "Reading VARIABLE variable size 1 byte"
@@ -280,8 +287,7 @@ class UDPPacketDeserializer(object):
 
                     #HACK: this is a slow procedure, should passed in
                     if (decode_pos + var_size) > len(data):
-                        print "ERROR 2: trying to read " +  str(decode_pos + var_size) + \
-                              " from a buffer of len " + str(len(data))
+                        log(WARNING, "ERROR: trying to read %s from a buffer of len %s in %s" % (str(decode_pos + var_size), str(len(data)), packet.name))
                         return None
                     unpacked_data = self.unpacker.unpack_data(data, \
                                                               variable.type, \

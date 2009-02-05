@@ -85,9 +85,9 @@ class AgentDomain(object):
             response = self.restclient.POST(self.login_uri, payload, headers=headers)
         except HTTPError, error:
             if error.code==404:
-                raise exc.ResourceNotFound(self.login_uri)
+                raise ResourceNotFound(self.login_uri)
             else:
-                raise exc.ResourceError(self.login_uri, error.code, error.msg, error.fp.read(), method="POST")
+                raise ResourceError(self.login_uri, error.code, error.msg, error.fp.read(), method="POST")
         
         return response
 
@@ -101,7 +101,7 @@ class AgentDomain(object):
             self.connectedStatus = True
             log(INFO, 'logged in to %s' % (self.login_uri))
         except KeyError:
-            raise exc.UserNotAuthorized(self.credentials)
+            raise UserNotAuthorized(self.credentials)
         
     def parse_login_response(self, response):   
         """ parse the login uri response and returns deserialized data """
@@ -124,7 +124,7 @@ class AgentDomain(object):
         result = self.capabilities['rez_avatar/place'].POST(payload)
 
         if result['region_seed_capability'] is None:
-            raise exc.UserRezFailed(region)
+            raise UserRezFailed(region)
         else:
             log(INFO, 'Region_uri %s returned a seed_cap of %s' % (region_uri, result['region_seed_capability']))
 
@@ -136,7 +136,7 @@ class AgentDomain(object):
         """ queries the region seed cap for capabilities """
 
         if (self.seed_cap == None):
-            raise exc.RegionSeedCapNotAvailable("querying for agents's agent domain capabilities")
+            raise RegionSeedCapNotAvailable("querying for agents's agent domain capabilities")
             # well then get it
             # return something?
         else:
@@ -152,7 +152,7 @@ class AgentDomain(object):
 
         
         if self.capabilities['event_queue'] == None:
-            raise exc.RegionCapNotAvailable('event_queue')
+            raise RegionCapNotAvailable('event_queue')
             # change the exception here (add a new one)
         else:
             while self._isEventQueueRunning:
