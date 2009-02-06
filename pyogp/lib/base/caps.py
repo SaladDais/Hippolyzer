@@ -27,6 +27,7 @@ from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 from indra.base import llsd
 from network.stdlib_client import StdLibClient, HTTPError
 import exc
+from settings import Settings
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.caps')
@@ -45,12 +46,13 @@ class Capability(object):
 
         self.name = name
         self.public_url = public_url
+        self.settings = Settings()
         #log(DEBUG, 'instantiated cap %s' %self)
 
     def GET(self,custom_headers={}):
         """call this capability, return the parsed result"""
 
-        log(DEBUG, '%s: GETing %s' %(self.name, self.public_url))
+        if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, '%s: GETing %s' %(self.name, self.public_url))
 
         try:
             response = self.restclient.GET(self.public_url)
@@ -71,7 +73,7 @@ class Capability(object):
             raise exc.DeserializerNotFound(content_type)
 	
         data = deserializer.deserialize_string(response.body)
-        log(DEBUG, 'Get of cap %s response is: %s' % (self.public_url, data))        
+        if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, 'Get of cap %s response is: %s' % (self.public_url, data))        
         
         return data
 
@@ -79,7 +81,7 @@ class Capability(object):
     def POST(self,payload,custom_headers={}):
         """call this capability, return the parsed result"""
 
-        log(DEBUG, 'Sending to cap %s the following payload: %s' %(self.public_url, payload))        
+        if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, 'Sending to cap %s the following payload: %s' %(self.public_url, payload))        
 
         # serialize the data
         if (type(payload) is ListType):
@@ -116,7 +118,7 @@ class Capability(object):
             raise exc.DeserializerNotFound(content_type)
 	
         data = deserializer.deserialize_string(response.body)
-        log(DEBUG, 'Post to cap %s response is: %s' % (self.public_url, data))        
+        if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, 'Post to cap %s response is: %s' % (self.public_url, data))        
 
         return data
 

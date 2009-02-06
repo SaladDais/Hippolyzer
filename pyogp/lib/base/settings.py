@@ -33,7 +33,10 @@ class Settings(object):
 
         # Application behavior settings
         self.HANDLE_PACKETS = True
+
+        # Logging behaviors
         self.ENABLE_BYTES_TO_HEX_LOGGING = True
+        self.ENABLE_CAPS_LOGGING = True
 
     # parameters for xmplrpc login
     def get_default_xmlrpc_login_parameters(self):
