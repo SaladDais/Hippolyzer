@@ -62,7 +62,7 @@ class PacketHandler():
                 handler(packet)
 
         except AttributeError:
-            log(WARNING, "Received an unhandled packet: %s" % (packet.name))
+            log(INFO, "Received an unhandled packet: %s" % (packet.name))
             pass
 
 class PacketReceivedNotifier():

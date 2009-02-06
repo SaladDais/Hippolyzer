@@ -167,7 +167,7 @@ class Region(object):
 
         data = llsd.parse(response.body)
 
-        log(DEBUG, 'Get of cap %s response is: %s' % (self.region_uri, data))        
+        if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, 'Get of cap %s response is: %s' % (self.region_uri, data))        
 
         return data
 
@@ -365,7 +365,7 @@ class Region(object):
 
                 #log(DEBUG, 'region event queue cap called, returned id: %s' % (self.last_id))
 
-                log(DEBUG, 'Region EventQueueGet result: %s' % (result))
+                if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, 'Region EventQueueGet result: %s' % (result))
 
 
 class RegionSeedCapability(Capability):

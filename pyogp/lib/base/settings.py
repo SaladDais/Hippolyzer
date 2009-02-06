@@ -36,7 +36,7 @@ class Settings(object):
 
         # Logging behaviors
         self.ENABLE_BYTES_TO_HEX_LOGGING = True
-        self.ENABLE_CAPS_LOGGING = True
+        self.ENABLE_CAPS_LOGGING = False
 
     # parameters for xmplrpc login
     def get_default_xmlrpc_login_parameters(self):
