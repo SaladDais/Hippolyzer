@@ -58,11 +58,11 @@ class PacketHandler():
             # Handle the packet if we have subscribers
             # Conveniently, this will also enable verbose packet logging
             if len(handler) > 0:
-                log(DEBUG, 'Received packet: %s' % (packet.name))
+                log(DEBUG, 'Handling packet: %s' % (packet.name))
                 handler(packet)
 
         except AttributeError:
-            log(INFO, "Received an unhandled packet: %s" % (packet.name))
+            #log(INFO, "Received an unhandled packet: %s" % (packet.name))
             pass
 
 class PacketReceivedNotifier():
