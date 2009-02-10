@@ -209,6 +209,19 @@ class MessageDeserializationError(MessageSystemError):
     def __str__(self):   
         return "Error serializing '%s' due to reason: '%s'" % (self.label, self.reason) 
 
+class DataUnpackingError(MessageSystemError):
+    """ problem deserializing packet data
+
+    stores the label and reason in ``label`` and ``reason`` attributes
+    """
+
+    def __init__(self, data='', reason=''):
+        self.data = data
+        self.reason = reason
+
+    def __str__(self):   
+        return "Error serializing '%s' due to reason: '%s'" % (self.data, self.reason) 
+
 ##########################
 ### high level exceptions
 ##########################
