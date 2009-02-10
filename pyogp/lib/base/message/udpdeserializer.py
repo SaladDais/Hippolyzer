@@ -86,7 +86,12 @@ class UDPPacketDeserializer(object):
 
         if self.__validate_message(msg_buff) == True:
             msg_buff = msg_buff + ''.join(temp_acks)      #go ahead an merge the acks back in in order for the decode to work
-            return self.__decode_data(msg_buff)
+            try:
+                return self.__decode_data(msg_buff)
+            except exc.DataUnpackingError, error:
+                #log(WARNING, "Error parsing packet due to: %s" % (error))
+                raise exc.MessageDeserializationError("packet parsing", error)
+                return None
 
         return None
 
@@ -173,8 +178,7 @@ class UDPPacketDeserializer(object):
 
         #determine packet flags
         packet.send_flags = ord(data[0])
-        packet.packet_id = \
-              self.unpacker.unpack_data(data, MsgType.MVT_U32, 1, endian_type=EndianType.BIG)
+        packet.packet_id = self.unpacker.unpack_data(data, MsgType.MVT_U32, 1, endian_type=EndianType.BIG)
 
         ##Zero code flag
         #if packet.send_flags & PackFlags.LL_ZERO_CODE_FLAG:
