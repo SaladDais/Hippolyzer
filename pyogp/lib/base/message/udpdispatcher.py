@@ -106,7 +106,11 @@ class UDPDispatcher(object):
             if self.settings.HANDLE_PACKETS:
                 self.packet_handler._handle(recv_packet)
 
-            #log(DEBUG, 'Received packet: %s' % (recv_packet.name))
+            if self.settings.ENABLE_BYTES_TO_HEX_LOGGING:
+                hex_string = '<=>' + self.helpers.bytes_to_hex(msg_buf)
+            else:
+                hex_string = ''
+            log(DEBUG, 'Received packet: %s%s' % (recv_packet.name, hex_string))
 
         return recv_packet
                                                                              

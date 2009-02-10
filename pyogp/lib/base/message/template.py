@@ -88,8 +88,22 @@ class MsgVariableData(object):
     
     def get_data_as_string(self):
         if self.var_type == MsgType.MVT_VARIABLE:
-            return binascii.hexlify(self.data) #LDE 23oct2008. Returns hex-string version of var-length data for display
-        else: return str(self.data)
+
+            #print '"',self.data[:-1].strip(),'"'
+            hexlified =  binascii.hexlify(self.data)
+            if 2*len(self.data) == len(hexlified):
+                #print 'here i am first!'
+                return self.data[:-1] #LDE 23oct2008. Returns hex-string version of var-length data for display
+            else:
+                #print 'here i am!'
+                return binascii.hexlify(self.data)
+        elif self.var_type == MsgType.MVT_FIXED:
+            return str(struct.unpack('h'*(len(self.data)/2), self.data))
+        else: 
+            return str(self.data)
+
+    def __repr__(self):
+        return self.get_data_as_string()
     
 class MessageTemplateVariable(object):
     """TODO: Add docstring"""

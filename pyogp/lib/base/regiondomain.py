@@ -295,10 +295,10 @@ class Region(object):
                     packet = RegionHandshakeReplyPacket()
                     packet.AgentData['SessionID'] = uuid.UUID(self.details['session_id'])    # MVT_LLUUID
                     packet.AgentData['AgentID'] = uuid.UUID(self.details['agent_id']) 
-                    packet.RegionInfo['Flags'] = 0x00
+                    packet.RegionInfo['Flags'] = 0x0
 
-                    for i in range(0,10):
-                        self.messenger.send_reliable(packet(), self.host, 0)
+                    #for i in range(0,10):
+                        #self.messenger.send_reliable(packet(), self.host, 0)
 
                 elif packet.name == 'StartPingCheck':
                     log(WARNING, "MOVE ME NOW")

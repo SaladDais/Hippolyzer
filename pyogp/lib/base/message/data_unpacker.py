@@ -19,9 +19,12 @@ $/LicenseInfo$
 """
 
 import struct
+import binascii
 from uuid import UUID
+import array
 
 from types import MsgType, EndianType, sizeof
+from pyogp.lib.base.exc import *
 
 class DataUnpacker(object):
     def __init__(self):
@@ -64,37 +67,41 @@ class DataUnpacker(object):
             
             unpack = unpack_tup[1]
             if callable(unpack):
-                return unpack(endian, data)
+                return unpack(endian, data, var_size)
             else:
-                return struct.unpack(endian + unpack, data)[0]
+                try:
+                    return struct.unpack(endian + unpack, data)[0]
+                except struct.error, error:
+                    #print error
+                    raise DataUnpackingError(data, error)
 
         return None
 
-    def __unpack_tuple(self, endian, tup, tp):
+    def __unpack_tuple(self, endian, tup, tp, var_size=None):
         size = len(tup) / struct.calcsize(tp)
         return struct.unpack(endian + str(size) + tp, tup)
 
-    def __unpack_vector3(self, endian, vec):
+    def __unpack_vector3(self, endian, vec, var_size=None):
         return self.__unpack_tuple(endian, vec, 'f')
 
-    def __unpack_vector3d(self, endian, vec):
+    def __unpack_vector3d(self, endian, vec, var_size=None):
         return self.__unpack_tuple(endian, vec, 'd')
 
-    def __unpack_vector4(self, endian, vec):
+    def __unpack_vector4(self, endian, vec, var_size=None):
         return self.__unpack_tuple(endian, vec, 'f')
 
-    def __unpack_quat(self, endian, quat):
+    def __unpack_quat(self, endian, quat, var_size=None):
         #first, pack to vector3
         #print "WARNING: UNPACKING A QUAT...."
         #vec = quat_to_vec3(quat)
         return self.__unpack_vector3(endian, quat)
 
-    def __unpack_uuid(self, endian, uuid_data):
+    def __unpack_uuid(self, endian, uuid_data, var_size=None):
         return UUID(bytes=uuid_data)
 
-    def __unpack_string(self, endian, pack_string):
+    def __unpack_string(self, endian, pack_string, var_size):
         return pack_string
     
-    def __unpack_fixed(self, endian, data): #LDE 23oct2008 handler for MVT_FIXED
+    def __unpack_fixed(self, endian, data, var_size): #LDE 23oct2008 handler for MVT_FIXED
         return data
             
