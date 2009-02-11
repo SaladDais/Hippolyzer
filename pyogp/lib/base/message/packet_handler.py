@@ -40,8 +40,9 @@ class PacketHandler():
 
         # create an attribute that is the event notifier (PacketReceivedNotifier)
         # TemplateDictionary.get_template_list() will provide all the proper names
-        # for use here
-        setattr(self, packet_name + "_Received", PacketReceivedNotifier(packet_name))
+        # for use here (aka packetnames)
+        if not self.__dict__.has_key(packet_name + "_Received"):
+            setattr(self, packet_name + "_Received", PacketReceivedNotifier(packet_name))
 
         # return the attribute (an instance of PacketReceivedNotifier)
         return getattr(self, packet_name + "_Received")
@@ -51,7 +52,6 @@ class PacketHandler():
 
         try:
 
-            
             # get the attribute of the self object called packet.name + Received
             handler = getattr(self, packet.name + "_Received")
 
