@@ -105,12 +105,13 @@ class UDPDispatcher(object):
 
             if self.settings.HANDLE_PACKETS:
                 self.packet_handler._handle(recv_packet)
-
-            if self.settings.ENABLE_BYTES_TO_HEX_LOGGING:
-                hex_string = '<=>' + self.helpers.bytes_to_hex(msg_buf)
-            else:
-                hex_string = ''
-            log(DEBUG, 'Received packet: %s%s' % (recv_packet.name, hex_string))
+            
+            if self.settings.ENABLE_UDP_LOGGING:
+                if self.settings.ENABLE_BYTES_TO_HEX_LOGGING:
+                    hex_string = '<=>' + self.helpers.bytes_to_hex(msg_buf)
+                else:
+                    hex_string = ''
+                log(DEBUG, 'Received packet: %s%s' % (recv_packet.name, hex_string))
 
         return recv_packet
                                                                              
@@ -154,14 +155,15 @@ class UDPDispatcher(object):
         #serializer = ISerialization(packet)
         send_buffer = serializer.serialize()
 
-        if self.settings.ENABLE_BYTES_TO_HEX_LOGGING:
-            hex_string = '<=>' + self.helpers.bytes_to_hex(send_buffer)
-        else:
-            hex_string = ''
+        if self.settings.ENABLE_UDP_LOGGING:
+            if self.settings.ENABLE_BYTES_TO_HEX_LOGGING:
+                hex_string = '<=>' + self.helpers.bytes_to_hex(send_buffer)
+            else:
+                hex_string = ''
+            log(DEBUG, 'Sent packet: %s%s' % (message.name, hex_string))
 
         #TODO: remove this when testing a network
         self.udp_client.send_packet(self.socket, send_buffer, host)
-        log(DEBUG, 'Sent packet: %s%s' % (message.name, hex_string))
 
         return send_buffer
                         
