@@ -18,7 +18,7 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 $/LicenseInfo$
 """
 
-class Helpers():
+class Helpers(object):
     """ contains useful helper functions """
 
     def bytes_to_hex(self, data):

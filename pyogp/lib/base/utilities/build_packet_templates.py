@@ -56,7 +56,7 @@ for i in template.message_dict:
         blocks_dict[block] = block.get_variables()
 
     #print 'class %sPacket(MsgData):' % (name)
-    print 'class %sPacket():' % (name)
+    print 'class %sPacket(object):' % (name)
     print '    \'\'\' a template for a %s packet \'\'\'' % (name)
     print ''
     print '    def __init__(self):'

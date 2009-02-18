@@ -20,7 +20,7 @@ $/LicenseInfo$
 
 from pyogp.lib.base.message.message import Message, Block
 
-class RegionPresenceRequestByRegionIDPacket():
+class RegionPresenceRequestByRegionIDPacket(object):
     ''' a template for a RegionPresenceRequestByRegionID packet '''
 
     def __init__(self):
@@ -34,7 +34,7 @@ class RegionPresenceRequestByRegionIDPacket():
 
         return Message('RegionPresenceRequestByRegionID', Block('RegionData', RegionID = self.RegionData['RegionID']))
 
-class GroupAccountSummaryRequestPacket():
+class GroupAccountSummaryRequestPacket(object):
     ''' a template for a GroupAccountSummaryRequest packet '''
 
     def __init__(self):
@@ -55,7 +55,7 @@ class GroupAccountSummaryRequestPacket():
 
         return Message('GroupAccountSummaryRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID']), Block('MoneyData', RequestID = self.MoneyData['RequestID'], IntervalDays = self.MoneyData['IntervalDays'], CurrentInterval = self.MoneyData['CurrentInterval']))
 
-class CancelAuctionPacket():
+class CancelAuctionPacket(object):
     ''' a template for a CancelAuction packet '''
 
     def __init__(self):
@@ -69,7 +69,7 @@ class CancelAuctionPacket():
 
         return Message('CancelAuction', Block('ParcelData', ParcelID = self.ParcelData['ParcelID']))
 
-class StateSavePacket():
+class StateSavePacket(object):
     ''' a template for a StateSave packet '''
 
     def __init__(self):
@@ -87,7 +87,7 @@ class StateSavePacket():
 
         return Message('StateSave', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('DataBlock', Filename = self.DataBlock['Filename']))
 
-class UpdateAttachmentPacket():
+class UpdateAttachmentPacket(object):
     ''' a template for a UpdateAttachment packet '''
 
     def __init__(self):
@@ -132,7 +132,7 @@ class UpdateAttachmentPacket():
 
         return Message('UpdateAttachment', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('AttachmentBlock', AttachmentPoint = self.AttachmentBlock['AttachmentPoint']), Block('OperationData', AddItem = self.OperationData['AddItem'], UseExistingAsset = self.OperationData['UseExistingAsset']), Block('InventoryData', ItemID = self.InventoryData['ItemID'], FolderID = self.InventoryData['FolderID'], CreatorID = self.InventoryData['CreatorID'], OwnerID = self.InventoryData['OwnerID'], GroupID = self.InventoryData['GroupID'], BaseMask = self.InventoryData['BaseMask'], OwnerMask = self.InventoryData['OwnerMask'], GroupMask = self.InventoryData['GroupMask'], EveryoneMask = self.InventoryData['EveryoneMask'], NextOwnerMask = self.InventoryData['NextOwnerMask'], GroupOwned = self.InventoryData['GroupOwned'], AssetID = self.InventoryData['AssetID'], Type = self.InventoryData['Type'], InvType = self.InventoryData['InvType'], Flags = self.InventoryData['Flags'], SaleType = self.InventoryData['SaleType'], SalePrice = self.InventoryData['SalePrice'], Name = self.InventoryData['Name'], Description = self.InventoryData['Description'], CreationDate = self.InventoryData['CreationDate'], CRC = self.InventoryData['CRC']))
 
-class ParcelJoinPacket():
+class ParcelJoinPacket(object):
     ''' a template for a ParcelJoin packet '''
 
     def __init__(self):
@@ -153,7 +153,7 @@ class ParcelJoinPacket():
 
         return Message('ParcelJoin', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ParcelData', West = self.ParcelData['West'], South = self.ParcelData['South'], East = self.ParcelData['East'], North = self.ParcelData['North']))
 
-class ObjectDeletePacket():
+class ObjectDeletePacket(object):
     ''' a template for a ObjectDelete packet '''
 
     def __init__(self):
@@ -172,7 +172,7 @@ class ObjectDeletePacket():
 
         return Message('ObjectDelete', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], Force = self.AgentData['Force']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID']))
 
-class RegionHandleRequestPacket():
+class RegionHandleRequestPacket(object):
     ''' a template for a RegionHandleRequest packet '''
 
     def __init__(self):
@@ -186,7 +186,7 @@ class RegionHandleRequestPacket():
 
         return Message('RegionHandleRequest', Block('RequestBlock', RegionID = self.RequestBlock['RegionID']))
 
-class ScriptQuestionPacket():
+class ScriptQuestionPacket(object):
     ''' a template for a ScriptQuestion packet '''
 
     def __init__(self):
@@ -204,7 +204,7 @@ class ScriptQuestionPacket():
 
         return Message('ScriptQuestion', Block('Data', TaskID = self.Data['TaskID'], ItemID = self.Data['ItemID'], ObjectName = self.Data['ObjectName'], ObjectOwner = self.Data['ObjectOwner'], Questions = self.Data['Questions']))
 
-class CreateTrustedCircuitPacket():
+class CreateTrustedCircuitPacket(object):
     ''' a template for a CreateTrustedCircuit packet '''
 
     def __init__(self):
@@ -219,7 +219,7 @@ class CreateTrustedCircuitPacket():
 
         return Message('CreateTrustedCircuit', Block('DataBlock', EndPointID = self.DataBlock['EndPointID'], Digest = self.DataBlock['Digest']))
 
-class DataHomeLocationRequestPacket():
+class DataHomeLocationRequestPacket(object):
     ''' a template for a DataHomeLocationRequest packet '''
 
     def __init__(self):
@@ -234,7 +234,7 @@ class DataHomeLocationRequestPacket():
 
         return Message('DataHomeLocationRequest', Block('Info', AgentID = self.Info['AgentID'], KickedFromEstateID = self.Info['KickedFromEstateID']))
 
-class RemoveTaskInventoryPacket():
+class RemoveTaskInventoryPacket(object):
     ''' a template for a RemoveTaskInventory packet '''
 
     def __init__(self):
@@ -253,7 +253,7 @@ class RemoveTaskInventoryPacket():
 
         return Message('RemoveTaskInventory', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('InventoryData', LocalID = self.InventoryData['LocalID'], ItemID = self.InventoryData['ItemID']))
 
-class SystemKickUserPacket():
+class SystemKickUserPacket(object):
     ''' a template for a SystemKickUser packet '''
 
     def __init__(self):
@@ -267,7 +267,7 @@ class SystemKickUserPacket():
 
         return Message('SystemKickUser', Block('AgentInfo', AgentID = self.AgentInfo['AgentID']))
 
-class ConfirmXferPacketPacket():
+class ConfirmXferPacketPacket(object):
     ''' a template for a ConfirmXferPacket packet '''
 
     def __init__(self):
@@ -282,7 +282,7 @@ class ConfirmXferPacketPacket():
 
         return Message('ConfirmXferPacket', Block('XferID', ID = self.XferID['ID'], Packet = self.XferID['Packet']))
 
-class ClassifiedInfoUpdatePacket():
+class ClassifiedInfoUpdatePacket(object):
     ''' a template for a ClassifiedInfoUpdate packet '''
 
     def __init__(self):
@@ -309,7 +309,7 @@ class ClassifiedInfoUpdatePacket():
 
         return Message('ClassifiedInfoUpdate', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', ClassifiedID = self.Data['ClassifiedID'], Category = self.Data['Category'], Name = self.Data['Name'], Desc = self.Data['Desc'], ParcelID = self.Data['ParcelID'], ParentEstate = self.Data['ParentEstate'], SnapshotID = self.Data['SnapshotID'], PosGlobal = self.Data['PosGlobal'], ClassifiedFlags = self.Data['ClassifiedFlags'], PriceForListing = self.Data['PriceForListing']))
 
-class ReportAutosaveCrashPacket():
+class ReportAutosaveCrashPacket(object):
     ''' a template for a ReportAutosaveCrash packet '''
 
     def __init__(self):
@@ -324,7 +324,7 @@ class ReportAutosaveCrashPacket():
 
         return Message('ReportAutosaveCrash', Block('AutosaveData', PID = self.AutosaveData['PID'], Status = self.AutosaveData['Status']))
 
-class SetSimPresenceInDatabasePacket():
+class SetSimPresenceInDatabasePacket(object):
     ''' a template for a SetSimPresenceInDatabase packet '''
 
     def __init__(self):
@@ -345,7 +345,7 @@ class SetSimPresenceInDatabasePacket():
 
         return Message('SetSimPresenceInDatabase', Block('SimData', RegionID = self.SimData['RegionID'], HostName = self.SimData['HostName'], GridX = self.SimData['GridX'], GridY = self.SimData['GridY'], PID = self.SimData['PID'], AgentCount = self.SimData['AgentCount'], TimeToLive = self.SimData['TimeToLive'], Status = self.SimData['Status']))
 
-class GroupVoteHistoryItemReplyPacket():
+class GroupVoteHistoryItemReplyPacket(object):
     ''' a template for a GroupVoteHistoryItemReply packet '''
 
     def __init__(self):
@@ -381,7 +381,7 @@ class GroupVoteHistoryItemReplyPacket():
 
         return Message('GroupVoteHistoryItemReply', Block('AgentData', AgentID = self.AgentData['AgentID'], GroupID = self.AgentData['GroupID']), Block('TransactionData', TransactionID = self.TransactionData['TransactionID'], TotalNumItems = self.TransactionData['TotalNumItems']), Block('HistoryItemData', VoteID = self.HistoryItemData['VoteID'], TerseDateID = self.HistoryItemData['TerseDateID'], StartDateTime = self.HistoryItemData['StartDateTime'], EndDateTime = self.HistoryItemData['EndDateTime'], VoteInitiator = self.HistoryItemData['VoteInitiator'], VoteType = self.HistoryItemData['VoteType'], VoteResult = self.HistoryItemData['VoteResult'], Majority = self.HistoryItemData['Majority'], Quorum = self.HistoryItemData['Quorum'], ProposalText = self.HistoryItemData['ProposalText']), Block('VoteItem', CandidateID = self.VoteItem['CandidateID'], VoteCast = self.VoteItem['VoteCast'], NumVotes = self.VoteItem['NumVotes']))
 
-class ChildAgentUnknownPacket():
+class ChildAgentUnknownPacket(object):
     ''' a template for a ChildAgentUnknown packet '''
 
     def __init__(self):
@@ -396,7 +396,7 @@ class ChildAgentUnknownPacket():
 
         return Message('ChildAgentUnknown', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']))
 
-class ObjectSpinStartPacket():
+class ObjectSpinStartPacket(object):
     ''' a template for a ObjectSpinStart packet '''
 
     def __init__(self):
@@ -414,7 +414,7 @@ class ObjectSpinStartPacket():
 
         return Message('ObjectSpinStart', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectID = self.ObjectData['ObjectID']))
 
-class CreateGroupReplyPacket():
+class CreateGroupReplyPacket(object):
     ''' a template for a CreateGroupReply packet '''
 
     def __init__(self):
@@ -433,7 +433,7 @@ class CreateGroupReplyPacket():
 
         return Message('CreateGroupReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('ReplyData', GroupID = self.ReplyData['GroupID'], Success = self.ReplyData['Success'], Message = self.ReplyData['Message']))
 
-class ParcelDwellReplyPacket():
+class ParcelDwellReplyPacket(object):
     ''' a template for a ParcelDwellReply packet '''
 
     def __init__(self):
@@ -452,7 +452,7 @@ class ParcelDwellReplyPacket():
 
         return Message('ParcelDwellReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('Data', LocalID = self.Data['LocalID'], ParcelID = self.Data['ParcelID'], Dwell = self.Data['Dwell']))
 
-class ObjectShapePacket():
+class ObjectShapePacket(object):
     ''' a template for a ObjectShape packet '''
 
     def __init__(self):
@@ -488,7 +488,7 @@ class ObjectShapePacket():
 
         return Message('ObjectShape', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID'], PathCurve = self.ObjectData['PathCurve'], ProfileCurve = self.ObjectData['ProfileCurve'], PathBegin = self.ObjectData['PathBegin'], PathEnd = self.ObjectData['PathEnd'], PathScaleX = self.ObjectData['PathScaleX'], PathScaleY = self.ObjectData['PathScaleY'], PathShearX = self.ObjectData['PathShearX'], PathShearY = self.ObjectData['PathShearY'], PathTwist = self.ObjectData['PathTwist'], PathTwistBegin = self.ObjectData['PathTwistBegin'], PathRadiusOffset = self.ObjectData['PathRadiusOffset'], PathTaperX = self.ObjectData['PathTaperX'], PathTaperY = self.ObjectData['PathTaperY'], PathRevolutions = self.ObjectData['PathRevolutions'], PathSkew = self.ObjectData['PathSkew'], ProfileBegin = self.ObjectData['ProfileBegin'], ProfileEnd = self.ObjectData['ProfileEnd'], ProfileHollow = self.ObjectData['ProfileHollow']))
 
-class MuteListUpdatePacket():
+class MuteListUpdatePacket(object):
     ''' a template for a MuteListUpdate packet '''
 
     def __init__(self):
@@ -503,7 +503,7 @@ class MuteListUpdatePacket():
 
         return Message('MuteListUpdate', Block('MuteData', AgentID = self.MuteData['AgentID'], Filename = self.MuteData['Filename']))
 
-class ParcelPropertiesRequestByIDPacket():
+class ParcelPropertiesRequestByIDPacket(object):
     ''' a template for a ParcelPropertiesRequestByID packet '''
 
     def __init__(self):
@@ -522,7 +522,7 @@ class ParcelPropertiesRequestByIDPacket():
 
         return Message('ParcelPropertiesRequestByID', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ParcelData', SequenceID = self.ParcelData['SequenceID'], LocalID = self.ParcelData['LocalID']))
 
-class UpdateUserInfoPacket():
+class UpdateUserInfoPacket(object):
     ''' a template for a UpdateUserInfo packet '''
 
     def __init__(self):
@@ -541,7 +541,7 @@ class UpdateUserInfoPacket():
 
         return Message('UpdateUserInfo', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('UserData', IMViaEMail = self.UserData['IMViaEMail'], DirectoryVisibility = self.UserData['DirectoryVisibility']))
 
-class RedoPacket():
+class RedoPacket(object):
     ''' a template for a Redo packet '''
 
     def __init__(self):
@@ -560,7 +560,7 @@ class RedoPacket():
 
         return Message('Redo', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID']), Block('ObjectData', ObjectID = self.ObjectData['ObjectID']))
 
-class FetchInventoryReplyPacket():
+class FetchInventoryReplyPacket(object):
     ''' a template for a FetchInventoryReply packet '''
 
     def __init__(self):
@@ -597,7 +597,7 @@ class FetchInventoryReplyPacket():
 
         return Message('FetchInventoryReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('InventoryData', ItemID = self.InventoryData['ItemID'], FolderID = self.InventoryData['FolderID'], CreatorID = self.InventoryData['CreatorID'], OwnerID = self.InventoryData['OwnerID'], GroupID = self.InventoryData['GroupID'], BaseMask = self.InventoryData['BaseMask'], OwnerMask = self.InventoryData['OwnerMask'], GroupMask = self.InventoryData['GroupMask'], EveryoneMask = self.InventoryData['EveryoneMask'], NextOwnerMask = self.InventoryData['NextOwnerMask'], GroupOwned = self.InventoryData['GroupOwned'], AssetID = self.InventoryData['AssetID'], Type = self.InventoryData['Type'], InvType = self.InventoryData['InvType'], Flags = self.InventoryData['Flags'], SaleType = self.InventoryData['SaleType'], SalePrice = self.InventoryData['SalePrice'], Name = self.InventoryData['Name'], Description = self.InventoryData['Description'], CreationDate = self.InventoryData['CreationDate'], CRC = self.InventoryData['CRC']))
 
-class AvatarInterestsUpdatePacket():
+class AvatarInterestsUpdatePacket(object):
     ''' a template for a AvatarInterestsUpdate packet '''
 
     def __init__(self):
@@ -619,7 +619,7 @@ class AvatarInterestsUpdatePacket():
 
         return Message('AvatarInterestsUpdate', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('PropertiesData', WantToMask = self.PropertiesData['WantToMask'], WantToText = self.PropertiesData['WantToText'], SkillsMask = self.PropertiesData['SkillsMask'], SkillsText = self.PropertiesData['SkillsText'], LanguagesText = self.PropertiesData['LanguagesText']))
 
-class ImagePacketPacket():
+class ImagePacketPacket(object):
     ''' a template for a ImagePacket packet '''
 
     def __init__(self):
@@ -637,7 +637,7 @@ class ImagePacketPacket():
 
         return Message('ImagePacket', Block('ImageID', ID = self.ImageID['ID'], Packet = self.ImageID['Packet']), Block('ImageData', Data = self.ImageData['Data']))
 
-class ParcelInfoRequestPacket():
+class ParcelInfoRequestPacket(object):
     ''' a template for a ParcelInfoRequest packet '''
 
     def __init__(self):
@@ -655,7 +655,7 @@ class ParcelInfoRequestPacket():
 
         return Message('ParcelInfoRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', ParcelID = self.Data['ParcelID']))
 
-class GrantGodlikePowersPacket():
+class GrantGodlikePowersPacket(object):
     ''' a template for a GrantGodlikePowers packet '''
 
     def __init__(self):
@@ -674,7 +674,7 @@ class GrantGodlikePowersPacket():
 
         return Message('GrantGodlikePowers', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('GrantData', GodLevel = self.GrantData['GodLevel'], Token = self.GrantData['Token']))
 
-class ViewerFrozenMessagePacket():
+class ViewerFrozenMessagePacket(object):
     ''' a template for a ViewerFrozenMessage packet '''
 
     def __init__(self):
@@ -688,7 +688,7 @@ class ViewerFrozenMessagePacket():
 
         return Message('ViewerFrozenMessage', Block('FrozenData', Data = self.FrozenData['Data']))
 
-class RegionPresenceResponsePacket():
+class RegionPresenceResponsePacket(object):
     ''' a template for a RegionPresenceResponse packet '''
 
     def __init__(self):
@@ -708,7 +708,7 @@ class RegionPresenceResponsePacket():
 
         return Message('RegionPresenceResponse', Block('RegionData', RegionID = self.RegionData['RegionID'], RegionHandle = self.RegionData['RegionHandle'], InternalRegionIP = self.RegionData['InternalRegionIP'], ExternalRegionIP = self.RegionData['ExternalRegionIP'], RegionPort = self.RegionData['RegionPort'], ValidUntil = self.RegionData['ValidUntil'], Message = self.RegionData['Message']))
 
-class OpenCircuitPacket():
+class OpenCircuitPacket(object):
     ''' a template for a OpenCircuit packet '''
 
     def __init__(self):
@@ -723,7 +723,7 @@ class OpenCircuitPacket():
 
         return Message('OpenCircuit', Block('CircuitInfo', IP = self.CircuitInfo['IP'], Port = self.CircuitInfo['Port']))
 
-class GroupRoleDataRequestPacket():
+class GroupRoleDataRequestPacket(object):
     ''' a template for a GroupRoleDataRequest packet '''
 
     def __init__(self):
@@ -742,7 +742,7 @@ class GroupRoleDataRequestPacket():
 
         return Message('GroupRoleDataRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('GroupData', GroupID = self.GroupData['GroupID'], RequestID = self.GroupData['RequestID']))
 
-class AgentMovementCompletePacket():
+class AgentMovementCompletePacket(object):
     ''' a template for a AgentMovementComplete packet '''
 
     def __init__(self):
@@ -766,7 +766,7 @@ class AgentMovementCompletePacket():
 
         return Message('AgentMovementComplete', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', Position = self.Data['Position'], LookAt = self.Data['LookAt'], RegionHandle = self.Data['RegionHandle'], Timestamp = self.Data['Timestamp']), Block('SimData', ChannelVersion = self.SimData['ChannelVersion']))
 
-class InviteGroupRequestPacket():
+class InviteGroupRequestPacket(object):
     ''' a template for a InviteGroupRequest packet '''
 
     def __init__(self):
@@ -788,7 +788,7 @@ class InviteGroupRequestPacket():
 
         return Message('InviteGroupRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('GroupData', GroupID = self.GroupData['GroupID']), Block('InviteData', InviteeID = self.InviteData['InviteeID'], RoleID = self.InviteData['RoleID']))
 
-class ViewerStartAuctionPacket():
+class ViewerStartAuctionPacket(object):
     ''' a template for a ViewerStartAuction packet '''
 
     def __init__(self):
@@ -807,7 +807,7 @@ class ViewerStartAuctionPacket():
 
         return Message('ViewerStartAuction', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ParcelData', LocalID = self.ParcelData['LocalID'], SnapshotID = self.ParcelData['SnapshotID']))
 
-class ObjectNamePacket():
+class ObjectNamePacket(object):
     ''' a template for a ObjectName packet '''
 
     def __init__(self):
@@ -826,7 +826,7 @@ class ObjectNamePacket():
 
         return Message('ObjectName', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', LocalID = self.ObjectData['LocalID'], Name = self.ObjectData['Name']))
 
-class CrossedRegionPacket():
+class CrossedRegionPacket(object):
     ''' a template for a CrossedRegion packet '''
 
     def __init__(self):
@@ -851,7 +851,7 @@ class CrossedRegionPacket():
 
         return Message('CrossedRegion', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('RegionData', SimIP = self.RegionData['SimIP'], SimPort = self.RegionData['SimPort'], RegionHandle = self.RegionData['RegionHandle'], SeedCapability = self.RegionData['SeedCapability']), Block('Info', Position = self.Info['Position'], LookAt = self.Info['LookAt']))
 
-class SetCPURatioPacket():
+class SetCPURatioPacket(object):
     ''' a template for a SetCPURatio packet '''
 
     def __init__(self):
@@ -865,7 +865,7 @@ class SetCPURatioPacket():
 
         return Message('SetCPURatio', Block('Data', Ratio = self.Data['Ratio']))
 
-class ParcelBuyPassPacket():
+class ParcelBuyPassPacket(object):
     ''' a template for a ParcelBuyPass packet '''
 
     def __init__(self):
@@ -883,7 +883,7 @@ class ParcelBuyPassPacket():
 
         return Message('ParcelBuyPass', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ParcelData', LocalID = self.ParcelData['LocalID']))
 
-class MapItemRequestPacket():
+class MapItemRequestPacket(object):
     ''' a template for a MapItemRequest packet '''
 
     def __init__(self):
@@ -905,7 +905,7 @@ class MapItemRequestPacket():
 
         return Message('MapItemRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], Flags = self.AgentData['Flags'], EstateID = self.AgentData['EstateID'], Godlike = self.AgentData['Godlike']), Block('RequestData', ItemType = self.RequestData['ItemType'], RegionHandle = self.RequestData['RegionHandle']))
 
-class AgentQuitCopyPacket():
+class AgentQuitCopyPacket(object):
     ''' a template for a AgentQuitCopy packet '''
 
     def __init__(self):
@@ -923,7 +923,7 @@ class AgentQuitCopyPacket():
 
         return Message('AgentQuitCopy', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('FuseBlock', ViewerCircuitCode = self.FuseBlock['ViewerCircuitCode']))
 
-class RequestTaskInventoryPacket():
+class RequestTaskInventoryPacket(object):
     ''' a template for a RequestTaskInventory packet '''
 
     def __init__(self):
@@ -941,7 +941,7 @@ class RequestTaskInventoryPacket():
 
         return Message('RequestTaskInventory', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('InventoryData', LocalID = self.InventoryData['LocalID']))
 
-class FreezeUserPacket():
+class FreezeUserPacket(object):
     ''' a template for a FreezeUser packet '''
 
     def __init__(self):
@@ -960,7 +960,7 @@ class FreezeUserPacket():
 
         return Message('FreezeUser', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', TargetID = self.Data['TargetID'], Flags = self.Data['Flags']))
 
-class StartPingCheckPacket():
+class StartPingCheckPacket(object):
     ''' a template for a StartPingCheck packet '''
 
     def __init__(self):
@@ -975,7 +975,7 @@ class StartPingCheckPacket():
 
         return Message('StartPingCheck', Block('PingID', PingID = self.PingID['PingID'], OldestUnacked = self.PingID['OldestUnacked']))
 
-class GroupDataUpdatePacket():
+class GroupDataUpdatePacket(object):
     ''' a template for a GroupDataUpdate packet '''
 
     def __init__(self):
@@ -992,7 +992,7 @@ class GroupDataUpdatePacket():
 
         return Message('GroupDataUpdate', Block('AgentGroupData', AgentID = self.AgentGroupData['AgentID'], GroupID = self.AgentGroupData['GroupID'], AgentPowers = self.AgentGroupData['AgentPowers'], GroupTitle = self.AgentGroupData['GroupTitle']))
 
-class TeleportLocationRequestPacket():
+class TeleportLocationRequestPacket(object):
     ''' a template for a TeleportLocationRequest packet '''
 
     def __init__(self):
@@ -1012,7 +1012,7 @@ class TeleportLocationRequestPacket():
 
         return Message('TeleportLocationRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Info', RegionHandle = self.Info['RegionHandle'], Position = self.Info['Position'], LookAt = self.Info['LookAt']))
 
-class UpdateCreateInventoryItemPacket():
+class UpdateCreateInventoryItemPacket(object):
     ''' a template for a UpdateCreateInventoryItem packet '''
 
     def __init__(self):
@@ -1052,7 +1052,7 @@ class UpdateCreateInventoryItemPacket():
 
         return Message('UpdateCreateInventoryItem', Block('AgentData', AgentID = self.AgentData['AgentID'], SimApproved = self.AgentData['SimApproved'], TransactionID = self.AgentData['TransactionID']), Block('InventoryData', ItemID = self.InventoryData['ItemID'], FolderID = self.InventoryData['FolderID'], CallbackID = self.InventoryData['CallbackID'], CreatorID = self.InventoryData['CreatorID'], OwnerID = self.InventoryData['OwnerID'], GroupID = self.InventoryData['GroupID'], BaseMask = self.InventoryData['BaseMask'], OwnerMask = self.InventoryData['OwnerMask'], GroupMask = self.InventoryData['GroupMask'], EveryoneMask = self.InventoryData['EveryoneMask'], NextOwnerMask = self.InventoryData['NextOwnerMask'], GroupOwned = self.InventoryData['GroupOwned'], AssetID = self.InventoryData['AssetID'], Type = self.InventoryData['Type'], InvType = self.InventoryData['InvType'], Flags = self.InventoryData['Flags'], SaleType = self.InventoryData['SaleType'], SalePrice = self.InventoryData['SalePrice'], Name = self.InventoryData['Name'], Description = self.InventoryData['Description'], CreationDate = self.InventoryData['CreationDate'], CRC = self.InventoryData['CRC']))
 
-class NearestLandingRegionUpdatedPacket():
+class NearestLandingRegionUpdatedPacket(object):
     ''' a template for a NearestLandingRegionUpdated packet '''
 
     def __init__(self):
@@ -1066,7 +1066,7 @@ class NearestLandingRegionUpdatedPacket():
 
         return Message('NearestLandingRegionUpdated', Block('RegionData', RegionHandle = self.RegionData['RegionHandle']))
 
-class EconomyDataPacket():
+class EconomyDataPacket(object):
     ''' a template for a EconomyData packet '''
 
     def __init__(self):
@@ -1096,7 +1096,7 @@ class EconomyDataPacket():
 
         return Message('EconomyData', Block('Info', ObjectCapacity = self.Info['ObjectCapacity'], ObjectCount = self.Info['ObjectCount'], PriceEnergyUnit = self.Info['PriceEnergyUnit'], PriceObjectClaim = self.Info['PriceObjectClaim'], PricePublicObjectDecay = self.Info['PricePublicObjectDecay'], PricePublicObjectDelete = self.Info['PricePublicObjectDelete'], PriceParcelClaim = self.Info['PriceParcelClaim'], PriceParcelClaimFactor = self.Info['PriceParcelClaimFactor'], PriceUpload = self.Info['PriceUpload'], PriceRentLight = self.Info['PriceRentLight'], TeleportMinPrice = self.Info['TeleportMinPrice'], TeleportPriceExponent = self.Info['TeleportPriceExponent'], EnergyEfficiency = self.Info['EnergyEfficiency'], PriceObjectRent = self.Info['PriceObjectRent'], PriceObjectScaleFactor = self.Info['PriceObjectScaleFactor'], PriceParcelRent = self.Info['PriceParcelRent'], PriceGroupCreate = self.Info['PriceGroupCreate']))
 
-class LiveHelpGroupReplyPacket():
+class LiveHelpGroupReplyPacket(object):
     ''' a template for a LiveHelpGroupReply packet '''
 
     def __init__(self):
@@ -1112,7 +1112,7 @@ class LiveHelpGroupReplyPacket():
 
         return Message('LiveHelpGroupReply', Block('ReplyData', RequestID = self.ReplyData['RequestID'], GroupID = self.ReplyData['GroupID'], Selection = self.ReplyData['Selection']))
 
-class UseCircuitCodePacket():
+class UseCircuitCodePacket(object):
     ''' a template for a UseCircuitCode packet '''
 
     def __init__(self):
@@ -1128,7 +1128,7 @@ class UseCircuitCodePacket():
 
         return Message('UseCircuitCode', Block('CircuitCode', Code = self.CircuitCode['Code'], SessionID = self.CircuitCode['SessionID'], ID = self.CircuitCode['ID']))
 
-class GroupAccountTransactionsReplyPacket():
+class GroupAccountTransactionsReplyPacket(object):
     ''' a template for a GroupAccountTransactionsReply packet '''
 
     def __init__(self):
@@ -1156,7 +1156,7 @@ class GroupAccountTransactionsReplyPacket():
 
         return Message('GroupAccountTransactionsReply', Block('AgentData', AgentID = self.AgentData['AgentID'], GroupID = self.AgentData['GroupID']), Block('MoneyData', RequestID = self.MoneyData['RequestID'], IntervalDays = self.MoneyData['IntervalDays'], CurrentInterval = self.MoneyData['CurrentInterval'], StartDate = self.MoneyData['StartDate']), Block('HistoryData', Time = self.HistoryData['Time'], User = self.HistoryData['User'], Type = self.HistoryData['Type'], Item = self.HistoryData['Item'], Amount = self.HistoryData['Amount']))
 
-class UUIDGroupNameRequestPacket():
+class UUIDGroupNameRequestPacket(object):
     ''' a template for a UUIDGroupNameRequest packet '''
 
     def __init__(self):
@@ -1170,7 +1170,7 @@ class UUIDGroupNameRequestPacket():
 
         return Message('UUIDGroupNameRequest', Block('UUIDNameBlock', ID = self.UUIDNameBlock['ID']))
 
-class ObjectDelinkPacket():
+class ObjectDelinkPacket(object):
     ''' a template for a ObjectDelink packet '''
 
     def __init__(self):
@@ -1188,7 +1188,7 @@ class ObjectDelinkPacket():
 
         return Message('ObjectDelink', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID']))
 
-class SimStatusPacket():
+class SimStatusPacket(object):
     ''' a template for a SimStatus packet '''
 
     def __init__(self):
@@ -1203,7 +1203,7 @@ class SimStatusPacket():
 
         return Message('SimStatus', Block('SimStatus', CanAcceptAgents = self.SimStatus['CanAcceptAgents'], CanAcceptTasks = self.SimStatus['CanAcceptTasks']))
 
-class GrantUserRightsPacket():
+class GrantUserRightsPacket(object):
     ''' a template for a GrantUserRights packet '''
 
     def __init__(self):
@@ -1222,7 +1222,7 @@ class GrantUserRightsPacket():
 
         return Message('GrantUserRights', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Rights', AgentRelated = self.Rights['AgentRelated'], RelatedRights = self.Rights['RelatedRights']))
 
-class ParcelAccessListRequestPacket():
+class ParcelAccessListRequestPacket(object):
     ''' a template for a ParcelAccessListRequest packet '''
 
     def __init__(self):
@@ -1242,7 +1242,7 @@ class ParcelAccessListRequestPacket():
 
         return Message('ParcelAccessListRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', SequenceID = self.Data['SequenceID'], Flags = self.Data['Flags'], LocalID = self.Data['LocalID']))
 
-class ParcelMediaCommandMessagePacket():
+class ParcelMediaCommandMessagePacket(object):
     ''' a template for a ParcelMediaCommandMessage packet '''
 
     def __init__(self):
@@ -1258,7 +1258,7 @@ class ParcelMediaCommandMessagePacket():
 
         return Message('ParcelMediaCommandMessage', Block('CommandBlock', Flags = self.CommandBlock['Flags'], Command = self.CommandBlock['Command'], Time = self.CommandBlock['Time']))
 
-class ObjectFlagUpdatePacket():
+class ObjectFlagUpdatePacket(object):
     ''' a template for a ObjectFlagUpdate packet '''
 
     def __init__(self):
@@ -1278,7 +1278,7 @@ class ObjectFlagUpdatePacket():
 
         return Message('ObjectFlagUpdate', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], ObjectLocalID = self.AgentData['ObjectLocalID'], UsePhysics = self.AgentData['UsePhysics'], IsTemporary = self.AgentData['IsTemporary'], IsPhantom = self.AgentData['IsPhantom'], CastsShadows = self.AgentData['CastsShadows']))
 
-class DeclineFriendshipPacket():
+class DeclineFriendshipPacket(object):
     ''' a template for a DeclineFriendship packet '''
 
     def __init__(self):
@@ -1296,7 +1296,7 @@ class DeclineFriendshipPacket():
 
         return Message('DeclineFriendship', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('TransactionBlock', TransactionID = self.TransactionBlock['TransactionID']))
 
-class AvatarNotesUpdatePacket():
+class AvatarNotesUpdatePacket(object):
     ''' a template for a AvatarNotesUpdate packet '''
 
     def __init__(self):
@@ -1315,7 +1315,7 @@ class AvatarNotesUpdatePacket():
 
         return Message('AvatarNotesUpdate', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', TargetID = self.Data['TargetID'], Notes = self.Data['Notes']))
 
-class DetachAttachmentIntoInvPacket():
+class DetachAttachmentIntoInvPacket(object):
     ''' a template for a DetachAttachmentIntoInv packet '''
 
     def __init__(self):
@@ -1330,7 +1330,7 @@ class DetachAttachmentIntoInvPacket():
 
         return Message('DetachAttachmentIntoInv', Block('ObjectData', AgentID = self.ObjectData['AgentID'], ItemID = self.ObjectData['ItemID']))
 
-class ParcelObjectOwnersRequestPacket():
+class ParcelObjectOwnersRequestPacket(object):
     ''' a template for a ParcelObjectOwnersRequest packet '''
 
     def __init__(self):
@@ -1348,7 +1348,7 @@ class ParcelObjectOwnersRequestPacket():
 
         return Message('ParcelObjectOwnersRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ParcelData', LocalID = self.ParcelData['LocalID']))
 
-class RemoveInventoryFolderPacket():
+class RemoveInventoryFolderPacket(object):
     ''' a template for a RemoveInventoryFolder packet '''
 
     def __init__(self):
@@ -1366,7 +1366,7 @@ class RemoveInventoryFolderPacket():
 
         return Message('RemoveInventoryFolder', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('FolderData', FolderID = self.FolderData['FolderID']))
 
-class TransferAbortPacket():
+class TransferAbortPacket(object):
     ''' a template for a TransferAbort packet '''
 
     def __init__(self):
@@ -1381,7 +1381,7 @@ class TransferAbortPacket():
 
         return Message('TransferAbort', Block('TransferInfo', TransferID = self.TransferInfo['TransferID'], ChannelType = self.TransferInfo['ChannelType']))
 
-class DirPlacesQueryBackendPacket():
+class DirPlacesQueryBackendPacket(object):
     ''' a template for a DirPlacesQueryBackend packet '''
 
     def __init__(self):
@@ -1405,7 +1405,7 @@ class DirPlacesQueryBackendPacket():
 
         return Message('DirPlacesQueryBackend', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('QueryData', QueryID = self.QueryData['QueryID'], QueryText = self.QueryData['QueryText'], QueryFlags = self.QueryData['QueryFlags'], Category = self.QueryData['Category'], SimName = self.QueryData['SimName'], EstateID = self.QueryData['EstateID'], Godlike = self.QueryData['Godlike'], QueryStart = self.QueryData['QueryStart']))
 
-class UserReportPacket():
+class UserReportPacket(object):
     ''' a template for a UserReport packet '''
 
     def __init__(self):
@@ -1434,7 +1434,7 @@ class UserReportPacket():
 
         return Message('UserReport', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ReportData', ReportType = self.ReportData['ReportType'], Category = self.ReportData['Category'], Position = self.ReportData['Position'], CheckFlags = self.ReportData['CheckFlags'], ScreenshotID = self.ReportData['ScreenshotID'], ObjectID = self.ReportData['ObjectID'], AbuserID = self.ReportData['AbuserID'], AbuseRegionName = self.ReportData['AbuseRegionName'], AbuseRegionID = self.ReportData['AbuseRegionID'], Summary = self.ReportData['Summary'], Details = self.ReportData['Details'], VersionString = self.ReportData['VersionString']))
 
-class SimulatorLoadPacket():
+class SimulatorLoadPacket(object):
     ''' a template for a SimulatorLoad packet '''
 
     def __init__(self):
@@ -1455,7 +1455,7 @@ class SimulatorLoadPacket():
 
         return Message('SimulatorLoad', Block('SimulatorLoad', TimeDilation = self.SimulatorLoad['TimeDilation'], AgentCount = self.SimulatorLoad['AgentCount'], CanAcceptAgents = self.SimulatorLoad['CanAcceptAgents']), Block('AgentList', CircuitCode = self.AgentList['CircuitCode'], X = self.AgentList['X'], Y = self.AgentList['Y']))
 
-class GroupMembersReplyPacket():
+class GroupMembersReplyPacket(object):
     ''' a template for a GroupMembersReply packet '''
 
     def __init__(self):
@@ -1482,7 +1482,7 @@ class GroupMembersReplyPacket():
 
         return Message('GroupMembersReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('GroupData', GroupID = self.GroupData['GroupID'], RequestID = self.GroupData['RequestID'], MemberCount = self.GroupData['MemberCount']), Block('MemberData', AgentID = self.MemberData['AgentID'], Contribution = self.MemberData['Contribution'], OnlineStatus = self.MemberData['OnlineStatus'], AgentPowers = self.MemberData['AgentPowers'], Title = self.MemberData['Title'], IsOwner = self.MemberData['IsOwner']))
 
-class ScriptResetPacket():
+class ScriptResetPacket(object):
     ''' a template for a ScriptReset packet '''
 
     def __init__(self):
@@ -1501,7 +1501,7 @@ class ScriptResetPacket():
 
         return Message('ScriptReset', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Script', ObjectID = self.Script['ObjectID'], ItemID = self.Script['ItemID']))
 
-class VelocityInterpolateOnPacket():
+class VelocityInterpolateOnPacket(object):
     ''' a template for a VelocityInterpolateOn packet '''
 
     def __init__(self):
@@ -1516,7 +1516,7 @@ class VelocityInterpolateOnPacket():
 
         return Message('VelocityInterpolateOn', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']))
 
-class NameValuePairPacket():
+class NameValuePairPacket(object):
     ''' a template for a NameValuePair packet '''
 
     def __init__(self):
@@ -1533,7 +1533,7 @@ class NameValuePairPacket():
 
         return Message('NameValuePair', Block('TaskData', ID = self.TaskData['ID']), Block('NameValueData', NVPair = self.NameValueData['NVPair']))
 
-class ParcelReclaimPacket():
+class ParcelReclaimPacket(object):
     ''' a template for a ParcelReclaim packet '''
 
     def __init__(self):
@@ -1551,7 +1551,7 @@ class ParcelReclaimPacket():
 
         return Message('ParcelReclaim', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', LocalID = self.Data['LocalID']))
 
-class BuyObjectInventoryPacket():
+class BuyObjectInventoryPacket(object):
     ''' a template for a BuyObjectInventory packet '''
 
     def __init__(self):
@@ -1571,7 +1571,7 @@ class BuyObjectInventoryPacket():
 
         return Message('BuyObjectInventory', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', ObjectID = self.Data['ObjectID'], ItemID = self.Data['ItemID'], FolderID = self.Data['FolderID']))
 
-class EventLocationRequestPacket():
+class EventLocationRequestPacket(object):
     ''' a template for a EventLocationRequest packet '''
 
     def __init__(self):
@@ -1588,7 +1588,7 @@ class EventLocationRequestPacket():
 
         return Message('EventLocationRequest', Block('QueryData', QueryID = self.QueryData['QueryID']), Block('EventData', EventID = self.EventData['EventID']))
 
-class PickDeletePacket():
+class PickDeletePacket(object):
     ''' a template for a PickDelete packet '''
 
     def __init__(self):
@@ -1606,7 +1606,7 @@ class PickDeletePacket():
 
         return Message('PickDelete', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', PickID = self.Data['PickID']))
 
-class MapLayerReplyPacket():
+class MapLayerReplyPacket(object):
     ''' a template for a MapLayerReply packet '''
 
     def __init__(self):
@@ -1628,7 +1628,7 @@ class MapLayerReplyPacket():
 
         return Message('MapLayerReply', Block('AgentData', AgentID = self.AgentData['AgentID'], Flags = self.AgentData['Flags']), Block('LayerData', Left = self.LayerData['Left'], Right = self.LayerData['Right'], Top = self.LayerData['Top'], Bottom = self.LayerData['Bottom'], ImageID = self.LayerData['ImageID']))
 
-class TeleportLandmarkRequestPacket():
+class TeleportLandmarkRequestPacket(object):
     ''' a template for a TeleportLandmarkRequest packet '''
 
     def __init__(self):
@@ -1644,7 +1644,7 @@ class TeleportLandmarkRequestPacket():
 
         return Message('TeleportLandmarkRequest', Block('Info', AgentID = self.Info['AgentID'], SessionID = self.Info['SessionID'], LandmarkID = self.Info['LandmarkID']))
 
-class PurgeInventoryDescendentsPacket():
+class PurgeInventoryDescendentsPacket(object):
     ''' a template for a PurgeInventoryDescendents packet '''
 
     def __init__(self):
@@ -1662,7 +1662,7 @@ class PurgeInventoryDescendentsPacket():
 
         return Message('PurgeInventoryDescendents', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('InventoryData', FolderID = self.InventoryData['FolderID']))
 
-class KickUserAckPacket():
+class KickUserAckPacket(object):
     ''' a template for a KickUserAck packet '''
 
     def __init__(self):
@@ -1677,7 +1677,7 @@ class KickUserAckPacket():
 
         return Message('KickUserAck', Block('UserInfo', SessionID = self.UserInfo['SessionID'], Flags = self.UserInfo['Flags']))
 
-class AvatarSitResponsePacket():
+class AvatarSitResponsePacket(object):
     ''' a template for a AvatarSitResponse packet '''
 
     def __init__(self):
@@ -1699,7 +1699,7 @@ class AvatarSitResponsePacket():
 
         return Message('AvatarSitResponse', Block('SitObject', ID = self.SitObject['ID']), Block('SitTransform', AutoPilot = self.SitTransform['AutoPilot'], SitPosition = self.SitTransform['SitPosition'], SitRotation = self.SitTransform['SitRotation'], CameraEyeOffset = self.SitTransform['CameraEyeOffset'], CameraAtOffset = self.SitTransform['CameraAtOffset'], ForceMouselook = self.SitTransform['ForceMouselook']))
 
-class ClassifiedInfoRequestPacket():
+class ClassifiedInfoRequestPacket(object):
     ''' a template for a ClassifiedInfoRequest packet '''
 
     def __init__(self):
@@ -1717,7 +1717,7 @@ class ClassifiedInfoRequestPacket():
 
         return Message('ClassifiedInfoRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', ClassifiedID = self.Data['ClassifiedID']))
 
-class UpdateMuteListEntryPacket():
+class UpdateMuteListEntryPacket(object):
     ''' a template for a UpdateMuteListEntry packet '''
 
     def __init__(self):
@@ -1738,7 +1738,7 @@ class UpdateMuteListEntryPacket():
 
         return Message('UpdateMuteListEntry', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('MuteData', MuteID = self.MuteData['MuteID'], MuteName = self.MuteData['MuteName'], MuteType = self.MuteData['MuteType'], MuteFlags = self.MuteData['MuteFlags']))
 
-class RegionInfoPacket():
+class RegionInfoPacket(object):
     ''' a template for a RegionInfo packet '''
 
     def __init__(self):
@@ -1778,7 +1778,7 @@ class RegionInfoPacket():
 
         return Message('RegionInfo', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('RegionInfo', SimName = self.RegionInfo['SimName'], EstateID = self.RegionInfo['EstateID'], ParentEstateID = self.RegionInfo['ParentEstateID'], RegionFlags = self.RegionInfo['RegionFlags'], SimAccess = self.RegionInfo['SimAccess'], MaxAgents = self.RegionInfo['MaxAgents'], BillableFactor = self.RegionInfo['BillableFactor'], ObjectBonusFactor = self.RegionInfo['ObjectBonusFactor'], WaterHeight = self.RegionInfo['WaterHeight'], TerrainRaiseLimit = self.RegionInfo['TerrainRaiseLimit'], TerrainLowerLimit = self.RegionInfo['TerrainLowerLimit'], PricePerMeter = self.RegionInfo['PricePerMeter'], RedirectGridX = self.RegionInfo['RedirectGridX'], RedirectGridY = self.RegionInfo['RedirectGridY'], UseEstateSun = self.RegionInfo['UseEstateSun'], SunHour = self.RegionInfo['SunHour']), Block('RegionInfo2', ProductSKU = self.RegionInfo2['ProductSKU'], ProductName = self.RegionInfo2['ProductName'], MaxAgents32 = self.RegionInfo2['MaxAgents32'], HardMaxAgents = self.RegionInfo2['HardMaxAgents'], HardMaxObjects = self.RegionInfo2['HardMaxObjects']))
 
-class UserReportInternalPacket():
+class UserReportInternalPacket(object):
     ''' a template for a UserReportInternal packet '''
 
     def __init__(self):
@@ -1808,7 +1808,7 @@ class UserReportInternalPacket():
 
         return Message('UserReportInternal', Block('ReportData', ReportType = self.ReportData['ReportType'], Category = self.ReportData['Category'], ReporterID = self.ReportData['ReporterID'], ViewerPosition = self.ReportData['ViewerPosition'], AgentPosition = self.ReportData['AgentPosition'], ScreenshotID = self.ReportData['ScreenshotID'], ObjectID = self.ReportData['ObjectID'], OwnerID = self.ReportData['OwnerID'], LastOwnerID = self.ReportData['LastOwnerID'], CreatorID = self.ReportData['CreatorID'], RegionID = self.ReportData['RegionID'], AbuserID = self.ReportData['AbuserID'], AbuseRegionName = self.ReportData['AbuseRegionName'], AbuseRegionID = self.ReportData['AbuseRegionID'], Summary = self.ReportData['Summary'], Details = self.ReportData['Details'], VersionString = self.ReportData['VersionString']))
 
-class GroupActiveProposalItemReplyPacket():
+class GroupActiveProposalItemReplyPacket(object):
     ''' a template for a GroupActiveProposalItemReply packet '''
 
     def __init__(self):
@@ -1839,7 +1839,7 @@ class GroupActiveProposalItemReplyPacket():
 
         return Message('GroupActiveProposalItemReply', Block('AgentData', AgentID = self.AgentData['AgentID'], GroupID = self.AgentData['GroupID']), Block('TransactionData', TransactionID = self.TransactionData['TransactionID'], TotalNumItems = self.TransactionData['TotalNumItems']), Block('ProposalData', VoteID = self.ProposalData['VoteID'], VoteInitiator = self.ProposalData['VoteInitiator'], TerseDateID = self.ProposalData['TerseDateID'], StartDateTime = self.ProposalData['StartDateTime'], EndDateTime = self.ProposalData['EndDateTime'], AlreadyVoted = self.ProposalData['AlreadyVoted'], VoteCast = self.ProposalData['VoteCast'], Majority = self.ProposalData['Majority'], Quorum = self.ProposalData['Quorum'], ProposalText = self.ProposalData['ProposalText']))
 
-class RetrieveInstantMessagesPacket():
+class RetrieveInstantMessagesPacket(object):
     ''' a template for a RetrieveInstantMessages packet '''
 
     def __init__(self):
@@ -1854,7 +1854,7 @@ class RetrieveInstantMessagesPacket():
 
         return Message('RetrieveInstantMessages', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']))
 
-class ScriptDataReplyPacket():
+class ScriptDataReplyPacket(object):
     ''' a template for a ScriptDataReply packet '''
 
     def __init__(self):
@@ -1869,7 +1869,7 @@ class ScriptDataReplyPacket():
 
         return Message('ScriptDataReply', Block('DataBlock', Hash = self.DataBlock['Hash'], Reply = self.DataBlock['Reply']))
 
-class ParcelAccessListUpdatePacket():
+class ParcelAccessListUpdatePacket(object):
     ''' a template for a ParcelAccessListUpdate packet '''
 
     def __init__(self):
@@ -1896,7 +1896,7 @@ class ParcelAccessListUpdatePacket():
 
         return Message('ParcelAccessListUpdate', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', Flags = self.Data['Flags'], LocalID = self.Data['LocalID'], TransactionID = self.Data['TransactionID'], SequenceID = self.Data['SequenceID'], Sections = self.Data['Sections']), Block('List', ID = self.List['ID'], Time = self.List['Time'], Flags = self.List['Flags']))
 
-class ObjectImagePacket():
+class ObjectImagePacket(object):
     ''' a template for a ObjectImage packet '''
 
     def __init__(self):
@@ -1916,7 +1916,7 @@ class ObjectImagePacket():
 
         return Message('ObjectImage', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID'], MediaURL = self.ObjectData['MediaURL'], TextureEntry = self.ObjectData['TextureEntry']))
 
-class ActivateGesturesPacket():
+class ActivateGesturesPacket(object):
     ''' a template for a ActivateGestures packet '''
 
     def __init__(self):
@@ -1937,7 +1937,7 @@ class ActivateGesturesPacket():
 
         return Message('ActivateGestures', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], Flags = self.AgentData['Flags']), Block('Data', ItemID = self.Data['ItemID'], AssetID = self.Data['AssetID'], GestureFlags = self.Data['GestureFlags']))
 
-class ScriptTeleportRequestPacket():
+class ScriptTeleportRequestPacket(object):
     ''' a template for a ScriptTeleportRequest packet '''
 
     def __init__(self):
@@ -1954,7 +1954,7 @@ class ScriptTeleportRequestPacket():
 
         return Message('ScriptTeleportRequest', Block('Data', ObjectName = self.Data['ObjectName'], SimName = self.Data['SimName'], SimPosition = self.Data['SimPosition'], LookAt = self.Data['LookAt']))
 
-class RpcScriptRequestInboundPacket():
+class RpcScriptRequestInboundPacket(object):
     ''' a template for a RpcScriptRequestInbound packet '''
 
     def __init__(self):
@@ -1976,7 +1976,7 @@ class RpcScriptRequestInboundPacket():
 
         return Message('RpcScriptRequestInbound', Block('TargetBlock', GridX = self.TargetBlock['GridX'], GridY = self.TargetBlock['GridY']), Block('DataBlock', TaskID = self.DataBlock['TaskID'], ItemID = self.DataBlock['ItemID'], ChannelID = self.DataBlock['ChannelID'], IntValue = self.DataBlock['IntValue'], StringValue = self.DataBlock['StringValue']))
 
-class TeleportFailedPacket():
+class TeleportFailedPacket(object):
     ''' a template for a TeleportFailed packet '''
 
     def __init__(self):
@@ -1991,7 +1991,7 @@ class TeleportFailedPacket():
 
         return Message('TeleportFailed', Block('Info', AgentID = self.Info['AgentID'], Reason = self.Info['Reason']))
 
-class RezObjectFromNotecardPacket():
+class RezObjectFromNotecardPacket(object):
     ''' a template for a RezObjectFromNotecard packet '''
 
     def __init__(self):
@@ -2028,7 +2028,7 @@ class RezObjectFromNotecardPacket():
 
         return Message('RezObjectFromNotecard', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID']), Block('RezData', FromTaskID = self.RezData['FromTaskID'], BypassRaycast = self.RezData['BypassRaycast'], RayStart = self.RezData['RayStart'], RayEnd = self.RezData['RayEnd'], RayTargetID = self.RezData['RayTargetID'], RayEndIsIntersection = self.RezData['RayEndIsIntersection'], RezSelected = self.RezData['RezSelected'], RemoveItem = self.RezData['RemoveItem'], ItemFlags = self.RezData['ItemFlags'], GroupMask = self.RezData['GroupMask'], EveryoneMask = self.RezData['EveryoneMask'], NextOwnerMask = self.RezData['NextOwnerMask']), Block('NotecardData', NotecardItemID = self.NotecardData['NotecardItemID'], ObjectID = self.NotecardData['ObjectID']), Block('InventoryData', ItemID = self.InventoryData['ItemID']))
 
-class AvatarGroupsReplyPacket():
+class AvatarGroupsReplyPacket(object):
     ''' a template for a AvatarGroupsReply packet '''
 
     def __init__(self):
@@ -2054,7 +2054,7 @@ class AvatarGroupsReplyPacket():
 
         return Message('AvatarGroupsReply', Block('AgentData', AgentID = self.AgentData['AgentID'], AvatarID = self.AgentData['AvatarID']), Block('GroupData', GroupPowers = self.GroupData['GroupPowers'], AcceptNotices = self.GroupData['AcceptNotices'], GroupTitle = self.GroupData['GroupTitle'], GroupID = self.GroupData['GroupID'], GroupName = self.GroupData['GroupName'], GroupInsigniaID = self.GroupData['GroupInsigniaID']), Block('NewGroupData', ListInProfile = self.NewGroupData['ListInProfile']))
 
-class ObjectUpdatePacket():
+class ObjectUpdatePacket(object):
     ''' a template for a ObjectUpdate packet '''
 
     def __init__(self):
@@ -2117,7 +2117,7 @@ class ObjectUpdatePacket():
 
         return Message('ObjectUpdate', Block('RegionData', RegionHandle = self.RegionData['RegionHandle'], TimeDilation = self.RegionData['TimeDilation']), Block('ObjectData', ID = self.ObjectData['ID'], State = self.ObjectData['State'], FullID = self.ObjectData['FullID'], CRC = self.ObjectData['CRC'], PCode = self.ObjectData['PCode'], Material = self.ObjectData['Material'], ClickAction = self.ObjectData['ClickAction'], Scale = self.ObjectData['Scale'], ObjectData = self.ObjectData['ObjectData'], ParentID = self.ObjectData['ParentID'], UpdateFlags = self.ObjectData['UpdateFlags'], PathCurve = self.ObjectData['PathCurve'], ProfileCurve = self.ObjectData['ProfileCurve'], PathBegin = self.ObjectData['PathBegin'], PathEnd = self.ObjectData['PathEnd'], PathScaleX = self.ObjectData['PathScaleX'], PathScaleY = self.ObjectData['PathScaleY'], PathShearX = self.ObjectData['PathShearX'], PathShearY = self.ObjectData['PathShearY'], PathTwist = self.ObjectData['PathTwist'], PathTwistBegin = self.ObjectData['PathTwistBegin'], PathRadiusOffset = self.ObjectData['PathRadiusOffset'], PathTaperX = self.ObjectData['PathTaperX'], PathTaperY = self.ObjectData['PathTaperY'], PathRevolutions = self.ObjectData['PathRevolutions'], PathSkew = self.ObjectData['PathSkew'], ProfileBegin = self.ObjectData['ProfileBegin'], ProfileEnd = self.ObjectData['ProfileEnd'], ProfileHollow = self.ObjectData['ProfileHollow'], TextureEntry = self.ObjectData['TextureEntry'], TextureAnim = self.ObjectData['TextureAnim'], NameValue = self.ObjectData['NameValue'], Data = self.ObjectData['Data'], Text = self.ObjectData['Text'], TextColor = self.ObjectData['TextColor'], MediaURL = self.ObjectData['MediaURL'], PSBlock = self.ObjectData['PSBlock'], ExtraParams = self.ObjectData['ExtraParams'], Sound = self.ObjectData['Sound'], OwnerID = self.ObjectData['OwnerID'], Gain = self.ObjectData['Gain'], Flags = self.ObjectData['Flags'], Radius = self.ObjectData['Radius'], JointType = self.ObjectData['JointType'], JointPivot = self.ObjectData['JointPivot'], JointAxisOrAnchor = self.ObjectData['JointAxisOrAnchor']))
 
-class DirPopularQueryBackendPacket():
+class DirPopularQueryBackendPacket(object):
     ''' a template for a DirPopularQueryBackend packet '''
 
     def __init__(self):
@@ -2137,7 +2137,7 @@ class DirPopularQueryBackendPacket():
 
         return Message('DirPopularQueryBackend', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('QueryData', QueryID = self.QueryData['QueryID'], QueryFlags = self.QueryData['QueryFlags'], EstateID = self.QueryData['EstateID'], Godlike = self.QueryData['Godlike']))
 
-class FindAgentPacket():
+class FindAgentPacket(object):
     ''' a template for a FindAgent packet '''
 
     def __init__(self):
@@ -2157,7 +2157,7 @@ class FindAgentPacket():
 
         return Message('FindAgent', Block('AgentBlock', Hunter = self.AgentBlock['Hunter'], Prey = self.AgentBlock['Prey'], SpaceIP = self.AgentBlock['SpaceIP']), Block('LocationBlock', GlobalX = self.LocationBlock['GlobalX'], GlobalY = self.LocationBlock['GlobalY']))
 
-class EnableSimulatorPacket():
+class EnableSimulatorPacket(object):
     ''' a template for a EnableSimulator packet '''
 
     def __init__(self):
@@ -2173,7 +2173,7 @@ class EnableSimulatorPacket():
 
         return Message('EnableSimulator', Block('SimulatorInfo', Handle = self.SimulatorInfo['Handle'], IP = self.SimulatorInfo['IP'], Port = self.SimulatorInfo['Port']))
 
-class PlacesReplyPacket():
+class PlacesReplyPacket(object):
     ''' a template for a PlacesReply packet '''
 
     def __init__(self):
@@ -2206,7 +2206,7 @@ class PlacesReplyPacket():
 
         return Message('PlacesReply', Block('AgentData', AgentID = self.AgentData['AgentID'], QueryID = self.AgentData['QueryID']), Block('TransactionData', TransactionID = self.TransactionData['TransactionID']), Block('QueryData', OwnerID = self.QueryData['OwnerID'], Name = self.QueryData['Name'], Desc = self.QueryData['Desc'], ActualArea = self.QueryData['ActualArea'], BillableArea = self.QueryData['BillableArea'], Flags = self.QueryData['Flags'], GlobalX = self.QueryData['GlobalX'], GlobalY = self.QueryData['GlobalY'], GlobalZ = self.QueryData['GlobalZ'], SimName = self.QueryData['SimName'], SnapshotID = self.QueryData['SnapshotID'], Dwell = self.QueryData['Dwell'], Price = self.QueryData['Price']))
 
-class SetGroupContributionPacket():
+class SetGroupContributionPacket(object):
     ''' a template for a SetGroupContribution packet '''
 
     def __init__(self):
@@ -2225,7 +2225,7 @@ class SetGroupContributionPacket():
 
         return Message('SetGroupContribution', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', GroupID = self.Data['GroupID'], Contribution = self.Data['Contribution']))
 
-class ScriptSensorReplyPacket():
+class ScriptSensorReplyPacket(object):
     ''' a template for a ScriptSensorReply packet '''
 
     def __init__(self):
@@ -2250,7 +2250,7 @@ class ScriptSensorReplyPacket():
 
         return Message('ScriptSensorReply', Block('Requester', SourceID = self.Requester['SourceID']), Block('SensedData', ObjectID = self.SensedData['ObjectID'], OwnerID = self.SensedData['OwnerID'], GroupID = self.SensedData['GroupID'], Position = self.SensedData['Position'], Velocity = self.SensedData['Velocity'], Rotation = self.SensedData['Rotation'], Name = self.SensedData['Name'], Type = self.SensedData['Type'], Range = self.SensedData['Range']))
 
-class LeaveGroupRequestPacket():
+class LeaveGroupRequestPacket(object):
     ''' a template for a LeaveGroupRequest packet '''
 
     def __init__(self):
@@ -2268,7 +2268,7 @@ class LeaveGroupRequestPacket():
 
         return Message('LeaveGroupRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('GroupData', GroupID = self.GroupData['GroupID']))
 
-class ParcelSalesPacket():
+class ParcelSalesPacket(object):
     ''' a template for a ParcelSales packet '''
 
     def __init__(self):
@@ -2283,7 +2283,7 @@ class ParcelSalesPacket():
 
         return Message('ParcelSales', Block('ParcelData', ParcelID = self.ParcelData['ParcelID'], BuyerID = self.ParcelData['BuyerID']))
 
-class ObjectPermissionsPacket():
+class ObjectPermissionsPacket(object):
     ''' a template for a ObjectPermissions packet '''
 
     def __init__(self):
@@ -2307,7 +2307,7 @@ class ObjectPermissionsPacket():
 
         return Message('ObjectPermissions', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('HeaderData', Override = self.HeaderData['Override']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID'], Field = self.ObjectData['Field'], Set = self.ObjectData['Set'], Mask = self.ObjectData['Mask']))
 
-class ObjectPropertiesPacket():
+class ObjectPropertiesPacket(object):
     ''' a template for a ObjectProperties packet '''
 
     def __init__(self):
@@ -2347,7 +2347,7 @@ class ObjectPropertiesPacket():
 
         return Message('ObjectProperties', Block('ObjectData', ObjectID = self.ObjectData['ObjectID'], CreatorID = self.ObjectData['CreatorID'], OwnerID = self.ObjectData['OwnerID'], GroupID = self.ObjectData['GroupID'], CreationDate = self.ObjectData['CreationDate'], BaseMask = self.ObjectData['BaseMask'], OwnerMask = self.ObjectData['OwnerMask'], GroupMask = self.ObjectData['GroupMask'], EveryoneMask = self.ObjectData['EveryoneMask'], NextOwnerMask = self.ObjectData['NextOwnerMask'], OwnershipCost = self.ObjectData['OwnershipCost'], SaleType = self.ObjectData['SaleType'], SalePrice = self.ObjectData['SalePrice'], AggregatePerms = self.ObjectData['AggregatePerms'], AggregatePermTextures = self.ObjectData['AggregatePermTextures'], AggregatePermTexturesOwner = self.ObjectData['AggregatePermTexturesOwner'], Category = self.ObjectData['Category'], InventorySerial = self.ObjectData['InventorySerial'], ItemID = self.ObjectData['ItemID'], FolderID = self.ObjectData['FolderID'], FromTaskID = self.ObjectData['FromTaskID'], LastOwnerID = self.ObjectData['LastOwnerID'], Name = self.ObjectData['Name'], Description = self.ObjectData['Description'], TouchName = self.ObjectData['TouchName'], SitName = self.ObjectData['SitName'], TextureID = self.ObjectData['TextureID']))
 
-class SetStartLocationPacket():
+class SetStartLocationPacket(object):
     ''' a template for a SetStartLocation packet '''
 
     def __init__(self):
@@ -2366,7 +2366,7 @@ class SetStartLocationPacket():
 
         return Message('SetStartLocation', Block('StartLocationData', AgentID = self.StartLocationData['AgentID'], RegionID = self.StartLocationData['RegionID'], LocationID = self.StartLocationData['LocationID'], RegionHandle = self.StartLocationData['RegionHandle'], LocationPos = self.StartLocationData['LocationPos'], LocationLookAt = self.StartLocationData['LocationLookAt']))
 
-class EstateCovenantReplyPacket():
+class EstateCovenantReplyPacket(object):
     ''' a template for a EstateCovenantReply packet '''
 
     def __init__(self):
@@ -2382,7 +2382,7 @@ class EstateCovenantReplyPacket():
 
         return Message('EstateCovenantReply', Block('Data', CovenantID = self.Data['CovenantID'], CovenantTimestamp = self.Data['CovenantTimestamp'], EstateName = self.Data['EstateName']))
 
-class MapNameRequestPacket():
+class MapNameRequestPacket(object):
     ''' a template for a MapNameRequest packet '''
 
     def __init__(self):
@@ -2403,7 +2403,7 @@ class MapNameRequestPacket():
 
         return Message('MapNameRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], Flags = self.AgentData['Flags'], EstateID = self.AgentData['EstateID'], Godlike = self.AgentData['Godlike']), Block('NameData', Name = self.NameData['Name']))
 
-class AgentHeightWidthPacket():
+class AgentHeightWidthPacket(object):
     ''' a template for a AgentHeightWidth packet '''
 
     def __init__(self):
@@ -2424,7 +2424,7 @@ class AgentHeightWidthPacket():
 
         return Message('AgentHeightWidth', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], CircuitCode = self.AgentData['CircuitCode']), Block('HeightWidthBlock', GenCounter = self.HeightWidthBlock['GenCounter'], Height = self.HeightWidthBlock['Height'], Width = self.HeightWidthBlock['Width']))
 
-class DeclineCallingCardPacket():
+class DeclineCallingCardPacket(object):
     ''' a template for a DeclineCallingCard packet '''
 
     def __init__(self):
@@ -2442,7 +2442,7 @@ class DeclineCallingCardPacket():
 
         return Message('DeclineCallingCard', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('TransactionBlock', TransactionID = self.TransactionBlock['TransactionID']))
 
-class EventNotificationRemoveRequestPacket():
+class EventNotificationRemoveRequestPacket(object):
     ''' a template for a EventNotificationRemoveRequest packet '''
 
     def __init__(self):
@@ -2460,7 +2460,7 @@ class EventNotificationRemoveRequestPacket():
 
         return Message('EventNotificationRemoveRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('EventData', EventID = self.EventData['EventID']))
 
-class NeighborListPacket():
+class NeighborListPacket(object):
     ''' a template for a NeighborList packet '''
 
     def __init__(self):
@@ -2480,7 +2480,7 @@ class NeighborListPacket():
 
         return Message('NeighborList', Block('NeighborBlock', IP = self.NeighborBlock['IP'], Port = self.NeighborBlock['Port'], PublicIP = self.NeighborBlock['PublicIP'], PublicPort = self.NeighborBlock['PublicPort'], RegionID = self.NeighborBlock['RegionID'], Name = self.NeighborBlock['Name'], SimAccess = self.NeighborBlock['SimAccess']))
 
-class AgentDataUpdateRequestPacket():
+class AgentDataUpdateRequestPacket(object):
     ''' a template for a AgentDataUpdateRequest packet '''
 
     def __init__(self):
@@ -2495,7 +2495,7 @@ class AgentDataUpdateRequestPacket():
 
         return Message('AgentDataUpdateRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']))
 
-class GroupNoticeAddPacket():
+class GroupNoticeAddPacket(object):
     ''' a template for a GroupNoticeAdd packet '''
 
     def __init__(self):
@@ -2517,7 +2517,7 @@ class GroupNoticeAddPacket():
 
         return Message('GroupNoticeAdd', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('MessageBlock', ToGroupID = self.MessageBlock['ToGroupID'], ID = self.MessageBlock['ID'], Dialog = self.MessageBlock['Dialog'], FromAgentName = self.MessageBlock['FromAgentName'], Message = self.MessageBlock['Message'], BinaryBucket = self.MessageBlock['BinaryBucket']))
 
-class CopyInventoryFromNotecardPacket():
+class CopyInventoryFromNotecardPacket(object):
     ''' a template for a CopyInventoryFromNotecard packet '''
 
     def __init__(self):
@@ -2540,7 +2540,7 @@ class CopyInventoryFromNotecardPacket():
 
         return Message('CopyInventoryFromNotecard', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('NotecardData', NotecardItemID = self.NotecardData['NotecardItemID'], ObjectID = self.NotecardData['ObjectID']), Block('InventoryData', ItemID = self.InventoryData['ItemID'], FolderID = self.InventoryData['FolderID']))
 
-class NearestLandingRegionRequestPacket():
+class NearestLandingRegionRequestPacket(object):
     ''' a template for a NearestLandingRegionRequest packet '''
 
     def __init__(self):
@@ -2554,7 +2554,7 @@ class NearestLandingRegionRequestPacket():
 
         return Message('NearestLandingRegionRequest', Block('RequestingRegionData', RegionHandle = self.RequestingRegionData['RegionHandle']))
 
-class ChildAgentUpdatePacket():
+class ChildAgentUpdatePacket(object):
     ''' a template for a ChildAgentUpdate packet '''
 
     def __init__(self):
@@ -2610,7 +2610,7 @@ class ChildAgentUpdatePacket():
 
         return Message('ChildAgentUpdate', Block('AgentData', RegionHandle = self.AgentData['RegionHandle'], ViewerCircuitCode = self.AgentData['ViewerCircuitCode'], AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], AgentPos = self.AgentData['AgentPos'], AgentVel = self.AgentData['AgentVel'], Center = self.AgentData['Center'], Size = self.AgentData['Size'], AtAxis = self.AgentData['AtAxis'], LeftAxis = self.AgentData['LeftAxis'], UpAxis = self.AgentData['UpAxis'], ChangedGrid = self.AgentData['ChangedGrid'], Far = self.AgentData['Far'], Aspect = self.AgentData['Aspect'], Throttles = self.AgentData['Throttles'], HeadRotation = self.AgentData['HeadRotation'], BodyRotation = self.AgentData['BodyRotation'], ControlFlags = self.AgentData['ControlFlags'], EnergyLevel = self.AgentData['EnergyLevel'], GodLevel = self.AgentData['GodLevel'], AlwaysRun = self.AgentData['AlwaysRun'], PreyAgent = self.AgentData['PreyAgent'], AgentAccess = self.AgentData['AgentAccess'], AgentTextures = self.AgentData['AgentTextures'], ActiveGroupID = self.AgentData['ActiveGroupID']), Block('GroupData', GroupID = self.GroupData['GroupID'], GroupPowers = self.GroupData['GroupPowers'], AcceptNotices = self.GroupData['AcceptNotices']), Block('AnimationData', Animation = self.AnimationData['Animation'], ObjectID = self.AnimationData['ObjectID']), Block('GranterBlock', GranterID = self.GranterBlock['GranterID']), Block('NVPairData', NVPairs = self.NVPairData['NVPairs']), Block('VisualParam', ParamValue = self.VisualParam['ParamValue']))
 
-class DirClassifiedQueryPacket():
+class DirClassifiedQueryPacket(object):
     ''' a template for a DirClassifiedQuery packet '''
 
     def __init__(self):
@@ -2632,7 +2632,7 @@ class DirClassifiedQueryPacket():
 
         return Message('DirClassifiedQuery', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('QueryData', QueryID = self.QueryData['QueryID'], QueryText = self.QueryData['QueryText'], QueryFlags = self.QueryData['QueryFlags'], Category = self.QueryData['Category'], QueryStart = self.QueryData['QueryStart']))
 
-class GroupRoleUpdatePacket():
+class GroupRoleUpdatePacket(object):
     ''' a template for a GroupRoleUpdate packet '''
 
     def __init__(self):
@@ -2656,7 +2656,7 @@ class GroupRoleUpdatePacket():
 
         return Message('GroupRoleUpdate', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID']), Block('RoleData', RoleID = self.RoleData['RoleID'], Name = self.RoleData['Name'], Description = self.RoleData['Description'], Title = self.RoleData['Title'], Powers = self.RoleData['Powers'], UpdateType = self.RoleData['UpdateType']))
 
-class TestMessagePacket():
+class TestMessagePacket(object):
     ''' a template for a TestMessage packet '''
 
     def __init__(self):
@@ -2675,7 +2675,7 @@ class TestMessagePacket():
 
         return Message('TestMessage', Block('TestBlock1', Test1 = self.TestBlock1['Test1']), Block('NeighborBlock', Test0 = self.NeighborBlock['Test0'], Test1 = self.NeighborBlock['Test1'], Test2 = self.NeighborBlock['Test2']))
 
-class GroupAccountDetailsReplyPacket():
+class GroupAccountDetailsReplyPacket(object):
     ''' a template for a GroupAccountDetailsReply packet '''
 
     def __init__(self):
@@ -2700,7 +2700,7 @@ class GroupAccountDetailsReplyPacket():
 
         return Message('GroupAccountDetailsReply', Block('AgentData', AgentID = self.AgentData['AgentID'], GroupID = self.AgentData['GroupID']), Block('MoneyData', RequestID = self.MoneyData['RequestID'], IntervalDays = self.MoneyData['IntervalDays'], CurrentInterval = self.MoneyData['CurrentInterval'], StartDate = self.MoneyData['StartDate']), Block('HistoryData', Description = self.HistoryData['Description'], Amount = self.HistoryData['Amount']))
 
-class UUIDNameRequestPacket():
+class UUIDNameRequestPacket(object):
     ''' a template for a UUIDNameRequest packet '''
 
     def __init__(self):
@@ -2714,7 +2714,7 @@ class UUIDNameRequestPacket():
 
         return Message('UUIDNameRequest', Block('UUIDNameBlock', ID = self.UUIDNameBlock['ID']))
 
-class ObjectDropPacket():
+class ObjectDropPacket(object):
     ''' a template for a ObjectDrop packet '''
 
     def __init__(self):
@@ -2732,7 +2732,7 @@ class ObjectDropPacket():
 
         return Message('ObjectDrop', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID']))
 
-class AttachedSoundGainChangePacket():
+class AttachedSoundGainChangePacket(object):
     ''' a template for a AttachedSoundGainChange packet '''
 
     def __init__(self):
@@ -2747,7 +2747,7 @@ class AttachedSoundGainChangePacket():
 
         return Message('AttachedSoundGainChange', Block('DataBlock', ObjectID = self.DataBlock['ObjectID'], Gain = self.DataBlock['Gain']))
 
-class AssetUploadCompletePacket():
+class AssetUploadCompletePacket(object):
     ''' a template for a AssetUploadComplete packet '''
 
     def __init__(self):
@@ -2763,7 +2763,7 @@ class AssetUploadCompletePacket():
 
         return Message('AssetUploadComplete', Block('AssetBlock', UUID = self.AssetBlock['UUID'], Type = self.AssetBlock['Type'], Success = self.AssetBlock['Success']))
 
-class ParcelBuyPacket():
+class ParcelBuyPacket(object):
     ''' a template for a ParcelBuy packet '''
 
     def __init__(self):
@@ -2789,7 +2789,7 @@ class ParcelBuyPacket():
 
         return Message('ParcelBuy', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', GroupID = self.Data['GroupID'], IsGroupOwned = self.Data['IsGroupOwned'], RemoveContribution = self.Data['RemoveContribution'], LocalID = self.Data['LocalID'], Final = self.Data['Final']), Block('ParcelData', Price = self.ParcelData['Price'], Area = self.ParcelData['Area']))
 
-class RpcScriptReplyInboundPacket():
+class RpcScriptReplyInboundPacket(object):
     ''' a template for a RpcScriptReplyInbound packet '''
 
     def __init__(self):
@@ -2807,7 +2807,7 @@ class RpcScriptReplyInboundPacket():
 
         return Message('RpcScriptReplyInbound', Block('DataBlock', TaskID = self.DataBlock['TaskID'], ItemID = self.DataBlock['ItemID'], ChannelID = self.DataBlock['ChannelID'], IntValue = self.DataBlock['IntValue'], StringValue = self.DataBlock['StringValue']))
 
-class ObjectScalePacket():
+class ObjectScalePacket(object):
     ''' a template for a ObjectScale packet '''
 
     def __init__(self):
@@ -2826,7 +2826,7 @@ class ObjectScalePacket():
 
         return Message('ObjectScale', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID'], Scale = self.ObjectData['Scale']))
 
-class TransferInventoryAckPacket():
+class TransferInventoryAckPacket(object):
     ''' a template for a TransferInventoryAck packet '''
 
     def __init__(self):
@@ -2841,7 +2841,7 @@ class TransferInventoryAckPacket():
 
         return Message('TransferInventoryAck', Block('InfoBlock', TransactionID = self.InfoBlock['TransactionID'], InventoryID = self.InfoBlock['InventoryID']))
 
-class ScriptDialogReplyPacket():
+class ScriptDialogReplyPacket(object):
     ''' a template for a ScriptDialogReply packet '''
 
     def __init__(self):
@@ -2862,7 +2862,7 @@ class ScriptDialogReplyPacket():
 
         return Message('ScriptDialogReply', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', ObjectID = self.Data['ObjectID'], ChatChannel = self.Data['ChatChannel'], ButtonIndex = self.Data['ButtonIndex'], ButtonLabel = self.Data['ButtonLabel']))
 
-class RezSingleAttachmentFromInvPacket():
+class RezSingleAttachmentFromInvPacket(object):
     ''' a template for a RezSingleAttachmentFromInv packet '''
 
     def __init__(self):
@@ -2888,7 +2888,7 @@ class RezSingleAttachmentFromInvPacket():
 
         return Message('RezSingleAttachmentFromInv', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ItemID = self.ObjectData['ItemID'], OwnerID = self.ObjectData['OwnerID'], AttachmentPt = self.ObjectData['AttachmentPt'], ItemFlags = self.ObjectData['ItemFlags'], GroupMask = self.ObjectData['GroupMask'], EveryoneMask = self.ObjectData['EveryoneMask'], NextOwnerMask = self.ObjectData['NextOwnerMask'], Name = self.ObjectData['Name'], Description = self.ObjectData['Description']))
 
-class StartLurePacket():
+class StartLurePacket(object):
     ''' a template for a StartLure packet '''
 
     def __init__(self):
@@ -2910,7 +2910,7 @@ class StartLurePacket():
 
         return Message('StartLure', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Info', LureType = self.Info['LureType'], Message = self.Info['Message']), Block('TargetData', TargetID = self.TargetData['TargetID']))
 
-class UpdateInventoryFolderPacket():
+class UpdateInventoryFolderPacket(object):
     ''' a template for a UpdateInventoryFolder packet '''
 
     def __init__(self):
@@ -2931,7 +2931,7 @@ class UpdateInventoryFolderPacket():
 
         return Message('UpdateInventoryFolder', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('FolderData', FolderID = self.FolderData['FolderID'], ParentID = self.FolderData['ParentID'], Type = self.FolderData['Type'], Name = self.FolderData['Name']))
 
-class TransferRequestPacket():
+class TransferRequestPacket(object):
     ''' a template for a TransferRequest packet '''
 
     def __init__(self):
@@ -2949,7 +2949,7 @@ class TransferRequestPacket():
 
         return Message('TransferRequest', Block('TransferInfo', TransferID = self.TransferInfo['TransferID'], ChannelType = self.TransferInfo['ChannelType'], SourceType = self.TransferInfo['SourceType'], Priority = self.TransferInfo['Priority'], Params = self.TransferInfo['Params']))
 
-class KillObjectPacket():
+class KillObjectPacket(object):
     ''' a template for a KillObject packet '''
 
     def __init__(self):
@@ -2963,7 +2963,7 @@ class KillObjectPacket():
 
         return Message('KillObject', Block('ObjectData', ID = self.ObjectData['ID']))
 
-class DirFindQueryBackendPacket():
+class DirFindQueryBackendPacket(object):
     ''' a template for a DirFindQueryBackend packet '''
 
     def __init__(self):
@@ -2985,7 +2985,7 @@ class DirFindQueryBackendPacket():
 
         return Message('DirFindQueryBackend', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('QueryData', QueryID = self.QueryData['QueryID'], QueryText = self.QueryData['QueryText'], QueryFlags = self.QueryData['QueryFlags'], QueryStart = self.QueryData['QueryStart'], EstateID = self.QueryData['EstateID'], Godlike = self.QueryData['Godlike']))
 
-class ViewerStatsPacket():
+class ViewerStatsPacket(object):
     ''' a template for a ViewerStats packet '''
 
     def __init__(self):
@@ -2996,7 +2996,7 @@ class ViewerStatsPacket():
 
         return Message('ViewerStats')
 
-class TelehubInfoPacket():
+class TelehubInfoPacket(object):
     ''' a template for a TelehubInfo packet '''
 
     def __init__(self):
@@ -3016,7 +3016,7 @@ class TelehubInfoPacket():
 
         return Message('TelehubInfo', Block('TelehubBlock', ObjectID = self.TelehubBlock['ObjectID'], ObjectName = self.TelehubBlock['ObjectName'], TelehubPos = self.TelehubBlock['TelehubPos'], TelehubRot = self.TelehubBlock['TelehubRot']), Block('SpawnPointBlock', SpawnPointPos = self.SpawnPointBlock['SpawnPointPos']))
 
-class TallyVotesPacket():
+class TallyVotesPacket(object):
     ''' a template for a TallyVotes packet '''
 
     def __init__(self):
@@ -3027,7 +3027,7 @@ class TallyVotesPacket():
 
         return Message('TallyVotes')
 
-class ScriptRunningReplyPacket():
+class ScriptRunningReplyPacket(object):
     ''' a template for a ScriptRunningReply packet '''
 
     def __init__(self):
@@ -3043,7 +3043,7 @@ class ScriptRunningReplyPacket():
 
         return Message('ScriptRunningReply', Block('Script', ObjectID = self.Script['ObjectID'], ItemID = self.Script['ItemID'], Running = self.Script['Running']))
 
-class ObjectExportSelectedPacket():
+class ObjectExportSelectedPacket(object):
     ''' a template for a ObjectExportSelected packet '''
 
     def __init__(self):
@@ -3062,7 +3062,7 @@ class ObjectExportSelectedPacket():
 
         return Message('ObjectExportSelected', Block('AgentData', AgentID = self.AgentData['AgentID'], RequestID = self.AgentData['RequestID'], VolumeDetail = self.AgentData['VolumeDetail']), Block('ObjectData', ObjectID = self.ObjectData['ObjectID']))
 
-class JoinGroupRequestPacket():
+class JoinGroupRequestPacket(object):
     ''' a template for a JoinGroupRequest packet '''
 
     def __init__(self):
@@ -3080,7 +3080,7 @@ class JoinGroupRequestPacket():
 
         return Message('JoinGroupRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('GroupData', GroupID = self.GroupData['GroupID']))
 
-class RemoveParcelPacket():
+class RemoveParcelPacket(object):
     ''' a template for a RemoveParcel packet '''
 
     def __init__(self):
@@ -3094,7 +3094,7 @@ class RemoveParcelPacket():
 
         return Message('RemoveParcel', Block('ParcelData', ParcelID = self.ParcelData['ParcelID']))
 
-class ObjectGroupPacket():
+class ObjectGroupPacket(object):
     ''' a template for a ObjectGroup packet '''
 
     def __init__(self):
@@ -3113,7 +3113,7 @@ class ObjectGroupPacket():
 
         return Message('ObjectGroup', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID']))
 
-class CreateInventoryItemPacket():
+class CreateInventoryItemPacket(object):
     ''' a template for a CreateInventoryItem packet '''
 
     def __init__(self):
@@ -3139,7 +3139,7 @@ class CreateInventoryItemPacket():
 
         return Message('CreateInventoryItem', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('InventoryBlock', CallbackID = self.InventoryBlock['CallbackID'], FolderID = self.InventoryBlock['FolderID'], TransactionID = self.InventoryBlock['TransactionID'], NextOwnerMask = self.InventoryBlock['NextOwnerMask'], Type = self.InventoryBlock['Type'], InvType = self.InventoryBlock['InvType'], WearableType = self.InventoryBlock['WearableType'], Name = self.InventoryBlock['Name'], Description = self.InventoryBlock['Description']))
 
-class PickInfoReplyPacket():
+class PickInfoReplyPacket(object):
     ''' a template for a PickInfoReply packet '''
 
     def __init__(self):
@@ -3168,7 +3168,7 @@ class PickInfoReplyPacket():
 
         return Message('PickInfoReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('Data', PickID = self.Data['PickID'], CreatorID = self.Data['CreatorID'], TopPick = self.Data['TopPick'], ParcelID = self.Data['ParcelID'], Name = self.Data['Name'], Desc = self.Data['Desc'], SnapshotID = self.Data['SnapshotID'], User = self.Data['User'], OriginalName = self.Data['OriginalName'], SimName = self.Data['SimName'], PosGlobal = self.Data['PosGlobal'], SortOrder = self.Data['SortOrder'], Enabled = self.Data['Enabled']))
 
-class SystemMessagePacket():
+class SystemMessagePacket(object):
     ''' a template for a SystemMessage packet '''
 
     def __init__(self):
@@ -3187,7 +3187,7 @@ class SystemMessagePacket():
 
         return Message('SystemMessage', Block('MethodData', Method = self.MethodData['Method'], Invoice = self.MethodData['Invoice'], Digest = self.MethodData['Digest']), Block('ParamList', Parameter = self.ParamList['Parameter']))
 
-class AgentResumePacket():
+class AgentResumePacket(object):
     ''' a template for a AgentResume packet '''
 
     def __init__(self):
@@ -3203,7 +3203,7 @@ class AgentResumePacket():
 
         return Message('AgentResume', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], SerialNum = self.AgentData['SerialNum']))
 
-class InventoryAssetResponsePacket():
+class InventoryAssetResponsePacket(object):
     ''' a template for a InventoryAssetResponse packet '''
 
     def __init__(self):
@@ -3219,7 +3219,7 @@ class InventoryAssetResponsePacket():
 
         return Message('InventoryAssetResponse', Block('QueryData', QueryID = self.QueryData['QueryID'], AssetID = self.QueryData['AssetID'], IsReadable = self.QueryData['IsReadable']))
 
-class PayPriceReplyPacket():
+class PayPriceReplyPacket(object):
     ''' a template for a PayPriceReply packet '''
 
     def __init__(self):
@@ -3237,7 +3237,7 @@ class PayPriceReplyPacket():
 
         return Message('PayPriceReply', Block('ObjectData', ObjectID = self.ObjectData['ObjectID'], DefaultPayPrice = self.ObjectData['DefaultPayPrice']), Block('ButtonData', PayButton = self.ButtonData['PayButton']))
 
-class ParcelPropertiesPacket():
+class ParcelPropertiesPacket(object):
     ''' a template for a ParcelProperties packet '''
 
     def __init__(self):
@@ -3302,7 +3302,7 @@ class ParcelPropertiesPacket():
 
         return Message('ParcelProperties', Block('ParcelData', RequestResult = self.ParcelData['RequestResult'], SequenceID = self.ParcelData['SequenceID'], SnapSelection = self.ParcelData['SnapSelection'], SelfCount = self.ParcelData['SelfCount'], OtherCount = self.ParcelData['OtherCount'], PublicCount = self.ParcelData['PublicCount'], LocalID = self.ParcelData['LocalID'], OwnerID = self.ParcelData['OwnerID'], IsGroupOwned = self.ParcelData['IsGroupOwned'], AuctionID = self.ParcelData['AuctionID'], ClaimDate = self.ParcelData['ClaimDate'], ClaimPrice = self.ParcelData['ClaimPrice'], RentPrice = self.ParcelData['RentPrice'], AABBMin = self.ParcelData['AABBMin'], AABBMax = self.ParcelData['AABBMax'], Bitmap = self.ParcelData['Bitmap'], Area = self.ParcelData['Area'], Status = self.ParcelData['Status'], SimWideMaxPrims = self.ParcelData['SimWideMaxPrims'], SimWideTotalPrims = self.ParcelData['SimWideTotalPrims'], MaxPrims = self.ParcelData['MaxPrims'], TotalPrims = self.ParcelData['TotalPrims'], OwnerPrims = self.ParcelData['OwnerPrims'], GroupPrims = self.ParcelData['GroupPrims'], OtherPrims = self.ParcelData['OtherPrims'], SelectedPrims = self.ParcelData['SelectedPrims'], ParcelPrimBonus = self.ParcelData['ParcelPrimBonus'], OtherCleanTime = self.ParcelData['OtherCleanTime'], ParcelFlags = self.ParcelData['ParcelFlags'], SalePrice = self.ParcelData['SalePrice'], Name = self.ParcelData['Name'], Desc = self.ParcelData['Desc'], MusicURL = self.ParcelData['MusicURL'], MediaURL = self.ParcelData['MediaURL'], MediaID = self.ParcelData['MediaID'], MediaAutoScale = self.ParcelData['MediaAutoScale'], GroupID = self.ParcelData['GroupID'], PassPrice = self.ParcelData['PassPrice'], PassHours = self.ParcelData['PassHours'], Category = self.ParcelData['Category'], AuthBuyerID = self.ParcelData['AuthBuyerID'], SnapshotID = self.ParcelData['SnapshotID'], UserLocation = self.ParcelData['UserLocation'], UserLookAt = self.ParcelData['UserLookAt'], LandingType = self.ParcelData['LandingType'], RegionPushOverride = self.ParcelData['RegionPushOverride'], RegionDenyAnonymous = self.ParcelData['RegionDenyAnonymous'], RegionDenyIdentified = self.ParcelData['RegionDenyIdentified'], RegionDenyTransacted = self.ParcelData['RegionDenyTransacted']), Block('AgeVerificationBlock', RegionDenyAgeUnverified = self.AgeVerificationBlock['RegionDenyAgeUnverified']))
 
-class DirClassifiedReplyPacket():
+class DirClassifiedReplyPacket(object):
     ''' a template for a DirClassifiedReply packet '''
 
     def __init__(self):
@@ -3327,7 +3327,7 @@ class DirClassifiedReplyPacket():
 
         return Message('DirClassifiedReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('QueryData', QueryID = self.QueryData['QueryID']), Block('QueryReplies', ClassifiedID = self.QueryReplies['ClassifiedID'], Name = self.QueryReplies['Name'], ClassifiedFlags = self.QueryReplies['ClassifiedFlags'], CreationDate = self.QueryReplies['CreationDate'], ExpirationDate = self.QueryReplies['ExpirationDate'], PriceForListing = self.QueryReplies['PriceForListing']))
 
-class GenericMessagePacket():
+class GenericMessagePacket(object):
     ''' a template for a GenericMessage packet '''
 
     def __init__(self):
@@ -3350,7 +3350,7 @@ class GenericMessagePacket():
 
         return Message('GenericMessage', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], TransactionID = self.AgentData['TransactionID']), Block('MethodData', Method = self.MethodData['Method'], Invoice = self.MethodData['Invoice']), Block('ParamList', Parameter = self.ParamList['Parameter']))
 
-class SimStatsPacket():
+class SimStatsPacket(object):
     ''' a template for a SimStats packet '''
 
     def __init__(self):
@@ -3374,7 +3374,7 @@ class SimStatsPacket():
 
         return Message('SimStats', Block('Region', RegionX = self.Region['RegionX'], RegionY = self.Region['RegionY'], RegionFlags = self.Region['RegionFlags'], ObjectCapacity = self.Region['ObjectCapacity']), Block('Stat', StatID = self.Stat['StatID'], StatValue = self.Stat['StatValue']), Block('PidStat', PID = self.PidStat['PID']))
 
-class FeatureDisabledPacket():
+class FeatureDisabledPacket(object):
     ''' a template for a FeatureDisabled packet '''
 
     def __init__(self):
@@ -3390,7 +3390,7 @@ class FeatureDisabledPacket():
 
         return Message('FeatureDisabled', Block('FailureInfo', ErrorMessage = self.FailureInfo['ErrorMessage'], AgentID = self.FailureInfo['AgentID'], TransactionID = self.FailureInfo['TransactionID']))
 
-class PacketAckPacket():
+class PacketAckPacket(object):
     ''' a template for a PacketAck packet '''
 
     def __init__(self):
@@ -3404,7 +3404,7 @@ class PacketAckPacket():
 
         return Message('PacketAck', Block('Packets', ID = self.Packets['ID']))
 
-class GroupRoleMembersReplyPacket():
+class GroupRoleMembersReplyPacket(object):
     ''' a template for a GroupRoleMembersReply packet '''
 
     def __init__(self):
@@ -3425,7 +3425,7 @@ class GroupRoleMembersReplyPacket():
 
         return Message('GroupRoleMembersReply', Block('AgentData', AgentID = self.AgentData['AgentID'], GroupID = self.AgentData['GroupID'], RequestID = self.AgentData['RequestID'], TotalPairs = self.AgentData['TotalPairs']), Block('MemberData', RoleID = self.MemberData['RoleID'], MemberID = self.MemberData['MemberID']))
 
-class LogoutReplyPacket():
+class LogoutReplyPacket(object):
     ''' a template for a LogoutReply packet '''
 
     def __init__(self):
@@ -3443,7 +3443,7 @@ class LogoutReplyPacket():
 
         return Message('LogoutReply', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('InventoryData', ItemID = self.InventoryData['ItemID']))
 
-class EmailMessageReplyPacket():
+class EmailMessageReplyPacket(object):
     ''' a template for a EmailMessageReply packet '''
 
     def __init__(self):
@@ -3463,7 +3463,7 @@ class EmailMessageReplyPacket():
 
         return Message('EmailMessageReply', Block('DataBlock', ObjectID = self.DataBlock['ObjectID'], More = self.DataBlock['More'], Time = self.DataBlock['Time'], FromAddress = self.DataBlock['FromAddress'], Subject = self.DataBlock['Subject'], Data = self.DataBlock['Data'], MailFilter = self.DataBlock['MailFilter']))
 
-class CompleteAuctionPacket():
+class CompleteAuctionPacket(object):
     ''' a template for a CompleteAuction packet '''
 
     def __init__(self):
@@ -3477,7 +3477,7 @@ class CompleteAuctionPacket():
 
         return Message('CompleteAuction', Block('ParcelData', ParcelID = self.ParcelData['ParcelID']))
 
-class ObjectSelectPacket():
+class ObjectSelectPacket(object):
     ''' a template for a ObjectSelect packet '''
 
     def __init__(self):
@@ -3495,7 +3495,7 @@ class ObjectSelectPacket():
 
         return Message('ObjectSelect', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID']))
 
-class MultipleObjectUpdatePacket():
+class MultipleObjectUpdatePacket(object):
     ''' a template for a MultipleObjectUpdate packet '''
 
     def __init__(self):
@@ -3515,7 +3515,7 @@ class MultipleObjectUpdatePacket():
 
         return Message('MultipleObjectUpdate', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID'], Type = self.ObjectData['Type'], Data = self.ObjectData['Data']))
 
-class MoneyBalanceReplyPacket():
+class MoneyBalanceReplyPacket(object):
     ''' a template for a MoneyBalanceReply packet '''
 
     def __init__(self):
@@ -3535,7 +3535,7 @@ class MoneyBalanceReplyPacket():
 
         return Message('MoneyBalanceReply', Block('MoneyData', AgentID = self.MoneyData['AgentID'], TransactionID = self.MoneyData['TransactionID'], TransactionSuccess = self.MoneyData['TransactionSuccess'], MoneyBalance = self.MoneyData['MoneyBalance'], SquareMetersCredit = self.MoneyData['SquareMetersCredit'], SquareMetersCommitted = self.MoneyData['SquareMetersCommitted'], Description = self.MoneyData['Description']))
 
-class RevokePermissionsPacket():
+class RevokePermissionsPacket(object):
     ''' a template for a RevokePermissions packet '''
 
     def __init__(self):
@@ -3554,7 +3554,7 @@ class RevokePermissionsPacket():
 
         return Message('RevokePermissions', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', ObjectID = self.Data['ObjectID'], ObjectPermissions = self.Data['ObjectPermissions']))
 
-class RpcChannelRequestPacket():
+class RpcChannelRequestPacket(object):
     ''' a template for a RpcChannelRequest packet '''
 
     def __init__(self):
@@ -3571,7 +3571,7 @@ class RpcChannelRequestPacket():
 
         return Message('RpcChannelRequest', Block('DataBlock', GridX = self.DataBlock['GridX'], GridY = self.DataBlock['GridY'], TaskID = self.DataBlock['TaskID'], ItemID = self.DataBlock['ItemID']))
 
-class TeleportCancelPacket():
+class TeleportCancelPacket(object):
     ''' a template for a TeleportCancel packet '''
 
     def __init__(self):
@@ -3586,7 +3586,7 @@ class TeleportCancelPacket():
 
         return Message('TeleportCancel', Block('Info', AgentID = self.Info['AgentID'], SessionID = self.Info['SessionID']))
 
-class DeRezAckPacket():
+class DeRezAckPacket(object):
     ''' a template for a DeRezAck packet '''
 
     def __init__(self):
@@ -3601,7 +3601,7 @@ class DeRezAckPacket():
 
         return Message('DeRezAck', Block('TransactionData', TransactionID = self.TransactionData['TransactionID'], Success = self.TransactionData['Success']))
 
-class AvatarPropertiesReplyPacket():
+class AvatarPropertiesReplyPacket(object):
     ''' a template for a AvatarPropertiesReply packet '''
 
     def __init__(self):
@@ -3627,7 +3627,7 @@ class AvatarPropertiesReplyPacket():
 
         return Message('AvatarPropertiesReply', Block('AgentData', AgentID = self.AgentData['AgentID'], AvatarID = self.AgentData['AvatarID']), Block('PropertiesData', ImageID = self.PropertiesData['ImageID'], FLImageID = self.PropertiesData['FLImageID'], PartnerID = self.PropertiesData['PartnerID'], AboutText = self.PropertiesData['AboutText'], FLAboutText = self.PropertiesData['FLAboutText'], BornOn = self.PropertiesData['BornOn'], ProfileURL = self.PropertiesData['ProfileURL'], CharterMember = self.PropertiesData['CharterMember'], Flags = self.PropertiesData['Flags']))
 
-class ObjectUpdateCachedPacket():
+class ObjectUpdateCachedPacket(object):
     ''' a template for a ObjectUpdateCached packet '''
 
     def __init__(self):
@@ -3647,7 +3647,7 @@ class ObjectUpdateCachedPacket():
 
         return Message('ObjectUpdateCached', Block('RegionData', RegionHandle = self.RegionData['RegionHandle'], TimeDilation = self.RegionData['TimeDilation']), Block('ObjectData', ID = self.ObjectData['ID'], CRC = self.ObjectData['CRC'], UpdateFlags = self.ObjectData['UpdateFlags']))
 
-class LogTextMessagePacket():
+class LogTextMessagePacket(object):
     ''' a template for a LogTextMessage packet '''
 
     def __init__(self):
@@ -3666,7 +3666,7 @@ class LogTextMessagePacket():
 
         return Message('LogTextMessage', Block('DataBlock', FromAgentId = self.DataBlock['FromAgentId'], ToAgentId = self.DataBlock['ToAgentId'], GlobalX = self.DataBlock['GlobalX'], GlobalY = self.DataBlock['GlobalY'], Time = self.DataBlock['Time'], Message = self.DataBlock['Message']))
 
-class DirLandReplyPacket():
+class DirLandReplyPacket(object):
     ''' a template for a DirLandReply packet '''
 
     def __init__(self):
@@ -3691,7 +3691,7 @@ class DirLandReplyPacket():
 
         return Message('DirLandReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('QueryData', QueryID = self.QueryData['QueryID']), Block('QueryReplies', ParcelID = self.QueryReplies['ParcelID'], Name = self.QueryReplies['Name'], Auction = self.QueryReplies['Auction'], ForSale = self.QueryReplies['ForSale'], SalePrice = self.QueryReplies['SalePrice'], ActualArea = self.QueryReplies['ActualArea']))
 
-class RemoveInventoryItemPacket():
+class RemoveInventoryItemPacket(object):
     ''' a template for a RemoveInventoryItem packet '''
 
     def __init__(self):
@@ -3709,7 +3709,7 @@ class RemoveInventoryItemPacket():
 
         return Message('RemoveInventoryItem', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('InventoryData', ItemID = self.InventoryData['ItemID']))
 
-class RegionHandshakeReplyPacket():
+class RegionHandshakeReplyPacket(object):
     ''' a template for a RegionHandshakeReply packet '''
 
     def __init__(self):
@@ -3727,7 +3727,7 @@ class RegionHandshakeReplyPacket():
 
         return Message('RegionHandshakeReply', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('RegionInfo', Flags = self.RegionInfo['Flags']))
 
-class AvatarPickerReplyPacket():
+class AvatarPickerReplyPacket(object):
     ''' a template for a AvatarPickerReply packet '''
 
     def __init__(self):
@@ -3747,7 +3747,7 @@ class AvatarPickerReplyPacket():
 
         return Message('AvatarPickerReply', Block('AgentData', AgentID = self.AgentData['AgentID'], QueryID = self.AgentData['QueryID']), Block('Data', AvatarID = self.Data['AvatarID'], FirstName = self.Data['FirstName'], LastName = self.Data['LastName']))
 
-class AgentIsNowWearingPacket():
+class AgentIsNowWearingPacket(object):
     ''' a template for a AgentIsNowWearing packet '''
 
     def __init__(self):
@@ -3766,7 +3766,7 @@ class AgentIsNowWearingPacket():
 
         return Message('AgentIsNowWearing', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('WearableData', ItemID = self.WearableData['ItemID'], WearableType = self.WearableData['WearableType']))
 
-class SimulatorSetMapPacket():
+class SimulatorSetMapPacket(object):
     ''' a template for a SimulatorSetMap packet '''
 
     def __init__(self):
@@ -3782,7 +3782,7 @@ class SimulatorSetMapPacket():
 
         return Message('SimulatorSetMap', Block('MapData', RegionHandle = self.MapData['RegionHandle'], Type = self.MapData['Type'], MapImage = self.MapData['MapImage']))
 
-class EjectGroupMemberRequestPacket():
+class EjectGroupMemberRequestPacket(object):
     ''' a template for a EjectGroupMemberRequest packet '''
 
     def __init__(self):
@@ -3803,7 +3803,7 @@ class EjectGroupMemberRequestPacket():
 
         return Message('EjectGroupMemberRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('GroupData', GroupID = self.GroupData['GroupID']), Block('EjectData', EjecteeID = self.EjectData['EjecteeID']))
 
-class LogParcelChangesPacket():
+class LogParcelChangesPacket(object):
     ''' a template for a LogParcelChanges packet '''
 
     def __init__(self):
@@ -3828,7 +3828,7 @@ class LogParcelChangesPacket():
 
         return Message('LogParcelChanges', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('RegionData', RegionHandle = self.RegionData['RegionHandle']), Block('ParcelData', ParcelID = self.ParcelData['ParcelID'], OwnerID = self.ParcelData['OwnerID'], IsOwnerGroup = self.ParcelData['IsOwnerGroup'], ActualArea = self.ParcelData['ActualArea'], Action = self.ParcelData['Action'], TransactionID = self.ParcelData['TransactionID']))
 
-class ObjectDeGrabPacket():
+class ObjectDeGrabPacket(object):
     ''' a template for a ObjectDeGrab packet '''
 
     def __init__(self):
@@ -3850,7 +3850,7 @@ class ObjectDeGrabPacket():
 
         return Message('ObjectDeGrab', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', LocalID = self.ObjectData['LocalID']), Block('SurfaceInfo', UVCoord = self.SurfaceInfo['UVCoord'], STCoord = self.SurfaceInfo['STCoord']))
 
-class ParcelPropertiesRequestPacket():
+class ParcelPropertiesRequestPacket(object):
     ''' a template for a ParcelPropertiesRequest packet '''
 
     def __init__(self):
@@ -3873,7 +3873,7 @@ class ParcelPropertiesRequestPacket():
 
         return Message('ParcelPropertiesRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ParcelData', SequenceID = self.ParcelData['SequenceID'], West = self.ParcelData['West'], South = self.ParcelData['South'], East = self.ParcelData['East'], North = self.ParcelData['North'], SnapSelection = self.ParcelData['SnapSelection']))
 
-class OfflineNotificationPacket():
+class OfflineNotificationPacket(object):
     ''' a template for a OfflineNotification packet '''
 
     def __init__(self):
@@ -3887,7 +3887,7 @@ class OfflineNotificationPacket():
 
         return Message('OfflineNotification', Block('AgentBlock', AgentID = self.AgentBlock['AgentID']))
 
-class ParcelSelectObjectsPacket():
+class ParcelSelectObjectsPacket(object):
     ''' a template for a ParcelSelectObjects packet '''
 
     def __init__(self):
@@ -3909,7 +3909,7 @@ class ParcelSelectObjectsPacket():
 
         return Message('ParcelSelectObjects', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ParcelData', LocalID = self.ParcelData['LocalID'], ReturnType = self.ParcelData['ReturnType']), Block('ReturnIDs', ReturnID = self.ReturnIDs['ReturnID']))
 
-class LandStatReplyPacket():
+class LandStatReplyPacket(object):
     ''' a template for a LandStatReply packet '''
 
     def __init__(self):
@@ -3935,7 +3935,7 @@ class LandStatReplyPacket():
 
         return Message('LandStatReply', Block('RequestData', ReportType = self.RequestData['ReportType'], RequestFlags = self.RequestData['RequestFlags'], TotalObjectCount = self.RequestData['TotalObjectCount']), Block('ReportData', TaskLocalID = self.ReportData['TaskLocalID'], TaskID = self.ReportData['TaskID'], LocationX = self.ReportData['LocationX'], LocationY = self.ReportData['LocationY'], LocationZ = self.ReportData['LocationZ'], Score = self.ReportData['Score'], TaskName = self.ReportData['TaskName'], OwnerName = self.ReportData['OwnerName']))
 
-class AgentThrottlePacket():
+class AgentThrottlePacket(object):
     ''' a template for a AgentThrottle packet '''
 
     def __init__(self):
@@ -3955,7 +3955,7 @@ class AgentThrottlePacket():
 
         return Message('AgentThrottle', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], CircuitCode = self.AgentData['CircuitCode']), Block('Throttle', GenCounter = self.Throttle['GenCounter'], Throttles = self.Throttle['Throttles']))
 
-class ViewerEffectPacket():
+class ViewerEffectPacket(object):
     ''' a template for a ViewerEffect packet '''
 
     def __init__(self):
@@ -3978,7 +3978,7 @@ class ViewerEffectPacket():
 
         return Message('ViewerEffect', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Effect', ID = self.Effect['ID'], AgentID = self.Effect['AgentID'], Type = self.Effect['Type'], Duration = self.Effect['Duration'], Color = self.Effect['Color'], TypeData = self.Effect['TypeData']))
 
-class OfferCallingCardPacket():
+class OfferCallingCardPacket(object):
     ''' a template for a OfferCallingCard packet '''
 
     def __init__(self):
@@ -3997,7 +3997,7 @@ class OfferCallingCardPacket():
 
         return Message('OfferCallingCard', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('AgentBlock', DestID = self.AgentBlock['DestID'], TransactionID = self.AgentBlock['TransactionID']))
 
-class EventInfoReplyPacket():
+class EventInfoReplyPacket(object):
     ''' a template for a EventInfoReply packet '''
 
     def __init__(self):
@@ -4026,7 +4026,7 @@ class EventInfoReplyPacket():
 
         return Message('EventInfoReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('EventData', EventID = self.EventData['EventID'], Creator = self.EventData['Creator'], Name = self.EventData['Name'], Category = self.EventData['Category'], Desc = self.EventData['Desc'], Date = self.EventData['Date'], DateUTC = self.EventData['DateUTC'], Duration = self.EventData['Duration'], Cover = self.EventData['Cover'], Amount = self.EventData['Amount'], SimName = self.EventData['SimName'], GlobalPos = self.EventData['GlobalPos'], EventFlags = self.EventData['EventFlags']))
 
-class AgentAnimationPacket():
+class AgentAnimationPacket(object):
     ''' a template for a AgentAnimation packet '''
 
     def __init__(self):
@@ -4048,7 +4048,7 @@ class AgentAnimationPacket():
 
         return Message('AgentAnimation', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('AnimationList', AnimID = self.AnimationList['AnimID'], StartAnim = self.AnimationList['StartAnim']), Block('PhysicalAvatarEventList', TypeData = self.PhysicalAvatarEventList['TypeData']))
 
-class AgentCachedTexturePacket():
+class AgentCachedTexturePacket(object):
     ''' a template for a AgentCachedTexture packet '''
 
     def __init__(self):
@@ -4068,7 +4068,7 @@ class AgentCachedTexturePacket():
 
         return Message('AgentCachedTexture', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], SerialNum = self.AgentData['SerialNum']), Block('WearableData', ID = self.WearableData['ID'], TextureIndex = self.WearableData['TextureIndex']))
 
-class GroupNoticesListReplyPacket():
+class GroupNoticesListReplyPacket(object):
     ''' a template for a GroupNoticesListReply packet '''
 
     def __init__(self):
@@ -4091,7 +4091,7 @@ class GroupNoticesListReplyPacket():
 
         return Message('GroupNoticesListReply', Block('AgentData', AgentID = self.AgentData['AgentID'], GroupID = self.AgentData['GroupID']), Block('Data', NoticeID = self.Data['NoticeID'], Timestamp = self.Data['Timestamp'], FromName = self.Data['FromName'], Subject = self.Data['Subject'], HasAttachment = self.Data['HasAttachment'], AssetType = self.Data['AssetType']))
 
-class FetchInventoryPacket():
+class FetchInventoryPacket(object):
     ''' a template for a FetchInventory packet '''
 
     def __init__(self):
@@ -4110,7 +4110,7 @@ class FetchInventoryPacket():
 
         return Message('FetchInventory', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('InventoryData', OwnerID = self.InventoryData['OwnerID'], ItemID = self.InventoryData['ItemID']))
 
-class AvatarAppearancePacket():
+class AvatarAppearancePacket(object):
     ''' a template for a AvatarAppearance packet '''
 
     def __init__(self):
@@ -4131,7 +4131,7 @@ class AvatarAppearancePacket():
 
         return Message('AvatarAppearance', Block('Sender', ID = self.Sender['ID'], IsTrial = self.Sender['IsTrial']), Block('ObjectData', TextureEntry = self.ObjectData['TextureEntry']), Block('VisualParam', ParamValue = self.VisualParam['ParamValue']))
 
-class ChildAgentPositionUpdatePacket():
+class ChildAgentPositionUpdatePacket(object):
     ''' a template for a ChildAgentPositionUpdate packet '''
 
     def __init__(self):
@@ -4156,7 +4156,7 @@ class ChildAgentPositionUpdatePacket():
 
         return Message('ChildAgentPositionUpdate', Block('AgentData', RegionHandle = self.AgentData['RegionHandle'], ViewerCircuitCode = self.AgentData['ViewerCircuitCode'], AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], AgentPos = self.AgentData['AgentPos'], AgentVel = self.AgentData['AgentVel'], Center = self.AgentData['Center'], Size = self.AgentData['Size'], AtAxis = self.AgentData['AtAxis'], LeftAxis = self.AgentData['LeftAxis'], UpAxis = self.AgentData['UpAxis'], ChangedGrid = self.AgentData['ChangedGrid']))
 
-class DirEventsReplyPacket():
+class DirEventsReplyPacket(object):
     ''' a template for a DirEventsReply packet '''
 
     def __init__(self):
@@ -4181,7 +4181,7 @@ class DirEventsReplyPacket():
 
         return Message('DirEventsReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('QueryData', QueryID = self.QueryData['QueryID']), Block('QueryReplies', OwnerID = self.QueryReplies['OwnerID'], Name = self.QueryReplies['Name'], EventID = self.QueryReplies['EventID'], Date = self.QueryReplies['Date'], UnixTime = self.QueryReplies['UnixTime'], EventFlags = self.QueryReplies['EventFlags']))
 
-class GroupTitlesReplyPacket():
+class GroupTitlesReplyPacket(object):
     ''' a template for a GroupTitlesReply packet '''
 
     def __init__(self):
@@ -4202,7 +4202,7 @@ class GroupTitlesReplyPacket():
 
         return Message('GroupTitlesReply', Block('AgentData', AgentID = self.AgentData['AgentID'], GroupID = self.AgentData['GroupID'], RequestID = self.AgentData['RequestID']), Block('GroupData', Title = self.GroupData['Title'], RoleID = self.GroupData['RoleID'], Selected = self.GroupData['Selected']))
 
-class RegionPresenceRequestByHandlePacket():
+class RegionPresenceRequestByHandlePacket(object):
     ''' a template for a RegionPresenceRequestByHandle packet '''
 
     def __init__(self):
@@ -4216,7 +4216,7 @@ class RegionPresenceRequestByHandlePacket():
 
         return Message('RegionPresenceRequestByHandle', Block('RegionData', RegionHandle = self.RegionData['RegionHandle']))
 
-class GroupAccountSummaryReplyPacket():
+class GroupAccountSummaryReplyPacket(object):
     ''' a template for a GroupAccountSummaryReply packet '''
 
     def __init__(self):
@@ -4253,7 +4253,7 @@ class GroupAccountSummaryReplyPacket():
 
         return Message('GroupAccountSummaryReply', Block('AgentData', AgentID = self.AgentData['AgentID'], GroupID = self.AgentData['GroupID']), Block('MoneyData', RequestID = self.MoneyData['RequestID'], IntervalDays = self.MoneyData['IntervalDays'], CurrentInterval = self.MoneyData['CurrentInterval'], StartDate = self.MoneyData['StartDate'], Balance = self.MoneyData['Balance'], TotalCredits = self.MoneyData['TotalCredits'], TotalDebits = self.MoneyData['TotalDebits'], ObjectTaxCurrent = self.MoneyData['ObjectTaxCurrent'], LightTaxCurrent = self.MoneyData['LightTaxCurrent'], LandTaxCurrent = self.MoneyData['LandTaxCurrent'], GroupTaxCurrent = self.MoneyData['GroupTaxCurrent'], ParcelDirFeeCurrent = self.MoneyData['ParcelDirFeeCurrent'], ObjectTaxEstimate = self.MoneyData['ObjectTaxEstimate'], LightTaxEstimate = self.MoneyData['LightTaxEstimate'], LandTaxEstimate = self.MoneyData['LandTaxEstimate'], GroupTaxEstimate = self.MoneyData['GroupTaxEstimate'], ParcelDirFeeEstimate = self.MoneyData['ParcelDirFeeEstimate'], NonExemptMembers = self.MoneyData['NonExemptMembers'], LastTaxDate = self.MoneyData['LastTaxDate'], TaxDate = self.MoneyData['TaxDate']))
 
-class CheckParcelAuctionsPacket():
+class CheckParcelAuctionsPacket(object):
     ''' a template for a CheckParcelAuctions packet '''
 
     def __init__(self):
@@ -4267,7 +4267,7 @@ class CheckParcelAuctionsPacket():
 
         return Message('CheckParcelAuctions', Block('RegionData', RegionHandle = self.RegionData['RegionHandle']))
 
-class ObjectAttachPacket():
+class ObjectAttachPacket(object):
     ''' a template for a ObjectAttach packet '''
 
     def __init__(self):
@@ -4287,7 +4287,7 @@ class ObjectAttachPacket():
 
         return Message('ObjectAttach', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], AttachmentPoint = self.AgentData['AttachmentPoint']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID'], Rotation = self.ObjectData['Rotation']))
 
-class RemoveAttachmentPacket():
+class RemoveAttachmentPacket(object):
     ''' a template for a RemoveAttachment packet '''
 
     def __init__(self):
@@ -4306,7 +4306,7 @@ class RemoveAttachmentPacket():
 
         return Message('RemoveAttachment', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('AttachmentBlock', AttachmentPoint = self.AttachmentBlock['AttachmentPoint'], ItemID = self.AttachmentBlock['ItemID']))
 
-class ParcelDividePacket():
+class ParcelDividePacket(object):
     ''' a template for a ParcelDivide packet '''
 
     def __init__(self):
@@ -4327,7 +4327,7 @@ class ParcelDividePacket():
 
         return Message('ParcelDivide', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ParcelData', West = self.ParcelData['West'], South = self.ParcelData['South'], East = self.ParcelData['East'], North = self.ParcelData['North']))
 
-class ObjectDuplicatePacket():
+class ObjectDuplicatePacket(object):
     ''' a template for a ObjectDuplicate packet '''
 
     def __init__(self):
@@ -4350,7 +4350,7 @@ class ObjectDuplicatePacket():
 
         return Message('ObjectDuplicate', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID']), Block('SharedData', Offset = self.SharedData['Offset'], DuplicateFlags = self.SharedData['DuplicateFlags']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID']))
 
-class RegionIDAndHandleReplyPacket():
+class RegionIDAndHandleReplyPacket(object):
     ''' a template for a RegionIDAndHandleReply packet '''
 
     def __init__(self):
@@ -4365,7 +4365,7 @@ class RegionIDAndHandleReplyPacket():
 
         return Message('RegionIDAndHandleReply', Block('ReplyBlock', RegionID = self.ReplyBlock['RegionID'], RegionHandle = self.ReplyBlock['RegionHandle']))
 
-class ScriptControlChangePacket():
+class ScriptControlChangePacket(object):
     ''' a template for a ScriptControlChange packet '''
 
     def __init__(self):
@@ -4381,7 +4381,7 @@ class ScriptControlChangePacket():
 
         return Message('ScriptControlChange', Block('Data', TakeControls = self.Data['TakeControls'], Controls = self.Data['Controls'], PassToAgent = self.Data['PassToAgent']))
 
-class DenyTrustedCircuitPacket():
+class DenyTrustedCircuitPacket(object):
     ''' a template for a DenyTrustedCircuit packet '''
 
     def __init__(self):
@@ -4395,7 +4395,7 @@ class DenyTrustedCircuitPacket():
 
         return Message('DenyTrustedCircuit', Block('DataBlock', EndPointID = self.DataBlock['EndPointID']))
 
-class DataHomeLocationReplyPacket():
+class DataHomeLocationReplyPacket(object):
     ''' a template for a DataHomeLocationReply packet '''
 
     def __init__(self):
@@ -4412,7 +4412,7 @@ class DataHomeLocationReplyPacket():
 
         return Message('DataHomeLocationReply', Block('Info', AgentID = self.Info['AgentID'], RegionHandle = self.Info['RegionHandle'], Position = self.Info['Position'], LookAt = self.Info['LookAt']))
 
-class SaveAssetIntoInventoryPacket():
+class SaveAssetIntoInventoryPacket(object):
     ''' a template for a SaveAssetIntoInventory packet '''
 
     def __init__(self):
@@ -4430,7 +4430,7 @@ class SaveAssetIntoInventoryPacket():
 
         return Message('SaveAssetIntoInventory', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('InventoryData', ItemID = self.InventoryData['ItemID'], NewAssetID = self.InventoryData['NewAssetID']))
 
-class EjectUserPacket():
+class EjectUserPacket(object):
     ''' a template for a EjectUser packet '''
 
     def __init__(self):
@@ -4449,7 +4449,7 @@ class EjectUserPacket():
 
         return Message('EjectUser', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', TargetID = self.Data['TargetID'], Flags = self.Data['Flags']))
 
-class SendXferPacketPacket():
+class SendXferPacketPacket(object):
     ''' a template for a SendXferPacket packet '''
 
     def __init__(self):
@@ -4467,7 +4467,7 @@ class SendXferPacketPacket():
 
         return Message('SendXferPacket', Block('XferID', ID = self.XferID['ID'], Packet = self.XferID['Packet']), Block('DataPacket', Data = self.DataPacket['Data']))
 
-class ClassifiedDeletePacket():
+class ClassifiedDeletePacket(object):
     ''' a template for a ClassifiedDelete packet '''
 
     def __init__(self):
@@ -4485,7 +4485,7 @@ class ClassifiedDeletePacket():
 
         return Message('ClassifiedDelete', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', ClassifiedID = self.Data['ClassifiedID']))
 
-class SimWideDeletesPacket():
+class SimWideDeletesPacket(object):
     ''' a template for a SimWideDeletes packet '''
 
     def __init__(self):
@@ -4504,7 +4504,7 @@ class SimWideDeletesPacket():
 
         return Message('SimWideDeletes', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('DataBlock', TargetID = self.DataBlock['TargetID'], Flags = self.DataBlock['Flags']))
 
-class UnsubscribeLoadPacket():
+class UnsubscribeLoadPacket(object):
     ''' a template for a UnsubscribeLoad packet '''
 
     def __init__(self):
@@ -4515,7 +4515,7 @@ class UnsubscribeLoadPacket():
 
         return Message('UnsubscribeLoad')
 
-class StartGroupProposalPacket():
+class StartGroupProposalPacket(object):
     ''' a template for a StartGroupProposal packet '''
 
     def __init__(self):
@@ -4537,7 +4537,7 @@ class StartGroupProposalPacket():
 
         return Message('StartGroupProposal', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ProposalData', GroupID = self.ProposalData['GroupID'], Quorum = self.ProposalData['Quorum'], Majority = self.ProposalData['Majority'], Duration = self.ProposalData['Duration'], ProposalText = self.ProposalData['ProposalText']))
 
-class KillChildAgentsPacket():
+class KillChildAgentsPacket(object):
     ''' a template for a KillChildAgents packet '''
 
     def __init__(self):
@@ -4551,7 +4551,7 @@ class KillChildAgentsPacket():
 
         return Message('KillChildAgents', Block('IDBlock', AgentID = self.IDBlock['AgentID']))
 
-class ObjectSpinUpdatePacket():
+class ObjectSpinUpdatePacket(object):
     ''' a template for a ObjectSpinUpdate packet '''
 
     def __init__(self):
@@ -4570,7 +4570,7 @@ class ObjectSpinUpdatePacket():
 
         return Message('ObjectSpinUpdate', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectID = self.ObjectData['ObjectID'], Rotation = self.ObjectData['Rotation']))
 
-class UpdateGroupInfoPacket():
+class UpdateGroupInfoPacket(object):
     ''' a template for a UpdateGroupInfo packet '''
 
     def __init__(self):
@@ -4595,7 +4595,7 @@ class UpdateGroupInfoPacket():
 
         return Message('UpdateGroupInfo', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('GroupData', GroupID = self.GroupData['GroupID'], Charter = self.GroupData['Charter'], ShowInList = self.GroupData['ShowInList'], InsigniaID = self.GroupData['InsigniaID'], MembershipFee = self.GroupData['MembershipFee'], OpenEnrollment = self.GroupData['OpenEnrollment'], AllowPublish = self.GroupData['AllowPublish'], MaturePublish = self.GroupData['MaturePublish']))
 
-class RequestParcelTransferPacket():
+class RequestParcelTransferPacket(object):
     ''' a template for a RequestParcelTransfer packet '''
 
     def __init__(self):
@@ -4619,7 +4619,7 @@ class RequestParcelTransferPacket():
 
         return Message('RequestParcelTransfer', Block('Data', TransactionID = self.Data['TransactionID'], TransactionTime = self.Data['TransactionTime'], SourceID = self.Data['SourceID'], DestID = self.Data['DestID'], OwnerID = self.Data['OwnerID'], Flags = self.Data['Flags'], TransactionType = self.Data['TransactionType'], Amount = self.Data['Amount'], BillableArea = self.Data['BillableArea'], ActualArea = self.Data['ActualArea'], Final = self.Data['Final']))
 
-class ObjectIncludeInSearchPacket():
+class ObjectIncludeInSearchPacket(object):
     ''' a template for a ObjectIncludeInSearch packet '''
 
     def __init__(self):
@@ -4638,7 +4638,7 @@ class ObjectIncludeInSearchPacket():
 
         return Message('ObjectIncludeInSearch', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID'], IncludeInSearch = self.ObjectData['IncludeInSearch']))
 
-class ObjectExtraParamsPacket():
+class ObjectExtraParamsPacket(object):
     ''' a template for a ObjectExtraParams packet '''
 
     def __init__(self):
@@ -4660,7 +4660,7 @@ class ObjectExtraParamsPacket():
 
         return Message('ObjectExtraParams', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID'], ParamType = self.ObjectData['ParamType'], ParamInUse = self.ObjectData['ParamInUse'], ParamSize = self.ObjectData['ParamSize'], ParamData = self.ObjectData['ParamData']))
 
-class UseCachedMuteListPacket():
+class UseCachedMuteListPacket(object):
     ''' a template for a UseCachedMuteList packet '''
 
     def __init__(self):
@@ -4674,7 +4674,7 @@ class UseCachedMuteListPacket():
 
         return Message('UseCachedMuteList', Block('AgentData', AgentID = self.AgentData['AgentID']))
 
-class ParcelPropertiesUpdatePacket():
+class ParcelPropertiesUpdatePacket(object):
     ''' a template for a ParcelPropertiesUpdate packet '''
 
     def __init__(self):
@@ -4710,7 +4710,7 @@ class ParcelPropertiesUpdatePacket():
 
         return Message('ParcelPropertiesUpdate', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ParcelData', LocalID = self.ParcelData['LocalID'], Flags = self.ParcelData['Flags'], ParcelFlags = self.ParcelData['ParcelFlags'], SalePrice = self.ParcelData['SalePrice'], Name = self.ParcelData['Name'], Desc = self.ParcelData['Desc'], MusicURL = self.ParcelData['MusicURL'], MediaURL = self.ParcelData['MediaURL'], MediaID = self.ParcelData['MediaID'], MediaAutoScale = self.ParcelData['MediaAutoScale'], GroupID = self.ParcelData['GroupID'], PassPrice = self.ParcelData['PassPrice'], PassHours = self.ParcelData['PassHours'], Category = self.ParcelData['Category'], AuthBuyerID = self.ParcelData['AuthBuyerID'], SnapshotID = self.ParcelData['SnapshotID'], UserLocation = self.ParcelData['UserLocation'], UserLookAt = self.ParcelData['UserLookAt'], LandingType = self.ParcelData['LandingType']))
 
-class ParcelRenamePacket():
+class ParcelRenamePacket(object):
     ''' a template for a ParcelRename packet '''
 
     def __init__(self):
@@ -4725,7 +4725,7 @@ class ParcelRenamePacket():
 
         return Message('ParcelRename', Block('ParcelData', ParcelID = self.ParcelData['ParcelID'], NewName = self.ParcelData['NewName']))
 
-class UndoLandPacket():
+class UndoLandPacket(object):
     ''' a template for a UndoLand packet '''
 
     def __init__(self):
@@ -4740,7 +4740,7 @@ class UndoLandPacket():
 
         return Message('UndoLand', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']))
 
-class BulkUpdateInventoryPacket():
+class BulkUpdateInventoryPacket(object):
     ''' a template for a BulkUpdateInventory packet '''
 
     def __init__(self):
@@ -4785,7 +4785,7 @@ class BulkUpdateInventoryPacket():
 
         return Message('BulkUpdateInventory', Block('AgentData', AgentID = self.AgentData['AgentID'], TransactionID = self.AgentData['TransactionID']), Block('FolderData', FolderID = self.FolderData['FolderID'], ParentID = self.FolderData['ParentID'], Type = self.FolderData['Type'], Name = self.FolderData['Name']), Block('ItemData', ItemID = self.ItemData['ItemID'], CallbackID = self.ItemData['CallbackID'], FolderID = self.ItemData['FolderID'], CreatorID = self.ItemData['CreatorID'], OwnerID = self.ItemData['OwnerID'], GroupID = self.ItemData['GroupID'], BaseMask = self.ItemData['BaseMask'], OwnerMask = self.ItemData['OwnerMask'], GroupMask = self.ItemData['GroupMask'], EveryoneMask = self.ItemData['EveryoneMask'], NextOwnerMask = self.ItemData['NextOwnerMask'], GroupOwned = self.ItemData['GroupOwned'], AssetID = self.ItemData['AssetID'], Type = self.ItemData['Type'], InvType = self.ItemData['InvType'], Flags = self.ItemData['Flags'], SaleType = self.ItemData['SaleType'], SalePrice = self.ItemData['SalePrice'], Name = self.ItemData['Name'], Description = self.ItemData['Description'], CreationDate = self.ItemData['CreationDate'], CRC = self.ItemData['CRC']))
 
-class ClearFollowCamPropertiesPacket():
+class ClearFollowCamPropertiesPacket(object):
     ''' a template for a ClearFollowCamProperties packet '''
 
     def __init__(self):
@@ -4799,7 +4799,7 @@ class ClearFollowCamPropertiesPacket():
 
         return Message('ClearFollowCamProperties', Block('ObjectData', ObjectID = self.ObjectData['ObjectID']))
 
-class ImageDataPacket():
+class ImageDataPacket(object):
     ''' a template for a ImageData packet '''
 
     def __init__(self):
@@ -4819,7 +4819,7 @@ class ImageDataPacket():
 
         return Message('ImageData', Block('ImageID', ID = self.ImageID['ID'], Codec = self.ImageID['Codec'], Size = self.ImageID['Size'], Packets = self.ImageID['Packets']), Block('ImageData', Data = self.ImageData['Data']))
 
-class ParcelInfoReplyPacket():
+class ParcelInfoReplyPacket(object):
     ''' a template for a ParcelInfoReply packet '''
 
     def __init__(self):
@@ -4850,7 +4850,7 @@ class ParcelInfoReplyPacket():
 
         return Message('ParcelInfoReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('Data', ParcelID = self.Data['ParcelID'], OwnerID = self.Data['OwnerID'], Name = self.Data['Name'], Desc = self.Data['Desc'], ActualArea = self.Data['ActualArea'], BillableArea = self.Data['BillableArea'], Flags = self.Data['Flags'], GlobalX = self.Data['GlobalX'], GlobalY = self.Data['GlobalY'], GlobalZ = self.Data['GlobalZ'], SimName = self.Data['SimName'], SnapshotID = self.Data['SnapshotID'], Dwell = self.Data['Dwell'], SalePrice = self.Data['SalePrice'], AuctionID = self.Data['AuctionID']))
 
-class GodlikeMessagePacket():
+class GodlikeMessagePacket(object):
     ''' a template for a GodlikeMessage packet '''
 
     def __init__(self):
@@ -4873,7 +4873,7 @@ class GodlikeMessagePacket():
 
         return Message('GodlikeMessage', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], TransactionID = self.AgentData['TransactionID']), Block('MethodData', Method = self.MethodData['Method'], Invoice = self.MethodData['Invoice']), Block('ParamList', Parameter = self.ParamList['Parameter']))
 
-class HealthMessagePacket():
+class HealthMessagePacket(object):
     ''' a template for a HealthMessage packet '''
 
     def __init__(self):
@@ -4887,7 +4887,7 @@ class HealthMessagePacket():
 
         return Message('HealthMessage', Block('HealthData', Health = self.HealthData['Health']))
 
-class UpdateSimulatorPacket():
+class UpdateSimulatorPacket(object):
     ''' a template for a UpdateSimulator packet '''
 
     def __init__(self):
@@ -4904,7 +4904,7 @@ class UpdateSimulatorPacket():
 
         return Message('UpdateSimulator', Block('SimulatorInfo', RegionID = self.SimulatorInfo['RegionID'], SimName = self.SimulatorInfo['SimName'], EstateID = self.SimulatorInfo['EstateID'], SimAccess = self.SimulatorInfo['SimAccess']))
 
-class CloseCircuitPacket():
+class CloseCircuitPacket(object):
     ''' a template for a CloseCircuit packet '''
 
     def __init__(self):
@@ -4915,7 +4915,7 @@ class CloseCircuitPacket():
 
         return Message('CloseCircuit')
 
-class GroupRoleDataReplyPacket():
+class GroupRoleDataReplyPacket(object):
     ''' a template for a GroupRoleDataReply packet '''
 
     def __init__(self):
@@ -4942,7 +4942,7 @@ class GroupRoleDataReplyPacket():
 
         return Message('GroupRoleDataReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('GroupData', GroupID = self.GroupData['GroupID'], RequestID = self.GroupData['RequestID'], RoleCount = self.GroupData['RoleCount']), Block('RoleData', RoleID = self.RoleData['RoleID'], Name = self.RoleData['Name'], Title = self.RoleData['Title'], Description = self.RoleData['Description'], Powers = self.RoleData['Powers'], Members = self.RoleData['Members']))
 
-class DataServerLogoutPacket():
+class DataServerLogoutPacket(object):
     ''' a template for a DataServerLogout packet '''
 
     def __init__(self):
@@ -4959,7 +4959,7 @@ class DataServerLogoutPacket():
 
         return Message('DataServerLogout', Block('UserData', AgentID = self.UserData['AgentID'], ViewerIP = self.UserData['ViewerIP'], Disconnect = self.UserData['Disconnect'], SessionID = self.UserData['SessionID']))
 
-class InviteGroupResponsePacket():
+class InviteGroupResponsePacket(object):
     ''' a template for a InviteGroupResponse packet '''
 
     def __init__(self):
@@ -4977,7 +4977,7 @@ class InviteGroupResponsePacket():
 
         return Message('InviteGroupResponse', Block('InviteData', AgentID = self.InviteData['AgentID'], InviteeID = self.InviteData['InviteeID'], GroupID = self.InviteData['GroupID'], RoleID = self.InviteData['RoleID'], MembershipFee = self.InviteData['MembershipFee']))
 
-class StartAuctionPacket():
+class StartAuctionPacket(object):
     ''' a template for a StartAuction packet '''
 
     def __init__(self):
@@ -4996,7 +4996,7 @@ class StartAuctionPacket():
 
         return Message('StartAuction', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('ParcelData', ParcelID = self.ParcelData['ParcelID'], SnapshotID = self.ParcelData['SnapshotID'], Name = self.ParcelData['Name']))
 
-class ObjectDescriptionPacket():
+class ObjectDescriptionPacket(object):
     ''' a template for a ObjectDescription packet '''
 
     def __init__(self):
@@ -5015,7 +5015,7 @@ class ObjectDescriptionPacket():
 
         return Message('ObjectDescription', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', LocalID = self.ObjectData['LocalID'], Description = self.ObjectData['Description']))
 
-class ObjectPositionPacket():
+class ObjectPositionPacket(object):
     ''' a template for a ObjectPosition packet '''
 
     def __init__(self):
@@ -5034,7 +5034,7 @@ class ObjectPositionPacket():
 
         return Message('ObjectPosition', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID'], Position = self.ObjectData['Position']))
 
-class MoneyTransferBackendPacket():
+class MoneyTransferBackendPacket(object):
     ''' a template for a MoneyTransferBackend packet '''
 
     def __init__(self):
@@ -5060,7 +5060,7 @@ class MoneyTransferBackendPacket():
 
         return Message('MoneyTransferBackend', Block('MoneyData', TransactionID = self.MoneyData['TransactionID'], TransactionTime = self.MoneyData['TransactionTime'], SourceID = self.MoneyData['SourceID'], DestID = self.MoneyData['DestID'], Flags = self.MoneyData['Flags'], Amount = self.MoneyData['Amount'], AggregatePermNextOwner = self.MoneyData['AggregatePermNextOwner'], AggregatePermInventory = self.MoneyData['AggregatePermInventory'], TransactionType = self.MoneyData['TransactionType'], RegionID = self.MoneyData['RegionID'], GridX = self.MoneyData['GridX'], GridY = self.MoneyData['GridY'], Description = self.MoneyData['Description']))
 
-class ParcelDeedToGroupPacket():
+class ParcelDeedToGroupPacket(object):
     ''' a template for a ParcelDeedToGroup packet '''
 
     def __init__(self):
@@ -5079,7 +5079,7 @@ class ParcelDeedToGroupPacket():
 
         return Message('ParcelDeedToGroup', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', GroupID = self.Data['GroupID'], LocalID = self.Data['LocalID']))
 
-class MapItemReplyPacket():
+class MapItemReplyPacket(object):
     ''' a template for a MapItemReply packet '''
 
     def __init__(self):
@@ -5105,7 +5105,7 @@ class MapItemReplyPacket():
 
         return Message('MapItemReply', Block('AgentData', AgentID = self.AgentData['AgentID'], Flags = self.AgentData['Flags']), Block('RequestData', ItemType = self.RequestData['ItemType']), Block('Data', X = self.Data['X'], Y = self.Data['Y'], ID = self.Data['ID'], Extra = self.Data['Extra'], Extra2 = self.Data['Extra2'], Name = self.Data['Name']))
 
-class ImageNotInDatabasePacket():
+class ImageNotInDatabasePacket(object):
     ''' a template for a ImageNotInDatabase packet '''
 
     def __init__(self):
@@ -5119,7 +5119,7 @@ class ImageNotInDatabasePacket():
 
         return Message('ImageNotInDatabase', Block('ImageID', ID = self.ImageID['ID']))
 
-class ReplyTaskInventoryPacket():
+class ReplyTaskInventoryPacket(object):
     ''' a template for a ReplyTaskInventory packet '''
 
     def __init__(self):
@@ -5135,7 +5135,7 @@ class ReplyTaskInventoryPacket():
 
         return Message('ReplyTaskInventory', Block('InventoryData', TaskID = self.InventoryData['TaskID'], Serial = self.InventoryData['Serial'], Filename = self.InventoryData['Filename']))
 
-class AvatarPropertiesRequestPacket():
+class AvatarPropertiesRequestPacket(object):
     ''' a template for a AvatarPropertiesRequest packet '''
 
     def __init__(self):
@@ -5151,7 +5151,7 @@ class AvatarPropertiesRequestPacket():
 
         return Message('AvatarPropertiesRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], AvatarID = self.AgentData['AvatarID']))
 
-class AgentGroupDataUpdatePacket():
+class AgentGroupDataUpdatePacket(object):
     ''' a template for a AgentGroupDataUpdate packet '''
 
     def __init__(self):
@@ -5173,7 +5173,7 @@ class AgentGroupDataUpdatePacket():
 
         return Message('AgentGroupDataUpdate', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('GroupData', GroupID = self.GroupData['GroupID'], GroupPowers = self.GroupData['GroupPowers'], AcceptNotices = self.GroupData['AcceptNotices'], GroupInsigniaID = self.GroupData['GroupInsigniaID'], Contribution = self.GroupData['Contribution'], GroupName = self.GroupData['GroupName']))
 
-class DirLandQueryPacket():
+class DirLandQueryPacket(object):
     ''' a template for a DirLandQuery packet '''
 
     def __init__(self):
@@ -5196,7 +5196,7 @@ class DirLandQueryPacket():
 
         return Message('DirLandQuery', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('QueryData', QueryID = self.QueryData['QueryID'], QueryFlags = self.QueryData['QueryFlags'], SearchType = self.QueryData['SearchType'], Price = self.QueryData['Price'], Area = self.QueryData['Area'], QueryStart = self.QueryData['QueryStart']))
 
-class MoveInventoryItemPacket():
+class MoveInventoryItemPacket(object):
     ''' a template for a MoveInventoryItem packet '''
 
     def __init__(self):
@@ -5217,7 +5217,7 @@ class MoveInventoryItemPacket():
 
         return Message('MoveInventoryItem', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], Stamp = self.AgentData['Stamp']), Block('InventoryData', ItemID = self.InventoryData['ItemID'], FolderID = self.InventoryData['FolderID'], NewName = self.InventoryData['NewName']))
 
-class TeleportLandingStatusChangedPacket():
+class TeleportLandingStatusChangedPacket(object):
     ''' a template for a TeleportLandingStatusChanged packet '''
 
     def __init__(self):
@@ -5231,7 +5231,7 @@ class TeleportLandingStatusChangedPacket():
 
         return Message('TeleportLandingStatusChanged', Block('RegionData', RegionHandle = self.RegionData['RegionHandle']))
 
-class AvatarPickerRequestPacket():
+class AvatarPickerRequestPacket(object):
     ''' a template for a AvatarPickerRequest packet '''
 
     def __init__(self):
@@ -5250,7 +5250,7 @@ class AvatarPickerRequestPacket():
 
         return Message('AvatarPickerRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], QueryID = self.AgentData['QueryID']), Block('Data', Name = self.Data['Name']))
 
-class AgentWearablesRequestPacket():
+class AgentWearablesRequestPacket(object):
     ''' a template for a AgentWearablesRequest packet '''
 
     def __init__(self):
@@ -5265,7 +5265,7 @@ class AgentWearablesRequestPacket():
 
         return Message('AgentWearablesRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']))
 
-class AvatarTextureUpdatePacket():
+class AvatarTextureUpdatePacket(object):
     ''' a template for a AvatarTextureUpdate packet '''
 
     def __init__(self):
@@ -5288,7 +5288,7 @@ class AvatarTextureUpdatePacket():
 
         return Message('AvatarTextureUpdate', Block('AgentData', AgentID = self.AgentData['AgentID'], TexturesChanged = self.AgentData['TexturesChanged']), Block('WearableData', CacheID = self.WearableData['CacheID'], TextureIndex = self.WearableData['TextureIndex'], HostName = self.WearableData['HostName']), Block('TextureData', TextureID = self.TextureData['TextureID']))
 
-class GroupActiveProposalsRequestPacket():
+class GroupActiveProposalsRequestPacket(object):
     ''' a template for a GroupActiveProposalsRequest packet '''
 
     def __init__(self):
@@ -5309,7 +5309,7 @@ class GroupActiveProposalsRequestPacket():
 
         return Message('GroupActiveProposalsRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('GroupData', GroupID = self.GroupData['GroupID']), Block('TransactionData', TransactionID = self.TransactionData['TransactionID']))
 
-class UUIDGroupNameReplyPacket():
+class UUIDGroupNameReplyPacket(object):
     ''' a template for a UUIDGroupNameReply packet '''
 
     def __init__(self):
@@ -5324,7 +5324,7 @@ class UUIDGroupNameReplyPacket():
 
         return Message('UUIDGroupNameReply', Block('UUIDNameBlock', ID = self.UUIDNameBlock['ID'], GroupName = self.UUIDNameBlock['GroupName']))
 
-class ObjectGrabPacket():
+class ObjectGrabPacket(object):
     ''' a template for a ObjectGrab packet '''
 
     def __init__(self):
@@ -5347,7 +5347,7 @@ class ObjectGrabPacket():
 
         return Message('ObjectGrab', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', LocalID = self.ObjectData['LocalID'], GrabOffset = self.ObjectData['GrabOffset']), Block('SurfaceInfo', UVCoord = self.SurfaceInfo['UVCoord'], STCoord = self.SurfaceInfo['STCoord']))
 
-class AttachedSoundPacket():
+class AttachedSoundPacket(object):
     ''' a template for a AttachedSound packet '''
 
     def __init__(self):
@@ -5365,7 +5365,7 @@ class AttachedSoundPacket():
 
         return Message('AttachedSound', Block('DataBlock', SoundID = self.DataBlock['SoundID'], ObjectID = self.DataBlock['ObjectID'], OwnerID = self.DataBlock['OwnerID'], Gain = self.DataBlock['Gain'], Flags = self.DataBlock['Flags']))
 
-class ChangeUserRightsPacket():
+class ChangeUserRightsPacket(object):
     ''' a template for a ChangeUserRights packet '''
 
     def __init__(self):
@@ -5383,7 +5383,7 @@ class ChangeUserRightsPacket():
 
         return Message('ChangeUserRights', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('Rights', AgentRelated = self.Rights['AgentRelated'], RelatedRights = self.Rights['RelatedRights']))
 
-class ParcelSetOtherCleanTimePacket():
+class ParcelSetOtherCleanTimePacket(object):
     ''' a template for a ParcelSetOtherCleanTime packet '''
 
     def __init__(self):
@@ -5402,7 +5402,7 @@ class ParcelSetOtherCleanTimePacket():
 
         return Message('ParcelSetOtherCleanTime', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ParcelData', LocalID = self.ParcelData['LocalID'], OtherCleanTime = self.ParcelData['OtherCleanTime']))
 
-class ParcelMediaUpdatePacket():
+class ParcelMediaUpdatePacket(object):
     ''' a template for a ParcelMediaUpdate packet '''
 
     def __init__(self):
@@ -5425,7 +5425,7 @@ class ParcelMediaUpdatePacket():
 
         return Message('ParcelMediaUpdate', Block('DataBlock', MediaURL = self.DataBlock['MediaURL'], MediaID = self.DataBlock['MediaID'], MediaAutoScale = self.DataBlock['MediaAutoScale']), Block('DataBlockExtended', MediaType = self.DataBlockExtended['MediaType'], MediaDesc = self.DataBlockExtended['MediaDesc'], MediaWidth = self.DataBlockExtended['MediaWidth'], MediaHeight = self.DataBlockExtended['MediaHeight'], MediaLoop = self.DataBlockExtended['MediaLoop']))
 
-class ObjectClickActionPacket():
+class ObjectClickActionPacket(object):
     ''' a template for a ObjectClickAction packet '''
 
     def __init__(self):
@@ -5444,7 +5444,7 @@ class ObjectClickActionPacket():
 
         return Message('ObjectClickAction', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID'], ClickAction = self.ObjectData['ClickAction']))
 
-class FormFriendshipPacket():
+class FormFriendshipPacket(object):
     ''' a template for a FormFriendship packet '''
 
     def __init__(self):
@@ -5459,7 +5459,7 @@ class FormFriendshipPacket():
 
         return Message('FormFriendship', Block('AgentBlock', SourceID = self.AgentBlock['SourceID'], DestID = self.AgentBlock['DestID']))
 
-class AvatarPicksReplyPacket():
+class AvatarPicksReplyPacket(object):
     ''' a template for a AvatarPicksReply packet '''
 
     def __init__(self):
@@ -5478,7 +5478,7 @@ class AvatarPicksReplyPacket():
 
         return Message('AvatarPicksReply', Block('AgentData', AgentID = self.AgentData['AgentID'], TargetID = self.AgentData['TargetID']), Block('Data', PickID = self.Data['PickID'], PickName = self.Data['PickName']))
 
-class AgentSitPacket():
+class AgentSitPacket(object):
     ''' a template for a AgentSit packet '''
 
     def __init__(self):
@@ -5493,7 +5493,7 @@ class AgentSitPacket():
 
         return Message('AgentSit', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']))
 
-class CreateNewOutfitAttachmentsPacket():
+class CreateNewOutfitAttachmentsPacket(object):
     ''' a template for a CreateNewOutfitAttachments packet '''
 
     def __init__(self):
@@ -5515,7 +5515,7 @@ class CreateNewOutfitAttachmentsPacket():
 
         return Message('CreateNewOutfitAttachments', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('HeaderData', NewFolderID = self.HeaderData['NewFolderID']), Block('ObjectData', OldItemID = self.ObjectData['OldItemID'], OldFolderID = self.ObjectData['OldFolderID']))
 
-class ParcelObjectOwnersReplyPacket():
+class ParcelObjectOwnersReplyPacket(object):
     ''' a template for a ParcelObjectOwnersReply packet '''
 
     def __init__(self):
@@ -5532,7 +5532,7 @@ class ParcelObjectOwnersReplyPacket():
 
         return Message('ParcelObjectOwnersReply', Block('Data', OwnerID = self.Data['OwnerID'], IsGroupOwned = self.Data['IsGroupOwned'], Count = self.Data['Count'], OnlineStatus = self.Data['OnlineStatus']))
 
-class FetchInventoryDescendentsPacket():
+class FetchInventoryDescendentsPacket(object):
     ''' a template for a FetchInventoryDescendents packet '''
 
     def __init__(self):
@@ -5554,7 +5554,7 @@ class FetchInventoryDescendentsPacket():
 
         return Message('FetchInventoryDescendents', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('InventoryData', FolderID = self.InventoryData['FolderID'], OwnerID = self.InventoryData['OwnerID'], SortOrder = self.InventoryData['SortOrder'], FetchFolders = self.InventoryData['FetchFolders'], FetchItems = self.InventoryData['FetchItems']))
 
-class RequestXferPacket():
+class RequestXferPacket(object):
     ''' a template for a RequestXfer packet '''
 
     def __init__(self):
@@ -5574,7 +5574,7 @@ class RequestXferPacket():
 
         return Message('RequestXfer', Block('XferID', ID = self.XferID['ID'], Filename = self.XferID['Filename'], FilePath = self.XferID['FilePath'], DeleteOnCompletion = self.XferID['DeleteOnCompletion'], UseBigPackets = self.XferID['UseBigPackets'], VFileID = self.XferID['VFileID'], VFileType = self.XferID['VFileType']))
 
-class SoundTriggerPacket():
+class SoundTriggerPacket(object):
     ''' a template for a SoundTrigger packet '''
 
     def __init__(self):
@@ -5594,7 +5594,7 @@ class SoundTriggerPacket():
 
         return Message('SoundTrigger', Block('SoundData', SoundID = self.SoundData['SoundID'], OwnerID = self.SoundData['OwnerID'], ObjectID = self.SoundData['ObjectID'], ParentID = self.SoundData['ParentID'], Handle = self.SoundData['Handle'], Position = self.SoundData['Position'], Gain = self.SoundData['Gain']))
 
-class DirPlacesReplyPacket():
+class DirPlacesReplyPacket(object):
     ''' a template for a DirPlacesReply packet '''
 
     def __init__(self):
@@ -5618,7 +5618,7 @@ class DirPlacesReplyPacket():
 
         return Message('DirPlacesReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('QueryData', QueryID = self.QueryData['QueryID']), Block('QueryReplies', ParcelID = self.QueryReplies['ParcelID'], Name = self.QueryReplies['Name'], ForSale = self.QueryReplies['ForSale'], Auction = self.QueryReplies['Auction'], Dwell = self.QueryReplies['Dwell']))
 
-class AlertMessagePacket():
+class AlertMessagePacket(object):
     ''' a template for a AlertMessage packet '''
 
     def __init__(self):
@@ -5632,7 +5632,7 @@ class AlertMessagePacket():
 
         return Message('AlertMessage', Block('AlertData', Message = self.AlertData['Message']))
 
-class SimulatorShutdownRequestPacket():
+class SimulatorShutdownRequestPacket(object):
     ''' a template for a SimulatorShutdownRequest packet '''
 
     def __init__(self):
@@ -5643,7 +5643,7 @@ class SimulatorShutdownRequestPacket():
 
         return Message('SimulatorShutdownRequest')
 
-class GroupProfileReplyPacket():
+class GroupProfileReplyPacket(object):
     ''' a template for a GroupProfileReply packet '''
 
     def __init__(self):
@@ -5675,7 +5675,7 @@ class GroupProfileReplyPacket():
 
         return Message('GroupProfileReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('GroupData', GroupID = self.GroupData['GroupID'], Name = self.GroupData['Name'], Charter = self.GroupData['Charter'], ShowInList = self.GroupData['ShowInList'], MemberTitle = self.GroupData['MemberTitle'], PowersMask = self.GroupData['PowersMask'], InsigniaID = self.GroupData['InsigniaID'], FounderID = self.GroupData['FounderID'], MembershipFee = self.GroupData['MembershipFee'], OpenEnrollment = self.GroupData['OpenEnrollment'], Money = self.GroupData['Money'], GroupMembershipCount = self.GroupData['GroupMembershipCount'], GroupRolesCount = self.GroupData['GroupRolesCount'], AllowPublish = self.GroupData['AllowPublish'], MaturePublish = self.GroupData['MaturePublish'], OwnerRole = self.GroupData['OwnerRole']))
 
-class ScriptSensorRequestPacket():
+class ScriptSensorRequestPacket(object):
     ''' a template for a ScriptSensorRequest packet '''
 
     def __init__(self):
@@ -5699,7 +5699,7 @@ class ScriptSensorRequestPacket():
 
         return Message('ScriptSensorRequest', Block('Requester', SourceID = self.Requester['SourceID'], RequestID = self.Requester['RequestID'], SearchID = self.Requester['SearchID'], SearchPos = self.Requester['SearchPos'], SearchDir = self.Requester['SearchDir'], SearchName = self.Requester['SearchName'], Type = self.Requester['Type'], Range = self.Requester['Range'], Arc = self.Requester['Arc'], RegionHandle = self.Requester['RegionHandle'], SearchRegions = self.Requester['SearchRegions']))
 
-class VelocityInterpolateOffPacket():
+class VelocityInterpolateOffPacket(object):
     ''' a template for a VelocityInterpolateOff packet '''
 
     def __init__(self):
@@ -5714,7 +5714,7 @@ class VelocityInterpolateOffPacket():
 
         return Message('VelocityInterpolateOff', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']))
 
-class RemoveNameValuePairPacket():
+class RemoveNameValuePairPacket(object):
     ''' a template for a RemoveNameValuePair packet '''
 
     def __init__(self):
@@ -5731,7 +5731,7 @@ class RemoveNameValuePairPacket():
 
         return Message('RemoveNameValuePair', Block('TaskData', ID = self.TaskData['ID']), Block('NameValueData', NVPair = self.NameValueData['NVPair']))
 
-class ParcelClaimPacket():
+class ParcelClaimPacket(object):
     ''' a template for a ParcelClaim packet '''
 
     def __init__(self):
@@ -5757,7 +5757,7 @@ class ParcelClaimPacket():
 
         return Message('ParcelClaim', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', GroupID = self.Data['GroupID'], IsGroupOwned = self.Data['IsGroupOwned'], Final = self.Data['Final']), Block('ParcelData', West = self.ParcelData['West'], South = self.ParcelData['South'], East = self.ParcelData['East'], North = self.ParcelData['North']))
 
-class SetAlwaysRunPacket():
+class SetAlwaysRunPacket(object):
     ''' a template for a SetAlwaysRun packet '''
 
     def __init__(self):
@@ -5773,7 +5773,7 @@ class SetAlwaysRunPacket():
 
         return Message('SetAlwaysRun', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], AlwaysRun = self.AgentData['AlwaysRun']))
 
-class EventLocationReplyPacket():
+class EventLocationReplyPacket(object):
     ''' a template for a EventLocationReply packet '''
 
     def __init__(self):
@@ -5792,7 +5792,7 @@ class EventLocationReplyPacket():
 
         return Message('EventLocationReply', Block('QueryData', QueryID = self.QueryData['QueryID']), Block('EventData', Success = self.EventData['Success'], RegionID = self.EventData['RegionID'], RegionPos = self.EventData['RegionPos']))
 
-class PickGodDeletePacket():
+class PickGodDeletePacket(object):
     ''' a template for a PickGodDelete packet '''
 
     def __init__(self):
@@ -5811,7 +5811,7 @@ class PickGodDeletePacket():
 
         return Message('PickGodDelete', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', PickID = self.Data['PickID'], QueryID = self.Data['QueryID']))
 
-class MapBlockRequestPacket():
+class MapBlockRequestPacket(object):
     ''' a template for a MapBlockRequest packet '''
 
     def __init__(self):
@@ -5835,7 +5835,7 @@ class MapBlockRequestPacket():
 
         return Message('MapBlockRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], Flags = self.AgentData['Flags'], EstateID = self.AgentData['EstateID'], Godlike = self.AgentData['Godlike']), Block('PositionData', MinX = self.PositionData['MinX'], MaxX = self.PositionData['MaxX'], MinY = self.PositionData['MinY'], MaxY = self.PositionData['MaxY']))
 
-class TeleportProgressPacket():
+class TeleportProgressPacket(object):
     ''' a template for a TeleportProgress packet '''
 
     def __init__(self):
@@ -5853,7 +5853,7 @@ class TeleportProgressPacket():
 
         return Message('TeleportProgress', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('Info', TeleportFlags = self.Info['TeleportFlags'], Message = self.Info['Message']))
 
-class UpdateTaskInventoryPacket():
+class UpdateTaskInventoryPacket(object):
     ''' a template for a UpdateTaskInventory packet '''
 
     def __init__(self):
@@ -5895,7 +5895,7 @@ class UpdateTaskInventoryPacket():
 
         return Message('UpdateTaskInventory', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('UpdateData', LocalID = self.UpdateData['LocalID'], Key = self.UpdateData['Key']), Block('InventoryData', ItemID = self.InventoryData['ItemID'], FolderID = self.InventoryData['FolderID'], CreatorID = self.InventoryData['CreatorID'], OwnerID = self.InventoryData['OwnerID'], GroupID = self.InventoryData['GroupID'], BaseMask = self.InventoryData['BaseMask'], OwnerMask = self.InventoryData['OwnerMask'], GroupMask = self.InventoryData['GroupMask'], EveryoneMask = self.InventoryData['EveryoneMask'], NextOwnerMask = self.InventoryData['NextOwnerMask'], GroupOwned = self.InventoryData['GroupOwned'], TransactionID = self.InventoryData['TransactionID'], Type = self.InventoryData['Type'], InvType = self.InventoryData['InvType'], Flags = self.InventoryData['Flags'], SaleType = self.InventoryData['SaleType'], SalePrice = self.InventoryData['SalePrice'], Name = self.InventoryData['Name'], Description = self.InventoryData['Description'], CreationDate = self.InventoryData['CreationDate'], CRC = self.InventoryData['CRC']))
 
-class GodKickUserPacket():
+class GodKickUserPacket(object):
     ''' a template for a GodKickUser packet '''
 
     def __init__(self):
@@ -5913,7 +5913,7 @@ class GodKickUserPacket():
 
         return Message('GodKickUser', Block('UserInfo', GodID = self.UserInfo['GodID'], GodSessionID = self.UserInfo['GodSessionID'], AgentID = self.UserInfo['AgentID'], KickFlags = self.UserInfo['KickFlags'], Reason = self.UserInfo['Reason']))
 
-class AvatarAnimationPacket():
+class AvatarAnimationPacket(object):
     ''' a template for a AvatarAnimation packet '''
 
     def __init__(self):
@@ -5937,7 +5937,7 @@ class AvatarAnimationPacket():
 
         return Message('AvatarAnimation', Block('Sender', ID = self.Sender['ID']), Block('AnimationList', AnimID = self.AnimationList['AnimID'], AnimSequenceID = self.AnimationList['AnimSequenceID']), Block('AnimationSourceList', ObjectID = self.AnimationSourceList['ObjectID']), Block('PhysicalAvatarEventList', TypeData = self.PhysicalAvatarEventList['TypeData']))
 
-class ClassifiedInfoReplyPacket():
+class ClassifiedInfoReplyPacket(object):
     ''' a template for a ClassifiedInfoReply packet '''
 
     def __init__(self):
@@ -5968,7 +5968,7 @@ class ClassifiedInfoReplyPacket():
 
         return Message('ClassifiedInfoReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('Data', ClassifiedID = self.Data['ClassifiedID'], CreatorID = self.Data['CreatorID'], CreationDate = self.Data['CreationDate'], ExpirationDate = self.Data['ExpirationDate'], Category = self.Data['Category'], Name = self.Data['Name'], Desc = self.Data['Desc'], ParcelID = self.Data['ParcelID'], ParentEstate = self.Data['ParentEstate'], SnapshotID = self.Data['SnapshotID'], SimName = self.Data['SimName'], PosGlobal = self.Data['PosGlobal'], ParcelName = self.Data['ParcelName'], ClassifiedFlags = self.Data['ClassifiedFlags'], PriceForListing = self.Data['PriceForListing']))
 
-class GodUpdateRegionInfoPacket():
+class GodUpdateRegionInfoPacket(object):
     ''' a template for a GodUpdateRegionInfo packet '''
 
     def __init__(self):
@@ -5993,7 +5993,7 @@ class GodUpdateRegionInfoPacket():
 
         return Message('GodUpdateRegionInfo', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('RegionInfo', SimName = self.RegionInfo['SimName'], EstateID = self.RegionInfo['EstateID'], ParentEstateID = self.RegionInfo['ParentEstateID'], RegionFlags = self.RegionInfo['RegionFlags'], BillableFactor = self.RegionInfo['BillableFactor'], PricePerMeter = self.RegionInfo['PricePerMeter'], RedirectGridX = self.RegionInfo['RedirectGridX'], RedirectGridY = self.RegionInfo['RedirectGridY']))
 
-class SetSimStatusInDatabasePacket():
+class SetSimStatusInDatabasePacket(object):
     ''' a template for a SetSimStatusInDatabase packet '''
 
     def __init__(self):
@@ -6014,7 +6014,7 @@ class SetSimStatusInDatabasePacket():
 
         return Message('SetSimStatusInDatabase', Block('Data', RegionID = self.Data['RegionID'], HostName = self.Data['HostName'], X = self.Data['X'], Y = self.Data['Y'], PID = self.Data['PID'], AgentCount = self.Data['AgentCount'], TimeToLive = self.Data['TimeToLive'], Status = self.Data['Status']))
 
-class GroupVoteHistoryRequestPacket():
+class GroupVoteHistoryRequestPacket(object):
     ''' a template for a GroupVoteHistoryRequest packet '''
 
     def __init__(self):
@@ -6035,7 +6035,7 @@ class GroupVoteHistoryRequestPacket():
 
         return Message('GroupVoteHistoryRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('GroupData', GroupID = self.GroupData['GroupID']), Block('TransactionData', TransactionID = self.TransactionData['TransactionID']))
 
-class ChildAgentDyingPacket():
+class ChildAgentDyingPacket(object):
     ''' a template for a ChildAgentDying packet '''
 
     def __init__(self):
@@ -6050,7 +6050,7 @@ class ChildAgentDyingPacket():
 
         return Message('ChildAgentDying', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']))
 
-class CreateGroupRequestPacket():
+class CreateGroupRequestPacket(object):
     ''' a template for a CreateGroupRequest packet '''
 
     def __init__(self):
@@ -6075,7 +6075,7 @@ class CreateGroupRequestPacket():
 
         return Message('CreateGroupRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('GroupData', Name = self.GroupData['Name'], Charter = self.GroupData['Charter'], ShowInList = self.GroupData['ShowInList'], InsigniaID = self.GroupData['InsigniaID'], MembershipFee = self.GroupData['MembershipFee'], OpenEnrollment = self.GroupData['OpenEnrollment'], AllowPublish = self.GroupData['AllowPublish'], MaturePublish = self.GroupData['MaturePublish']))
 
-class ParcelDwellRequestPacket():
+class ParcelDwellRequestPacket(object):
     ''' a template for a ParcelDwellRequest packet '''
 
     def __init__(self):
@@ -6094,7 +6094,7 @@ class ParcelDwellRequestPacket():
 
         return Message('ParcelDwellRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', LocalID = self.Data['LocalID'], ParcelID = self.Data['ParcelID']))
 
-class ObjectMaterialPacket():
+class ObjectMaterialPacket(object):
     ''' a template for a ObjectMaterial packet '''
 
     def __init__(self):
@@ -6113,7 +6113,7 @@ class ObjectMaterialPacket():
 
         return Message('ObjectMaterial', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID'], Material = self.ObjectData['Material']))
 
-class ObjectAddPacket():
+class ObjectAddPacket(object):
     ''' a template for a ObjectAdd packet '''
 
     def __init__(self):
@@ -6160,7 +6160,7 @@ class ObjectAddPacket():
 
         return Message('ObjectAdd', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID']), Block('ObjectData', PCode = self.ObjectData['PCode'], Material = self.ObjectData['Material'], AddFlags = self.ObjectData['AddFlags'], PathCurve = self.ObjectData['PathCurve'], ProfileCurve = self.ObjectData['ProfileCurve'], PathBegin = self.ObjectData['PathBegin'], PathEnd = self.ObjectData['PathEnd'], PathScaleX = self.ObjectData['PathScaleX'], PathScaleY = self.ObjectData['PathScaleY'], PathShearX = self.ObjectData['PathShearX'], PathShearY = self.ObjectData['PathShearY'], PathTwist = self.ObjectData['PathTwist'], PathTwistBegin = self.ObjectData['PathTwistBegin'], PathRadiusOffset = self.ObjectData['PathRadiusOffset'], PathTaperX = self.ObjectData['PathTaperX'], PathTaperY = self.ObjectData['PathTaperY'], PathRevolutions = self.ObjectData['PathRevolutions'], PathSkew = self.ObjectData['PathSkew'], ProfileBegin = self.ObjectData['ProfileBegin'], ProfileEnd = self.ObjectData['ProfileEnd'], ProfileHollow = self.ObjectData['ProfileHollow'], BypassRaycast = self.ObjectData['BypassRaycast'], RayStart = self.ObjectData['RayStart'], RayEnd = self.ObjectData['RayEnd'], RayTargetID = self.ObjectData['RayTargetID'], RayEndIsIntersection = self.ObjectData['RayEndIsIntersection'], Scale = self.ObjectData['Scale'], Rotation = self.ObjectData['Rotation'], State = self.ObjectData['State']))
 
-class DeactivateGesturesPacket():
+class DeactivateGesturesPacket(object):
     ''' a template for a DeactivateGestures packet '''
 
     def __init__(self):
@@ -6180,7 +6180,7 @@ class DeactivateGesturesPacket():
 
         return Message('DeactivateGestures', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], Flags = self.AgentData['Flags']), Block('Data', ItemID = self.Data['ItemID'], GestureFlags = self.Data['GestureFlags']))
 
-class ParcelOverlayPacket():
+class ParcelOverlayPacket(object):
     ''' a template for a ParcelOverlay packet '''
 
     def __init__(self):
@@ -6195,7 +6195,7 @@ class ParcelOverlayPacket():
 
         return Message('ParcelOverlay', Block('ParcelData', SequenceID = self.ParcelData['SequenceID'], Data = self.ParcelData['Data']))
 
-class UserInfoReplyPacket():
+class UserInfoReplyPacket(object):
     ''' a template for a UserInfoReply packet '''
 
     def __init__(self):
@@ -6214,7 +6214,7 @@ class UserInfoReplyPacket():
 
         return Message('UserInfoReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('UserData', IMViaEMail = self.UserData['IMViaEMail'], DirectoryVisibility = self.UserData['DirectoryVisibility'], EMail = self.UserData['EMail']))
 
-class UndoPacket():
+class UndoPacket(object):
     ''' a template for a Undo packet '''
 
     def __init__(self):
@@ -6233,7 +6233,7 @@ class UndoPacket():
 
         return Message('Undo', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID']), Block('ObjectData', ObjectID = self.ObjectData['ObjectID']))
 
-class TransferInventoryPacket():
+class TransferInventoryPacket(object):
     ''' a template for a TransferInventory packet '''
 
     def __init__(self):
@@ -6253,7 +6253,7 @@ class TransferInventoryPacket():
 
         return Message('TransferInventory', Block('InfoBlock', SourceID = self.InfoBlock['SourceID'], DestID = self.InfoBlock['DestID'], TransactionID = self.InfoBlock['TransactionID']), Block('InventoryBlock', InventoryID = self.InventoryBlock['InventoryID'], Type = self.InventoryBlock['Type']))
 
-class AvatarPropertiesUpdatePacket():
+class AvatarPropertiesUpdatePacket(object):
     ''' a template for a AvatarPropertiesUpdate packet '''
 
     def __init__(self):
@@ -6277,7 +6277,7 @@ class AvatarPropertiesUpdatePacket():
 
         return Message('AvatarPropertiesUpdate', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('PropertiesData', ImageID = self.PropertiesData['ImageID'], FLImageID = self.PropertiesData['FLImageID'], AboutText = self.PropertiesData['AboutText'], FLAboutText = self.PropertiesData['FLAboutText'], AllowPublish = self.PropertiesData['AllowPublish'], MaturePublish = self.PropertiesData['MaturePublish'], ProfileURL = self.PropertiesData['ProfileURL']))
 
-class LayerDataPacket():
+class LayerDataPacket(object):
     ''' a template for a LayerData packet '''
 
     def __init__(self):
@@ -6294,7 +6294,7 @@ class LayerDataPacket():
 
         return Message('LayerData', Block('LayerID', Type = self.LayerID['Type']), Block('LayerData', Data = self.LayerData['Data']))
 
-class DirPopularReplyPacket():
+class DirPopularReplyPacket(object):
     ''' a template for a DirPopularReply packet '''
 
     def __init__(self):
@@ -6316,7 +6316,7 @@ class DirPopularReplyPacket():
 
         return Message('DirPopularReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('QueryData', QueryID = self.QueryData['QueryID']), Block('QueryReplies', ParcelID = self.QueryReplies['ParcelID'], Name = self.QueryReplies['Name'], Dwell = self.QueryReplies['Dwell']))
 
-class RequestGodlikePowersPacket():
+class RequestGodlikePowersPacket(object):
     ''' a template for a RequestGodlikePowers packet '''
 
     def __init__(self):
@@ -6335,7 +6335,7 @@ class RequestGodlikePowersPacket():
 
         return Message('RequestGodlikePowers', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('RequestBlock', Godlike = self.RequestBlock['Godlike'], Token = self.RequestBlock['Token']))
 
-class MeanCollisionAlertPacket():
+class MeanCollisionAlertPacket(object):
     ''' a template for a MeanCollisionAlert packet '''
 
     def __init__(self):
@@ -6353,7 +6353,7 @@ class MeanCollisionAlertPacket():
 
         return Message('MeanCollisionAlert', Block('MeanCollision', Victim = self.MeanCollision['Victim'], Perp = self.MeanCollision['Perp'], Time = self.MeanCollision['Time'], Mag = self.MeanCollision['Mag'], Type = self.MeanCollision['Type']))
 
-class DirFindQueryPacket():
+class DirFindQueryPacket(object):
     ''' a template for a DirFindQuery packet '''
 
     def __init__(self):
@@ -6374,7 +6374,7 @@ class DirFindQueryPacket():
 
         return Message('DirFindQuery', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('QueryData', QueryID = self.QueryData['QueryID'], QueryText = self.QueryData['QueryText'], QueryFlags = self.QueryData['QueryFlags'], QueryStart = self.QueryData['QueryStart']))
 
-class SetGroupAcceptNoticesPacket():
+class SetGroupAcceptNoticesPacket(object):
     ''' a template for a SetGroupAcceptNotices packet '''
 
     def __init__(self):
@@ -6396,7 +6396,7 @@ class SetGroupAcceptNoticesPacket():
 
         return Message('SetGroupAcceptNotices', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', GroupID = self.Data['GroupID'], AcceptNotices = self.Data['AcceptNotices']), Block('NewData', ListInProfile = self.NewData['ListInProfile']))
 
-class CompleteAgentMovementPacket():
+class CompleteAgentMovementPacket(object):
     ''' a template for a CompleteAgentMovement packet '''
 
     def __init__(self):
@@ -6412,7 +6412,7 @@ class CompleteAgentMovementPacket():
 
         return Message('CompleteAgentMovement', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], CircuitCode = self.AgentData['CircuitCode']))
 
-class LeaveGroupReplyPacket():
+class LeaveGroupReplyPacket(object):
     ''' a template for a LeaveGroupReply packet '''
 
     def __init__(self):
@@ -6430,7 +6430,7 @@ class LeaveGroupReplyPacket():
 
         return Message('LeaveGroupReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('GroupData', GroupID = self.GroupData['GroupID'], Success = self.GroupData['Success']))
 
-class ParcelGodMarkAsContentPacket():
+class ParcelGodMarkAsContentPacket(object):
     ''' a template for a ParcelGodMarkAsContent packet '''
 
     def __init__(self):
@@ -6448,7 +6448,7 @@ class ParcelGodMarkAsContentPacket():
 
         return Message('ParcelGodMarkAsContent', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ParcelData', LocalID = self.ParcelData['LocalID']))
 
-class ObjectSaleInfoPacket():
+class ObjectSaleInfoPacket(object):
     ''' a template for a ObjectSaleInfo packet '''
 
     def __init__(self):
@@ -6468,7 +6468,7 @@ class ObjectSaleInfoPacket():
 
         return Message('ObjectSaleInfo', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', LocalID = self.ObjectData['LocalID'], SaleType = self.ObjectData['SaleType'], SalePrice = self.ObjectData['SalePrice']))
 
-class CoarseLocationUpdatePacket():
+class CoarseLocationUpdatePacket(object):
     ''' a template for a CoarseLocationUpdate packet '''
 
     def __init__(self):
@@ -6491,7 +6491,7 @@ class CoarseLocationUpdatePacket():
 
         return Message('CoarseLocationUpdate', Block('Location', X = self.Location['X'], Y = self.Location['Y'], Z = self.Location['Z']), Block('Index', You = self.Index['You'], Prey = self.Index['Prey']), Block('AgentData', AgentID = self.AgentData['AgentID']))
 
-class NetTestPacket():
+class NetTestPacket(object):
     ''' a template for a NetTest packet '''
 
     def __init__(self):
@@ -6505,7 +6505,7 @@ class NetTestPacket():
 
         return Message('NetTest', Block('NetBlock', Port = self.NetBlock['Port']))
 
-class ForceObjectSelectPacket():
+class ForceObjectSelectPacket(object):
     ''' a template for a ForceObjectSelect packet '''
 
     def __init__(self):
@@ -6522,7 +6522,7 @@ class ForceObjectSelectPacket():
 
         return Message('ForceObjectSelect', Block('Header', ResetList = self.Header['ResetList']), Block('Data', LocalID = self.Data['LocalID']))
 
-class MapBlockReplyPacket():
+class MapBlockReplyPacket(object):
     ''' a template for a MapBlockReply packet '''
 
     def __init__(self):
@@ -6547,7 +6547,7 @@ class MapBlockReplyPacket():
 
         return Message('MapBlockReply', Block('AgentData', AgentID = self.AgentData['AgentID'], Flags = self.AgentData['Flags']), Block('Data', X = self.Data['X'], Y = self.Data['Y'], Name = self.Data['Name'], Access = self.Data['Access'], RegionFlags = self.Data['RegionFlags'], WaterHeight = self.Data['WaterHeight'], Agents = self.Data['Agents'], MapImageID = self.Data['MapImageID']))
 
-class AgentSetAppearancePacket():
+class AgentSetAppearancePacket(object):
     ''' a template for a AgentSetAppearance packet '''
 
     def __init__(self):
@@ -6574,7 +6574,7 @@ class AgentSetAppearancePacket():
 
         return Message('AgentSetAppearance', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], SerialNum = self.AgentData['SerialNum'], Size = self.AgentData['Size']), Block('WearableData', CacheID = self.WearableData['CacheID'], TextureIndex = self.WearableData['TextureIndex']), Block('ObjectData', TextureEntry = self.ObjectData['TextureEntry']), Block('VisualParam', ParamValue = self.VisualParam['ParamValue']))
 
-class MoveTaskInventoryPacket():
+class MoveTaskInventoryPacket(object):
     ''' a template for a MoveTaskInventory packet '''
 
     def __init__(self):
@@ -6594,7 +6594,7 @@ class MoveTaskInventoryPacket():
 
         return Message('MoveTaskInventory', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], FolderID = self.AgentData['FolderID']), Block('InventoryData', LocalID = self.InventoryData['LocalID'], ItemID = self.InventoryData['ItemID']))
 
-class EventGodDeletePacket():
+class EventGodDeletePacket(object):
     ''' a template for a EventGodDelete packet '''
 
     def __init__(self):
@@ -6618,7 +6618,7 @@ class EventGodDeletePacket():
 
         return Message('EventGodDelete', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('EventData', EventID = self.EventData['EventID']), Block('QueryData', QueryID = self.QueryData['QueryID'], QueryText = self.QueryData['QueryText'], QueryFlags = self.QueryData['QueryFlags'], QueryStart = self.QueryData['QueryStart']))
 
-class CompletePingCheckPacket():
+class CompletePingCheckPacket(object):
     ''' a template for a CompletePingCheck packet '''
 
     def __init__(self):
@@ -6632,7 +6632,7 @@ class CompletePingCheckPacket():
 
         return Message('CompletePingCheck', Block('PingID', PingID = self.PingID['PingID']))
 
-class AgentDataUpdatePacket():
+class AgentDataUpdatePacket(object):
     ''' a template for a AgentDataUpdate packet '''
 
     def __init__(self):
@@ -6652,7 +6652,7 @@ class AgentDataUpdatePacket():
 
         return Message('AgentDataUpdate', Block('AgentData', AgentID = self.AgentData['AgentID'], FirstName = self.AgentData['FirstName'], LastName = self.AgentData['LastName'], GroupTitle = self.AgentData['GroupTitle'], ActiveGroupID = self.AgentData['ActiveGroupID'], GroupPowers = self.AgentData['GroupPowers'], GroupName = self.AgentData['GroupName']))
 
-class TeleportRequestPacket():
+class TeleportRequestPacket(object):
     ''' a template for a TeleportRequest packet '''
 
     def __init__(self):
@@ -6672,7 +6672,7 @@ class TeleportRequestPacket():
 
         return Message('TeleportRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Info', RegionID = self.Info['RegionID'], Position = self.Info['Position'], LookAt = self.Info['LookAt']))
 
-class UpdateInventoryItemPacket():
+class UpdateInventoryItemPacket(object):
     ''' a template for a UpdateInventoryItem packet '''
 
     def __init__(self):
@@ -6712,7 +6712,7 @@ class UpdateInventoryItemPacket():
 
         return Message('UpdateInventoryItem', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], TransactionID = self.AgentData['TransactionID']), Block('InventoryData', ItemID = self.InventoryData['ItemID'], FolderID = self.InventoryData['FolderID'], CallbackID = self.InventoryData['CallbackID'], CreatorID = self.InventoryData['CreatorID'], OwnerID = self.InventoryData['OwnerID'], GroupID = self.InventoryData['GroupID'], BaseMask = self.InventoryData['BaseMask'], OwnerMask = self.InventoryData['OwnerMask'], GroupMask = self.InventoryData['GroupMask'], EveryoneMask = self.InventoryData['EveryoneMask'], NextOwnerMask = self.InventoryData['NextOwnerMask'], GroupOwned = self.InventoryData['GroupOwned'], TransactionID = self.InventoryData['TransactionID'], Type = self.InventoryData['Type'], InvType = self.InventoryData['InvType'], Flags = self.InventoryData['Flags'], SaleType = self.InventoryData['SaleType'], SalePrice = self.InventoryData['SalePrice'], Name = self.InventoryData['Name'], Description = self.InventoryData['Description'], CreationDate = self.InventoryData['CreationDate'], CRC = self.InventoryData['CRC']))
 
-class NearestLandingRegionReplyPacket():
+class NearestLandingRegionReplyPacket(object):
     ''' a template for a NearestLandingRegionReply packet '''
 
     def __init__(self):
@@ -6726,7 +6726,7 @@ class NearestLandingRegionReplyPacket():
 
         return Message('NearestLandingRegionReply', Block('LandingRegionData', RegionHandle = self.LandingRegionData['RegionHandle']))
 
-class EdgeDataPacketPacket():
+class EdgeDataPacketPacket(object):
     ''' a template for a EdgeDataPacket packet '''
 
     def __init__(self):
@@ -6742,7 +6742,7 @@ class EdgeDataPacketPacket():
 
         return Message('EdgeDataPacket', Block('EdgeData', LayerType = self.EdgeData['LayerType'], Direction = self.EdgeData['Direction'], LayerData = self.EdgeData['LayerData']))
 
-class EconomyDataRequestPacket():
+class EconomyDataRequestPacket(object):
     ''' a template for a EconomyDataRequest packet '''
 
     def __init__(self):
@@ -6753,7 +6753,7 @@ class EconomyDataRequestPacket():
 
         return Message('EconomyDataRequest')
 
-class LiveHelpGroupRequestPacket():
+class LiveHelpGroupRequestPacket(object):
     ''' a template for a LiveHelpGroupRequest packet '''
 
     def __init__(self):
@@ -6768,7 +6768,7 @@ class LiveHelpGroupRequestPacket():
 
         return Message('LiveHelpGroupRequest', Block('RequestData', RequestID = self.RequestData['RequestID'], AgentID = self.RequestData['AgentID']))
 
-class AddCircuitCodePacket():
+class AddCircuitCodePacket(object):
     ''' a template for a AddCircuitCode packet '''
 
     def __init__(self):
@@ -6784,7 +6784,7 @@ class AddCircuitCodePacket():
 
         return Message('AddCircuitCode', Block('CircuitCode', Code = self.CircuitCode['Code'], SessionID = self.CircuitCode['SessionID'], AgentID = self.CircuitCode['AgentID']))
 
-class GroupAccountTransactionsRequestPacket():
+class GroupAccountTransactionsRequestPacket(object):
     ''' a template for a GroupAccountTransactionsRequest packet '''
 
     def __init__(self):
@@ -6805,7 +6805,7 @@ class GroupAccountTransactionsRequestPacket():
 
         return Message('GroupAccountTransactionsRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID']), Block('MoneyData', RequestID = self.MoneyData['RequestID'], IntervalDays = self.MoneyData['IntervalDays'], CurrentInterval = self.MoneyData['CurrentInterval']))
 
-class UUIDNameReplyPacket():
+class UUIDNameReplyPacket(object):
     ''' a template for a UUIDNameReply packet '''
 
     def __init__(self):
@@ -6821,7 +6821,7 @@ class UUIDNameReplyPacket():
 
         return Message('UUIDNameReply', Block('UUIDNameBlock', ID = self.UUIDNameBlock['ID'], FirstName = self.UUIDNameBlock['FirstName'], LastName = self.UUIDNameBlock['LastName']))
 
-class ObjectLinkPacket():
+class ObjectLinkPacket(object):
     ''' a template for a ObjectLink packet '''
 
     def __init__(self):
@@ -6839,7 +6839,7 @@ class ObjectLinkPacket():
 
         return Message('ObjectLink', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID']))
 
-class PreloadSoundPacket():
+class PreloadSoundPacket(object):
     ''' a template for a PreloadSound packet '''
 
     def __init__(self):
@@ -6855,7 +6855,7 @@ class PreloadSoundPacket():
 
         return Message('PreloadSound', Block('DataBlock', ObjectID = self.DataBlock['ObjectID'], OwnerID = self.DataBlock['OwnerID'], SoundID = self.DataBlock['SoundID']))
 
-class EmailMessageRequestPacket():
+class EmailMessageRequestPacket(object):
     ''' a template for a EmailMessageRequest packet '''
 
     def __init__(self):
@@ -6871,7 +6871,7 @@ class EmailMessageRequestPacket():
 
         return Message('EmailMessageRequest', Block('DataBlock', ObjectID = self.DataBlock['ObjectID'], FromAddress = self.DataBlock['FromAddress'], Subject = self.DataBlock['Subject']))
 
-class ParcelGodForceOwnerPacket():
+class ParcelGodForceOwnerPacket(object):
     ''' a template for a ParcelGodForceOwner packet '''
 
     def __init__(self):
@@ -6890,7 +6890,7 @@ class ParcelGodForceOwnerPacket():
 
         return Message('ParcelGodForceOwner', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', OwnerID = self.Data['OwnerID'], LocalID = self.Data['LocalID']))
 
-class ScriptMailRegistrationPacket():
+class ScriptMailRegistrationPacket(object):
     ''' a template for a ScriptMailRegistration packet '''
 
     def __init__(self):
@@ -6907,7 +6907,7 @@ class ScriptMailRegistrationPacket():
 
         return Message('ScriptMailRegistration', Block('DataBlock', TargetIP = self.DataBlock['TargetIP'], TargetPort = self.DataBlock['TargetPort'], TaskID = self.DataBlock['TaskID'], Flags = self.DataBlock['Flags']))
 
-class ObjectRotationPacket():
+class ObjectRotationPacket(object):
     ''' a template for a ObjectRotation packet '''
 
     def __init__(self):
@@ -6926,7 +6926,7 @@ class ObjectRotationPacket():
 
         return Message('ObjectRotation', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID'], Rotation = self.ObjectData['Rotation']))
 
-class AcceptFriendshipPacket():
+class AcceptFriendshipPacket(object):
     ''' a template for a AcceptFriendship packet '''
 
     def __init__(self):
@@ -6947,7 +6947,7 @@ class AcceptFriendshipPacket():
 
         return Message('AcceptFriendship', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('TransactionBlock', TransactionID = self.TransactionBlock['TransactionID']), Block('FolderData', FolderID = self.FolderData['FolderID']))
 
-class AvatarNotesReplyPacket():
+class AvatarNotesReplyPacket(object):
     ''' a template for a AvatarNotesReply packet '''
 
     def __init__(self):
@@ -6965,7 +6965,7 @@ class AvatarNotesReplyPacket():
 
         return Message('AvatarNotesReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('Data', TargetID = self.Data['TargetID'], Notes = self.Data['Notes']))
 
-class RezMultipleAttachmentsFromInvPacket():
+class RezMultipleAttachmentsFromInvPacket(object):
     ''' a template for a RezMultipleAttachmentsFromInv packet '''
 
     def __init__(self):
@@ -6996,7 +6996,7 @@ class RezMultipleAttachmentsFromInvPacket():
 
         return Message('RezMultipleAttachmentsFromInv', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('HeaderData', CompoundMsgID = self.HeaderData['CompoundMsgID'], TotalObjects = self.HeaderData['TotalObjects'], FirstDetachAll = self.HeaderData['FirstDetachAll']), Block('ObjectData', ItemID = self.ObjectData['ItemID'], OwnerID = self.ObjectData['OwnerID'], AttachmentPt = self.ObjectData['AttachmentPt'], ItemFlags = self.ObjectData['ItemFlags'], GroupMask = self.ObjectData['GroupMask'], EveryoneMask = self.ObjectData['EveryoneMask'], NextOwnerMask = self.ObjectData['NextOwnerMask'], Name = self.ObjectData['Name'], Description = self.ObjectData['Description']))
 
-class TeleportLureRequestPacket():
+class TeleportLureRequestPacket(object):
     ''' a template for a TeleportLureRequest packet '''
 
     def __init__(self):
@@ -7013,7 +7013,7 @@ class TeleportLureRequestPacket():
 
         return Message('TeleportLureRequest', Block('Info', AgentID = self.Info['AgentID'], SessionID = self.Info['SessionID'], LureID = self.Info['LureID'], TeleportFlags = self.Info['TeleportFlags']))
 
-class MoveInventoryFolderPacket():
+class MoveInventoryFolderPacket(object):
     ''' a template for a MoveInventoryFolder packet '''
 
     def __init__(self):
@@ -7033,7 +7033,7 @@ class MoveInventoryFolderPacket():
 
         return Message('MoveInventoryFolder', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], Stamp = self.AgentData['Stamp']), Block('InventoryData', FolderID = self.InventoryData['FolderID'], ParentID = self.InventoryData['ParentID']))
 
-class TransferInfoPacket():
+class TransferInfoPacket(object):
     ''' a template for a TransferInfo packet '''
 
     def __init__(self):
@@ -7052,7 +7052,7 @@ class TransferInfoPacket():
 
         return Message('TransferInfo', Block('TransferInfo', TransferID = self.TransferInfo['TransferID'], ChannelType = self.TransferInfo['ChannelType'], TargetType = self.TransferInfo['TargetType'], Status = self.TransferInfo['Status'], Size = self.TransferInfo['Size'], Params = self.TransferInfo['Params']))
 
-class DirPlacesQueryPacket():
+class DirPlacesQueryPacket(object):
     ''' a template for a DirPlacesQuery packet '''
 
     def __init__(self):
@@ -7075,7 +7075,7 @@ class DirPlacesQueryPacket():
 
         return Message('DirPlacesQuery', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('QueryData', QueryID = self.QueryData['QueryID'], QueryText = self.QueryData['QueryText'], QueryFlags = self.QueryData['QueryFlags'], Category = self.QueryData['Category'], SimName = self.QueryData['SimName'], QueryStart = self.QueryData['QueryStart']))
 
-class ScriptAnswerYesPacket():
+class ScriptAnswerYesPacket(object):
     ''' a template for a ScriptAnswerYes packet '''
 
     def __init__(self):
@@ -7095,7 +7095,7 @@ class ScriptAnswerYesPacket():
 
         return Message('ScriptAnswerYes', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', TaskID = self.Data['TaskID'], ItemID = self.Data['ItemID'], Questions = self.Data['Questions']))
 
-class SimulatorPresentAtLocationPacket():
+class SimulatorPresentAtLocationPacket(object):
     ''' a template for a SimulatorPresentAtLocation packet '''
 
     def __init__(self):
@@ -7128,7 +7128,7 @@ class SimulatorPresentAtLocationPacket():
 
         return Message('SimulatorPresentAtLocation', Block('SimulatorPublicHostBlock', Port = self.SimulatorPublicHostBlock['Port'], SimulatorIP = self.SimulatorPublicHostBlock['SimulatorIP'], GridX = self.SimulatorPublicHostBlock['GridX'], GridY = self.SimulatorPublicHostBlock['GridY']), Block('NeighborBlock', IP = self.NeighborBlock['IP'], Port = self.NeighborBlock['Port']), Block('SimulatorBlock', SimName = self.SimulatorBlock['SimName'], SimAccess = self.SimulatorBlock['SimAccess'], RegionFlags = self.SimulatorBlock['RegionFlags'], RegionID = self.SimulatorBlock['RegionID'], EstateID = self.SimulatorBlock['EstateID'], ParentEstateID = self.SimulatorBlock['ParentEstateID']), Block('TelehubBlock', HasTelehub = self.TelehubBlock['HasTelehub'], TelehubPos = self.TelehubBlock['TelehubPos']))
 
-class GroupMembersRequestPacket():
+class GroupMembersRequestPacket(object):
     ''' a template for a GroupMembersRequest packet '''
 
     def __init__(self):
@@ -7147,7 +7147,7 @@ class GroupMembersRequestPacket():
 
         return Message('GroupMembersRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('GroupData', GroupID = self.GroupData['GroupID'], RequestID = self.GroupData['RequestID']))
 
-class SetScriptRunningPacket():
+class SetScriptRunningPacket(object):
     ''' a template for a SetScriptRunning packet '''
 
     def __init__(self):
@@ -7167,7 +7167,7 @@ class SetScriptRunningPacket():
 
         return Message('SetScriptRunning', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Script', ObjectID = self.Script['ObjectID'], ItemID = self.Script['ItemID'], Running = self.Script['Running']))
 
-class ModifyLandPacket():
+class ModifyLandPacket(object):
     ''' a template for a ModifyLand packet '''
 
     def __init__(self):
@@ -7195,7 +7195,7 @@ class ModifyLandPacket():
 
         return Message('ModifyLand', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ModifyBlock', Action = self.ModifyBlock['Action'], BrushSize = self.ModifyBlock['BrushSize'], Seconds = self.ModifyBlock['Seconds'], Height = self.ModifyBlock['Height']), Block('ParcelData', LocalID = self.ParcelData['LocalID'], West = self.ParcelData['West'], South = self.ParcelData['South'], East = self.ParcelData['East'], North = self.ParcelData['North']))
 
-class SimCrashedPacket():
+class SimCrashedPacket(object):
     ''' a template for a SimCrashed packet '''
 
     def __init__(self):
@@ -7213,7 +7213,7 @@ class SimCrashedPacket():
 
         return Message('SimCrashed', Block('Data', RegionX = self.Data['RegionX'], RegionY = self.Data['RegionY']), Block('Users', AgentID = self.Users['AgentID']))
 
-class MergeParcelPacket():
+class MergeParcelPacket(object):
     ''' a template for a MergeParcel packet '''
 
     def __init__(self):
@@ -7230,7 +7230,7 @@ class MergeParcelPacket():
 
         return Message('MergeParcel', Block('MasterParcelData', MasterID = self.MasterParcelData['MasterID']), Block('SlaveParcelData', SlaveID = self.SlaveParcelData['SlaveID']))
 
-class ObjectBuyPacket():
+class ObjectBuyPacket(object):
     ''' a template for a ObjectBuy packet '''
 
     def __init__(self):
@@ -7252,7 +7252,7 @@ class ObjectBuyPacket():
 
         return Message('ObjectBuy', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID'], CategoryID = self.AgentData['CategoryID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID'], SaleType = self.ObjectData['SaleType'], SalePrice = self.ObjectData['SalePrice']))
 
-class CreateLandmarkForEventPacket():
+class CreateLandmarkForEventPacket(object):
     ''' a template for a CreateLandmarkForEvent packet '''
 
     def __init__(self):
@@ -7274,7 +7274,7 @@ class CreateLandmarkForEventPacket():
 
         return Message('CreateLandmarkForEvent', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('EventData', EventID = self.EventData['EventID']), Block('InventoryBlock', FolderID = self.InventoryBlock['FolderID'], Name = self.InventoryBlock['Name']))
 
-class PickInfoUpdatePacket():
+class PickInfoUpdatePacket(object):
     ''' a template for a PickInfoUpdate packet '''
 
     def __init__(self):
@@ -7299,7 +7299,7 @@ class PickInfoUpdatePacket():
 
         return Message('PickInfoUpdate', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', PickID = self.Data['PickID'], CreatorID = self.Data['CreatorID'], TopPick = self.Data['TopPick'], ParcelID = self.Data['ParcelID'], Name = self.Data['Name'], Desc = self.Data['Desc'], SnapshotID = self.Data['SnapshotID'], PosGlobal = self.Data['PosGlobal']))
 
-class MapLayerRequestPacket():
+class MapLayerRequestPacket(object):
     ''' a template for a MapLayerRequest packet '''
 
     def __init__(self):
@@ -7317,7 +7317,7 @@ class MapLayerRequestPacket():
 
         return Message('MapLayerRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], Flags = self.AgentData['Flags'], EstateID = self.AgentData['EstateID'], Godlike = self.AgentData['Godlike']))
 
-class TeleportLocalPacket():
+class TeleportLocalPacket(object):
     ''' a template for a TeleportLocal packet '''
 
     def __init__(self):
@@ -7335,7 +7335,7 @@ class TeleportLocalPacket():
 
         return Message('TeleportLocal', Block('Info', AgentID = self.Info['AgentID'], LocationID = self.Info['LocationID'], Position = self.Info['Position'], LookAt = self.Info['LookAt'], TeleportFlags = self.Info['TeleportFlags']))
 
-class RemoveInventoryObjectsPacket():
+class RemoveInventoryObjectsPacket(object):
     ''' a template for a RemoveInventoryObjects packet '''
 
     def __init__(self):
@@ -7356,7 +7356,7 @@ class RemoveInventoryObjectsPacket():
 
         return Message('RemoveInventoryObjects', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('FolderData', FolderID = self.FolderData['FolderID']), Block('ItemData', ItemID = self.ItemData['ItemID']))
 
-class KickUserPacket():
+class KickUserPacket(object):
     ''' a template for a KickUser packet '''
 
     def __init__(self):
@@ -7376,7 +7376,7 @@ class KickUserPacket():
 
         return Message('KickUser', Block('TargetBlock', TargetIP = self.TargetBlock['TargetIP'], TargetPort = self.TargetBlock['TargetPort']), Block('UserInfo', AgentID = self.UserInfo['AgentID'], SessionID = self.UserInfo['SessionID'], Reason = self.UserInfo['Reason']))
 
-class CameraConstraintPacket():
+class CameraConstraintPacket(object):
     ''' a template for a CameraConstraint packet '''
 
     def __init__(self):
@@ -7390,7 +7390,7 @@ class CameraConstraintPacket():
 
         return Message('CameraConstraint', Block('CameraCollidePlane', Plane = self.CameraCollidePlane['Plane']))
 
-class AvatarClassifiedReplyPacket():
+class AvatarClassifiedReplyPacket(object):
     ''' a template for a AvatarClassifiedReply packet '''
 
     def __init__(self):
@@ -7409,7 +7409,7 @@ class AvatarClassifiedReplyPacket():
 
         return Message('AvatarClassifiedReply', Block('AgentData', AgentID = self.AgentData['AgentID'], TargetID = self.AgentData['TargetID']), Block('Data', ClassifiedID = self.Data['ClassifiedID'], Name = self.Data['Name']))
 
-class MuteListRequestPacket():
+class MuteListRequestPacket(object):
     ''' a template for a MuteListRequest packet '''
 
     def __init__(self):
@@ -7427,7 +7427,7 @@ class MuteListRequestPacket():
 
         return Message('MuteListRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('MuteData', MuteCRC = self.MuteData['MuteCRC']))
 
-class RequestRegionInfoPacket():
+class RequestRegionInfoPacket(object):
     ''' a template for a RequestRegionInfo packet '''
 
     def __init__(self):
@@ -7442,7 +7442,7 @@ class RequestRegionInfoPacket():
 
         return Message('RequestRegionInfo', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']))
 
-class LogFailedMoneyTransactionPacket():
+class LogFailedMoneyTransactionPacket(object):
     ''' a template for a LogFailedMoneyTransaction packet '''
 
     def __init__(self):
@@ -7466,7 +7466,7 @@ class LogFailedMoneyTransactionPacket():
 
         return Message('LogFailedMoneyTransaction', Block('TransactionData', TransactionID = self.TransactionData['TransactionID'], TransactionTime = self.TransactionData['TransactionTime'], TransactionType = self.TransactionData['TransactionType'], SourceID = self.TransactionData['SourceID'], DestID = self.TransactionData['DestID'], Flags = self.TransactionData['Flags'], Amount = self.TransactionData['Amount'], SimulatorIP = self.TransactionData['SimulatorIP'], GridX = self.TransactionData['GridX'], GridY = self.TransactionData['GridY'], FailureType = self.TransactionData['FailureType']))
 
-class GroupTitlesRequestPacket():
+class GroupTitlesRequestPacket(object):
     ''' a template for a GroupTitlesRequest packet '''
 
     def __init__(self):
@@ -7483,7 +7483,7 @@ class GroupTitlesRequestPacket():
 
         return Message('GroupTitlesRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID'], RequestID = self.AgentData['RequestID']))
 
-class ImprovedInstantMessagePacket():
+class ImprovedInstantMessagePacket(object):
     ''' a template for a ImprovedInstantMessage packet '''
 
     def __init__(self):
@@ -7512,7 +7512,7 @@ class ImprovedInstantMessagePacket():
 
         return Message('ImprovedInstantMessage', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('MessageBlock', FromGroup = self.MessageBlock['FromGroup'], ToAgentID = self.MessageBlock['ToAgentID'], ParentEstateID = self.MessageBlock['ParentEstateID'], RegionID = self.MessageBlock['RegionID'], Position = self.MessageBlock['Position'], Offline = self.MessageBlock['Offline'], Dialog = self.MessageBlock['Dialog'], ID = self.MessageBlock['ID'], Timestamp = self.MessageBlock['Timestamp'], FromAgentName = self.MessageBlock['FromAgentName'], Message = self.MessageBlock['Message'], BinaryBucket = self.MessageBlock['BinaryBucket']))
 
-class ScriptDataRequestPacket():
+class ScriptDataRequestPacket(object):
     ''' a template for a ScriptDataRequest packet '''
 
     def __init__(self):
@@ -7528,7 +7528,7 @@ class ScriptDataRequestPacket():
 
         return Message('ScriptDataRequest', Block('DataBlock', Hash = self.DataBlock['Hash'], RequestType = self.DataBlock['RequestType'], Request = self.DataBlock['Request']))
 
-class ParcelAccessListReplyPacket():
+class ParcelAccessListReplyPacket(object):
     ''' a template for a ParcelAccessListReply packet '''
 
     def __init__(self):
@@ -7550,7 +7550,7 @@ class ParcelAccessListReplyPacket():
 
         return Message('ParcelAccessListReply', Block('Data', AgentID = self.Data['AgentID'], SequenceID = self.Data['SequenceID'], Flags = self.Data['Flags'], LocalID = self.Data['LocalID']), Block('List', ID = self.List['ID'], Time = self.List['Time'], Flags = self.List['Flags']))
 
-class ObjectDeselectPacket():
+class ObjectDeselectPacket(object):
     ''' a template for a ObjectDeselect packet '''
 
     def __init__(self):
@@ -7568,7 +7568,7 @@ class ObjectDeselectPacket():
 
         return Message('ObjectDeselect', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID']))
 
-class RequestMultipleObjectsPacket():
+class RequestMultipleObjectsPacket(object):
     ''' a template for a RequestMultipleObjects packet '''
 
     def __init__(self):
@@ -7587,7 +7587,7 @@ class RequestMultipleObjectsPacket():
 
         return Message('RequestMultipleObjects', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', CacheMissType = self.ObjectData['CacheMissType'], ID = self.ObjectData['ID']))
 
-class RoutedMoneyBalanceReplyPacket():
+class RoutedMoneyBalanceReplyPacket(object):
     ''' a template for a RoutedMoneyBalanceReply packet '''
 
     def __init__(self):
@@ -7611,7 +7611,7 @@ class RoutedMoneyBalanceReplyPacket():
 
         return Message('RoutedMoneyBalanceReply', Block('TargetBlock', TargetIP = self.TargetBlock['TargetIP'], TargetPort = self.TargetBlock['TargetPort']), Block('MoneyData', AgentID = self.MoneyData['AgentID'], TransactionID = self.MoneyData['TransactionID'], TransactionSuccess = self.MoneyData['TransactionSuccess'], MoneyBalance = self.MoneyData['MoneyBalance'], SquareMetersCredit = self.MoneyData['SquareMetersCredit'], SquareMetersCommitted = self.MoneyData['SquareMetersCommitted'], Description = self.MoneyData['Description']))
 
-class LoadURLPacket():
+class LoadURLPacket(object):
     ''' a template for a LoadURL packet '''
 
     def __init__(self):
@@ -7630,7 +7630,7 @@ class LoadURLPacket():
 
         return Message('LoadURL', Block('Data', ObjectName = self.Data['ObjectName'], ObjectID = self.Data['ObjectID'], OwnerID = self.Data['OwnerID'], OwnerIsGroup = self.Data['OwnerIsGroup'], Message = self.Data['Message'], URL = self.Data['URL']))
 
-class RpcChannelReplyPacket():
+class RpcChannelReplyPacket(object):
     ''' a template for a RpcChannelReply packet '''
 
     def __init__(self):
@@ -7646,7 +7646,7 @@ class RpcChannelReplyPacket():
 
         return Message('RpcChannelReply', Block('DataBlock', TaskID = self.DataBlock['TaskID'], ItemID = self.DataBlock['ItemID'], ChannelID = self.DataBlock['ChannelID']))
 
-class TeleportStartPacket():
+class TeleportStartPacket(object):
     ''' a template for a TeleportStart packet '''
 
     def __init__(self):
@@ -7660,7 +7660,7 @@ class TeleportStartPacket():
 
         return Message('TeleportStart', Block('Info', TeleportFlags = self.Info['TeleportFlags']))
 
-class RezObjectPacket():
+class RezObjectPacket(object):
     ''' a template for a RezObject packet '''
 
     def __init__(self):
@@ -7713,7 +7713,7 @@ class RezObjectPacket():
 
         return Message('RezObject', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID']), Block('RezData', FromTaskID = self.RezData['FromTaskID'], BypassRaycast = self.RezData['BypassRaycast'], RayStart = self.RezData['RayStart'], RayEnd = self.RezData['RayEnd'], RayTargetID = self.RezData['RayTargetID'], RayEndIsIntersection = self.RezData['RayEndIsIntersection'], RezSelected = self.RezData['RezSelected'], RemoveItem = self.RezData['RemoveItem'], ItemFlags = self.RezData['ItemFlags'], GroupMask = self.RezData['GroupMask'], EveryoneMask = self.RezData['EveryoneMask'], NextOwnerMask = self.RezData['NextOwnerMask']), Block('InventoryData', ItemID = self.InventoryData['ItemID'], FolderID = self.InventoryData['FolderID'], CreatorID = self.InventoryData['CreatorID'], OwnerID = self.InventoryData['OwnerID'], GroupID = self.InventoryData['GroupID'], BaseMask = self.InventoryData['BaseMask'], OwnerMask = self.InventoryData['OwnerMask'], GroupMask = self.InventoryData['GroupMask'], EveryoneMask = self.InventoryData['EveryoneMask'], NextOwnerMask = self.InventoryData['NextOwnerMask'], GroupOwned = self.InventoryData['GroupOwned'], TransactionID = self.InventoryData['TransactionID'], Type = self.InventoryData['Type'], InvType = self.InventoryData['InvType'], Flags = self.InventoryData['Flags'], SaleType = self.InventoryData['SaleType'], SalePrice = self.InventoryData['SalePrice'], Name = self.InventoryData['Name'], Description = self.InventoryData['Description'], CreationDate = self.InventoryData['CreationDate'], CRC = self.InventoryData['CRC']))
 
-class AvatarInterestsReplyPacket():
+class AvatarInterestsReplyPacket(object):
     ''' a template for a AvatarInterestsReply packet '''
 
     def __init__(self):
@@ -7735,7 +7735,7 @@ class AvatarInterestsReplyPacket():
 
         return Message('AvatarInterestsReply', Block('AgentData', AgentID = self.AgentData['AgentID'], AvatarID = self.AgentData['AvatarID']), Block('PropertiesData', WantToMask = self.PropertiesData['WantToMask'], WantToText = self.PropertiesData['WantToText'], SkillsMask = self.PropertiesData['SkillsMask'], SkillsText = self.PropertiesData['SkillsText'], LanguagesText = self.PropertiesData['LanguagesText']))
 
-class ObjectUpdateCompressedPacket():
+class ObjectUpdateCompressedPacket(object):
     ''' a template for a ObjectUpdateCompressed packet '''
 
     def __init__(self):
@@ -7754,7 +7754,7 @@ class ObjectUpdateCompressedPacket():
 
         return Message('ObjectUpdateCompressed', Block('RegionData', RegionHandle = self.RegionData['RegionHandle'], TimeDilation = self.RegionData['TimeDilation']), Block('ObjectData', UpdateFlags = self.ObjectData['UpdateFlags'], Data = self.ObjectData['Data']))
 
-class DirPopularQueryPacket():
+class DirPopularQueryPacket(object):
     ''' a template for a DirPopularQuery packet '''
 
     def __init__(self):
@@ -7773,7 +7773,7 @@ class DirPopularQueryPacket():
 
         return Message('DirPopularQuery', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('QueryData', QueryID = self.QueryData['QueryID'], QueryFlags = self.QueryData['QueryFlags']))
 
-class ChangeInventoryItemFlagsPacket():
+class ChangeInventoryItemFlagsPacket(object):
     ''' a template for a ChangeInventoryItemFlags packet '''
 
     def __init__(self):
@@ -7792,7 +7792,7 @@ class ChangeInventoryItemFlagsPacket():
 
         return Message('ChangeInventoryItemFlags', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('InventoryData', ItemID = self.InventoryData['ItemID'], Flags = self.InventoryData['Flags']))
 
-class SimulatorViewerTimeMessagePacket():
+class SimulatorViewerTimeMessagePacket(object):
     ''' a template for a SimulatorViewerTimeMessage packet '''
 
     def __init__(self):
@@ -7811,7 +7811,7 @@ class SimulatorViewerTimeMessagePacket():
 
         return Message('SimulatorViewerTimeMessage', Block('TimeInfo', UsecSinceStart = self.TimeInfo['UsecSinceStart'], SecPerDay = self.TimeInfo['SecPerDay'], SecPerYear = self.TimeInfo['SecPerYear'], SunDirection = self.TimeInfo['SunDirection'], SunPhase = self.TimeInfo['SunPhase'], SunAngVelocity = self.TimeInfo['SunAngVelocity']))
 
-class PlacesQueryPacket():
+class PlacesQueryPacket(object):
     ''' a template for a PlacesQuery packet '''
 
     def __init__(self):
@@ -7836,7 +7836,7 @@ class PlacesQueryPacket():
 
         return Message('PlacesQuery', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], QueryID = self.AgentData['QueryID']), Block('TransactionData', TransactionID = self.TransactionData['TransactionID']), Block('QueryData', QueryText = self.QueryData['QueryText'], QueryFlags = self.QueryData['QueryFlags'], Category = self.QueryData['Category'], SimName = self.QueryData['SimName']))
 
-class ActivateGroupPacket():
+class ActivateGroupPacket(object):
     ''' a template for a ActivateGroup packet '''
 
     def __init__(self):
@@ -7852,7 +7852,7 @@ class ActivateGroupPacket():
 
         return Message('ActivateGroup', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID']))
 
-class SubscribeLoadPacket():
+class SubscribeLoadPacket(object):
     ''' a template for a SubscribeLoad packet '''
 
     def __init__(self):
@@ -7863,7 +7863,7 @@ class SubscribeLoadPacket():
 
         return Message('SubscribeLoad')
 
-class EjectGroupMemberReplyPacket():
+class EjectGroupMemberReplyPacket(object):
     ''' a template for a EjectGroupMemberReply packet '''
 
     def __init__(self):
@@ -7883,7 +7883,7 @@ class EjectGroupMemberReplyPacket():
 
         return Message('EjectGroupMemberReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('GroupData', GroupID = self.GroupData['GroupID']), Block('EjectData', Success = self.EjectData['Success']))
 
-class CheckParcelSalesPacket():
+class CheckParcelSalesPacket(object):
     ''' a template for a CheckParcelSales packet '''
 
     def __init__(self):
@@ -7897,7 +7897,7 @@ class CheckParcelSalesPacket():
 
         return Message('CheckParcelSales', Block('RegionData', RegionHandle = self.RegionData['RegionHandle']))
 
-class DerezContainerPacket():
+class DerezContainerPacket(object):
     ''' a template for a DerezContainer packet '''
 
     def __init__(self):
@@ -7912,7 +7912,7 @@ class DerezContainerPacket():
 
         return Message('DerezContainer', Block('Data', ObjectID = self.Data['ObjectID'], Delete = self.Data['Delete']))
 
-class ConfirmEnableSimulatorPacket():
+class ConfirmEnableSimulatorPacket(object):
     ''' a template for a ConfirmEnableSimulator packet '''
 
     def __init__(self):
@@ -7927,7 +7927,7 @@ class ConfirmEnableSimulatorPacket():
 
         return Message('ConfirmEnableSimulator', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']))
 
-class SetStartLocationRequestPacket():
+class SetStartLocationRequestPacket(object):
     ''' a template for a SetStartLocationRequest packet '''
 
     def __init__(self):
@@ -7948,7 +7948,7 @@ class SetStartLocationRequestPacket():
 
         return Message('SetStartLocationRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('StartLocationData', SimName = self.StartLocationData['SimName'], LocationID = self.StartLocationData['LocationID'], LocationPos = self.StartLocationData['LocationPos'], LocationLookAt = self.StartLocationData['LocationLookAt']))
 
-class EstateCovenantRequestPacket():
+class EstateCovenantRequestPacket(object):
     ''' a template for a EstateCovenantRequest packet '''
 
     def __init__(self):
@@ -7963,7 +7963,7 @@ class EstateCovenantRequestPacket():
 
         return Message('EstateCovenantRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']))
 
-class ErrorPacket():
+class ErrorPacket(object):
     ''' a template for a Error packet '''
 
     def __init__(self):
@@ -7985,7 +7985,7 @@ class ErrorPacket():
 
         return Message('Error', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('Data', Code = self.Data['Code'], Token = self.Data['Token'], ID = self.Data['ID'], System = self.Data['System'], Message = self.Data['Message'], Data = self.Data['Data']))
 
-class AgentFOVPacket():
+class AgentFOVPacket(object):
     ''' a template for a AgentFOV packet '''
 
     def __init__(self):
@@ -8005,7 +8005,7 @@ class AgentFOVPacket():
 
         return Message('AgentFOV', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], CircuitCode = self.AgentData['CircuitCode']), Block('FOVBlock', GenCounter = self.FOVBlock['GenCounter'], VerticalAngle = self.FOVBlock['VerticalAngle']))
 
-class AcceptCallingCardPacket():
+class AcceptCallingCardPacket(object):
     ''' a template for a AcceptCallingCard packet '''
 
     def __init__(self):
@@ -8026,7 +8026,7 @@ class AcceptCallingCardPacket():
 
         return Message('AcceptCallingCard', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('TransactionBlock', TransactionID = self.TransactionBlock['TransactionID']), Block('FolderData', FolderID = self.FolderData['FolderID']))
 
-class EventNotificationAddRequestPacket():
+class EventNotificationAddRequestPacket(object):
     ''' a template for a EventNotificationAddRequest packet '''
 
     def __init__(self):
@@ -8044,7 +8044,7 @@ class EventNotificationAddRequestPacket():
 
         return Message('EventNotificationAddRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('EventData', EventID = self.EventData['EventID']))
 
-class AgentUpdatePacket():
+class AgentUpdatePacket(object):
     ''' a template for a AgentUpdate packet '''
 
     def __init__(self):
@@ -8069,7 +8069,7 @@ class AgentUpdatePacket():
 
         return Message('AgentUpdate', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], BodyRotation = self.AgentData['BodyRotation'], HeadRotation = self.AgentData['HeadRotation'], State = self.AgentData['State'], CameraCenter = self.AgentData['CameraCenter'], CameraAtAxis = self.AgentData['CameraAtAxis'], CameraLeftAxis = self.AgentData['CameraLeftAxis'], CameraUpAxis = self.AgentData['CameraUpAxis'], Far = self.AgentData['Far'], ControlFlags = self.AgentData['ControlFlags'], Flags = self.AgentData['Flags']))
 
-class AgentCachedTextureResponsePacket():
+class AgentCachedTextureResponsePacket(object):
     ''' a template for a AgentCachedTextureResponse packet '''
 
     def __init__(self):
@@ -8090,7 +8090,7 @@ class AgentCachedTextureResponsePacket():
 
         return Message('AgentCachedTextureResponse', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], SerialNum = self.AgentData['SerialNum']), Block('WearableData', TextureID = self.WearableData['TextureID'], TextureIndex = self.WearableData['TextureIndex'], HostName = self.WearableData['HostName']))
 
-class GroupNoticeRequestPacket():
+class GroupNoticeRequestPacket(object):
     ''' a template for a GroupNoticeRequest packet '''
 
     def __init__(self):
@@ -8108,7 +8108,7 @@ class GroupNoticeRequestPacket():
 
         return Message('GroupNoticeRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', GroupNoticeID = self.Data['GroupNoticeID']))
 
-class RemoveMuteListEntryPacket():
+class RemoveMuteListEntryPacket(object):
     ''' a template for a RemoveMuteListEntry packet '''
 
     def __init__(self):
@@ -8127,7 +8127,7 @@ class RemoveMuteListEntryPacket():
 
         return Message('RemoveMuteListEntry', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('MuteData', MuteID = self.MuteData['MuteID'], MuteName = self.MuteData['MuteName']))
 
-class SetFollowCamPropertiesPacket():
+class SetFollowCamPropertiesPacket(object):
     ''' a template for a SetFollowCamProperties packet '''
 
     def __init__(self):
@@ -8145,7 +8145,7 @@ class SetFollowCamPropertiesPacket():
 
         return Message('SetFollowCamProperties', Block('ObjectData', ObjectID = self.ObjectData['ObjectID']), Block('CameraProperty', Type = self.CameraProperty['Type'], Value = self.CameraProperty['Value']))
 
-class ChildAgentAlivePacket():
+class ChildAgentAlivePacket(object):
     ''' a template for a ChildAgentAlive packet '''
 
     def __init__(self):
@@ -8162,7 +8162,7 @@ class ChildAgentAlivePacket():
 
         return Message('ChildAgentAlive', Block('AgentData', RegionHandle = self.AgentData['RegionHandle'], ViewerCircuitCode = self.AgentData['ViewerCircuitCode'], AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']))
 
-class DirGroupsReplyPacket():
+class DirGroupsReplyPacket(object):
     ''' a template for a DirGroupsReply packet '''
 
     def __init__(self):
@@ -8185,7 +8185,7 @@ class DirGroupsReplyPacket():
 
         return Message('DirGroupsReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('QueryData', QueryID = self.QueryData['QueryID']), Block('QueryReplies', GroupID = self.QueryReplies['GroupID'], GroupName = self.QueryReplies['GroupName'], Members = self.QueryReplies['Members'], SearchOrder = self.QueryReplies['SearchOrder']))
 
-class GroupTitleUpdatePacket():
+class GroupTitleUpdatePacket(object):
     ''' a template for a GroupTitleUpdate packet '''
 
     def __init__(self):
@@ -8202,7 +8202,7 @@ class GroupTitleUpdatePacket():
 
         return Message('GroupTitleUpdate', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID'], TitleRoleID = self.AgentData['TitleRoleID']))
 
-class GroupAccountDetailsRequestPacket():
+class GroupAccountDetailsRequestPacket(object):
     ''' a template for a GroupAccountDetailsRequest packet '''
 
     def __init__(self):
@@ -8223,7 +8223,7 @@ class GroupAccountDetailsRequestPacket():
 
         return Message('GroupAccountDetailsRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID']), Block('MoneyData', RequestID = self.MoneyData['RequestID'], IntervalDays = self.MoneyData['IntervalDays'], CurrentInterval = self.MoneyData['CurrentInterval']))
 
-class ParcelAuctionsPacket():
+class ParcelAuctionsPacket(object):
     ''' a template for a ParcelAuctions packet '''
 
     def __init__(self):
@@ -8238,7 +8238,7 @@ class ParcelAuctionsPacket():
 
         return Message('ParcelAuctions', Block('ParcelData', ParcelID = self.ParcelData['ParcelID'], WinnerID = self.ParcelData['WinnerID']))
 
-class ObjectDetachPacket():
+class ObjectDetachPacket(object):
     ''' a template for a ObjectDetach packet '''
 
     def __init__(self):
@@ -8256,7 +8256,7 @@ class ObjectDetachPacket():
 
         return Message('ObjectDetach', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID']))
 
-class AssetUploadRequestPacket():
+class AssetUploadRequestPacket(object):
     ''' a template for a AssetUploadRequest packet '''
 
     def __init__(self):
@@ -8274,7 +8274,7 @@ class AssetUploadRequestPacket():
 
         return Message('AssetUploadRequest', Block('AssetBlock', TransactionID = self.AssetBlock['TransactionID'], Type = self.AssetBlock['Type'], Tempfile = self.AssetBlock['Tempfile'], StoreLocal = self.AssetBlock['StoreLocal'], AssetData = self.AssetBlock['AssetData']))
 
-class ParcelReleasePacket():
+class ParcelReleasePacket(object):
     ''' a template for a ParcelRelease packet '''
 
     def __init__(self):
@@ -8292,7 +8292,7 @@ class ParcelReleasePacket():
 
         return Message('ParcelRelease', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', LocalID = self.Data['LocalID']))
 
-class RpcScriptRequestInboundForwardPacket():
+class RpcScriptRequestInboundForwardPacket(object):
     ''' a template for a RpcScriptRequestInboundForward packet '''
 
     def __init__(self):
@@ -8312,7 +8312,7 @@ class RpcScriptRequestInboundForwardPacket():
 
         return Message('RpcScriptRequestInboundForward', Block('DataBlock', RPCServerIP = self.DataBlock['RPCServerIP'], RPCServerPort = self.DataBlock['RPCServerPort'], TaskID = self.DataBlock['TaskID'], ItemID = self.DataBlock['ItemID'], ChannelID = self.DataBlock['ChannelID'], IntValue = self.DataBlock['IntValue'], StringValue = self.DataBlock['StringValue']))
 
-class ObjectDuplicateOnRayPacket():
+class ObjectDuplicateOnRayPacket(object):
     ''' a template for a ObjectDuplicateOnRay packet '''
 
     def __init__(self):
@@ -8339,7 +8339,7 @@ class ObjectDuplicateOnRayPacket():
 
         return Message('ObjectDuplicateOnRay', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID'], RayStart = self.AgentData['RayStart'], RayEnd = self.AgentData['RayEnd'], BypassRaycast = self.AgentData['BypassRaycast'], RayEndIsIntersection = self.AgentData['RayEndIsIntersection'], CopyCenters = self.AgentData['CopyCenters'], CopyRotates = self.AgentData['CopyRotates'], RayTargetID = self.AgentData['RayTargetID'], DuplicateFlags = self.AgentData['DuplicateFlags']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID']))
 
-class MoneyTransferRequestPacket():
+class MoneyTransferRequestPacket(object):
     ''' a template for a MoneyTransferRequest packet '''
 
     def __init__(self):
@@ -8364,7 +8364,7 @@ class MoneyTransferRequestPacket():
 
         return Message('MoneyTransferRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('MoneyData', SourceID = self.MoneyData['SourceID'], DestID = self.MoneyData['DestID'], Flags = self.MoneyData['Flags'], Amount = self.MoneyData['Amount'], AggregatePermNextOwner = self.MoneyData['AggregatePermNextOwner'], AggregatePermInventory = self.MoneyData['AggregatePermInventory'], TransactionType = self.MoneyData['TransactionType'], Description = self.MoneyData['Description']))
 
-class ScriptDialogPacket():
+class ScriptDialogPacket(object):
     ''' a template for a ScriptDialog packet '''
 
     def __init__(self):
@@ -8387,7 +8387,7 @@ class ScriptDialogPacket():
 
         return Message('ScriptDialog', Block('Data', ObjectID = self.Data['ObjectID'], FirstName = self.Data['FirstName'], LastName = self.Data['LastName'], ObjectName = self.Data['ObjectName'], Message = self.Data['Message'], ChatChannel = self.Data['ChatChannel'], ImageID = self.Data['ImageID']), Block('Buttons', ButtonLabel = self.Buttons['ButtonLabel']))
 
-class RequestTrustedCircuitPacket():
+class RequestTrustedCircuitPacket(object):
     ''' a template for a RequestTrustedCircuit packet '''
 
     def __init__(self):
@@ -8398,7 +8398,7 @@ class RequestTrustedCircuitPacket():
 
         return Message('RequestTrustedCircuit')
 
-class TeleportFinishPacket():
+class TeleportFinishPacket(object):
     ''' a template for a TeleportFinish packet '''
 
     def __init__(self):
@@ -8419,7 +8419,7 @@ class TeleportFinishPacket():
 
         return Message('TeleportFinish', Block('Info', AgentID = self.Info['AgentID'], LocationID = self.Info['LocationID'], SimIP = self.Info['SimIP'], SimPort = self.Info['SimPort'], RegionHandle = self.Info['RegionHandle'], SeedCapability = self.Info['SeedCapability'], SimAccess = self.Info['SimAccess'], TeleportFlags = self.Info['TeleportFlags']))
 
-class CreateInventoryFolderPacket():
+class CreateInventoryFolderPacket(object):
     ''' a template for a CreateInventoryFolder packet '''
 
     def __init__(self):
@@ -8440,7 +8440,7 @@ class CreateInventoryFolderPacket():
 
         return Message('CreateInventoryFolder', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('FolderData', FolderID = self.FolderData['FolderID'], ParentID = self.FolderData['ParentID'], Type = self.FolderData['Type'], Name = self.FolderData['Name']))
 
-class DisableSimulatorPacket():
+class DisableSimulatorPacket(object):
     ''' a template for a DisableSimulator packet '''
 
     def __init__(self):
@@ -8451,7 +8451,7 @@ class DisableSimulatorPacket():
 
         return Message('DisableSimulator')
 
-class TransferPacketPacket():
+class TransferPacketPacket(object):
     ''' a template for a TransferPacket packet '''
 
     def __init__(self):
@@ -8469,7 +8469,7 @@ class TransferPacketPacket():
 
         return Message('TransferPacket', Block('TransferData', TransferID = self.TransferData['TransferID'], ChannelType = self.TransferData['ChannelType'], Packet = self.TransferData['Packet'], Status = self.TransferData['Status'], Data = self.TransferData['Data']))
 
-class ClassifiedGodDeletePacket():
+class ClassifiedGodDeletePacket(object):
     ''' a template for a ClassifiedGodDelete packet '''
 
     def __init__(self):
@@ -8488,7 +8488,7 @@ class ClassifiedGodDeletePacket():
 
         return Message('ClassifiedGodDelete', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', ClassifiedID = self.Data['ClassifiedID'], QueryID = self.Data['QueryID']))
 
-class TrackAgentPacket():
+class TrackAgentPacket(object):
     ''' a template for a TrackAgent packet '''
 
     def __init__(self):
@@ -8506,7 +8506,7 @@ class TrackAgentPacket():
 
         return Message('TrackAgent', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('TargetData', PreyID = self.TargetData['PreyID']))
 
-class SimulatorReadyPacket():
+class SimulatorReadyPacket(object):
     ''' a template for a SimulatorReady packet '''
 
     def __init__(self):
@@ -8529,7 +8529,7 @@ class SimulatorReadyPacket():
 
         return Message('SimulatorReady', Block('SimulatorBlock', SimName = self.SimulatorBlock['SimName'], SimAccess = self.SimulatorBlock['SimAccess'], RegionFlags = self.SimulatorBlock['RegionFlags'], RegionID = self.SimulatorBlock['RegionID'], EstateID = self.SimulatorBlock['EstateID'], ParentEstateID = self.SimulatorBlock['ParentEstateID']), Block('TelehubBlock', HasTelehub = self.TelehubBlock['HasTelehub'], TelehubPos = self.TelehubBlock['TelehubPos']))
 
-class GroupProposalBallotPacket():
+class GroupProposalBallotPacket(object):
     ''' a template for a GroupProposalBallot packet '''
 
     def __init__(self):
@@ -8549,7 +8549,7 @@ class GroupProposalBallotPacket():
 
         return Message('GroupProposalBallot', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ProposalData', ProposalID = self.ProposalData['ProposalID'], GroupID = self.ProposalData['GroupID'], VoteCast = self.ProposalData['VoteCast']))
 
-class GetScriptRunningPacket():
+class GetScriptRunningPacket(object):
     ''' a template for a GetScriptRunning packet '''
 
     def __init__(self):
@@ -8564,7 +8564,7 @@ class GetScriptRunningPacket():
 
         return Message('GetScriptRunning', Block('Script', ObjectID = self.Script['ObjectID'], ItemID = self.Script['ItemID']))
 
-class ObjectSpinStopPacket():
+class ObjectSpinStopPacket(object):
     ''' a template for a ObjectSpinStop packet '''
 
     def __init__(self):
@@ -8582,7 +8582,7 @@ class ObjectSpinStopPacket():
 
         return Message('ObjectSpinStop', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectID = self.ObjectData['ObjectID']))
 
-class GroupRoleChangesPacket():
+class GroupRoleChangesPacket(object):
     ''' a template for a GroupRoleChanges packet '''
 
     def __init__(self):
@@ -8603,7 +8603,7 @@ class GroupRoleChangesPacket():
 
         return Message('GroupRoleChanges', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID']), Block('RoleChange', RoleID = self.RoleChange['RoleID'], MemberID = self.RoleChange['MemberID'], Change = self.RoleChange['Change']))
 
-class UpdateParcelPacket():
+class UpdateParcelPacket(object):
     ''' a template for a UpdateParcel packet '''
 
     def __init__(self):
@@ -8637,7 +8637,7 @@ class UpdateParcelPacket():
 
         return Message('UpdateParcel', Block('ParcelData', ParcelID = self.ParcelData['ParcelID'], RegionHandle = self.ParcelData['RegionHandle'], OwnerID = self.ParcelData['OwnerID'], GroupOwned = self.ParcelData['GroupOwned'], Status = self.ParcelData['Status'], Name = self.ParcelData['Name'], Description = self.ParcelData['Description'], MusicURL = self.ParcelData['MusicURL'], RegionX = self.ParcelData['RegionX'], RegionY = self.ParcelData['RegionY'], ActualArea = self.ParcelData['ActualArea'], BillableArea = self.ParcelData['BillableArea'], ShowDir = self.ParcelData['ShowDir'], IsForSale = self.ParcelData['IsForSale'], Category = self.ParcelData['Category'], SnapshotID = self.ParcelData['SnapshotID'], UserLocation = self.ParcelData['UserLocation'], SalePrice = self.ParcelData['SalePrice'], AuthorizedBuyerID = self.ParcelData['AuthorizedBuyerID'], AllowPublish = self.ParcelData['AllowPublish'], MaturePublish = self.ParcelData['MaturePublish']))
 
-class RezRestoreToWorldPacket():
+class RezRestoreToWorldPacket(object):
     ''' a template for a RezRestoreToWorld packet '''
 
     def __init__(self):
@@ -8675,7 +8675,7 @@ class RezRestoreToWorldPacket():
 
         return Message('RezRestoreToWorld', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('InventoryData', ItemID = self.InventoryData['ItemID'], FolderID = self.InventoryData['FolderID'], CreatorID = self.InventoryData['CreatorID'], OwnerID = self.InventoryData['OwnerID'], GroupID = self.InventoryData['GroupID'], BaseMask = self.InventoryData['BaseMask'], OwnerMask = self.InventoryData['OwnerMask'], GroupMask = self.InventoryData['GroupMask'], EveryoneMask = self.InventoryData['EveryoneMask'], NextOwnerMask = self.InventoryData['NextOwnerMask'], GroupOwned = self.InventoryData['GroupOwned'], TransactionID = self.InventoryData['TransactionID'], Type = self.InventoryData['Type'], InvType = self.InventoryData['InvType'], Flags = self.InventoryData['Flags'], SaleType = self.InventoryData['SaleType'], SalePrice = self.InventoryData['SalePrice'], Name = self.InventoryData['Name'], Description = self.InventoryData['Description'], CreationDate = self.InventoryData['CreationDate'], CRC = self.InventoryData['CRC']))
 
-class ObjectOwnerPacket():
+class ObjectOwnerPacket(object):
     ''' a template for a ObjectOwner packet '''
 
     def __init__(self):
@@ -8698,7 +8698,7 @@ class ObjectOwnerPacket():
 
         return Message('ObjectOwner', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('HeaderData', Override = self.HeaderData['Override'], OwnerID = self.HeaderData['OwnerID'], GroupID = self.HeaderData['GroupID']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID']))
 
-class RezScriptPacket():
+class RezScriptPacket(object):
     ''' a template for a RezScript packet '''
 
     def __init__(self):
@@ -8741,7 +8741,7 @@ class RezScriptPacket():
 
         return Message('RezScript', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], GroupID = self.AgentData['GroupID']), Block('UpdateBlock', ObjectLocalID = self.UpdateBlock['ObjectLocalID'], Enabled = self.UpdateBlock['Enabled']), Block('InventoryBlock', ItemID = self.InventoryBlock['ItemID'], FolderID = self.InventoryBlock['FolderID'], CreatorID = self.InventoryBlock['CreatorID'], OwnerID = self.InventoryBlock['OwnerID'], GroupID = self.InventoryBlock['GroupID'], BaseMask = self.InventoryBlock['BaseMask'], OwnerMask = self.InventoryBlock['OwnerMask'], GroupMask = self.InventoryBlock['GroupMask'], EveryoneMask = self.InventoryBlock['EveryoneMask'], NextOwnerMask = self.InventoryBlock['NextOwnerMask'], GroupOwned = self.InventoryBlock['GroupOwned'], TransactionID = self.InventoryBlock['TransactionID'], Type = self.InventoryBlock['Type'], InvType = self.InventoryBlock['InvType'], Flags = self.InventoryBlock['Flags'], SaleType = self.InventoryBlock['SaleType'], SalePrice = self.InventoryBlock['SalePrice'], Name = self.InventoryBlock['Name'], Description = self.InventoryBlock['Description'], CreationDate = self.InventoryBlock['CreationDate'], CRC = self.InventoryBlock['CRC']))
 
-class ParcelReturnObjectsPacket():
+class ParcelReturnObjectsPacket(object):
     ''' a template for a ParcelReturnObjects packet '''
 
     def __init__(self):
@@ -8766,7 +8766,7 @@ class ParcelReturnObjectsPacket():
 
         return Message('ParcelReturnObjects', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ParcelData', LocalID = self.ParcelData['LocalID'], ReturnType = self.ParcelData['ReturnType']), Block('TaskIDs', TaskID = self.TaskIDs['TaskID']), Block('OwnerIDs', OwnerID = self.OwnerIDs['OwnerID']))
 
-class InitiateDownloadPacket():
+class InitiateDownloadPacket(object):
     ''' a template for a InitiateDownload packet '''
 
     def __init__(self):
@@ -8784,7 +8784,7 @@ class InitiateDownloadPacket():
 
         return Message('InitiateDownload', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('FileData', SimFilename = self.FileData['SimFilename'], ViewerFilename = self.FileData['ViewerFilename']))
 
-class AgentPausePacket():
+class AgentPausePacket(object):
     ''' a template for a AgentPause packet '''
 
     def __init__(self):
@@ -8800,7 +8800,7 @@ class AgentPausePacket():
 
         return Message('AgentPause', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], SerialNum = self.AgentData['SerialNum']))
 
-class RequestInventoryAssetPacket():
+class RequestInventoryAssetPacket(object):
     ''' a template for a RequestInventoryAsset packet '''
 
     def __init__(self):
@@ -8817,7 +8817,7 @@ class RequestInventoryAssetPacket():
 
         return Message('RequestInventoryAsset', Block('QueryData', QueryID = self.QueryData['QueryID'], AgentID = self.QueryData['AgentID'], OwnerID = self.QueryData['OwnerID'], ItemID = self.QueryData['ItemID']))
 
-class RequestPayPricePacket():
+class RequestPayPricePacket(object):
     ''' a template for a RequestPayPrice packet '''
 
     def __init__(self):
@@ -8831,7 +8831,7 @@ class RequestPayPricePacket():
 
         return Message('RequestPayPrice', Block('ObjectData', ObjectID = self.ObjectData['ObjectID']))
 
-class RequestImagePacket():
+class RequestImagePacket(object):
     ''' a template for a RequestImage packet '''
 
     def __init__(self):
@@ -8853,7 +8853,7 @@ class RequestImagePacket():
 
         return Message('RequestImage', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('RequestImage', Image = self.RequestImage['Image'], DiscardLevel = self.RequestImage['DiscardLevel'], DownloadPriority = self.RequestImage['DownloadPriority'], Packet = self.RequestImage['Packet'], Type = self.RequestImage['Type']))
 
-class DirClassifiedQueryBackendPacket():
+class DirClassifiedQueryBackendPacket(object):
     ''' a template for a DirClassifiedQueryBackend packet '''
 
     def __init__(self):
@@ -8876,7 +8876,7 @@ class DirClassifiedQueryBackendPacket():
 
         return Message('DirClassifiedQueryBackend', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('QueryData', QueryID = self.QueryData['QueryID'], QueryText = self.QueryData['QueryText'], QueryFlags = self.QueryData['QueryFlags'], Category = self.QueryData['Category'], EstateID = self.QueryData['EstateID'], Godlike = self.QueryData['Godlike'], QueryStart = self.QueryData['QueryStart']))
 
-class EstateOwnerMessagePacket():
+class EstateOwnerMessagePacket(object):
     ''' a template for a EstateOwnerMessage packet '''
 
     def __init__(self):
@@ -8899,7 +8899,7 @@ class EstateOwnerMessagePacket():
 
         return Message('EstateOwnerMessage', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], TransactionID = self.AgentData['TransactionID']), Block('MethodData', Method = self.MethodData['Method'], Invoice = self.MethodData['Invoice']), Block('ParamList', Parameter = self.ParamList['Parameter']))
 
-class ChatFromSimulatorPacket():
+class ChatFromSimulatorPacket(object):
     ''' a template for a ChatFromSimulator packet '''
 
     def __init__(self):
@@ -8920,7 +8920,7 @@ class ChatFromSimulatorPacket():
 
         return Message('ChatFromSimulator', Block('ChatData', FromName = self.ChatData['FromName'], SourceID = self.ChatData['SourceID'], OwnerID = self.ChatData['OwnerID'], SourceType = self.ChatData['SourceType'], ChatType = self.ChatData['ChatType'], Audible = self.ChatData['Audible'], Position = self.ChatData['Position'], Message = self.ChatData['Message']))
 
-class LogDwellTimePacket():
+class LogDwellTimePacket(object):
     ''' a template for a LogDwellTime packet '''
 
     def __init__(self):
@@ -8941,7 +8941,7 @@ class LogDwellTimePacket():
 
         return Message('LogDwellTime', Block('DwellInfo', AgentID = self.DwellInfo['AgentID'], SessionID = self.DwellInfo['SessionID'], Duration = self.DwellInfo['Duration'], SimName = self.DwellInfo['SimName'], RegionX = self.DwellInfo['RegionX'], RegionY = self.DwellInfo['RegionY'], AvgAgentsInView = self.DwellInfo['AvgAgentsInView'], AvgViewerFPS = self.DwellInfo['AvgViewerFPS']))
 
-class GroupRoleMembersRequestPacket():
+class GroupRoleMembersRequestPacket(object):
     ''' a template for a GroupRoleMembersRequest packet '''
 
     def __init__(self):
@@ -8960,7 +8960,7 @@ class GroupRoleMembersRequestPacket():
 
         return Message('GroupRoleMembersRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('GroupData', GroupID = self.GroupData['GroupID'], RequestID = self.GroupData['RequestID']))
 
-class LogoutRequestPacket():
+class LogoutRequestPacket(object):
     ''' a template for a LogoutRequest packet '''
 
     def __init__(self):
@@ -8975,7 +8975,7 @@ class LogoutRequestPacket():
 
         return Message('LogoutRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']))
 
-class GroupProfileRequestPacket():
+class GroupProfileRequestPacket(object):
     ''' a template for a GroupProfileRequest packet '''
 
     def __init__(self):
@@ -8993,7 +8993,7 @@ class GroupProfileRequestPacket():
 
         return Message('GroupProfileRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('GroupData', GroupID = self.GroupData['GroupID']))
 
-class ConfirmAuctionStartPacket():
+class ConfirmAuctionStartPacket(object):
     ''' a template for a ConfirmAuctionStart packet '''
 
     def __init__(self):
@@ -9008,7 +9008,7 @@ class ConfirmAuctionStartPacket():
 
         return Message('ConfirmAuctionStart', Block('AuctionData', ParcelID = self.AuctionData['ParcelID'], AuctionID = self.AuctionData['AuctionID']))
 
-class ObjectCategoryPacket():
+class ObjectCategoryPacket(object):
     ''' a template for a ObjectCategory packet '''
 
     def __init__(self):
@@ -9027,7 +9027,7 @@ class ObjectCategoryPacket():
 
         return Message('ObjectCategory', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', LocalID = self.ObjectData['LocalID'], Category = self.ObjectData['Category']))
 
-class RequestObjectPropertiesFamilyPacket():
+class RequestObjectPropertiesFamilyPacket(object):
     ''' a template for a RequestObjectPropertiesFamily packet '''
 
     def __init__(self):
@@ -9046,7 +9046,7 @@ class RequestObjectPropertiesFamilyPacket():
 
         return Message('RequestObjectPropertiesFamily', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', RequestFlags = self.ObjectData['RequestFlags'], ObjectID = self.ObjectData['ObjectID']))
 
-class MoneyBalanceRequestPacket():
+class MoneyBalanceRequestPacket(object):
     ''' a template for a MoneyBalanceRequest packet '''
 
     def __init__(self):
@@ -9064,7 +9064,7 @@ class MoneyBalanceRequestPacket():
 
         return Message('MoneyBalanceRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('MoneyData', TransactionID = self.MoneyData['TransactionID']))
 
-class ForceScriptControlReleasePacket():
+class ForceScriptControlReleasePacket(object):
     ''' a template for a ForceScriptControlRelease packet '''
 
     def __init__(self):
@@ -9079,7 +9079,7 @@ class ForceScriptControlReleasePacket():
 
         return Message('ForceScriptControlRelease', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']))
 
-class SendPostcardPacket():
+class SendPostcardPacket(object):
     ''' a template for a SendPostcard packet '''
 
     def __init__(self):
@@ -9103,7 +9103,7 @@ class SendPostcardPacket():
 
         return Message('SendPostcard', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], AssetID = self.AgentData['AssetID'], PosGlobal = self.AgentData['PosGlobal'], To = self.AgentData['To'], From = self.AgentData['From'], Name = self.AgentData['Name'], Subject = self.AgentData['Subject'], Msg = self.AgentData['Msg'], AllowPublish = self.AgentData['AllowPublish'], MaturePublish = self.AgentData['MaturePublish']))
 
-class RebakeAvatarTexturesPacket():
+class RebakeAvatarTexturesPacket(object):
     ''' a template for a RebakeAvatarTextures packet '''
 
     def __init__(self):
@@ -9117,7 +9117,7 @@ class RebakeAvatarTexturesPacket():
 
         return Message('RebakeAvatarTextures', Block('TextureData', TextureID = self.TextureData['TextureID']))
 
-class DeRezObjectPacket():
+class DeRezObjectPacket(object):
     ''' a template for a DeRezObject packet '''
 
     def __init__(self):
@@ -9143,7 +9143,7 @@ class DeRezObjectPacket():
 
         return Message('DeRezObject', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('AgentBlock', GroupID = self.AgentBlock['GroupID'], Destination = self.AgentBlock['Destination'], DestinationID = self.AgentBlock['DestinationID'], TransactionID = self.AgentBlock['TransactionID'], PacketCount = self.AgentBlock['PacketCount'], PacketNumber = self.AgentBlock['PacketNumber']), Block('ObjectData', ObjectLocalID = self.ObjectData['ObjectLocalID']))
 
-class AvatarPropertiesRequestBackendPacket():
+class AvatarPropertiesRequestBackendPacket(object):
     ''' a template for a AvatarPropertiesRequestBackend packet '''
 
     def __init__(self):
@@ -9160,7 +9160,7 @@ class AvatarPropertiesRequestBackendPacket():
 
         return Message('AvatarPropertiesRequestBackend', Block('AgentData', AgentID = self.AgentData['AgentID'], AvatarID = self.AgentData['AvatarID'], GodLevel = self.AgentData['GodLevel'], WebProfilesDisabled = self.AgentData['WebProfilesDisabled']))
 
-class ImprovedTerseObjectUpdatePacket():
+class ImprovedTerseObjectUpdatePacket(object):
     ''' a template for a ImprovedTerseObjectUpdate packet '''
 
     def __init__(self):
@@ -9179,7 +9179,7 @@ class ImprovedTerseObjectUpdatePacket():
 
         return Message('ImprovedTerseObjectUpdate', Block('RegionData', RegionHandle = self.RegionData['RegionHandle'], TimeDilation = self.RegionData['TimeDilation']), Block('ObjectData', Data = self.ObjectData['Data'], TextureEntry = self.ObjectData['TextureEntry']))
 
-class AgentDropGroupPacket():
+class AgentDropGroupPacket(object):
     ''' a template for a AgentDropGroup packet '''
 
     def __init__(self):
@@ -9194,7 +9194,7 @@ class AgentDropGroupPacket():
 
         return Message('AgentDropGroup', Block('AgentData', AgentID = self.AgentData['AgentID'], GroupID = self.AgentData['GroupID']))
 
-class DirLandQueryBackendPacket():
+class DirLandQueryBackendPacket(object):
     ''' a template for a DirLandQueryBackend packet '''
 
     def __init__(self):
@@ -9218,7 +9218,7 @@ class DirLandQueryBackendPacket():
 
         return Message('DirLandQueryBackend', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('QueryData', QueryID = self.QueryData['QueryID'], QueryFlags = self.QueryData['QueryFlags'], SearchType = self.QueryData['SearchType'], Price = self.QueryData['Price'], Area = self.QueryData['Area'], QueryStart = self.QueryData['QueryStart'], EstateID = self.QueryData['EstateID'], Godlike = self.QueryData['Godlike']))
 
-class CopyInventoryItemPacket():
+class CopyInventoryItemPacket(object):
     ''' a template for a CopyInventoryItem packet '''
 
     def __init__(self):
@@ -9240,7 +9240,7 @@ class CopyInventoryItemPacket():
 
         return Message('CopyInventoryItem', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('InventoryData', CallbackID = self.InventoryData['CallbackID'], OldAgentID = self.InventoryData['OldAgentID'], OldItemID = self.InventoryData['OldItemID'], NewFolderID = self.InventoryData['NewFolderID'], NewName = self.InventoryData['NewName']))
 
-class RegionHandshakePacket():
+class RegionHandshakePacket(object):
     ''' a template for a RegionHandshake packet '''
 
     def __init__(self):
@@ -9287,7 +9287,7 @@ class RegionHandshakePacket():
 
         return Message('RegionHandshake', Block('RegionInfo', RegionFlags = self.RegionInfo['RegionFlags'], SimAccess = self.RegionInfo['SimAccess'], SimName = self.RegionInfo['SimName'], SimOwner = self.RegionInfo['SimOwner'], IsEstateManager = self.RegionInfo['IsEstateManager'], WaterHeight = self.RegionInfo['WaterHeight'], BillableFactor = self.RegionInfo['BillableFactor'], CacheID = self.RegionInfo['CacheID'], TerrainBase0 = self.RegionInfo['TerrainBase0'], TerrainBase1 = self.RegionInfo['TerrainBase1'], TerrainBase2 = self.RegionInfo['TerrainBase2'], TerrainBase3 = self.RegionInfo['TerrainBase3'], TerrainDetail0 = self.RegionInfo['TerrainDetail0'], TerrainDetail1 = self.RegionInfo['TerrainDetail1'], TerrainDetail2 = self.RegionInfo['TerrainDetail2'], TerrainDetail3 = self.RegionInfo['TerrainDetail3'], TerrainStartHeight00 = self.RegionInfo['TerrainStartHeight00'], TerrainStartHeight01 = self.RegionInfo['TerrainStartHeight01'], TerrainStartHeight10 = self.RegionInfo['TerrainStartHeight10'], TerrainStartHeight11 = self.RegionInfo['TerrainStartHeight11'], TerrainHeightRange00 = self.RegionInfo['TerrainHeightRange00'], TerrainHeightRange01 = self.RegionInfo['TerrainHeightRange01'], TerrainHeightRange10 = self.RegionInfo['TerrainHeightRange10'], TerrainHeightRange11 = self.RegionInfo['TerrainHeightRange11']), Block('RegionInfo2', RegionID = self.RegionInfo2['RegionID']), Block('RegionInfo3', CPUClassID = self.RegionInfo3['CPUClassID'], CPURatio = self.RegionInfo3['CPURatio'], ColoName = self.RegionInfo3['ColoName'], ProductSKU = self.RegionInfo3['ProductSKU'], ProductName = self.RegionInfo3['ProductName']))
 
-class AvatarPickerRequestBackendPacket():
+class AvatarPickerRequestBackendPacket(object):
     ''' a template for a AvatarPickerRequestBackend packet '''
 
     def __init__(self):
@@ -9307,7 +9307,7 @@ class AvatarPickerRequestBackendPacket():
 
         return Message('AvatarPickerRequestBackend', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], QueryID = self.AgentData['QueryID'], GodLevel = self.AgentData['GodLevel']), Block('Data', Name = self.Data['Name']))
 
-class AgentWearablesUpdatePacket():
+class AgentWearablesUpdatePacket(object):
     ''' a template for a AgentWearablesUpdate packet '''
 
     def __init__(self):
@@ -9328,7 +9328,7 @@ class AgentWearablesUpdatePacket():
 
         return Message('AgentWearablesUpdate', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID'], SerialNum = self.AgentData['SerialNum']), Block('WearableData', ItemID = self.WearableData['ItemID'], AssetID = self.WearableData['AssetID'], WearableType = self.WearableData['WearableType']))
 
-class SimulatorMapUpdatePacket():
+class SimulatorMapUpdatePacket(object):
     ''' a template for a SimulatorMapUpdate packet '''
 
     def __init__(self):
@@ -9342,7 +9342,7 @@ class SimulatorMapUpdatePacket():
 
         return Message('SimulatorMapUpdate', Block('MapData', Flags = self.MapData['Flags']))
 
-class JoinGroupReplyPacket():
+class JoinGroupReplyPacket(object):
     ''' a template for a JoinGroupReply packet '''
 
     def __init__(self):
@@ -9360,7 +9360,7 @@ class JoinGroupReplyPacket():
 
         return Message('JoinGroupReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('GroupData', GroupID = self.GroupData['GroupID'], Success = self.GroupData['Success']))
 
-class ChatPassPacket():
+class ChatPassPacket(object):
     ''' a template for a ChatPass packet '''
 
     def __init__(self):
@@ -9383,7 +9383,7 @@ class ChatPassPacket():
 
         return Message('ChatPass', Block('ChatData', Channel = self.ChatData['Channel'], Position = self.ChatData['Position'], ID = self.ChatData['ID'], OwnerID = self.ChatData['OwnerID'], Name = self.ChatData['Name'], SourceType = self.ChatData['SourceType'], Type = self.ChatData['Type'], Radius = self.ChatData['Radius'], SimAccess = self.ChatData['SimAccess'], Message = self.ChatData['Message']))
 
-class ObjectGrabUpdatePacket():
+class ObjectGrabUpdatePacket(object):
     ''' a template for a ObjectGrabUpdate packet '''
 
     def __init__(self):
@@ -9408,7 +9408,7 @@ class ObjectGrabUpdatePacket():
 
         return Message('ObjectGrabUpdate', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ObjectData', ObjectID = self.ObjectData['ObjectID'], GrabOffsetInitial = self.ObjectData['GrabOffsetInitial'], GrabPosition = self.ObjectData['GrabPosition'], TimeSinceLast = self.ObjectData['TimeSinceLast']), Block('SurfaceInfo', UVCoord = self.SurfaceInfo['UVCoord'], STCoord = self.SurfaceInfo['STCoord']))
 
-class ObjectPropertiesFamilyPacket():
+class ObjectPropertiesFamilyPacket(object):
     ''' a template for a ObjectPropertiesFamily packet '''
 
     def __init__(self):
@@ -9437,7 +9437,7 @@ class ObjectPropertiesFamilyPacket():
 
         return Message('ObjectPropertiesFamily', Block('ObjectData', RequestFlags = self.ObjectData['RequestFlags'], ObjectID = self.ObjectData['ObjectID'], OwnerID = self.ObjectData['OwnerID'], GroupID = self.ObjectData['GroupID'], BaseMask = self.ObjectData['BaseMask'], OwnerMask = self.ObjectData['OwnerMask'], GroupMask = self.ObjectData['GroupMask'], EveryoneMask = self.ObjectData['EveryoneMask'], NextOwnerMask = self.ObjectData['NextOwnerMask'], OwnershipCost = self.ObjectData['OwnershipCost'], SaleType = self.ObjectData['SaleType'], SalePrice = self.ObjectData['SalePrice'], Category = self.ObjectData['Category'], LastOwnerID = self.ObjectData['LastOwnerID'], Name = self.ObjectData['Name'], Description = self.ObjectData['Description']))
 
-class OnlineNotificationPacket():
+class OnlineNotificationPacket(object):
     ''' a template for a OnlineNotification packet '''
 
     def __init__(self):
@@ -9451,7 +9451,7 @@ class OnlineNotificationPacket():
 
         return Message('OnlineNotification', Block('AgentBlock', AgentID = self.AgentBlock['AgentID']))
 
-class ParcelDisableObjectsPacket():
+class ParcelDisableObjectsPacket(object):
     ''' a template for a ParcelDisableObjects packet '''
 
     def __init__(self):
@@ -9476,7 +9476,7 @@ class ParcelDisableObjectsPacket():
 
         return Message('ParcelDisableObjects', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ParcelData', LocalID = self.ParcelData['LocalID'], ReturnType = self.ParcelData['ReturnType']), Block('TaskIDs', TaskID = self.TaskIDs['TaskID']), Block('OwnerIDs', OwnerID = self.OwnerIDs['OwnerID']))
 
-class LandStatRequestPacket():
+class LandStatRequestPacket(object):
     ''' a template for a LandStatRequest packet '''
 
     def __init__(self):
@@ -9497,7 +9497,7 @@ class LandStatRequestPacket():
 
         return Message('LandStatRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('RequestData', ReportType = self.RequestData['ReportType'], RequestFlags = self.RequestData['RequestFlags'], Filter = self.RequestData['Filter'], ParcelLocalID = self.RequestData['ParcelLocalID']))
 
-class ChatFromViewerPacket():
+class ChatFromViewerPacket(object):
     ''' a template for a ChatFromViewer packet '''
 
     def __init__(self):
@@ -9517,7 +9517,7 @@ class ChatFromViewerPacket():
 
         return Message('ChatFromViewer', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ChatData', Message = self.ChatData['Message'], Type = self.ChatData['Type'], Channel = self.ChatData['Channel']))
 
-class InternalScriptMailPacket():
+class InternalScriptMailPacket(object):
     ''' a template for a InternalScriptMail packet '''
 
     def __init__(self):
@@ -9534,7 +9534,7 @@ class InternalScriptMailPacket():
 
         return Message('InternalScriptMail', Block('DataBlock', From = self.DataBlock['From'], To = self.DataBlock['To'], Subject = self.DataBlock['Subject'], Body = self.DataBlock['Body']))
 
-class TerminateFriendshipPacket():
+class TerminateFriendshipPacket(object):
     ''' a template for a TerminateFriendship packet '''
 
     def __init__(self):
@@ -9552,7 +9552,7 @@ class TerminateFriendshipPacket():
 
         return Message('TerminateFriendship', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('ExBlock', OtherID = self.ExBlock['OtherID']))
 
-class EventInfoRequestPacket():
+class EventInfoRequestPacket(object):
     ''' a template for a EventInfoRequest packet '''
 
     def __init__(self):
@@ -9570,7 +9570,7 @@ class EventInfoRequestPacket():
 
         return Message('EventInfoRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('EventData', EventID = self.EventData['EventID']))
 
-class AgentRequestSitPacket():
+class AgentRequestSitPacket(object):
     ''' a template for a AgentRequestSit packet '''
 
     def __init__(self):
@@ -9589,7 +9589,7 @@ class AgentRequestSitPacket():
 
         return Message('AgentRequestSit', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('TargetObject', TargetID = self.TargetObject['TargetID'], Offset = self.TargetObject['Offset']))
 
-class UserInfoRequestPacket():
+class UserInfoRequestPacket(object):
     ''' a template for a UserInfoRequest packet '''
 
     def __init__(self):
@@ -9604,7 +9604,7 @@ class UserInfoRequestPacket():
 
         return Message('UserInfoRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']))
 
-class GroupNoticesListRequestPacket():
+class GroupNoticesListRequestPacket(object):
     ''' a template for a GroupNoticesListRequest packet '''
 
     def __init__(self):
@@ -9622,7 +9622,7 @@ class GroupNoticesListRequestPacket():
 
         return Message('GroupNoticesListRequest', Block('AgentData', AgentID = self.AgentData['AgentID'], SessionID = self.AgentData['SessionID']), Block('Data', GroupID = self.Data['GroupID']))
 
-class InventoryDescendentsPacket():
+class InventoryDescendentsPacket(object):
     ''' a template for a InventoryDescendents packet '''
 
     def __init__(self):
@@ -9669,7 +9669,7 @@ class InventoryDescendentsPacket():
 
         return Message('InventoryDescendents', Block('AgentData', AgentID = self.AgentData['AgentID'], FolderID = self.AgentData['FolderID'], OwnerID = self.AgentData['OwnerID'], Version = self.AgentData['Version'], Descendents = self.AgentData['Descendents']), Block('FolderData', FolderID = self.FolderData['FolderID'], ParentID = self.FolderData['ParentID'], Type = self.FolderData['Type'], Name = self.FolderData['Name']), Block('ItemData', ItemID = self.ItemData['ItemID'], FolderID = self.ItemData['FolderID'], CreatorID = self.ItemData['CreatorID'], OwnerID = self.ItemData['OwnerID'], GroupID = self.ItemData['GroupID'], BaseMask = self.ItemData['BaseMask'], OwnerMask = self.ItemData['OwnerMask'], GroupMask = self.ItemData['GroupMask'], EveryoneMask = self.ItemData['EveryoneMask'], NextOwnerMask = self.ItemData['NextOwnerMask'], GroupOwned = self.ItemData['GroupOwned'], AssetID = self.ItemData['AssetID'], Type = self.ItemData['Type'], InvType = self.ItemData['InvType'], Flags = self.ItemData['Flags'], SaleType = self.ItemData['SaleType'], SalePrice = self.ItemData['SalePrice'], Name = self.ItemData['Name'], Description = self.ItemData['Description'], CreationDate = self.ItemData['CreationDate'], CRC = self.ItemData['CRC']))
 
-class AbortXferPacket():
+class AbortXferPacket(object):
     ''' a template for a AbortXfer packet '''
 
     def __init__(self):
@@ -9684,7 +9684,7 @@ class AbortXferPacket():
 
         return Message('AbortXfer', Block('XferID', ID = self.XferID['ID'], Result = self.XferID['Result']))
 
-class AtomicPassObjectPacket():
+class AtomicPassObjectPacket(object):
     ''' a template for a AtomicPassObject packet '''
 
     def __init__(self):
@@ -9699,7 +9699,7 @@ class AtomicPassObjectPacket():
 
         return Message('AtomicPassObject', Block('TaskData', TaskID = self.TaskData['TaskID'], AttachmentNeedsSave = self.TaskData['AttachmentNeedsSave']))
 
-class DirPeopleReplyPacket():
+class DirPeopleReplyPacket(object):
     ''' a template for a DirPeopleReply packet '''
 
     def __init__(self):
@@ -9723,7 +9723,7 @@ class DirPeopleReplyPacket():
 
         return Message('DirPeopleReply', Block('AgentData', AgentID = self.AgentData['AgentID']), Block('QueryData', QueryID = self.QueryData['QueryID']), Block('QueryReplies', FirstName = self.QueryReplies['FirstName'], LastName = self.QueryReplies['LastName'], Group = self.QueryReplies['Group'], Online = self.QueryReplies['Online'], Reputation = self.QueryReplies['Reputation']))
 
-class AgentAlertMessagePacket():
+class AgentAlertMessagePacket(object):
     ''' a template for a AgentAlertMessage packet '''
 
     def __init__(self):

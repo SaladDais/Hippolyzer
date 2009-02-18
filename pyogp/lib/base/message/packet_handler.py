@@ -26,7 +26,7 @@ from pyogp.lib.base.utilities.events import Event
 logger = getLogger('...base.message.packet_handler')
 log = logger.log
 
-class PacketHandler():
+class PacketHandler(object):
     """ general class handling individual packets """
 
     def __init__(self):
@@ -65,7 +65,7 @@ class PacketHandler():
             #log(INFO, "Received an unhandled packet: %s" % (packet.name))
             pass
 
-class PacketReceivedNotifier():
+class PacketReceivedNotifier(object):
     """ received TestMessage packet """
 
     def __init__(self, packet_name):

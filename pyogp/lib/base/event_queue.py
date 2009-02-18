@@ -154,7 +154,7 @@ class EventQueueHandler(object):
 
         data = ###
 
-class EventQueueNotifier():
+class EventQueueNotifier(object):
     """ received TestMessage packet """
 
     def __init__(self):

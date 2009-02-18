@@ -13,7 +13,7 @@ from logging import getLogger, StreamHandler, Formatter, CRITICAL, ERROR, WARNIN
 logger = getLogger('parse_packet')
 log = logger.log
 
-class parsingStats():
+class parsingStats(object):
 
 #Todo: for this standalone script, move this class instance to global, move logging to the class itself
 
