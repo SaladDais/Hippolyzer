@@ -124,7 +124,7 @@ class UDPPacketDeserializer(object):
         #NEED TO GET THE GLOBAL TEMPLATE DICT
         template_dict = TemplateDictionary()
         result = template_dict.get_template_by_pair(frequency, num)
-        
+
         return result
 
     def __decode_frequency(self, header):

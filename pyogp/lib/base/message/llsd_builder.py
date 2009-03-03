@@ -34,7 +34,7 @@ class LLSDMessageBuilder(object):
 
     def is_built(self):
         return self.has_been_built
-                 
+
     def build_message(self):
         """ this does not serialize it for this type of builder. The message
             will be put in standard Python form and will need to be formatted
@@ -44,7 +44,7 @@ class LLSDMessageBuilder(object):
             #message can have multiple of the same block names, so
             #message actually holds a block list
             block_list = self.current_msg.blocks[block]
-            
+
             for block_data in block_list:
                 #set up the block list
                 if block_data.name not in msg:
@@ -58,7 +58,7 @@ class LLSDMessageBuilder(object):
                     #the variable holds the key-value pairs of data
                     #for the block
                     block[variable.name] = variable.data
-                    
+
         self.has_been_built = True
         return msg, len(msg)
 

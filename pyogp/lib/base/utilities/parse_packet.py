@@ -37,7 +37,7 @@ class parsingStats(object):
         self.failed.append(data)
 
     def __repr__(self):
-        
+
         string = "\n\n-----------------------------\n"
         string = string + "          Parsing Summary\n"
         string = string + "-----------------------------\n\n"
@@ -107,7 +107,7 @@ def process_file(options, stats):
                     process_stream(items[2][7:len(items[2])-3], packetSource, stats)
                     isSLclientpacket = False
                     isSLsimpacket = False
-                       
+
     else:
         handle = open(options.file,"r")
         # normal hex file, 1 packet of hex per line    
@@ -118,7 +118,7 @@ def process_file(options, stats):
 def process_wiresharkpacket(packet):
 
     print packet.__dict__
-    
+
 
 def process_stream(data, source=None, stats = None):
 
@@ -188,33 +188,19 @@ def display_packet(packet, data, source=None):
     print 'Packet Name:%s%s' % (delim, packet.name)
 
     for k in packet.__dict__:
-        
+
         if k == 'name': pass
         if k == 'message_data':
             print k
             for ablock in packet.message_data.blocks:
                 print "%sBlock Name:%s%s" % (delim, delim, ablock)
                 for somevars in packet.message_data.blocks[ablock]:
-                    #print somevars.var_list
+
                     for avar in somevars.var_list:
-                        #print somevars.var_list
-                        #print somevars.vars
                         zvar = somevars.get_variable(avar)
                         print "%s%s%s:%s%s" % (delim, delim, zvar.name, delim, zvar)
-                        #print zvar.data
+
     print "~~~~~~~~~~~~~~~~~~~"
-
-        #print '%s:\t%s' % (k, packet.__dict__[k])
-        #print '%s:\t%s (%s)' (k, packet.__dict__[k], type(packet.__dict__[k]))
-
-    '''
-    for k,v in packet.__dict__:
-        if type(v) == type(object)
-            print 'Block Name:\t%s' % (v.name)
-            for k, v in getattr(packet, k):
-    '''               
-
-    
 
 def enable_logging():
 

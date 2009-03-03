@@ -1,0 +1,9 @@
+Region
+=====
+
+The 'region' object creation
+============================
+
+First, initialize the region
+    >>> from pyogp.lib.base.region import Region
+    >>> region = Region()

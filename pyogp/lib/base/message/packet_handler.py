@@ -32,20 +32,13 @@ class PacketHandler(object):
     def __init__(self):
         """ i do nothing """
 
-        pass
+        self.handlers = {}
 
-    def _register_callback(self, packet_name):
+    def _register(self, packet_name):
 
         log(DEBUG, 'Creating a callback watcher for %s' % (packet_name))
 
-        # create an attribute that is the event notifier (PacketReceivedNotifier)
-        # TemplateDictionary.get_template_list() will provide all the proper names
-        # for use here (aka packetnames)
-        if not self.__dict__.has_key(packet_name + "_Received"):
-            setattr(self, packet_name + "_Received", PacketReceivedNotifier(packet_name))
-
-        # return the attribute (an instance of PacketReceivedNotifier)
-        return getattr(self, packet_name + "_Received")
+        return self.handlers.setdefault(packet_name + "_Received", PacketReceivedNotifier(packet_name))
 
     def _handle(self, packet):
         """ essentially a case statement to pass packets to event notifiers in the form of self attributes """
@@ -53,15 +46,15 @@ class PacketHandler(object):
         try:
 
             # get the attribute of the self object called packet.name + Received
-            handler = getattr(self, packet.name + "_Received")
+            handler = self.handlers[packet.name + "_Received"]
 
             # Handle the packet if we have subscribers
             # Conveniently, this will also enable verbose packet logging
             if len(handler) > 0:
-                log(DEBUG, 'Handling packet: %s' % (packet.name))
+                #log(DEBUG, 'Handling packet: %s' % (packet.name))
                 handler(packet)
 
-        except AttributeError:
+        except KeyError:
             #log(INFO, "Received an unhandled packet: %s" % (packet.name))
             pass
 
@@ -71,6 +64,9 @@ class PacketReceivedNotifier(object):
     def __init__(self, packet_name):
         self.event = Event()
         self.packet_name = packet_name
+
+    def subscribe(self, *args, **kwdargs):
+        self.event.subscribe(*args, **kwdargs)
 
     def received(self, packet):
 

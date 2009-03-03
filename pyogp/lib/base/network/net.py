@@ -30,14 +30,14 @@ class NetUDPClient(object):
 
     def get_sender(self):
         return self.sender
-    
+
     def send_packet(self, sock, send_buffer, host):
         #print "Sending to " + str(host.ip) + ":" + str(host.port) + ":" + send_buffer
         if send_buffer == None:
             raise Exception("No data specified")
 
         bytes = sock.sendto(send_buffer, (host.ip, host.port))
-    
+
     def receive_packet(self, sock):
         buf = 10000
         try:

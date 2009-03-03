@@ -33,22 +33,22 @@ except ImportError:
     print "Error importing eventlet"
     sys.exit()
 
-from exc import HTTPError
+from pyogp.lib.base.exc import HTTPError
 
 from webob import Request, Response
 
 class StdLibClient(object):
     """ implement a REST client on top of urllib2 """
-    
+
     def GET(self, url, headers={}):
         """ GET a resource """ 
-       
+
         request = urllib2.Request(url, headers=headers)
         try:
             result = urllib2.urlopen(request)
         except urllib2.HTTPError, error:
             raise HTTPError(error.code,error.msg,error.fp)
-        
+
         # convert back to webob
         headerlist = result.headers.items()
         status = "%s %s" %(result.code, result.msg)
@@ -57,13 +57,13 @@ class StdLibClient(object):
 
     def POST(self, url, data, headers={}):
         """ POST data to a resource """
-       
+
         request = urllib2.Request(url, data, headers=headers)
         try:
             result = urllib2.urlopen(request)
         except urllib2.HTTPError, error:
             raise HTTPError(error.code,error.msg,error.fp)
-        
+
         # convert back to webob
         headerlist = result.headers.items()
         status = "%s %s" %(result.code, result.msg)
@@ -76,13 +76,13 @@ class EventletClient(object):
 
     def GET(self, url, headers={}):
         """ GET a resource """ 
-       
+
         #request = urllib2.Request(url, headers=headers)
         try:
             result = httpc.get(url, headers=headers)
         except Exception, e:
             raise e
-        
+
         # convert back to webob
         headerlist = result.headers.items()
         status = "%s %s" %(result.code, result.msg)
@@ -91,14 +91,14 @@ class EventletClient(object):
 
     def POST(self, url, data, headers={}):
         """ POST data to a resource """
-       
+
         #request = urllib2.Request(url, data, headers=headers)
         try:
             (status, msg, body) = httpc.post_(url, data=data, headers=headers)
             print msg.__dict__
         except Exception, e:
             raise e
-        
+
         # convert back to webob
         headerlist = msg.dict
         status = "%s %s" %(status, msg.status)

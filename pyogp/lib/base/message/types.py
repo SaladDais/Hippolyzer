@@ -48,7 +48,7 @@ class MsgBlockType(object):
         if typenum == None:
             return "None"
         return cls.MBT_String_List[typenum]
-    
+
 
 class PackFlags(object):
     LL_ZERO_CODE_FLAG = 0x80
@@ -118,8 +118,8 @@ class MsgType(object):
     @classmethod
     def MVT_as_string(cls,typenum):
         return cls.MVT_String_List[typenum]
-    
-    
+
+
 
 #TODO should this be changed? Less switch-style and more object-style?
 def sizeof(var):

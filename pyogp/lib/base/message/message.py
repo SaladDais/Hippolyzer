@@ -48,4 +48,4 @@ class Block(MsgBlockData):
             variable = MsgVariableData(variable_name, variable_data)
             self.add_variable(variable)
 
-    
+

@@ -21,7 +21,7 @@ $/LicenseInfo$
 import unittest
 import doctest
 
-optionflags = doctest.REPORT_ONLY_FIRST_FAILURE | doctest.ELLIPSIS
+optionflags = doctest.ELLIPSIS
 
 # setup functions
 
@@ -31,9 +31,10 @@ def setUp(self):
     #from pyogp.lib.base.network.mockup_client import MockupClient
     #from pyogp.lib.base.network.stdlib_client import StdLibClient
     #from pyogp.lib.base.tests.base import AgentDomain
-    
+
 def tearDown(self):
-    print "down"
+    #print "down"
+    pass
 
 def test_suite():
     suite = unittest.TestSuite()

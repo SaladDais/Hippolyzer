@@ -40,13 +40,13 @@ class PacketTest(unittest.TestCase):
     def test_numMedium(self):
         num = message_template.decodeNum('\xFF\x01')
         assert num == 1, 'Outcome: ' + str(num) + ' Expected: 1'
-            
+
     def test_numHigh(self):
         num = message_template.decodeNum('\x01')
         assert num == 1, 'Outcome: ' + str(num) + ' Expected: 1'
-        
+
     #pass cases
-    
+
     def test_DecodeLow(self):
         assert message_template.decodeHeader('\xFF\xFF\x01')[0] == 'TestMessage', 'wrong message_template for 0xFFFF01: expected TestMessage'
 
@@ -89,7 +89,7 @@ class PacketTest(unittest.TestCase):
     def test_encodePackIDLow(self):
         pID = message_template.encodePacketID('Low', 1)
         assert pID == '\xFF\xFF\x00\x01', 'Outcome: ' + repr(pID) + ' Expected: ' + r'\xFF\xFF\x00\x01'
-        
+
     def test_encodePackIDMedium(self):
         pID = message_template.encodePacketID('Medium', 1)
         assert pID == '\xFF\x01', 'Outcome: ' + repr(pID) + ' Expected: ' + r'\xFF\x01'
@@ -101,7 +101,7 @@ class PacketTest(unittest.TestCase):
     def test_encodeHeaderLow(self):
         header = message_template.encodeHeader(message_template.LL_NONE, 1, 'Low', 1)
         assert header == '\x00\x00\x00\x00\x01\x00\xff\xff\x00\x01', 'Outcome: ' + repr(header) + ' Expected: ' + r'\x00\x00\x00\x00\x01\x00\xff\xff\x00\x01'
-        
+
     def test_encodeHeaderMedium(self):
         header = message_template.encodeHeader(message_template.LL_NONE, 1, 'Medium', 1)
         assert header == '\x00\x00\x00\x00\x01\x00\xff\x01', 'Outcome: ' + repr(header) + ' Expected: ' + r'\x00\x00\x00\x00\x01\x00\xff\x01'
@@ -113,7 +113,7 @@ class PacketTest(unittest.TestCase):
     def test_encodeHeaderNameLow(self):
         header = message_template.encodeHeaderName(message_template.LL_NONE, 1, 'TestMessage')
         assert header == '\x00\x00\x00\x00\x01\x00\xff\xff\x00\x01', 'Outcome: ' + repr(header) + ' Expected: ' + r'\x00\x00\x00\x00\x01\x00\xff\xff\x00\x01'
-        
+
     def test_encodeHeaderNameMedium(self):
         header = message_template.encodeHeaderName(message_template.LL_NONE, 1, 'ObjectAdd')
         assert header == '\x00\x00\x00\x00\x01\x00\xff\x01', 'Outcome: ' + repr(header) + ' Expected: ' + r'\x00\x00\x00\x00\x01\x00\xff\x01'

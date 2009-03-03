@@ -25,10 +25,10 @@ class Event(object):
 
         self.subscribers = []
 
-    def subscribe(self, handler):
+    def subscribe(self, handler, *args, **kwargs):
         """ establish the subscribers (handlers) to this event """
 
-        self.subscribers.append(handler)
+        self.subscribers.append( ( handler, args, kwargs) )
 
         return self
 
@@ -43,8 +43,8 @@ class Event(object):
 
     def notify(self, args):
 
-        for instance in self.subscribers:
-            instance(args)
+        for instance, inner_args, kwargs in self.subscribers:
+            instance(args, *inner_args, **kwargs)
 
     def getSubscriberCount(self):
 

@@ -46,7 +46,7 @@ class Circuit(object):
         as well as circuit information. """
     """ Some statistics things we may need: bytes/packets in, bytes/packets out,
         unacked packet count/bytes, acked packet count/bytes"""
-    
+
     def __init__(self, host, pack_in_id):
         self.host = host
         self.circuit_code = 0
@@ -64,7 +64,7 @@ class Circuit(object):
         self.unack_packet_bytes  = 0
         self.final_retry_packets = {} #packets we want acked, can't be resent
         self.final_packet_count  = 0
-        
+
     def next_packet_id(self):
         self.last_packet_out_id += 1
         return self.last_packet_out_id
@@ -101,7 +101,7 @@ class Circuit(object):
         if packet_id in self.unacked_packets:
             del self.unacked_packets[packet_id]
             self.unack_packet_count -= 1
-        
+
         if packet_id in self.final_retry_packets:
             del self.final_retry_packets[packet_id]
             self.final_packet_count -= 1
@@ -110,7 +110,7 @@ class Circuit(object):
         """ set a packet_id that this circuit needs to eventually ack
             (need to send ack out)"""
         self.acks.append(packet_id)
-        
+
     def add_reliable_packet(self, packet):
         """ add a packet that we want to be acked
             (want an incoming ack) """
@@ -130,7 +130,7 @@ class CircuitManager(object):
     def __init__(self):
         self.circuit_map = {}
         self.unacked_circuits = {}
-        
+
     def get_unacked_circuits(self):
         #go through circuits, if it has any unacked packets waiting ack, add
         #to a list
@@ -141,13 +141,13 @@ class CircuitManager(object):
             return self.circuit_map[(host.ip, host.port)]
 
         return None
-    
+
     def add_circuit(self, host, packet_in_id):
         circuit = Circuit(host, packet_in_id)
-        
+
         self.circuit_map[(host.ip, host.port)] = circuit
         return circuit
-        
+
     def remove_circuit_data(self, host):
         if (host.ip, host.port) in self.circuit_map:
             del self.circuit_map[(host.ip, host.port)]

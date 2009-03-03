@@ -57,14 +57,14 @@ class DataUnpacker(object):
                 data = data[start_index:start_index+var_size]
             else:
                 data = data[start_index:start_index+sizeof(data_type)]
-            
+
         if data_type in self.unpacker:
             unpack_tup = self.unpacker[data_type]
             endian = unpack_tup[0]
             #override endian
             if endian_type != EndianType.NONE:
                 endian = endian_type
-            
+
             unpack = unpack_tup[1]
             if callable(unpack):
                 return unpack(endian, data, var_size)
@@ -101,7 +101,7 @@ class DataUnpacker(object):
 
     def __unpack_string(self, endian, pack_string, var_size):
         return pack_string
-    
+
     def __unpack_fixed(self, endian, data, var_size): #LDE 23oct2008 handler for MVT_FIXED
         return data
-            
+

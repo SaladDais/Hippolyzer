@@ -6,10 +6,10 @@ and a SeedCapability.
 
 We can instantiate a SeedCapability like this:
 
-    >>> from pyogp.lib.base.network.mockup_client import MockupClient
+    >>> from pyogp.lib.base.tests.mockup_client import MockupClient
     >>> from pyogp.lib.base.caps import SeedCapability, Capability
-    >>> from pyogp.lib.base.tests.base import AgentDomain
-    >>> client = MockupClient(AgentDomain())
+    >>> from pyogp.lib.base.tests.base import MockAgentDomain
+    >>> client = MockupClient(MockAgentDomain())
     >>> seed = SeedCapability('seed', 'http://127.0.0.1:12345/seed_cap', client)
 
 We assume that we got the seed capability URL itself from login or some other service.
@@ -106,7 +106,7 @@ Now we test if network errors are handled correctly::
     Traceback (most recent call last):
     ...
     ResourceError: Error using 'POST' on resource 'http://127.0.0.1:12345/cap/error': Internal Server Error (500)
-    
+
 
 And some 404:
 

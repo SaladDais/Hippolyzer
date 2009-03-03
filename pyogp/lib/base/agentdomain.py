@@ -37,7 +37,7 @@ log = logger.log
 
 class AgentDomain(object):
     """an agent domain endpoint"""
-    
+
     def __init__(self, uri, restclient = None):
         """ initialize the agent domain endpoint """
 
@@ -52,31 +52,31 @@ class AgentDomain(object):
         self.credentials = None
 
         self.connectedStatus = False
-        
+
         self.capabilities = {}
         self.agentdomain_caps_list = ['rez_avatar/place']
         self._isEventQueueRunning = False
 
         self.seed_cap = None
         log(DEBUG, 'initializing agent domain: %s' %self)
-        
+
     def login(self, credentials):
         """ login to the agent domain """
-        
+
         response = self.post_to_loginuri(credentials)
-        
+
         self.eval_login_response(response)   
-        
+
     def post_to_loginuri(self, credentials):
         """ post to login_uri and return response """
-        
+
         self.credentials = credentials
         log(INFO, 'Logging in to %s as %s %s' % (self.login_uri, self.credentials.firstname, self.credentials.lastname))
-        
+
         payload = credentials.serialize()
         content_type = credentials.content_type
         headers = {'Content-Type': content_type}
-        
+
         # now create the request. We assume for now that self.uri is the login uri
         # TODO: make this pluggable so we can use other transports like eventlet in the future
         # TODO: add logging and error handling
@@ -88,12 +88,12 @@ class AgentDomain(object):
                 raise ResourceNotFound(self.login_uri)
             else:
                 raise ResourceError(self.login_uri, error.code, error.msg, error.fp.read(), method="POST")
-        
+
         return response
 
     def eval_login_response(self, response):
         """ parse the login uri response """
-    
+
         seed_cap_url_data = self.parse_login_response(response)
         try:
             seed_cap_url = seed_cap_url_data['agent_seed_capability']
@@ -102,16 +102,16 @@ class AgentDomain(object):
             log(INFO, 'logged in to %s' % (self.login_uri))
         except KeyError:
             raise UserNotAuthorized(self.credentials)
-        
+
     def parse_login_response(self, response):   
         """ parse the login uri response and returns deserialized data """
-       
+
         data = llsd.parse(response.body)
-        
+
         log(DEBUG, 'deserialized login response body = %s' % (data))
-            
+
         return data
-                
+
     def place_avatar(self, region_uri, position=[117,73,21]):
         """ handles the rez_avatar/place cap on the agent domain, populates some initial region attributes """
 
@@ -129,7 +129,7 @@ class AgentDomain(object):
             log(INFO, 'Region_uri %s returned a seed_cap of %s' % (region_uri, result['region_seed_capability']))
 
         log(DEBUG, 'Full rez_avatar/place response is: %s' % (result))
-        
+
         return result
 
     def get_agentdomain_capabilities(self):
@@ -150,7 +150,7 @@ class AgentDomain(object):
 
         self._isEventQueueRunning = True
 
-        
+
         if self.capabilities['event_queue'] == None:
             raise RegionCapNotAvailable('event_queue')
             # change the exception here (add a new one)
@@ -183,18 +183,18 @@ class EventQueue(AgentDomain):
     def __init__(self, context):
         """initialize this adapter"""
         self.context = context 
-        
+
         # let's retrieve the cap we need
         self.seed_cap = self.context.seed_cap
         self.cap = self.seed_cap.get(['event_queue'])['event_queue']
-        
+
         log(DEBUG, 'initializing event_queue for agent domain: %s' % (self.cap.public_url))
 
-        
+
     def __call__(self, data = {}):
         """initiate the event queue get request"""
         result = self.cap.POST(data)
         return result
-        
-    
-    
+
+
+

@@ -29,9 +29,9 @@ from pyogp.lib.base import exc
 
 class TemplateDictionary(object):
     """the dictionary with all known templates"""
-    
+
     #grok.implements(ITemplateDictionary)
-    
+
     def __init__(self, template_list=None):
 
         if template_list == None:
@@ -43,7 +43,7 @@ class TemplateDictionary(object):
 
         # maps name to template
         self.message_templates = {}
-        
+
         # maps (freq,num) to template
         self.message_dict = {}
 
@@ -70,7 +70,7 @@ class TemplateDictionary(object):
                 frequency_str = "Medium"
             elif template.frequency == MsgFrequency.HIGH_FREQUENCY_MESSAGE:
                 frequency_str = "High"
-                
+
             self.message_dict[(frequency_str, \
                                template.msg_num)] = template
 
@@ -103,7 +103,7 @@ class TemplateDictionary(object):
             return self.message_templates[template_name]
 
         return None
-    
+
     def get_template_by_pair(self, frequency, num):
         if (frequency, num) in self.message_dict:
             return self.message_dict[(frequency, num)]
@@ -112,5 +112,5 @@ class TemplateDictionary(object):
 
     def __getitem__(self, i):
         return self.get_template(i)
-    
+
 

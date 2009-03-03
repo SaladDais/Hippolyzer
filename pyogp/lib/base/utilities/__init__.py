@@ -17,5 +17,3 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 
 $/LicenseInfo$
 """
-
-pass

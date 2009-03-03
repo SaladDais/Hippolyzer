@@ -1,5 +1,5 @@
 """
-@file exc.py
+@file __init__.py
 @date 2008-09-16
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
@@ -18,18 +18,3 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 $/LicenseInfo$
 """
 
-
-class HTTPError(Exception):
-    """an HTTP error"""
-    
-    def __init__(self, code, msg, fp, details=""):
-        """initialize this exception"""
-        self.code = code
-        self.msg = msg
-        self.details = details
-        self.fp = fp
-        
-    def __str__(self):
-        """return a string representation"""
-        return "%s %s" %(self.code, self.msg)
-    

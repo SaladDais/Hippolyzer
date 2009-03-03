@@ -35,7 +35,7 @@ class UDPPacket(object):
         self.trusted            = False
         self.reliable           = False
         self.resent             = False
-        
+
         self.socket             = 0
         self.retries            = 1 #by default
         self.host               = None
@@ -44,3 +44,29 @@ class UDPPacket(object):
     def add_ack(self, packet_id):
         self.acks.append(packet_id)
         self.num_acks += 1
+
+    def get_var(self, block, variable):
+
+        return self.message_data.blocks[block].vars[variable]
+
+    def __repr__(self):
+        """ a string representation of a packet """
+
+        string = ''
+        delim = '    '
+
+        for k in self.__dict__:
+
+            if k == 'name':
+                string += '\nName: %s\n' % (self.name)
+            if k == 'message_data':
+
+                for ablock in self.message_data.blocks:
+                    string += "%sBlock Name:%s%s\n" % (delim, delim, ablock)
+                    for somevars in self.message_data.blocks[ablock]:
+
+                        for avar in somevars.var_list:
+                            zvar = somevars.get_variable(avar)
+                            string += "%s%s%s:%s%s\n" % (delim, delim, zvar.name, delim, zvar)
+
+        return string

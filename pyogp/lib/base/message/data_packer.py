@@ -53,7 +53,7 @@ class DataPacker(object):
             #override endian
             if endian_type != EndianType.NONE:
                 endian = endian_type
-            
+
             pack = pack_tup[1]
             if callable(pack):
                 return pack(endian, data)

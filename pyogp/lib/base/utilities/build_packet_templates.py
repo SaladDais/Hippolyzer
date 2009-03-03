@@ -47,44 +47,81 @@ print ''
 template = TemplateDictionary()
 
 for i in template.message_dict:
-    name = template.message_dict[i].get_name()
-    blocks = template.message_dict[i].get_blocks()
-    blocks_dict = {}
-    message_String = "Message(\'%s\'" % (name, )
-    
-    for block in blocks:
-        blocks_dict[block] = block.get_variables()
 
-    #print 'class %sPacket(MsgData):' % (name)
+    name = template.message_dict[i].get_name()
+
+    blocks = template.message_dict[i].get_blocks()
+
+    block_variables = {}
+
+    call_instance_contents_string = ''
+    class_block_parameters_string = ''
+
+    for block in blocks:
+        block_variables[block] = block.get_variables()
+        if block.get_block_type_as_string() == 'Single':
+            class_block_parameters_string += ', %sBlock = {}' % (block.get_name())
+        else:
+            # if there may be multiple blocks of one type, accept a list
+            class_block_parameters_string += ', %sBlocks = []' % (block.get_name())
+
     print 'class %sPacket(object):' % (name)
     print '    \'\'\' a template for a %s packet \'\'\'' % (name)
     print ''
-    print '    def __init__(self):'
-    #print ''
+    print '    def __init__(self%s):' % (class_block_parameters_string)
+    print '        \"\"\" allow passing in lists or dictionaries of block data \"\"\"'
     print '        self.name = \'%s\'' % (name)
-    #print '        self.blocks = []'
-    for block in blocks:
-        message_String = message_String + ", Block(\'%s\'" % (block.get_name())
-        print ''
-        #print '        # New %s block' % (block.get_name())
-        #print '        # should this move to a self.%s = MsgBlockData(\'%s\') model?' % (block.get_name(), block.get_name())
-        print '        self.%s = {}    # New %s block' % (block.get_name(), block.get_name())
-        #print '        self.%s = MsgBlockData(\'%s\')' % (block.get_name(), block.get_name())
-        #print ''
-        for var in block.get_variables():
-            message_String = message_String + ", %s = self.%s[\'%s\']" % (var.name, block.get_name(), var.name)
 
-            print '        self.%s[\'%s\'] = %s    # %s' % (block.get_name(), var.name, 'None', var.get_type_as_string())
-        message_String = message_String + ')'
-        #print ''
-        #print '        self.blocks.append(self.%s)' % (block.get_name())
-        #print ''
-    message_String = message_String + ')'
+    for block in blocks:
+
+        print ''
+
+        if block.get_block_type_as_string() == 'Single':
+
+            call_instance_contents_string += '        args.append(Block(\'%s\'' % (block.get_name())
+
+            print '        if %sBlock == {}:' % (block.get_name())
+            print '            # initialize an empty block like dict for blocks that occur only once in the packet'
+            print '            self.%s = {}    # New %s block' % (block.get_name(), block.get_name())
+
+            for var in block.get_variables():
+                print '            self.%s[\'%s\'] = %s    # %s' % (block.get_name(), var.name, 'None', var.get_type_as_string())
+                call_instance_contents_string += ', %s=self.%s[\'%s\']' % (var.name, block.get_name(), var.name)
+
+            print '        else:'
+            print '            self.%s = %sBlock' % (block.get_name(), block.get_name())
+
+            call_instance_contents_string += '))\n'
+
+        else:
+
+            call_instance_contents_string += '        for block in self.%sBlocks:\n' % (block.get_name())
+            call_instance_contents_string += '            args.append(Block(\'%s\'' % (block.get_name(),)
+
+            print '        if %sBlocks == []:' % (block.get_name())
+            print '            # initialize an empty list for blocks that may occur > 1 time in the packet'
+            print '            self.%sBlocks = []    # list to store multiple and variable block types' % (block.get_name())
+            print ''
+            print '            # a sample block instance that may be appended to the list'
+            #print '            \'\'\''
+            print '            self.%s = {}' % (block.get_name())
+
+            for var in block.get_variables():
+                print '            self.%s[\'%s\'] = %s    # %s' % (block.get_name(), var.name, 'None', var.get_type_as_string())
+                call_instance_contents_string += ', %s=%s[\'%s\']' % (var.name, 'block', var.name)
+
+            #print '            \'\'\''
+            print '        else:'
+            print '            self.%sBlocks = %sBlocks' % (block.get_name(), block.get_name())
+
+            call_instance_contents_string += '))\n'
+
     print ''
     print '    def __call__(self):'
-    print '        \'\'\' transforms the attributes into a Message \'\'\''
+    print '        \'\'\' transforms the object into a Message \'\'\''
     print ''
-    print '        return %s' % (message_String)
-    #print message_String
+    print '        args = []'
+    print '%s' % (call_instance_contents_string)
+    print '        return Message(\'%s\', args)' % (name)
+
     print ''
- 

@@ -28,7 +28,7 @@ from pyogp.lib.base.message.message import Message, Block
 from pyogp.lib.base.message.packet import UDPPacket
 
 class TestHost(unittest.TestCase):
-    
+
     def tearDown(self):
         pass
 
@@ -44,7 +44,7 @@ class TestHost(unittest.TestCase):
         assert host.is_ok() == False, "Bad host thinks it is good"
 
 class TestCircuit(unittest.TestCase):
-    
+
     def tearDown(self):
         pass
 
@@ -72,7 +72,7 @@ class TestCircuit(unittest.TestCase):
         assert len(circuit.final_retry_packets) == 0, "Has incorrect final unacked"
 
 class TestCircuitManager(unittest.TestCase):
-    
+
     def tearDown(self):
         pass
 
@@ -96,7 +96,7 @@ class TestCircuitManager(unittest.TestCase):
                "Incorrect circuit alive state"
         assert manager.is_circuit_alive(host) == True, \
                "Incorrect circuit alive state 2"
-                
+
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()

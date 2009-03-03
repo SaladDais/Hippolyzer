@@ -50,7 +50,7 @@ class MessageTemplateParser(object):
 
     def _parse_template_file(self):
         count = 0
-        
+
         self.template_file.seek(0)
         lines = self.template_file
         #results = re.match("^\t([^\t{}]+.+)",line) #gets packet headers
@@ -73,14 +73,14 @@ class MessageTemplateParser(object):
                     parts = version_test.group(1)
                     parts = parts.split()
                     self.version = float(parts[0])
-            
+
             #get packet header, starting a new packet
             # ToDo: this regex needs to accomodate the case where 4 spaces are used in place of a tab and start of line
             packet_header = re.match("^\t([^\t{}]+.+)",line) #gets packet headers
             if packet_header != None:
                 parts = packet_header.group(1)
                 parts = parts.split()
-                
+
                 current_template = template.MessageTemplate(parts[0])
                 frequency = None
                 if parts[1] == 'Low':
@@ -93,7 +93,7 @@ class MessageTemplateParser(object):
                     frequency = MsgFrequency.FIXED_FREQUENCY_MESSAGE
 
                 current_template.frequency = frequency
-                
+
                 msg_num = string.atoi(parts[2],0)
                 if frequency == MsgFrequency.FIXED_FREQUENCY_MESSAGE:   
                     #have to do this because Fixed messages are stored as a long in the template
@@ -150,7 +150,7 @@ class MessageTemplateParser(object):
 
                 block_type = None
                 block_num = 0
-                
+
                 if parts[1] == 'Single':
                     block_type = MsgBlockType.MBT_SINGLE
                 elif parts[1] == 'Multiple':
@@ -164,14 +164,14 @@ class MessageTemplateParser(object):
                 current_block.number = block_num
 
                 current_template.add_block(current_block)
-              
+
             block_data  = re.match("^\t\t([{}]+.+)",line)  #gets block data
             if block_data != None:
                 parts = block_data.group(1)
                 parts = parts.split()
                 parts.remove('{')
                 parts.remove('}')
-    
+
                 type_string = parts[1]
                 var_type = None
                 var_size = -1
@@ -223,7 +223,7 @@ class MessageTemplateParser(object):
                 #if the size hasn't been read yet, then read it from message_types
                 if var_size == -1:
                     var_size = sizeof(var_type)
-                
+
                 #LDE 23oct2008 add var+type to creation of MTV object for subsequent formmating goodness
                 current_var = template.MessageTemplateVariable(parts[0], var_type, var_size)
                 current_block.add_variable(current_var)
@@ -243,7 +243,7 @@ def print_packet_names(packet_list):
     for counters in frequency_counter:
         print counters, frequency_counter[counters]
     print
-    
+
 def print_packet_list(packet_list):
     for packet in packet_list:
         print '================================================================================='
@@ -251,7 +251,7 @@ def print_packet_list(packet_list):
                 str(packet.get_message_number()) + ' ' + packet.get_message_hex_num() + \
                 ' ' + packet.get_message_trust_as_string() + ' ' + \
                 packet.get_message_encoding_as_string() + ' ' + packet.get_deprecation_as_string()
-        
+
         for block in packet.get_blocks():
 
             print '\t' + str(block.get_name()) + ' ' + block.get_block_type_as_string() + ' ' + \
@@ -282,6 +282,6 @@ def main():
     p_typelist = get_all_types(templates)
     pprint.pprint(p_typelist)
     return
-    
+
 if __name__ == "__main__":
     main()

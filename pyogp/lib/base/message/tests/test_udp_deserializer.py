@@ -32,13 +32,13 @@ from pyogp.lib.base.message.udpserializer import UDPPacketSerializer
 #from indra.base.lluuid import UUID
 
 class TestDeserializer(unittest.TestCase):
-    
+
     def tearDown(self):
         pass
 
     def setUp(self):
         pass
-        
+
     def test_deserialize(self):
         message = '\xff\xff\xff\xfb' + '\x03' + \
                   '\x01\x00\x00\x00' + '\x02\x00\x00\x00' + '\x03\x00\x00\x00'
@@ -64,8 +64,8 @@ class TestDeserializer(unittest.TestCase):
         assert data.blocks['ChatData'][0].vars['Message'].data == 'Hi Locklainn Tester',\
                'Message for chat is incorrect'
 
-        
-        
+
+
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()

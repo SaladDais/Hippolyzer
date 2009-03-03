@@ -41,7 +41,7 @@ OBJECT_UPDATE = "C0 00 00 00 51 00 0C 00 01 EA 03 00 02 E6 03 00 01 BE FF 01 06 
 OBJECT_UPDATE =  binascii.unhexlify(''.join(OBJECT_UPDATE.split()))
 
 class TestPacketDecode(unittest.TestCase):
-    
+
     def tearDown(self):
         pass
 
@@ -50,7 +50,7 @@ class TestPacketDecode(unittest.TestCase):
         parser = MessageTemplateParser(self.template_file)
         self.template_list = parser.message_templates        
         self.template_dict = TemplateDictionary(self.template_list)
-        
+
     def test_agent_data_update(self):
         """test if the agent data update packet can be decoded"""
         message = AGENT_DATA_UPDATE
@@ -63,7 +63,7 @@ class TestPacketDecode(unittest.TestCase):
                "Wrong last name for agent update"
         assert packet.message_data.blocks['AgentData'][0].vars['FirstName'].data == 'JB\x00', \
                "Wrong first name for agent update"
-        
+
     def test_agent_animation(self):
         """test if the agent data update packet can be decoded"""
         message = AGENT_ANIMATION
@@ -74,20 +74,20 @@ class TestPacketDecode(unittest.TestCase):
 
     def test_object_update(self):
         """test if the object update packet can be decoded"""
-        
 
-        
+
+
         message = OBJECT_UPDATE
         size = len(message)
-      
+
         deserializer = UDPPacketDeserializer(message)
         #geeneric timing code, should work 99% of the time unless we're at start time xx:xx:59.9 seconds or thereabouts
-        
+
         secsearch= re.compile('([0-90-9]+)\.([0-9]+)')
         start = str(datetime.datetime.now())
         matchobj = secsearch.search(start)
         startsecs = float(matchobj.group(1)+'.'+matchobj.group(2))
-        
+
         packet = deserializer.deserialize()
         assert packet != None, "Wrong data"
         assert packet.message_data.name == 'ObjectUpdate', "Wrong packet"
@@ -105,12 +105,12 @@ class TestPacketDecode(unittest.TestCase):
         print "Packetname is:", packet.name
         for ablock in packet.message_data.blocks:
             print "\tblockname is:", ablock
-       
+
             for somevars in packet.message_data.blocks[ablock]:
                 for avar in somevars.var_list:
                     zvar = somevars.get_variable(avar)
                     print "\t\t"+ zvar.name, zvar.get_var_type_as_string(), zvar.get_data_as_string()
-        
+
         #finish off timing code
         matchobj = secsearch.search(str(datetime.datetime.now()))
         print "TIME =", float(matchobj.group(1)+'.'+matchobj.group(2)) - startsecs     

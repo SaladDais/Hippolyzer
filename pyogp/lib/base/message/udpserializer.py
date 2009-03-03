@@ -31,7 +31,7 @@ from pyogp.lib.base import exc
 
 class UDPPacketSerializer(object):
     """ an adpater for serializing a IUDPPacket into the UDP message format
-    
+
         This class builds messages at its high level, that is, keeping
         that data in data structure form. A serializer should be used on
         the message produced by this so that it can be sent over a network. """
@@ -62,7 +62,7 @@ class UDPPacketSerializer(object):
 
         #pack in the offset to the data. NOTE: for 1 byte, endian doesn't matter
         msg_buffer += self.packer.pack_data(0, MsgType.MVT_U8)
-        
+
         if self.current_template == None:
             return None
 
@@ -80,7 +80,7 @@ class UDPPacketSerializer(object):
             bytes += block_size
 
         self.message_buffer = msg_buffer
-        
+
         return msg_buffer
 
     def build_block(self, template_block, message_data):
@@ -100,7 +100,7 @@ class UDPPacketSerializer(object):
         if template_block.block_type == MsgBlockType.MBT_MULTIPLE:
             if template_block.number != block_count:
                 raise exc.MessageSerializationError(template_block.name, "block data mismatch")
-                                  
+
         #variable means the block variables can repeat, so we have to
         #mark how many blocks there are of this type that repeat, stored in
         #the data
@@ -109,13 +109,13 @@ class UDPPacketSerializer(object):
             bytes += 1            
 
         for block in block_list:
-            
+
             for v in template_block.get_variables(): #message_block.get_variables():
                 #this mapping has to occur to make sure the data is written in correct order
                 variable = block.get_variable(v.name)
                 var_size  = v.size
                 var_data  = variable.data
-                
+
                 if variable == None:
                     raise exc.MessageSerializationError(variable.name, "variable value is not set")
 
@@ -136,13 +136,13 @@ class UDPPacketSerializer(object):
                         raise exc.MessageSerializationError("variable size", "unrecognized variable size")
 
                     bytes += var_size
-                
+
                 data = self.packer.pack_data(var_data, v.type)
                 block_buffer += data
                 bytes += len(data)
 
         return block_buffer, bytes
-    
+
     """this is currently done in the parser
     def build_message_ids(self):
         packer = DataPacker()

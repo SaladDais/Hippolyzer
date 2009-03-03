@@ -36,7 +36,7 @@ class MockupUDPServer(object):
         #print 'SERVER send'
         client.rec = send_message
         client.sender = Host((self, self.port))
-        
+
 #returns true if packet was sent successfully
 class MockupUDPClient(object):
 
@@ -46,7 +46,7 @@ class MockupUDPClient(object):
 
     def get_sender(self):
         return self.sender
-    
+
     def set_response(self, socket, response):
         self.rec[socket] = response
 
@@ -55,15 +55,15 @@ class MockupUDPClient(object):
         #print 'CLIENT send'
         host.ip.receive_message(self, send_buffer)
         return True
-    
+
     def receive_packet(self, socket):
         #print 'CLIENT receive'
         data = self.rec
         self.rec = ''
-        
+
         if len(data) > 0:
             return data, len(data)
-        
+
         return '', 0
 
     def start_udp_connection(self):

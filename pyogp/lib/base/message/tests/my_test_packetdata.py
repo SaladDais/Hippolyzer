@@ -82,7 +82,7 @@ OBJECT_UPDATE =  binascii.unhexlify(''.join(OBJECT_UPDATE.split()))
 
 
 class TestPacketDecode(object):
-    
+
 
 
     def __init__(self):
@@ -93,7 +93,7 @@ class TestPacketDecode(object):
         self.template_list = parser.message_templates        
         self.template_dict = TemplateDictionary(self.template_list)
         print "end =", str(datetime.datetime.now())
-        
+
     def test_agent_data_update(self):
         """test if the agent data update packet can be decoded"""
         message = AGENT_DATA_UPDATE
@@ -108,45 +108,45 @@ class TestPacketDecode(object):
                "Wrong first name for agent update"
         for ablock in packet.message_data.blocks.keys():
             print packet.message_data.blocks[ablock]
-        
+
     def test_object_update(self):
         """test if the object update packet can be decoded"""
-        
 
-        
+
+
         message = OBJECT_UPDATE
         size = len(message)
-      
+
         deserializer = IDeserialization(message)
         #geeneric timing code, should work 99% of the time unless we're at start time xx:xx:59.9 seconds or thereabouts
-        
+
         secsearch= re.compile('([0-90-9]+)\.([0-9]+)')
         start = str(datetime.datetime.now())
         matchobj = secsearch.search(start)
         startsecs = float(matchobj.group(1)+'.'+matchobj.group(2))
-        
+
         packet = deserializer.deserialize()
         assert packet != None, "Wrong data"
         assert packet.message_data.name == 'ObjectUpdate', "Wrong packet"
 
         #pretty printer for packets. Should work with any (not tested though).
-        
+
         print "Packetname is:", packet.name
         for ablock in packet.message_data.blocks:
             print "\tblockname is:", ablock
-       
+
             for somevars in packet.message_data.blocks[ablock]:
                 for avar in somevars.var_list:
                     zvar = somevars.get_variable(avar)
                     print "\t\t"+ zvar.name, zvar.get_var_type_as_string(), zvar.get_data_as_string()
-        
+
         #finish off timing code
         matchobj = secsearch.search(str(datetime.datetime.now()))
         print "TIME =", float(matchobj.group(1)+'.'+matchobj.group(2)) - startsecs     
 
 
 
-                        
+
     def test_agent_animation(self):
         """test if the agent data update packet can be decoded"""
         message = AGENT_ANIMATION
@@ -155,13 +155,13 @@ class TestPacketDecode(object):
         packet = deserializer.deserialize()
         assert packet != None, "Wrong data 2"
 
-        
+
 def main():
     testpackets = TestPacketDecode()
     testpackets.test_agent_data_update()
     testpackets.test_object_update()
     testpackets.test_agent_animation()
-    
+
 
 if __name__ == "__main__":
     main()

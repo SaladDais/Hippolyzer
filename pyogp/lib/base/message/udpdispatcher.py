@@ -34,7 +34,6 @@ from packet import UDPPacket
 from message import Message, Block
 from pyogp.lib.base.network.net import NetUDPClient
 from pyogp.lib.base import exc
-from packet_handler import PacketHandler
 from pyogp.lib.base.settings import Settings
 from pyogp.lib.base.utilities.helpers import Helpers
 
@@ -46,25 +45,42 @@ log = logger.log
 class UDPDispatcher(object):
     #implements(IUDPDispatcher)
 
-    def __init__(self, udp_client = None):
+    def __init__(self, udp_client = None, settings = None, packet_handler = None):
         #holds the details of the message, or how the messages should be sent,
         #built, and read
-        self.circuit_manager    = CircuitManager()
-        #the ID of the packet we most recently received
-        self.receive_packet_id  = -1
 
-        self.socket             = None
+        self.circuit_manager = CircuitManager()
+
+        #the ID of the packet we most recently received
+        self.receive_packet_id = -1
+
+        self.socket = None
+
         if udp_client == None:
             self.udp_client = NetUDPClient()
         else:
-	    self.udp_client = udp_client
+            self.udp_client = udp_client
+
         self.socket = self.udp_client.start_udp_connection()
         self.unpacker = DataUnpacker()
         self.packer = DataPacker()
 
-        self.settings = Settings()
+        # allow the settings to be passed in
+        # otherwise, grab the defaults
+        if settings != None:
+            self.settings = settings
+        else:
+            self.settings = Settings()
+
         self.helpers = Helpers()
-        self.packet_handler = PacketHandler()
+
+        # allow the packet_handler to be passed in
+        # otherwise, grab the defaults
+        if packet_handler != None:
+            self.packet_handler = packet_handler
+        elif self.settings.HANDLE_PACKETS:
+            from pyogp.lib.base.message.packet_handler import PacketHandler
+            self.packet_handler = PacketHandler()
 
     def find_circuit(self, host):
         circuit = self.circuit_manager.get_circuit(host)
@@ -80,7 +96,7 @@ class UDPDispatcher(object):
         #also, check and decode the message we have received
         recv_packet = None
         #msg_buf, msg_size = self.udp_client.receive_packet(self.socket)
-        
+
         #we have a message
         if msg_size > 0:
             udp_deserializer = UDPPacketDeserializer(msg_buf)
@@ -103,9 +119,6 @@ class UDPDispatcher(object):
 
             circuit.handle_packet(recv_packet)
 
-            if self.settings.HANDLE_PACKETS:
-                self.packet_handler._handle(recv_packet)
-            
             if self.settings.ENABLE_UDP_LOGGING:
                 if self.settings.ENABLE_BYTES_TO_HEX_LOGGING:
                     hex_string = '<=>' + self.helpers.bytes_to_hex(msg_buf)
@@ -113,14 +126,17 @@ class UDPDispatcher(object):
                     hex_string = ''
                 log(DEBUG, 'Received packet: %s%s' % (recv_packet.name, hex_string))
 
+            if self.settings.HANDLE_PACKETS:
+                self.packet_handler._handle(recv_packet)
+
         return recv_packet
-                                                                             
+
     def send_reliable(self, message, host, retries):
         """ Wants to be acked """
         #sets up the message so send_message will add the RELIABLE flag to
         #the message
         return self.__send_message(message, host, reliable=True, retries=retries)
-    
+
     def send_retry(self, message, host):
         """ This is a retry because we didn't get acked """
         #sets up the message so send_message will add the RETRY flag to it
@@ -128,7 +144,7 @@ class UDPDispatcher(object):
 
     def send_message(self, message, host):
         return self.__send_message(message, host)
-        
+
     def __send_message(self, message, host, reliable=False, retries=0, retrying=False):
         """ Sends the message that is currently built to the desired host """
         #make sure host is OK (ip and address aren't null)
@@ -156,30 +172,33 @@ class UDPDispatcher(object):
         send_buffer = serializer.serialize()
 
         if self.settings.ENABLE_UDP_LOGGING:
-            if self.settings.ENABLE_BYTES_TO_HEX_LOGGING:
-                hex_string = '<=>' + self.helpers.bytes_to_hex(send_buffer)
+            if packet.name in self.settings.UDP_SPAMMERS and self.settings.DISABLE_SPAMMERS:
+                pass
             else:
-                hex_string = ''
-            log(DEBUG, 'Sent packet: %s%s' % (message.name, hex_string))
+                if self.settings.ENABLE_BYTES_TO_HEX_LOGGING:
+                    hex_string = '<=>' + self.helpers.bytes_to_hex(send_buffer)
+                else:
+                    hex_string = ''
+                log(DEBUG, 'Sent packet: %s%s' % (message.name, hex_string))
 
         #TODO: remove this when testing a network
         self.udp_client.send_packet(self.socket, send_buffer, host)
 
         return send_buffer
-                        
+
     def process_acks(self):
         """ resends all of our messages that were unacked, and acks all
             the messages that others are waiting to be acked. """
-        
+
         #send the ones we didn't get acked
         self.__resend_all_unacked()
         #send the acks we didn't reply to
         self.__send_acks()
-        
+
     def __resend_all_unacked(self):
         """ Resends all packets sent that haven't yet been acked. """
         #now_time = get_time_now()
-        
+
         #go through all circuits in the map
         for circuit in self.circuit_manager.unacked_circuits.values():
             for unacked_packet in circuit.unacked_packets.values():
@@ -204,7 +223,7 @@ class UDPDispatcher(object):
         for circuit in self.circuit_manager.circuit_map.values():
             acks_this_packet = 0
             msg = None
-            
+
             for packet_id in circuit.acks:
                 if acks_this_packet == 0:
                     msg = Message('PacketAck')
@@ -218,7 +237,7 @@ class UDPDispatcher(object):
 
             if acks_this_packet > 0:
                 self.send_message(msg, circuit.host)    
-                
+
             circuit.acks = []
 
     def has_unacked(self):

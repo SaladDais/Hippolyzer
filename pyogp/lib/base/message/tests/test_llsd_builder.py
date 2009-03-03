@@ -29,20 +29,20 @@ from pyogp.lib.base.message.llsd_builder import LLSDMessageBuilder
 from pyogp.lib.base.message.types import MsgType
 
 class TestLLSDBuilder(unittest.TestCase):
-    
+
     def tearDown(self):
         pass
 
     def setUp(self):
         pass
-    
+
     def test_builder(self):
         builder = LLSDMessageBuilder()
         builder.new_message('TestMessage')
-        
+
         builder.next_block('TestBlock1')
         builder.add_data('Test1', 0x00000001, MsgType.MVT_U32)
-        
+
         builder.next_block('TestBlock1')
         builder.add_data('Test2', 0x00000001, MsgType.MVT_U32)
 

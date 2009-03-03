@@ -43,7 +43,7 @@ class MsgData(object):
     def add_block(self, block):
         if block.name not in self.blocks:
             self.blocks[block.name] = []
-            
+
         self.blocks[block.name].append(block)
 
     def get_block(self, block_name):
@@ -62,7 +62,7 @@ class MsgBlockData(object):
         self.vars = {}
         self.var_list = []       #LDE 25oct2008 added a var_list to keep track of the order the vars are listed in the template file
         self.block_number = 0
-             
+
     def get_variable(self, var_name):
         return self.vars[var_name]
 
@@ -85,7 +85,7 @@ class MsgVariableData(object):
         self.var_type = var_type    #LDE 25oct2008 adding var_type to allow for easier formatting of data in display
     def get_var_type_as_string(self):
         return MsgType.MVT_as_string(self.var_type) #LDE 23oct2008 adding var_type_as_string to allow for easier display
-    
+
     def get_data_as_string(self):
         if self.var_type == MsgType.MVT_VARIABLE:
 
@@ -104,7 +104,7 @@ class MsgVariableData(object):
 
     def __repr__(self):
         return self.get_data_as_string()
-    
+
 class MessageTemplateVariable(object):
     """TODO: Add docstring"""
 
@@ -112,10 +112,10 @@ class MessageTemplateVariable(object):
         self.name = name
         self.type = tp
         self.size = size
-        
+
     def get_name(self):
         return self.name
-    
+
     def get_type(self):
         return self.type
     def get_type_as_string(self):             
@@ -141,16 +141,16 @@ class MessageTemplateBlock(object):
 
     def get_variable(self, name):
         return self.variable_map[name]
-    
+
     def get_name(self):
         return self.name
-    
+
     def get_block_type(self):
         return self.block_type
-    
+
     def get_block_type_as_string(self):
         return MsgBlockType.MBT_as_string(self.block_type)  #LDE 23oct2008 Display convenience
-    
+
     def get_block_number(self):
         return self.number
 
@@ -165,7 +165,7 @@ class MessageTemplate(object):
 
         #this is the function or object that will handle this type of message
         self.received_count = 0
-        
+
         self.name = name
         self.frequency = None
         self.msg_num = 0
@@ -180,41 +180,40 @@ class MessageTemplate(object):
 
     def get_blocks(self):
         return self.blocks #self.block_map.values()
-        
+
     def get_block(self, name):
         return self.block_map[name]
-    
+
     def get_name(self):
         return self.name
-    
+
     def get_frequency(self):
         return self.frequency
-    
+
     def get_frequency_as_string(self):
         return MessageTemplate.frequency_strings[self.frequency]   #LDE 23oct2008 Display convenience
-    
+
     def get_message_number(self):
         return self.msg_num
-    
+
     def get_message_hex_num(self):
         return ''.join( [ "%02X" % ord( x ) for x in self.msg_num_hex ] ).strip()
 
-    
     def get_message_trust(self):
         return self.msg_trust
-    
+
     def get_message_trust_as_string(self):                 #LDE 23oct2008 Display convenience
         return MessageTemplate.trusted_strings[self.msg_trust]
-    
+
     def get_message_encoding(self):
         return self.msg_encoding
-    
+
     def get_message_encoding_as_string(self):   #added _as_string method for easier display
         return MessageTemplate.encoding_strings[self.msg_encoding]
-    
+
     def get_deprecation(self):
         return self.msg_deprecation
-        
+
     def get_deprecation_as_string(self):       #added _as_string method for easier display
         return MessageTemplate.depecration_strings[self.msg_deprecation]
-        
+

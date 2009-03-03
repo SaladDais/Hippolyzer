@@ -25,13 +25,13 @@ import pprint
 #local libraries
 #from pyogp.lib.base.message.udp_connection import MessageSystem
 from pyogp.lib.base.message.types import MsgType
-from pyogp.lib.base.network.mockup_net import MockupUDPServer, MockupUDPClient
+from pyogp.lib.base.tests.mockup_net import MockupUDPServer, MockupUDPClient
 from pyogp.lib.base.message.message import Message, Block
 from pyogp.lib.base.message.circuit import Host
 from pyogp.lib.base.message.udpdispatcher import UDPDispatcher
 
 class TestUDPConnection(unittest.TestCase):
-    
+
     def tearDown(self):
         pass
 
@@ -39,7 +39,7 @@ class TestUDPConnection(unittest.TestCase):
 
         self.udp_connection = UDPDispatcher(MockupUDPClient())
         self.host = Host( (MockupUDPServer(), 80) )
-        
+
     def test_find_circuit(self):
         host  = Host((MockupUDPServer(), 80))
         host2 = Host((MockupUDPServer(), 80))
@@ -56,7 +56,7 @@ class TestUDPConnection(unittest.TestCase):
         assert circuit2 == circuit3, "Didn't save circuit"
         assert len(udp_connection.circuit_manager.circuit_map) == 2, \
                "Circuit map has incorrect circuits 4"
-        
+
 
     def test_send_variable(self):
         msg = Message('PacketAck',
@@ -80,7 +80,7 @@ class TestUDPConnection(unittest.TestCase):
                       Block('Packets', ID=0x00000003)
                       )
         ret2 = self.udp_connection.send_message(msg2, self.host)
-        
+
         #strings to test for
         test_str = '\x00' + '\x00\x00\x00\x01' + '\x00' + '\xff\xff\xff\xfb' + \
                '\x01' + '\x03\x00\x00\x00'
@@ -96,7 +96,7 @@ class TestUDPConnection(unittest.TestCase):
                test_str2, \
                'Received: ' + repr(ret2) + '  ' + \
                'Expected: ' + repr(test_str2)
-                
+
     def test_send_reliable(self):
         msg = Message('PacketAck',
                       Block('Packets', ID=0x00000003)
@@ -122,7 +122,7 @@ class TestUDPConnection(unittest.TestCase):
         assert packet.name == 'PacketAck'
         data = packet.message_data.blocks['Packets'][0].vars['ID'].data
         assert data == 1, "ID Data incorrect: " + str(data)
-        
+
     def test_receive_zero(self):
         out_message = '\x80' + '\x00\x00\x00\x01' + '\x00' + \
             '\xff\xff\xff\xfb' + '\x01' + '\x01\x00\x03'
@@ -149,7 +149,7 @@ class TestUDPConnection(unittest.TestCase):
         circuit = self.udp_connection.circuit_manager.get_circuit(sender_host)
         assert len(circuit.acks) == 1, "Ack not collected"
         assert circuit.acks[0] == 5, "Ack ID not correct, got " + str(circuit.acks[0])
-        
+
     def test_acks(self):
         out_message = '\x40' + '\x00\x00\x00\x05' + '\x00' + \
             '\xff\xff\xff\xfb' + '\x01' + '\x00\x00\x00\x01'
@@ -167,7 +167,7 @@ class TestUDPConnection(unittest.TestCase):
             '\xff\xff\xff\xfb' + '\x01' + '\x05\x00\x00\x00'
         assert server.rec_buffer == test_msg, "Ack received incorrect, got " + \
                repr(server.rec_buffer)
-        
+
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()

@@ -53,7 +53,7 @@ class MessageFactory(object):
             block_data.block_number = 1
             self.current_block = block_data
             self.cur_block_name = block_name
-            
+
             for variable in template_block.get_variables():
                 var_data = MsgVariableData(variable.name, variable.type)
                 self.current_block.add_variable(var_data)
@@ -107,14 +107,14 @@ class MessageFactory(object):
             #template holds the max size the data can be
             data_size = template_variable.size
             #error check - size can't be larger than the bytes will hold
-            
+
             self.current_block.add_data(var_name, data, size)
-            
+
         else:
             #size check can't be done on VARIABLE sized variables
             if self.__check_size(var_name, data, size) == False:
                 raise exc.MessageBuildingError("data", "invalid variable size")
-            
+
             self.current_block.add_data(var_name, data, size)
 
     def __check_size(self, var_name, data, data_size):
@@ -122,5 +122,5 @@ class MessageFactory(object):
         size = block.get_variable(var_name).size
         if size != data_size:
             return False
-            
+
         return True

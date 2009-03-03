@@ -36,14 +36,14 @@ class TestDictionary(unittest.TestCase):
 
     def tearDown(self):
         pass
-    
+
     def test_create_dictionary(self):
         try:
             msg_dict = TemplateDictionary(None)
             assert False, "Template dictionary fail case list==None not caught"
         except:
             assert True
-            
+
     def test_get_packet(self):
         msg_dict = TemplateDictionary(self.template_list)
         packet = msg_dict.get_template('ConfirmEnableSimulator')
@@ -57,7 +57,7 @@ class TestDictionary(unittest.TestCase):
         assert packet.name == 'ConfirmEnableSimulator', "Frequency-Number pair resulting in incorrect packet"        
 
 class TestTemplates(unittest.TestCase):
-    
+
     def tearDown(self):
         pass
 
@@ -76,7 +76,7 @@ class TestTemplates(unittest.TestCase):
             assert False, "Fail case TEMPLATE_FILE == NONE not caught"
         except:
             assert True
-                        
+
     def test_parser_version(self):
         version = self.parser.version
         assert version == 2.0, "Version not correct, expected 2.0, got " + str(version)
@@ -124,7 +124,7 @@ class TestTemplates(unittest.TestCase):
         num = block.number
         assert tp == MsgBlockType.MBT_SINGLE, "Expected:   Single   Returned: " + tp       
         assert num == 0, "Expected:   0  Returned: " + str(num)               
-        
+
     def test_block_multiple(self):
         block = self.msg_dict['NeighborList'].get_block('NeighborBlock')
         tp = block.block_type   #block.block_type vs block.type issue
@@ -145,7 +145,7 @@ class TestTemplates(unittest.TestCase):
         count = len(blocks)
         assert blocks[0].name == 'CircuitCode', "Add block failed"
         assert template.get_block('CircuitCode') != None, "Get block failed"
-        
+
     def test_add_variable(self):
         block = MessageTemplateBlock('CircuitCode')
         variable = MessageTemplateVariable("PingID", MsgType.MVT_U8, 1)

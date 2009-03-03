@@ -39,7 +39,7 @@ setup(name='pyogp.lib.base',
       url='http://wiki.secondlife.com/wiki/Pyogp',
       license='Apache2',
       packages=find_packages(exclude=['ez_setup']),
-      namespace_packages=['pyogp', 'pyogp.lib'],
+      #namespace_packages=['pyogp', 'pyogp.lib'],
       include_package_data=True,
       zip_safe=False,
       install_requires=[
@@ -50,14 +50,15 @@ setup(name='pyogp.lib.base',
           'indra.base',
           'WebOb',
           'wsgiref',
-          
+          'eventlet'
+
       ],
       entry_points={
         'console_scripts': [
-            'login = pyogp.lib.base.example:main',
-            'packets = pyogp.lib.base.message_template_parser:main',
-            'testserver = pyogp.lib.base.tests.base:main'
+            'login = pyogp.lib.base.examples.sample_login:main',
+            'agent_login = pyogp.lib.base.examples.sample_agent_login:main',
+            'region_connect = pyogp.lib.base.examples.sample_region_connect:main'
         ],
       },
-      
+
       )

@@ -21,35 +21,79 @@ $/LicenseInfo$
 class Settings(object):
 
     def __init__(self):
-        """ some lovely configurable settings """
+        """ some lovely configurable settings 
+
+        These are applied application wide, and can be
+        overridden at any time in a specific instance
+        """
+
+        #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # Application behavior settings
+        #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        # default start location to use in login
+        self.DEFAULT_START_LOCATION = 'last'
+
+        # toggle handling udp packets
+        self.HANDLE_PACKETS = True
+
+        #~~~~~~~~~~~~~~~~~~~
+        # Simulator specific
+        #~~~~~~~~~~~~~~~~~~~
+
+        # toggle handling a region's event queue
+        self.ENABLE_REGION_EVENT_QUEUE = True
 
         # how many seconds to wait between polling
         # a region's event queue
-        self.region_event_queue_interval = 1
+        self.REGION_EVENT_QUEUE_POLL_INTERVAL = 1
 
+        # allow connecting to multiple simulators
+        self.MULTIPLE_SIM_CONNECTIONS = True      
+
+        #~~~~~~~~~~~~~~~~~~~~~~
+        # Agent Domain specific
+        #~~~~~~~~~~~~~~~~~~~~~~
+
+        # toggle handling an agent domain's event queue
+        self.ENABLE_AGENTDOMAIN_EVENT_QUEUE = True
         # how many seconds to wait between polling
         # a agent doamins's event queue
-        self.agentdomain_event_queue_interval = 15
+        self.AGENT_DOMAIN_EVENT_QUEUE_POLL_INTERVAL = 15
 
-        # Application behavior settings
-        self.HANDLE_PACKETS = True
-        self.ENABLE_EVENT_QUEUE = True
-
+        #~~~~~~~~~~~~~~~~~~
         # Logging behaviors
-        self.ENABLE_BYTES_TO_HEX_LOGGING = True
-        self.ENABLE_CAPS_LOGGING = True
-        self.ENABLE_EQ_LOGGING = True
-        self.ENABLE_UDP_LOGGING = False
+        #~~~~~~~~~~~~~~~~~~
+        # being a test tool, and an immature one at that,
+        # enable fine granularity in the logging, but
+        # make sure we can tone it down as well
+
+        self.LOG_VERBOSE = True
+        self.ENABLE_BYTES_TO_HEX_LOGGING = False
+        self.ENABLE_CAPS_LOGGING = False
+        self.ENABLE_CAPS_LLSD_LOGGING = False
+        self.ENABLE_EQ_LOGGING = False
+        self.ENABLE_UDP_LOGGING = True
+
+        # allow disabling logging of certain packets
+        self.DISABLE_SPAMMERS = False
+        self.UDP_SPAMMERS = ['PacketAck', 'AgentUpdate']
+
+        #~~~~~~~~~~~~~~~~~~~~~~
+        # Test related settings
+        #~~~~~~~~~~~~~~~~~~~~~~
+
+        self.ENABLE_LOGGING_IN_TESTS = True
 
     # parameters for xmplrpc login
     def get_default_xmlrpc_login_parameters(self):
         """ returns some default login params """
-    
+
         params = {   
             'major': '1',
-            'minor': '20',
-            'patch': '15',
-            'build': '3',
+            'minor': '22',
+            'patch': '9',
+            'build': '1',
             'platform': 'Win',
             'options': [],
             'user-agent': 'pyogp 0.1',
@@ -61,5 +105,5 @@ class Settings(object):
             'agree_to_tos': True,
             'read_critical': True
         }
-    
+
         return params

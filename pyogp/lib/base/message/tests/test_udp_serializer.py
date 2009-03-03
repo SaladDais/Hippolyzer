@@ -31,13 +31,13 @@ from pyogp.lib.base.message.udpserializer import UDPPacketSerializer
 #from indra.base.lluuid import UUID
 
 class TestSerializer(unittest.TestCase):
-    
+
     def tearDown(self):
         pass
 
     def setUp(self):
         pass
-        
+
     def test_serialize(self):
         message = '\xff\xff\xff\xfb' + '\x03' + \
                   '\x01\x00\x00\x00' + '\x02\x00\x00\x00' + '\x03\x00\x00\x00'
@@ -51,8 +51,8 @@ class TestSerializer(unittest.TestCase):
         serializer = UDPPacketSerializer(packet)
         packed_data = serializer.serialize()
         assert packed_data == message, "Incorrect serialization"
-        
-        
+
+
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()

@@ -20,7 +20,7 @@ $/LicenseInfo$
 
 import urlparse
 
-from exc import HTTPError
+from pyogp.lib.base.exc import HTTPError
 
 from webob import Request, Response
 from webob.exc import HTTPException, HTTPExceptionMiddleware
@@ -29,10 +29,10 @@ from cStringIO import StringIO
 
 class MockupClient(object):
     """implement a REST client on top of urllib2"""
-    
+
     def __init__(self, wsgi_app):
         self.app=wsgi_app
-        
+
     def strip_url(self, url):
         """remove server/host from the URL"""
         o = urlparse.urlparse(url)
