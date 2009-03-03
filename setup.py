@@ -26,8 +26,7 @@ version = '0.1'
 setup(name='pyogp.lib.base',
       version=version,
       description="basic pyogp library package",
-      long_description=open("README.txt").read() + "\n" +
-                       open(os.path.join("docs", "HISTORY.txt")).read(),
+      long_description="skipping",
       # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
       classifiers=[
         "Programming Language :: Python",
