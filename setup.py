@@ -56,7 +56,8 @@ setup(name='pyogp.lib.base',
         'console_scripts': [
             'login = pyogp.lib.base.examples.sample_login:main',
             'agent_login = pyogp.lib.base.examples.sample_agent_login:main',
-            'region_connect = pyogp.lib.base.examples.sample_region_connect:main'
+            'region_connect = pyogp.lib.base.examples.sample_region_connect:main',
+            'inventory_handling = pyogp.lib.base.examples.sample_inventory_handling:main'
         ],
       },
 

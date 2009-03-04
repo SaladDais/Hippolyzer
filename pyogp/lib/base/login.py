@@ -252,6 +252,7 @@ class Login(object):
         if not self.login_params.has_key('agree_to_tos'): self.login_params['agree_to_tos'] = default_login_params['agree_to_tos']
         if not self.login_params.has_key('read_critical'): self.login_params['read_critical'] = default_login_params['read_critical']
         if not self.login_params.has_key('id0'): self.login_params['id0'] = default_login_params['id0']
+        if not self.login_params.has_key('options'): self.login_params['options'] = default_login_params['options']
 
         log(DEBUG, 'Initializing login parameters for \'%s %s\'' % (self.login_params['first'], self.login_params['last']))
 

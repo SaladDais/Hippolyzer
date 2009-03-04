@@ -31,6 +31,7 @@ from eventlet import api
 from pyogp.lib.base.login import Login, LegacyLoginParams, OGPLoginParams
 from pyogp.lib.base.exc import LoginError
 from pyogp.lib.base.region import Region
+from pyogp.lib.base.inventory import Inventory
 
 # pyogp messaging
 from pyogp.lib.base.message.packet_handler import PacketHandler
@@ -143,7 +144,7 @@ class Agent(object):
             self._login_params = login_params
 
         # login and parse the response
-        login = Login()
+        login = Login(settings = self.settings)
 
         try:
 
@@ -156,6 +157,7 @@ class Agent(object):
             sys.exit(-1)
 
         # ToDo: what to do with self.login_response['look_at']?
+
         if connect_region:
             self._enable_current_region()
 
@@ -194,20 +196,20 @@ class Agent(object):
             self.inventory_host = self.login_response['inventory_host']
             self.agent_access = self.login_response['agent_access']
             self.udp_blacklist = self.login_response['udp_blacklist']
+
             if self.login_response.has_key('home'): self.home = Home(self.login_response['home'])
+
+            if self.settings.ENABLE_INVENTORY_MANAGEMENT:
+
+                self.inventory = Inventory(self)
+                self.inventory._parse_inventory_from_login_response()
 
         elif self.grid_type == 'OGP':
 
             pass
 
-    def _enable_current_region(self, region_x = None, region_y = None, seed_capability = None, udp_blacklist = None, sim_ip = None, sim_port = None, circuit_code = None, agent_dict = None):
+    def _enable_current_region(self, region_x = None, region_y = None, seed_capability = None, udp_blacklist = None, sim_ip = None, sim_port = None, circuit_code = None):
         """ enables an agents current region """
-
-        if agent_dict == None:
-            agent_dict = {}
-            agent_dict['agent_id'] = self.agent_id
-            agent_dict['session_id'] = self.session_id
-            agent_dict['secure_session_id'] = self.secure_session_id
 
         # enable the current rebion, setting connect = True
         self.region = Region(self.login_response['region_x'], self.login_response['region_y'], self.login_response['seed_capability'], self.login_response['udp_blacklist'], self.login_response['sim_ip'], self.login_response['sim_port'], self.login_response['circuit_code'], self, packet_handler = self.packet_handler)
@@ -222,6 +224,7 @@ class Agent(object):
         log(INFO, "Caught signal... %d. Stopping" % signal)
         self.running = False
         self.logout()
+        #sys.exit(0)
 
     def __repr__(self):
         """ returns a representation of the agent """

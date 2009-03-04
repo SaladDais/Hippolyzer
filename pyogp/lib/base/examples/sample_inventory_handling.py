@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """
-@file sample_agent_login.py
+@file sample_inventory_handling.py
 @date 2009-02-16
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
@@ -23,10 +23,13 @@ $/LicenseInfo$
 import re
 import getpass, sys, logging
 from optparse import OptionParser
+import time
+
+# related
+from eventlet import api
 
 # pyogp
 from pyogp.lib.base.agent import Agent
-from pyogp.lib.base.settings import Settings
 
 
 def login():
@@ -69,11 +72,11 @@ def login():
     #First, initialize the agent
     client = Agent()
 
-    # In this example, let's disable inventory handling
-    client.settings.ENABLE_INVENTORY_MANAGEMENT = False
-
     # Now let's log it in
     client.login(options.loginuri, args[0], args[1], password, start_location = options.region, connect_region = True)
+
+    for folder in client.inventory.contents:
+        client.inventory._request_folder_contents(folder.folder_id)
 
     print ''
     print ''
@@ -81,6 +84,11 @@ def login():
     print 'Agent attributes:'
     for attr in client.__dict__:
         print attr, ':\t\t\t',  client.__dict__[attr]
+    print ''
+    print ''
+    print 'Inventory: %s folders' % len(client.inventory.contents)
+    for inv_folder in client.inventory.contents:
+        print 'Inventory Folder', ':\t\t\t',  inv_folder.name
     print ''
     print ''
     print 'Region attributes:'

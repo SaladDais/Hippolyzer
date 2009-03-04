@@ -37,6 +37,20 @@ class Settings(object):
         # toggle handling udp packets
         self.HANDLE_PACKETS = True
 
+        # enable inventory management
+        self.ENABLE_INVENTORY_MANAGEMENT = True
+
+        #~~~~~~~~~~~~~~~~~~~~~~~
+        # Extended Login Options
+        #~~~~~~~~~~~~~~~~~~~~~~~
+
+        # self.HANDLE_INVENTORY is set above, and triggers the use of these options in the login params
+        self.INVENTORY_LOGIN_OPTIONS = [ "inventory-root", "inventory-skeleton", "inventory-lib-root", "inventory-lib-owner", "inventory-skel-lib"]
+
+        # ToDo: handle this!
+        self.ENABLE_EXTENDED_LOGIN_OPTIONS = False
+        self.EXTENDED_LOGIN_OPTIONS = ["gestures", "event_categories", "event_notifications", "classified_categories", "buddy_list", "ui-config", "login-flags", "global-textures" ]
+
         #~~~~~~~~~~~~~~~~~~~
         # Simulator specific
         #~~~~~~~~~~~~~~~~~~~
@@ -89,13 +103,23 @@ class Settings(object):
     def get_default_xmlrpc_login_parameters(self):
         """ returns some default login params """
 
+        login_options = []
+
+        if self.ENABLE_INVENTORY_MANAGEMENT:
+            for option in self.INVENTORY_LOGIN_OPTIONS:
+                login_options.append(option)
+
+        if self.ENABLE_EXTENDED_LOGIN_OPTIONS:
+            for option in self.EXTENDED_LOGIN_OPTIONS:
+                login_options.append(option)
+
         params = {   
             'major': '1',
             'minor': '22',
             'patch': '9',
             'build': '1',
             'platform': 'Win',
-            'options': [],
+            'options': login_options,
             'user-agent': 'pyogp 0.1',
             'id0': '',
             'viewer_digest': '09d93740-8f37-c418-fbf2-2a78c7b0d1ea',
@@ -105,5 +129,5 @@ class Settings(object):
             'agree_to_tos': True,
             'read_critical': True
         }
-
+        print params
         return params
