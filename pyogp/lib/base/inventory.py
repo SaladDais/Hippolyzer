@@ -67,10 +67,14 @@ class Inventory(object):
 
         # set up callbacks
         if self.settings.HANDLE_PACKETS:
-             self.packet_handler = self.agent.packet_handler
+            if self.agent != None:
+                self.packet_handler = self.agent.packet_handler
+            else:
+                from pyogp.lib.base.message.packet_handler import PacketHandler
+                self.packet_handler = PacketHandler()
 
-             onInventoryDescendents_received = self.packet_handler._register('InventoryDescendents')
-             onInventoryDescendents_received.subscribe(onInventoryDescendents, self)     
+            onInventoryDescendents_received = self.packet_handler._register('InventoryDescendents')
+            onInventoryDescendents_received.subscribe(onInventoryDescendents, self)     
 
         if self.settings.LOG_VERBOSE: log(INFO, "Initializing the inventory")
 
@@ -140,9 +144,7 @@ class Inventory(object):
         packet.InventoryData['FetchFolders'] = True    # MVT_BOOL
         packet.InventoryData['FetchItems'] = True    # MVT_BOOL
 
-        self.agent.region.send_message(packet())
-
-        return True
+        self.agent.region.enqueue_message(packet())
 
 class InventoryFolder(object):
     """ represents an Inventory folder 

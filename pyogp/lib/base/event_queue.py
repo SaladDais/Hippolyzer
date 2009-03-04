@@ -55,7 +55,7 @@ class EventQueueClient(object):
     Tests: tests/test_event_queue.py
     """
 
-    def __init__(self, capability = None, settings = None, packet_handler = None):
+    def __init__(self, capability = None, settings = None, packet_handler = None, region = None):
         """ set up the event queue attributes """
 
         # allow the settings to be passed in
@@ -73,6 +73,8 @@ class EventQueueClient(object):
         elif self.settings.HANDLE_PACKETS:
             from pyogp.lib.base.message.packet_handler import PacketHandler
             self.packet_handler = PacketHandler()
+
+        self.region = region
 
         self.cap = capability
         #self.type = eq_type    # specify 'agentdomain' or 'region'
@@ -93,15 +95,23 @@ class EventQueueClient(object):
 
     def start(self):
 
-        if self.cap.name == 'event_queue':
-            api.spawn(self._processADEventQueue)
-        elif self.cap.name == 'EventQueueGet':
-            api.spawn(self._processRegionEventQueue)
-        else:
-            # ToDo handle this as an exception
-            log(WARNING, 'Unable to start event queue polling due to %s' % ('unknown queue type'))
+        try:
+            if self.cap.name == 'event_queue':
+                api.spawn(self._processADEventQueue)
+                return True
+            elif self.cap.name == 'EventQueueGet':
+                api.spawn(self._processRegionEventQueue)
+                return True
+            else:
+                # ToDo handle this as an exception
+                log(WARNING, 'Unable to start event queue polling due to %s' % ('unknown queue type'))
+                return False
+        except:
+            return False
 
     def stop(self):
+
+        log(INFO, "Stopping %s event queue." % (self.type))
 
         self.stop = True
 
@@ -136,7 +146,7 @@ class EventQueueClient(object):
 
             self._running = True
 
-            while not self.stop:
+            while self.stop != True:
 
                 api.sleep(self.settings.REGION_EVENT_QUEUE_POLL_INTERVAL)
 
@@ -158,6 +168,8 @@ class EventQueueClient(object):
                 self._parse_result(self.result)
 
             self._running = False
+
+            log(DEBUG, "Stopped event queue processing for %s" % (self.region.SimName))
 
     def _processADEventQueue(self):
 

@@ -23,7 +23,6 @@ $/LicenseInfo$
 import re
 import getpass, sys, logging
 from optparse import OptionParser
-import time
 
 # related
 from eventlet import api
@@ -73,10 +72,22 @@ def login():
     client = Agent()
 
     # Now let's log it in
-    client.login(options.loginuri, args[0], args[1], password, start_location = options.region, connect_region = True)
+    api.spawn(client.login, options.loginuri, args[0], args[1], password, start_location = options.region, connect_region = True)
 
-    for folder in client.inventory.contents:
-        client.inventory._request_folder_contents(folder.folder_id)
+    print client.__dict__
+
+    # wait for the agent to connect to it's region
+    while client.connected == False:
+        api.sleep(0)
+
+    while client.region.connected == False:
+        api.sleep(0)
+
+    # for folders whose parent = root folder aka My Inventory, request their contents
+    [client.inventory._request_folder_contents(folder.folder_id) for folder in client.inventory.contents if folder.parent_id == client.inventory.root_folder.folder_id]
+
+    while client.running:
+        api.sleep(0)
 
     print ''
     print ''

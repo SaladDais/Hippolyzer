@@ -164,9 +164,8 @@ class Agent(object):
     def logout(self):
         """ logs an agent out of the current region """
 
-        if self.connected == True and self.region != None:
-            if self.region.logout():
-                self.connected = False
+        if self.region.logout():
+            self.connected = False
 
     def _get_login_params(self, loginuri, firstname, lastname, password):
         """ get the proper login parameters """
@@ -215,8 +214,8 @@ class Agent(object):
         self.region = Region(self.login_response['region_x'], self.login_response['region_y'], self.login_response['seed_capability'], self.login_response['udp_blacklist'], self.login_response['sim_ip'], self.login_response['sim_port'], self.login_response['circuit_code'], self, packet_handler = self.packet_handler)
 
         # start the simulator udp and event queue connections
-        self.region.connect()
-
+        api.spawn(self.region.connect)
+        #self.region.connect()
         while self.running:
             api.sleep(0)
 

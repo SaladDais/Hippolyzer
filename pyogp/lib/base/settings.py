@@ -97,7 +97,7 @@ class Settings(object):
         # Test related settings
         #~~~~~~~~~~~~~~~~~~~~~~
 
-        self.ENABLE_LOGGING_IN_TESTS = True
+        self.ENABLE_LOGGING_IN_TESTS = False
 
     # parameters for xmplrpc login
     def get_default_xmlrpc_login_parameters(self):
@@ -129,5 +129,5 @@ class Settings(object):
             'agree_to_tos': True,
             'read_critical': True
         }
-        print params
+
         return params

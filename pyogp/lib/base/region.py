@@ -112,8 +112,11 @@ class Region(object):
         self.seed_capability = None
         self.capabilities = {}
         self.event_queue = None
+        self.connected = False
+
         self._isUDPRunning = False
         self._isEventQueueRunning = False
+        self.packet_queue = []
 
         # data we need
         self.region_caps_list = ['ChatSessionRequest',
@@ -160,13 +163,26 @@ class Region(object):
 
         log(DEBUG, 'initializing region domain: %s' %self)
 
-    def send_message(self, packet):
+    def send_message_next(self, packet, reliable = False):
+        """ inserts this packet at the fron of the queue """
+
+        self.packet_queue.insert(0, (packet, reliable))
+
+    def enqueue_message(self, packet, reliable = False):
+        """ queues packets for the messaging system to send """
+
+        self.packet_queue.append((packet, reliable))
+
+    def send_message(self, packet, reliable = False):
         """ send a packet to the host """
 
         if self.host == None or self.messenger == None:
             raise RegionMessageError(self)
         else:
-            self.messenger.send_message(packet, self.host)
+            if reliable == False:
+                self.messenger.send_message(packet, self.host)
+            else:
+                self.messenger.send_reliable(packet)
 
     def send_reliable(self, packet):
         """ send a reliable packet to the host """
@@ -237,10 +253,14 @@ class Region(object):
 
         # spawn an eventlet api instance that runs the event queue connection
         log(DEBUG, 'Spawning region event queue connection')
-        self._startEventQueue() 
+        self._startEventQueue()
+
+        log(DEBUG, "Spawned region data connections")
 
     def logout(self):
         """ send a logout packet """
+
+        log(INFO, "Disconnecting from region %s" % (self.SimName))
 
         try:
             # this should move to a handled method
@@ -251,7 +271,7 @@ class Region(object):
             self.send_message(packet())
 
             self._isUDPRunning = False
-            self.event_queue.stop()
+            self._stopEventQueue()
 
             return True
         except:
@@ -375,6 +395,7 @@ class Region(object):
             # free up resources for other stuff to happen
             api.sleep(0)
 
+            # check for new messages
             msg_buf, msg_size = self.messenger.udp_client.receive_packet(self.messenger.socket)
             self.messenger.receive_check(self.messenger.udp_client.get_sender(),
                                             msg_buf, msg_size)
@@ -384,22 +405,25 @@ class Region(object):
                 self.messenger.process_acks()
                 self.sendAgentUpdate()
 
+            # send pending messages in the queue
+            for (packet, reliable) in self.packet_queue:
+                self.send_message(packet, reliable)
+                self.packet_queue.remove((packet, reliable))
+
+        log(DEBUG, "Stopped the UDP connection for %s" % (self.SimName))
+
     def _startEventQueue(self):
         """ polls the event queue capability and parses the results  """
 
+        self.event_queue = EventQueueClient(self.capabilities['EventQueueGet'], packet_handler = self.packet_handler, region = self)
+        api.spawn(self.event_queue.start)
         self._isEventQueueRunning = True
-
-        self.event_queue = EventQueueClient(self.capabilities['EventQueueGet'], packet_handler = self.packet_handler)
-        self.event_queue.start()
 
     def _stopEventQueue(self):
         """ shuts down the running event queue """
 
         if self._isEventQueueRunning == True and self.event_queue._running == True:
-            result = self.event_queue.stop()
-
-        if result == False:
-            log(INFO, "Enable to disable event queue running on: %s" % ('i don\'t know my name yet'))
+            self.event_queue.stop = True
 
 def onRegionHandshake(packet, region):
     """ handles the response to receiving a RegionHandshake packet """
@@ -431,6 +455,9 @@ def onRegionHandshake(packet, region):
     region.ProductSKU = packet.message_data.blocks['RegionInfo3'][0].get_variable('ProductSKU')
     region.ProductName = packet.message_data.blocks['RegionInfo3'][0].get_variable('ProductName')
     region.RegionID = packet.message_data.blocks['RegionInfo2'][0].get_variable('RegionID')
+
+    # we are connected
+    region.connected = True
 
 def onStartPingCheck(packet, region):
     """ sends the CompletePingCheck packet """
