@@ -36,7 +36,7 @@ class PacketHandler(object):
 
     def _register(self, packet_name):
 
-        log(DEBUG, 'Creating a callback watcher for %s' % (packet_name))
+        log(DEBUG, 'Creating a monitor for %s' % (packet_name))
 
         return self.handlers.setdefault(packet_name + "_Received", PacketReceivedNotifier(packet_name))
 
@@ -51,7 +51,7 @@ class PacketHandler(object):
             # Handle the packet if we have subscribers
             # Conveniently, this will also enable verbose packet logging
             if len(handler) > 0:
-                #log(DEBUG, 'Handling packet: %s' % (packet.name))
+                log(DEBUG, 'Handling packet: %s' % (packet.name))
                 handler(packet)
 
         except KeyError:

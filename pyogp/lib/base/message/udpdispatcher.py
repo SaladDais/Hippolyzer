@@ -79,7 +79,7 @@ class UDPDispatcher(object):
         if packet_handler != None:
             self.packet_handler = packet_handler
         elif self.settings.HANDLE_PACKETS:
-            from pyogp.lib.base.message.packet_handler import PacketHandler
+            from pyogp.lib.base.message.packethandler import PacketHandler
             self.packet_handler = PacketHandler()
 
     def find_circuit(self, host):

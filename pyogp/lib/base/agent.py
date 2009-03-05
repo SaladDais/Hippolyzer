@@ -34,7 +34,7 @@ from pyogp.lib.base.region import Region
 from pyogp.lib.base.inventory import Inventory
 
 # pyogp messaging
-from pyogp.lib.base.message.packet_handler import PacketHandler
+from pyogp.lib.base.message.packethandler import PacketHandler
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.agent')
@@ -86,6 +86,7 @@ class Agent(object):
         self.agent_access = None
         self.udp_blacklist = None
         self.home = None
+        self.inventory = None
 
         # additional attributes 
         self.login_response = None
@@ -210,8 +211,8 @@ class Agent(object):
     def _enable_current_region(self, region_x = None, region_y = None, seed_capability = None, udp_blacklist = None, sim_ip = None, sim_port = None, circuit_code = None):
         """ enables an agents current region """
 
-        # enable the current rebion, setting connect = True
-        self.region = Region(self.login_response['region_x'], self.login_response['region_y'], self.login_response['seed_capability'], self.login_response['udp_blacklist'], self.login_response['sim_ip'], self.login_response['sim_port'], self.login_response['circuit_code'], self, packet_handler = self.packet_handler)
+        # enable the current region, setting connect = True
+        self.region = Region(self.login_response['region_x'], self.login_response['region_y'], self.login_response['seed_capability'], self.login_response['udp_blacklist'], self.login_response['sim_ip'], self.login_response['sim_port'], self.login_response['circuit_code'], self, settings = self.settings, packet_handler = self.packet_handler)
 
         # start the simulator udp and event queue connections
         api.spawn(self.region.connect)
@@ -258,7 +259,7 @@ def onAgentMovementComplete(packet, agent):
 
     agent.LookAt = packet.message_data.blocks['Data'][0].get_variable('LookAt')
 
-    #agent.RegionHandle = packet.message_data.blocks['Data'][0].get_variable('RegionHandle')
+    agent.region.RegionHandle = packet.message_data.blocks['Data'][0].get_variable('RegionHandle')
 
     #agent.Timestamp = packet.message_data.blocks['Data'][0].get_variable('Timestamp')
 

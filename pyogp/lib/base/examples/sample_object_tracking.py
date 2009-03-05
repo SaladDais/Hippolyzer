@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """
-@file sample_inventory_handling.py
-@date 2009-02-16
+@file sample_object_tracking.py
+@date 2009-03-05
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
 
@@ -69,9 +69,9 @@ def login():
     #grab a password!
     password = getpass.getpass()
 
-    # let's disable object tracking for this example
+    # let's disable inventory handling for this example
     settings = Settings()
-    settings.ENABLE_OBJECT_TRACKING = False
+    settings.ENABLE_INVENTORY_MANAGEMENT = False
 
     #First, initialize the agent
     client = Agent(settings = settings)
@@ -86,8 +86,8 @@ def login():
     while client.region.connected == False:
         api.sleep(0)
 
-    # for folders whose parent = root folder aka My Inventory, request their contents
-    [client.inventory._request_folder_contents(folder.FolderID) for folder in client.inventory.folders if folder.ParentID == client.inventory.inventory_root.FolderID]
+    # do sample script specific stuff here
+
 
     while client.running:
         api.sleep(0)
@@ -100,11 +100,11 @@ def login():
         print attr, ':\t\t\t',  client.__dict__[attr]
     print ''
     print ''
-    print 'Inventory: %s folders' % len(client.inventory.folders)
-    for inv_folder in client.inventory.folders:
-        print 'Inventory Folder', ':\t\t\t',  inv_folder.Name
-        for item in inv_folder.inventory:
-            print '    ', item.Name
+    print 'Objects being tracked: %s' % len(client.region.objects.object_store)
+    print ''
+    print ''
+    for _object in client.region.objects.object_store:
+        print 'ID:', _object.ID, '\tUUID: ', _object.FullID 
     print ''
     print ''
     print 'Region attributes:'

@@ -72,6 +72,15 @@ class Helpers(object):
 
         return base64_string
 
+    # ~~~~~~~~~
+    # Callbacks
+    # ~~~~~~~~~
+
+    def log_packet(self, packet, object):
+        """ default logging function for abjects  """
+
+        log(INFO, "Object %s is monitoring packet type %s: \n%s" % (type(object), packet.name, packet.data()))
+
 class ListLLSDSerializer(object):
     """adapter for serializing a list to LLSD
 

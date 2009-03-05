@@ -71,7 +71,7 @@ class EventQueueClient(object):
         if packet_handler != None:
             self.packet_handler = packet_handler
         elif self.settings.HANDLE_PACKETS:
-            from pyogp.lib.base.message.packet_handler import PacketHandler
+            from pyogp.lib.base.message.packethandler import PacketHandler
             self.packet_handler = PacketHandler()
 
         self.region = region
@@ -202,7 +202,8 @@ class EventQueueClient(object):
                         for packet in parsed_data:
                             self.packet_handler._handle(packet)
             except Exception, error:
-                print error
+                #print error
+                pass
 
     def _decode_eq_result(self, data=None):
         """ parse the event queue data, return a list of packets

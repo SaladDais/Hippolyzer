@@ -40,6 +40,9 @@ class Settings(object):
         # enable inventory management
         self.ENABLE_INVENTORY_MANAGEMENT = True
 
+        # enable object tracking
+        self.ENABLE_OBJECT_TRACKING = True
+
         #~~~~~~~~~~~~~~~~~~~~~~~
         # Extended Login Options
         #~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,13 +87,13 @@ class Settings(object):
 
         self.LOG_VERBOSE = True
         self.ENABLE_BYTES_TO_HEX_LOGGING = False
-        self.ENABLE_CAPS_LOGGING = False
+        self.ENABLE_CAPS_LOGGING = True
         self.ENABLE_CAPS_LLSD_LOGGING = False
-        self.ENABLE_EQ_LOGGING = False
-        self.ENABLE_UDP_LOGGING = False
+        self.ENABLE_EQ_LOGGING = True
+        self.ENABLE_UDP_LOGGING = True
 
         # allow disabling logging of certain packets
-        self.DISABLE_SPAMMERS = False
+        self.DISABLE_SPAMMERS = True
         self.UDP_SPAMMERS = ['PacketAck', 'AgentUpdate']
 
         #~~~~~~~~~~~~~~~~~~~~~~

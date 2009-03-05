@@ -57,7 +57,8 @@ setup(name='pyogp.lib.base',
             'login = pyogp.lib.base.examples.sample_login:main',
             'agent_login = pyogp.lib.base.examples.sample_agent_login:main',
             'region_connect = pyogp.lib.base.examples.sample_region_connect:main',
-            'inventory_handling = pyogp.lib.base.examples.sample_inventory_handling:main'
+            'inventory_handling = pyogp.lib.base.examples.sample_inventory_handling:main',
+            'object_tracking = pyogp.lib.base.examples.sample_object_tracking:main'
         ],
       },
 

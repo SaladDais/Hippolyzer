@@ -37,12 +37,13 @@ from pyogp.lib.base.network.stdlib_client import StdLibClient, HTTPError
 import pyogp.lib.base.exc
 from pyogp.lib.base.settings import Settings
 from pyogp.lib.base.event_queue import EventQueueClient
+from pyogp.lib.base.objects import Objects
 
 # messaging
 from pyogp.lib.base.message.udpdispatcher import UDPDispatcher
 from pyogp.lib.base.message.circuit import Host
 from pyogp.lib.base.message.packets import *
-from pyogp.lib.base.message.packet_handler import PacketHandler
+from pyogp.lib.base.message.packethandler import PacketHandler
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.region')
@@ -85,7 +86,6 @@ class Region(object):
         if packet_handler != None:
             self.packet_handler = packet_handler
         elif self.settings.HANDLE_PACKETS:
-            from pyogp.lib.base.message.packet_handler import PacketHandler
             self.packet_handler = PacketHandler()
 
         # initialize the init params
@@ -108,6 +108,7 @@ class Region(object):
             self.host = None
 
         # other attributes
+        self.RegionHandle = None    # from AgentMovementComplete
         self.SimName = None
         self.seed_capability = None
         self.capabilities = {}
@@ -116,7 +117,14 @@ class Region(object):
 
         self._isUDPRunning = False
         self._isEventQueueRunning = False
+
+        # data storage containers
         self.packet_queue = []
+
+        if self.settings.ENABLE_OBJECT_TRACKING == True:
+            self.objects = Objects(agent = self.agent, region = self, settings = self.settings, packet_handler = self.packet_handler)
+        else:
+            self.objects = None
 
         # data we need
         self.region_caps_list = ['ChatSessionRequest',
@@ -161,7 +169,7 @@ class Region(object):
         if self.settings.HANDLE_PACKETS:
             pass
 
-        log(DEBUG, 'initializing region domain: %s' %self)
+        if self.settings.LOG_VERBOSE: log(DEBUG, 'initializing region domain: %s' %self)
 
     def send_message_next(self, packet, reliable = False):
         """ inserts this packet at the fron of the queue """
@@ -182,7 +190,7 @@ class Region(object):
             if reliable == False:
                 self.messenger.send_message(packet, self.host)
             else:
-                self.messenger.send_reliable(packet)
+                self.messenger.send_reliable(packet, self.host, 0)
 
     def send_reliable(self, packet):
         """ send a reliable packet to the host """
@@ -198,12 +206,12 @@ class Region(object):
             self.seed_capability_url = url
         self.seed_cap = RegionSeedCapability('seed_cap', self.seed_capability_url)
 
-        log(DEBUG, 'setting region domain seed cap: %s' % (self.seed_capability_url))
+        if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, 'setting region domain seed cap: %s' % (self.seed_capability_url))
 
     def _get_region_public_seed(self, custom_headers={'Accept' : 'application/llsd+xml'}):
         """ call this capability, return the parsed result """
 
-        log(DEBUG, 'Getting region public_seed %s' %(self.region_uri))
+        if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, 'Getting region public_seed %s' %(self.region_uri))
 
         try:
             restclient = StdLibClient()
@@ -228,7 +236,7 @@ class Region(object):
             return
         else:
 
-            log(INFO, 'Getting caps from region seed cap %s' % (self.seed_cap))
+            if self.settings.ENABLE_CAPS_LOGGING: log(INFO, 'Getting caps from region seed cap %s' % (self.seed_cap))
 
             # use self.region_caps.keys() to pass a list to be parsed into LLSD            
             self.capabilities = self.seed_cap.get(self.region_caps_list)
@@ -474,7 +482,7 @@ class RegionSeedCapability(Capability):
 
         payload = names
         parsed_result = self.POST(payload)  #['caps']
-        log(INFO, 'Request for caps returned: %s' % (parsed_result.keys()))
+        if self.settings.ENABLE_CAPS_LOGGING: log(INFO, 'Request for caps returned: %s' % (parsed_result.keys()))
 
         caps = {}
         for name in names:
@@ -482,7 +490,7 @@ class RegionSeedCapability(Capability):
             if parsed_result.has_key(name):
                 caps[name]=Capability(name, parsed_result[name])
             else:
-                log(DEBUG, 'Requested capability \'%s\' is not available' %  (name))
+                if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, 'Requested capability \'%s\' is not available' %  (name))
             #log(INFO, 'got cap: %s' % (name))
 
         return caps

@@ -49,7 +49,7 @@ class UDPPacket(object):
 
         return self.message_data.blocks[block].vars[variable]
 
-    def __repr__(self):
+    def data(self):
         """ a string representation of a packet """
 
         string = ''
@@ -70,3 +70,9 @@ class UDPPacket(object):
                             string += "%s%s%s:%s%s\n" % (delim, delim, zvar.name, delim, zvar)
 
         return string
+
+    def __repr__(self):
+        """ a string representation of a packet """
+
+        return self.data()
+        
