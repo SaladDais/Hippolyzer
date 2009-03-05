@@ -25,7 +25,7 @@ import uuid
 # related
 
 # pyogp
-from pyogp.lib.base.message.packet_handler import PacketHandler
+from pyogp.lib.base. message.packethandler import PacketHandler
 from pyogp.lib.base.message.packets import *
 from pyogp.lib.base.utilities.helpers import Helpers
 

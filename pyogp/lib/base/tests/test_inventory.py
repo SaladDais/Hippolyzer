@@ -42,30 +42,30 @@ class TestInventory(unittest.TestCase):
 
         pass
 
-    def test_get_folder_contents_by_id(self):
+    def test_display_folder_contents_by_id(self):
 
         for folder in self.folder_data:
 
             self.inventory._add_inventory_folder(folder)
 
-        self.assertEquals(len(self.inventory.get_folder_contents(folder_id = uuid.UUID('52aaafe8-7c5e-8fe0-b47e-097198648c9b'))), 18)
+        self.assertEquals(len(self.inventory.display_folder_contents(folder_id = uuid.UUID('52aaafe8-7c5e-8fe0-b47e-097198648c9b'))), 18)
 
-    def test_get_folder_contents_by_nonexistant_id(self):
+    def test_display_folder_contents_by_nonexistant_id(self):
 
         for folder in self.folder_data:
 
             self.inventory._add_inventory_folder(folder)
 
-        self.assertEquals(len(self.inventory.get_folder_contents(folder_id = uuid.UUID('00000001-0000-0000-0000-000000000000'))), 0)
+        self.assertEquals(len(self.inventory.display_folder_contents(folder_id = uuid.UUID('00000001-0000-0000-0000-000000000000'))), 0)
 
     '''
-    def test_get_folder_contents_by_name(self):
+    def test_display_folder_contents_by_name(self):
 
          for folder in self.folder_data:
 
              self.inventory._add_inventory_folder(folder)
 
-         self.assertEquals(len(self.inventory._get_folder_contents(name = 'Trash')), 18)
+         self.assertEquals(len(self.inventory._display_folder_contents(name = 'Trash')), 18)
     '''
 
 def test_suite():

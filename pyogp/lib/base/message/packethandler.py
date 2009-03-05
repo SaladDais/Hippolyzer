@@ -23,7 +23,7 @@ from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 from pyogp.lib.base.utilities.events import Event
 
 # initialize logging
-logger = getLogger('...base.message.packet_handler')
+logger = getLogger('...base. message.packethandler')
 log = logger.log
 
 class PacketHandler(object):
