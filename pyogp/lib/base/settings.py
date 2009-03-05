@@ -87,7 +87,7 @@ class Settings(object):
         self.ENABLE_CAPS_LOGGING = False
         self.ENABLE_CAPS_LLSD_LOGGING = False
         self.ENABLE_EQ_LOGGING = False
-        self.ENABLE_UDP_LOGGING = True
+        self.ENABLE_UDP_LOGGING = False
 
         # allow disabling logging of certain packets
         self.DISABLE_SPAMMERS = False

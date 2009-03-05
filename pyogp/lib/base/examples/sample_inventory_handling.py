@@ -84,7 +84,7 @@ def login():
         api.sleep(0)
 
     # for folders whose parent = root folder aka My Inventory, request their contents
-    [client.inventory._request_folder_contents(folder.folder_id) for folder in client.inventory.contents if folder.parent_id == client.inventory.root_folder.folder_id]
+    [client.inventory._request_folder_contents(folder.FolderID) for folder in client.inventory.folders if folder.ParentID == client.inventory.inventory_root.FolderID]
 
     while client.running:
         api.sleep(0)
@@ -97,9 +97,11 @@ def login():
         print attr, ':\t\t\t',  client.__dict__[attr]
     print ''
     print ''
-    print 'Inventory: %s folders' % len(client.inventory.contents)
-    for inv_folder in client.inventory.contents:
-        print 'Inventory Folder', ':\t\t\t',  inv_folder.name
+    print 'Inventory: %s folders' % len(client.inventory.folders)
+    for inv_folder in client.inventory.folders:
+        print 'Inventory Folder', ':\t\t\t',  inv_folder.Name
+        for item in inv_folder.inventory:
+            print '    ', item.Name
     print ''
     print ''
     print 'Region attributes:'

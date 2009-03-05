@@ -201,7 +201,7 @@ class Agent(object):
             if self.settings.ENABLE_INVENTORY_MANAGEMENT:
 
                 self.inventory = Inventory(self)
-                self.inventory._parse_inventory_from_login_response()
+                self.inventory._parse_folders_from_login_response()
 
         elif self.grid_type == 'OGP':
 

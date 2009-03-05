@@ -55,14 +55,14 @@ class Inventory(object):
 
         self.agent = agent
 
-        # store the inventory contents in a list
+        # For now, store the inventory contents in a list
+        #     of folders with it's contents list containing it's inventory items
         # Ditto the library
 
-        self.contents = []
-        self.count = len(self.contents)
+        self.folders = []
 
         # the root inventory and library root folder are special cases
-        self.root_folder = None
+        self.inventory_root = None
         self.library_root = None
 
         # set up callbacks
@@ -78,8 +78,8 @@ class Inventory(object):
 
         if self.settings.LOG_VERBOSE: log(INFO, "Initializing the inventory")
 
-    def _parse_inventory_from_login_response(self):
-        """ the login response may contain inventory information, append data to our contents list """
+    def _parse_folders_from_login_response(self):
+        """ the login response may contain inventory information, append data to our folders list """
 
         if self.settings.LOG_VERBOSE: log(DEBUG, 'Parsing the login response for inventory folders')
 
@@ -88,6 +88,31 @@ class Inventory(object):
 
         if self.agent.login_response.has_key('inventory-skel-lib'):
             [self._add_inventory_folder(folder) for folder in self.agent.login_response['inventory-skel-lib']]
+
+    def _add_inventory_item(self, inventory_item):
+        """ inventory items comes from packets """
+
+        # replace an existing list member, else, append
+        # for now, we are assuming the parent folder exists.
+        # if it doesn't we'll know via traceback
+
+        index = [self.folders.index(folder) for folder in self.folders if folder.FolderID == inventory_item.FolderID]
+
+        try:
+
+            inventory_index = [self.folders[index].index(item) for item in self.folders[index].inventory]
+
+            self.folders[index[0]].inventory[inventory_index[0]] = inventory_item
+
+        except:
+
+            self.folders[index[0]].inventory.append(inventory_item)
+
+    def search_inventory_by_id(self, item_id):
+        """ search through all inventory folders for a uuid, return the match, or None if no match """ 
+
+        pass
+
 
     def _add_inventory_folder(self, folder_data):
         """ inventory folder data comes from either packets or login """
@@ -99,19 +124,25 @@ class Inventory(object):
 
             folder = InventoryFolder(folder_data['name'], folder_data['folder_id'], folder_data['parent_id'], folder_data['version'], folder_data['type_default'])
 
-            self.contents.append(folder)
+            self.folders.append(folder)
 
             if folder_data['parent_id'] == '00000000-0000-0000-0000-000000000000' and folder_data['name'] == 'My Inventory':
-                self.root_folder = folder
+                self.inventory_root = folder
+
             elif folder_data['parent_id'] == '00000000-0000-0000-0000-000000000000' and folder_data['name'] == 'Library':
                 self.library_root = folder
+
+        # otherwise, we are adding an InventoryFolder() instance
+        else:
+
+            self.folders.append(folder)
 
     def get_folder_contents(self, folder_id = None, name = None):
         """ returns a list of the local representation of a folder's contents """
 
         if folder_id != None:
 
-            return [member for member in self.contents if member.parent_id == folder_id]
+            return [member for member in self.folders if member.ParentID == folder_id]
 
         # the name case is not handled at this time
         '''
@@ -125,7 +156,7 @@ class Inventory(object):
     def _request_folder_contents(self, folder_id = None, name = None):
         """ send a request to the server for folder contents, wraps sendFetchInventoryDescendentsPacket """
 
-        self.sendFetchInventoryDescendentsPacket(folder_id = str(folder_id))
+        self.sendFetchInventoryDescendentsPacket(folder_id = folder_id)
 
     def sendFetchInventoryDescendentsPacket(self, folder_id = None, name = None):
         """ send a request to the server for folder contents """
@@ -156,14 +187,18 @@ class InventoryFolder(object):
     Tests: tests/test_inventory.py
     """
 
-    def __init__(self, name = None, folder_id = None, parent_id = None, version = None, type_default = None):
+    def __init__(self, Name = None, FolderID = None, ParentID = None, Version = None, Type = None):
         """ initialize the inventory folder """
 
-        self.name = name
-        self.folder_id = uuid.UUID(folder_id)
-        self.parent_id = uuid.UUID(parent_id)
-        self.version = version
-        self.type_default = type_default
+        self.type = 'InventoryFolder'
+
+        self.Name = Name
+        self.FolderID = uuid.UUID(str(FolderID))
+        self.ParentID = uuid.UUID(str(ParentID))
+        self.Version = Version
+        self.Type = Type
+        
+        self.inventory = []
 
 class InventoryItem(object):
     """ represents an Inventory item 
@@ -175,10 +210,32 @@ class InventoryItem(object):
     Tests: tests/test_inventory.py
     """
 
-    def __init__(self):
-        """ set up the event queue attributes """
+    def __init__(self, ItemID = None, FolderID = None, CreatorID = None, OwnerID = None, GroupID = None, BaseMask = None, OwnerMask = None, GroupMask = None, EveryoneMask = None, NextOwnerMask = None, GroupOwned = None, AssetID = None, Type = None, InvType = None, Flags = None, SaleType = None, SalePrice = None, Name = None, Description = None, CreationDate = None, CRC = None):
+        """ initialize the inventory item """
 
-        pass
+        self.type = 'InventoryItem'
+
+        self.ItemID = uuid.UUID(str(ItemID))
+        self.FolderID = uuid.UUID(str(FolderID))
+        self.CreatorID = uuid.UUID(str(CreatorID))
+        self.OwnerID = uuid.UUID(str(OwnerID))
+        self.GroupID = uuid.UUID(str(GroupID))
+        self.BaseMask = BaseMask
+        self.OwnerMask = OwnerMask
+        self.GroupMask = GroupMask
+        self.EveryoneMask = EveryoneMask
+        self.NextOwnerMask = NextOwnerMask
+        self.GroupOwned = GroupOwned
+        self.AssetID = uuid.UUID(str(AssetID))
+        self.Type = Type
+        self.InvType = InvType
+        self.Flags = Flags
+        self.SaleType = SaleType
+        self.SalePrice = SalePrice
+        self.Name = Name
+        self.Description = Description
+        self.CreationDate = CreationDate
+        self.CRC = CRC
 
 #~~~~~~~~~~
 # Callbacks
@@ -186,4 +243,54 @@ class InventoryItem(object):
 
 def onInventoryDescendents(packet, inventory):
 
-    print packet
+    if packet.message_data.blocks['AgentData'][0].get_variable('Descendents') > 0:
+
+        _agent_id = packet.message_data.blocks['AgentData'][0].get_variable('AgentID')
+        _agent_id = packet.message_data.blocks['AgentData'][0].get_variable('AgentID')
+        _folder_id = packet.message_data.blocks['AgentData'][0].get_variable('FolderID')
+        _owner_id = packet.message_data.blocks['AgentData'][0].get_variable('OwnerID')
+        _version = packet.message_data.blocks['AgentData'][0].get_variable('Version')
+        _descendents = packet.message_data.blocks['AgentData'][0].get_variable('Descendents')
+
+        if packet.message_data.blocks['ItemData'][0].get_variable('FolderID').data != uuid.UUID('00000000-0000-0000-0000-000000000000'):
+
+            for item_data_block in packet.message_data.blocks['ItemData']:
+
+                _ItemID = item_data_block.get_variable('ItemID').data
+                _FolderID = item_data_block.get_variable('FolderID').data
+                _CreatorID = item_data_block.get_variable('CreatorID').data
+                _OwnerID = item_data_block.get_variable('OwnerID').data
+                _GroupID = item_data_block.get_variable('GroupID').data
+                _BaseMask = item_data_block.get_variable('BaseMask').data
+                _OwnerMask = item_data_block.get_variable('OwnerMask').data
+                _GroupMask = item_data_block.get_variable('GroupMask').data
+                _EveryoneMask = item_data_block.get_variable('EveryoneMask').data
+                _NextOwnerMask = item_data_block.get_variable('NextOwnerMask').data
+                _GroupOwned = item_data_block.get_variable('GroupOwned').data
+                _AssetID = item_data_block.get_variable('AssetID').data
+                _Type = item_data_block.get_variable('Type').data
+                _InvType = item_data_block.get_variable('InvType').data
+                _Flags = item_data_block.get_variable('Flags').data
+                _SaleType = item_data_block.get_variable('SaleType').data
+                _SalePrice = item_data_block.get_variable('SalePrice').data
+                _Name = item_data_block.get_variable('Name').data
+                _Description = item_data_block.get_variable('Description').data
+                _CreationDate = item_data_block.get_variable('CreationDate').data
+                _CRC = item_data_block.get_variable('CRC').data
+
+                inventory_item = InventoryItem(_ItemID, _FolderID, _CreatorID, _OwnerID, _GroupID, _BaseMask, _OwnerMask, _GroupMask, _EveryoneMask, _NextOwnerMask, _GroupOwned, _AssetID, _Type, _InvType, _Flags, _SaleType, _SalePrice, _Name, _Description, _CreationDate, _CRC)
+
+                inventory._add_inventory_item(inventory_item)
+
+        if packet.message_data.blocks['FolderData'][0].get_variable('FolderID').data != uuid.UUID('00000000-0000-0000-0000-000000000000'):
+
+            for folder_data_block in packet.message_data.blocks['FolderData']:
+
+                _FolderID = folder_data_block.get_variable('FolderID').data
+                _ParentID = folder_data_block.get_variable('ParentID').data
+                _Type = folder_data_block.get_variable('Type').data
+                _Name = folder_data_block.get_variable('Name').data
+
+                folder = InventoryFolder( _Name, _FolderID, _ParentID, None, _Type)
+                
+                inventory._add_inventory_folder(folder)
