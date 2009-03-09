@@ -156,7 +156,7 @@ class EventQueueClient(object):
                 # ToDo: this is blocking, we need to break this
                 try:
                     self.result = self.cap.POST(self.data)
-                except URLError, error:
+                except Exception, error:
                     log(INFO, "Received an error we ought not care about: %s" % (error))
                     pass
 
@@ -194,13 +194,23 @@ class EventQueueClient(object):
 
         # if there are subscribers to the event queue and packet handling is enabled
         if self.settings.HANDLE_PACKETS: # and (len(self.handler) > 0):
+
             try:
+
                 if data != None:
+
+                    # this returns packets
                     parsed_data = self._decode_eq_result(data)
+
                     if self.settings.ENABLE_EQ_LOGGING: log(DEBUG, 'Event Queue result: %s' % (data))
+
+                    # if we are handling packets, hanlde the packet so any subscribers can get the data
                     if self.settings.HANDLE_PACKETS:
+
                         for packet in parsed_data:
+
                             self.packet_handler._handle(packet)
+
             except Exception, error:
                 #print error
                 pass

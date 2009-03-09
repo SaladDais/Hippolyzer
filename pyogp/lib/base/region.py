@@ -174,15 +174,27 @@ class Region(object):
     def send_message_next(self, packet, reliable = False):
         """ inserts this packet at the fron of the queue """
 
+        # if the packet data type != UDPPacket, serialize it
+        if str(type(packet)) != '<class \'pyogp.lib.base.message.packet.UDPPacket\'>':
+            packet = packet()
+
         self.packet_queue.insert(0, (packet, reliable))
 
     def enqueue_message(self, packet, reliable = False):
         """ queues packets for the messaging system to send """
 
+        # if the packet data type != UDPPacket, serialize it
+        if str(type(packet)) != '<class \'pyogp.lib.base.message.packet.UDPPacket\'>':
+            packet = packet()
+
         self.packet_queue.append((packet, reliable))
 
     def send_message(self, packet, reliable = False):
         """ send a packet to the host """
+
+        # if the packet data type != UDPPacket, serialize it
+        if str(type(packet)) != '<class \'pyogp.lib.base.message.packet.UDPPacket\'>':
+            packet = packet()
 
         if self.host == None or self.messenger == None:
             raise RegionMessageError(self)
@@ -194,6 +206,10 @@ class Region(object):
 
     def send_reliable(self, packet):
         """ send a reliable packet to the host """
+
+        # if the packet data type != UDPPacket, serialize it
+        if str(type(packet)) != '<class \'pyogp.lib.base.message.packet.UDPPacket\'>':
+            packet = packet()
 
         if self.host == None or self.messenger == None:
             raise RegionMessageError(self)

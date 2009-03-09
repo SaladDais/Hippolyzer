@@ -146,6 +146,68 @@ class Objects(object):
         # enqueue the message, send as reliable
         self.region.enqueue_message(packet(), True)
 
+        '''
+        def create_object(self):
+ 
+        // ObjectAdd - create new object in the world
+        // Simulator will assign ID and send message back to signal
+        // object actually created.
+        //
+        // AddFlags (see also ObjectUpdate)
+        // 0x01 - use physics
+        // 0x02 - create selected
+        //
+        // If only one ImageID is sent for an object type that has more than
+        // one face, the same image is repeated on each subsequent face.
+        // 
+        // Data field is opaque type-specific data for this object
+        {
+        	ObjectAdd Medium 1 NotTrusted Zerocoded
+        	{
+        		AgentData		Single
+        		{	AgentID		LLUUID	}
+        		{	SessionID	LLUUID	}
+        		{	GroupID			LLUUID	}
+        	}
+        	{
+        		ObjectData			Single
+        		{	PCode			U8	}
+        		{	Material		U8	}
+        		{	AddFlags		U32	}	// see object_flags.h
+
+        		{	PathCurve		U8	}
+        		{	ProfileCurve	U8	}
+        		{	PathBegin		U16	}	// 0 to 1, quanta = 0.01
+        		{	PathEnd			U16	}	// 0 to 1, quanta = 0.01
+        		{	PathScaleX		U8	}	// 0 to 1, quanta = 0.01
+        		{	PathScaleY		U8	}	// 0 to 1, quanta = 0.01
+        		{	PathShearX		U8	}	// -.5 to .5, quanta = 0.01
+        		{	PathShearY		U8	}	// -.5 to .5, quanta = 0.01
+        		{	PathTwist		S8	}	// -1 to 1, quanta = 0.01
+        		{	PathTwistBegin		S8	}	// -1 to 1, quanta = 0.01
+        		{ 	PathRadiusOffset 	S8	} 	// -1 to 1, quanta = 0.01
+        		{ 	PathTaperX		S8	}	// -1 to 1, quanta = 0.01
+        		{	PathTaperY		S8	}	// -1 to 1, quanta = 0.01
+        		{	PathRevolutions		U8	}	// 0 to 3, quanta = 0.015
+        		{	PathSkew		S8	}	// -1 to 1, quanta = 0.01
+        		{	ProfileBegin	U16	}	// 0 to 1, quanta = 0.01
+        		{	ProfileEnd		U16	}	// 0 to 1, quanta = 0.01
+        		{	ProfileHollow	U16	}	// 0 to 1, quanta = 0.01
+
+        		{	BypassRaycast	U8	}
+        		{	RayStart		LLVector3	}
+        		{	RayEnd			LLVector3	}
+        		{	RayTargetID		LLUUID	}
+        		{	RayEndIsIntersection	U8	}
+
+        		{	Scale			LLVector3	}
+        		{	Rotation		LLQuaternion	}
+
+        		{	State			U8	}
+        	}
+        }
+        '''
+
 class Object(object):
     """ represents an Object 
 
@@ -290,7 +352,6 @@ def onObjectUpdateCached(packet, objects):
         if _object == None or _object == []:
             CacheMissType = 1
         else:
-            print _object[0]
             CacheMissType = 0
 
         _request_list.append((_ID, CacheMissType))

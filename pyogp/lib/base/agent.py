@@ -32,6 +32,7 @@ from pyogp.lib.base.login import Login, LegacyLoginParams, OGPLoginParams
 from pyogp.lib.base.exc import LoginError
 from pyogp.lib.base.region import Region
 from pyogp.lib.base.inventory import Inventory
+from pyogp.lib.base.appearance import Appearance
 
 # pyogp messaging
 from pyogp.lib.base.message.packethandler import PacketHandler
@@ -93,15 +94,18 @@ class Agent(object):
         self.connected = False
         self.grid_type = None
         self.running = True
+        self.packet_handler = PacketHandler()
 
         # should we include these here?
         self.agentdomain = None     # the agent domain the agent is connected to if an OGP context
         self.regions = []           # all known regions
         self.region = None          # the host simulation for the agent
 
+        # init Appearance()
+        self.appearance = Appearance(self.settings, self)
+
         # set up callbacks (is this a decent place to do this? it's perhaps premature)
         if self.settings.HANDLE_PACKETS:
-            self.packet_handler = PacketHandler()
 
             onAgentDataUpdate_received = self.packet_handler._register('AgentDataUpdate')
             onAgentDataUpdate_received.subscribe(onAgentDataUpdate, self)     
@@ -111,6 +115,12 @@ class Agent(object):
 
             onHealthMessage_received = self.packet_handler._register('HealthMessage')
             onHealthMessage_received.subscribe(onHealthMessage, self)
+
+            onChatFromSimulator_received = self.packet_handler._register('ChatFromSimulator')
+            onChatFromSimulator_received.subscribe(onChatFromSimulator, self)
+
+            onImprovedInstantMessage_received = self.packet_handler._register('ImprovedInstantMessage')
+            onImprovedInstantMessage_received.subscribe(onImprovedInstantMessage, self)
 
         if self.settings.LOG_VERBOSE: log(DEBUG, 'Initializing agent: %s' % (self))
 
@@ -220,6 +230,26 @@ class Agent(object):
         while self.running:
             api.sleep(0)
 
+    def send_AgentDataUpdateRequest(self):
+        """ request an agent data update """
+
+        packet = AgentDataUpdateRequestPacket()
+
+        packet.AgentData['AgentID'] = uuid.UUID(str(self.agent_id))
+        packet.AgentData['SessionID'] = uuid.UUID(str(self.session_id))
+
+        self.region.enqueue_message(packet())
+
+    def send_RetrieveInstantMessages(self):
+        """ asks simulator for instant messages stored while agent was offline """
+
+        packet = RetrieveInstantMessagesPackets()
+        
+        packet.AgentDataBlock['AgentID'] =uuid.UUID(str(self.agent_id))
+        packet.AgentDataBlock['SessionID'] =uuid.UUID(str(self.session_id))
+
+        self.region.enqueue_message(packet())
+
     def sigint_handler(self, signal, frame):
         log(INFO, "Caught signal... %d. Stopping" % signal)
         self.running = False
@@ -268,6 +298,64 @@ def onAgentMovementComplete(packet, agent):
 def onHealthMessage(packet, agent):
 
     agent.health = packet.message_data.blocks['HealthData'][0].get_variable('Health')
+
+def onChatFromSimulator(packet, agent):
+
+    pass
+    '''
+    {
+    	ChatFromSimulator Low 139 Trusted Unencoded
+    	{
+    		ChatData			Single
+    		{	FromName		Variable 1	}
+    		{	SourceID		LLUUID		}	// agent id or object id
+    		{	OwnerID			LLUUID		}	// object's owner
+    		{	SourceType		U8			}
+    		{	ChatType		U8			}
+    		{	Audible			U8			}
+    		{	Position		LLVector3	}
+    		{	Message			Variable 2	}	// UTF-8 text
+    	}
+    }
+    '''
+
+def onImprovedInstantMessage(packet, agent):
+
+    pass
+    '''
+    // ImprovedInstantMessage
+    // This message can potentially route all over the place
+    // ParentEstateID: parent estate id of the source estate
+    // RegionID: region id of the source of the IM.
+    // Position: position of the sender in region local coordinates
+    // Dialog	see llinstantmessage.h for values
+    // ID		May be used by dialog. Interpretation depends on context.
+    // BinaryBucket May be used by some dialog types
+    // reliable
+    {
+    	ImprovedInstantMessage Low 254 NotTrusted Zerocoded
+    	{
+    		AgentData 		Single
+    		{   AgentID     LLUUID  }
+    		{	SessionID	LLUUID	}
+    	}
+    	{
+    		MessageBlock		Single
+    		{	FromGroup		BOOL	}
+    		{	ToAgentID		LLUUID	}
+    		{	ParentEstateID	U32	}
+    		{   RegionID		LLUUID	}
+    		{	Position		LLVector3	}
+    		{	Offline			U8	}
+    		{	Dialog			U8	}	// U8 - IM type
+    		{	ID				LLUUID	}
+    		{	Timestamp		U32	}
+    		{	FromAgentName	Variable	1	}
+    		{	Message			Variable	2	}
+    		{	BinaryBucket	Variable	2	}
+    	}
+    }
+    '''
 
 class Home(object):
     """ contains the parameters descibing an agent's home location """
