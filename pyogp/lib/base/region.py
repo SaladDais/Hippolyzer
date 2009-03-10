@@ -184,7 +184,7 @@ class Region(object):
         """ queues packets for the messaging system to send """
 
         # if the packet data type != UDPPacket, serialize it
-        if str(type(packet)) != '<class \'pyogp.lib.base.message.packet.UDPPacket\'>':
+        if str(type(packet)) != '<class \'pyogp.lib.base.message.message.Message\'>':
             packet = packet()
 
         self.packet_queue.append((packet, reliable))
@@ -193,7 +193,7 @@ class Region(object):
         """ send a packet to the host """
 
         # if the packet data type != UDPPacket, serialize it
-        if str(type(packet)) != '<class \'pyogp.lib.base.message.packet.UDPPacket\'>':
+        if str(type(packet)) != '<class \'pyogp.lib.base.message.message.Message\'>':
             packet = packet()
 
         if self.host == None or self.messenger == None:
@@ -208,7 +208,7 @@ class Region(object):
         """ send a reliable packet to the host """
 
         # if the packet data type != UDPPacket, serialize it
-        if str(type(packet)) != '<class \'pyogp.lib.base.message.packet.UDPPacket\'>':
+        if str(type(packet)) != '<class \'pyogp.lib.base.message.message.Message\'>':
             packet = packet()
 
         if self.host == None or self.messenger == None:
