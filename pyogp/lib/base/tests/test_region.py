@@ -24,6 +24,8 @@ import unittest
 # pyogp
 from pyogp.lib.base.exc import *
 from pyogp.lib.base.region import Region
+from pyogp.lib.base.message.packets import AgentDataUpdateRequestPacket, SetStartLocationPacket
+
 
 # pyogp tests
 import pyogp.lib.base.tests.config 
@@ -51,8 +53,8 @@ class TestRegion(unittest.TestCase):
 
     def test_enqueue_message(self):
 
-        fake_packet = 'fake_packet'
-        fake_packet2 = 'fake_packet'
+        fake_packet = AgentDataUpdateRequestPacket()
+        fake_packet2 = AgentDataUpdateRequestPacket()
 
         self.region.enqueue_message(fake_packet)
         self.region.enqueue_message(fake_packet2)
@@ -60,21 +62,21 @@ class TestRegion(unittest.TestCase):
         self.assertEquals(len(self.region.packet_queue), 2)
 
         for data in self.region.packet_queue:
-            self.assertEquals(('fake_packet', False), data)
+            self.assertEquals(('<class \'pyogp.lib.base.message.message.Message\'>', False), (str(type(data[0])), False))
 
     def test_enqueue_urgent_message(self):
 
-        fake_packet = 'fake_packet'
-        fake_packet2 = 'fake_packet'
+        fake_packet = AgentDataUpdateRequestPacket()
+        fake_packet2 = AgentDataUpdateRequestPacket()
 
-        fake_urgent_packet = 'fake_urgent_packet'
+        fake_urgent_packet = SetStartLocationPacket()
 
         self.region.enqueue_message(fake_packet)
         self.region.enqueue_message(fake_packet2)
         self.region.send_message_next(fake_urgent_packet)
 
         self.assertEquals(len(self.region.packet_queue), 3)
-        self.assertEquals(self.region.packet_queue[0], (fake_urgent_packet, False))
+        self.assertEquals(self.region.packet_queue[0][0].name, 'SetStartLocation')
 
 def test_suite():
     from unittest import TestSuite, makeSuite

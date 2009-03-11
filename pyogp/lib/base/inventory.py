@@ -76,6 +76,9 @@ class Inventory(object):
             onInventoryDescendents_received = self.packet_handler._register('InventoryDescendents')
             onInventoryDescendents_received.subscribe(onInventoryDescendents, self)     
 
+            onFetchInventoryReply_received = self.packet_handler._register('FetchInventoryReply')
+            onFetchInventoryReply_received.subscribe(onFetchInventoryReply, self)
+
         if self.settings.LOG_VERBOSE: log(INFO, "Initializing inventory storage")
 
     def _parse_folders_from_login_response(self):
@@ -104,9 +107,13 @@ class Inventory(object):
 
             self.folders[index[0]].inventory[inventory_index[0]] = inventory_item
 
+            if self.settings.LOG_VERBOSE: log(DEBUG, 'Replacing a stored inventory item: %s for agent \'%s\'' % (inventory_item.ItemID, self.agent.agent_id))
+
         except:
 
             self.folders[index[0]].inventory.append(inventory_item)
+
+            if self.settings.LOG_VERBOSE: log(DEBUG, 'Storing a new inventory item: %s in agent \'%s\'' % (inventory_item.ItemID, self.agent.agent_id))
 
     def search_inventory_by_id(self, item_id):
         """ search through all inventory folders for a uuid, return the match, or None if no match """ 
@@ -117,10 +124,10 @@ class Inventory(object):
     def _add_inventory_folder(self, folder_data):
         """ inventory folder data comes from either packets or login """
 
-        if self.settings.LOG_VERBOSE: log(DEBUG, "Adding inventory folder %s" % (folder_data['name']))
-
         # if it's a dict, we are parsing login response data
         if type(folder_data) == dict:
+
+            if self.settings.LOG_VERBOSE: log(DEBUG, "Adding inventory folder %s" % (folder_data['name']))
 
             folder = InventoryFolder(folder_data['name'], folder_data['folder_id'], folder_data['parent_id'], folder_data['version'], folder_data['type_default'])
 
@@ -135,7 +142,9 @@ class Inventory(object):
         # otherwise, we are adding an InventoryFolder() instance
         else:
 
-            self.folders.append(folder)
+            if self.settings.LOG_VERBOSE: log(DEBUG, "Adding inventory folder %s" % (folder_data.Name))
+
+            self.folders.append(folder_data)
 
     def display_folder_contents(self, folder_id = None, name = None):
         """ returns a list of the local representation of a folder's contents """
@@ -162,6 +171,28 @@ class Inventory(object):
         """ send a request to the server for folder contents, wraps sendFetchInventoryDescendentsPacket """
 
         self.sendFetchInventoryDescendentsPacket(folder_id = folder_id)
+
+    def request_inventory_by_id(self, id_list = None):
+        """ ask for inventory data by id via a list """
+
+        if id_list != None:
+
+            packet = FetchInventoryPacket()
+
+            # AgentData block
+            packet.AgentData['AgentID'] = uuid.UUID(str(self.agent.agent_id))    # MVT_LLUUID
+            packet.AgentData['SessionID'] = uuid.UUID(str(self.agent.session_id))    # MVT_LLUUID
+
+            for inventory_id in id_list:
+
+                InventoryData = {}
+                InventoryData['OwnerID'] = uuid.UUID(str(self.agent.agent_id))    # MVT_LLUUID
+                InventoryData['ItemID'] = uuid.UUID(str(inventory_id))    # MVT_LLUUID
+
+                packet.InventoryDataBlocks.append(InventoryData)
+
+            # enqueue the message
+            self.region.enqueue_message(packet())                
 
     def sendFetchInventoryDescendentsPacket(self, folder_id = None, name = None):
         """ send a request to the server for folder contents """
@@ -299,3 +330,36 @@ def onInventoryDescendents(packet, inventory):
                 folder = InventoryFolder( _Name, _FolderID, _ParentID, None, _Type)
                 
                 inventory._add_inventory_folder(folder)
+
+def onFetchInventoryReply(packet, inventory):
+
+    _agent_id = packet.message_data.blocks['AgentData'][0].get_variable('AgentID')
+
+    for InventoryData_block in packet.message_data.blocks['InventoryData']:
+
+        _ItemID = InventoryData_block.get_variable('ItemID').data
+        _FolderID = InventoryData_block.get_variable('FolderID').data
+        _CreatorID = InventoryData_block.get_variable('CreatorID').data
+        _OwnerID = InventoryData_block.get_variable('OwnerID').data
+        _GroupID = InventoryData_block.get_variable('GroupID').data
+        _BaseMask = InventoryData_block.get_variable('BaseMask').data
+        _OwnerMask = InventoryData_block.get_variable('OwnerMask').data
+        _GroupMask = InventoryData_block.get_variable('GroupMask').data
+        _EveryoneMask = InventoryData_block.get_variable('EveryoneMask').data
+        _NextOwnerMask = InventoryData_block.get_variable('NextOwnerMask').data
+        _GroupOwned = InventoryData_block.get_variable('GroupOwned').data
+        _AssetID = InventoryData_block.get_variable('AssetID').data
+        _Type = InventoryData_block.get_variable('Type').data
+        _InvType = InventoryData_block.get_variable('InvType').data
+        _Flags = InventoryData_block.get_variable('Flags').data
+        _SaleType = InventoryData_block.get_variable('SaleType').data
+        _SalePrice = InventoryData_block.get_variable('SalePrice').data
+        _Name = InventoryData_block.get_variable('Name').data
+        _Description = InventoryData_block.get_variable('Description').data
+        _CreationDate = InventoryData_block.get_variable('CreationDate').data
+        _CRC = InventoryData_block.get_variable('CRC').data
+
+        inventory_item = InventoryItem(_ItemID, _FolderID, _CreatorID, _OwnerID, _GroupID, _BaseMask, _OwnerMask, _GroupMask, _EveryoneMask, _NextOwnerMask, _GroupOwned, _AssetID, _Type, _InvType, _Flags, _SaleType, _SalePrice, _Name, _Description, _CreationDate, _CRC)
+
+        inventory._add_inventory_item(inventory_item)
+
