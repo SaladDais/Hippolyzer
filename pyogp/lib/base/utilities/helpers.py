@@ -28,7 +28,7 @@ from indra.base import llsd
 from pyogp.lib.base.exc import DataParsingError, DeserializationFailed
 
 # initialize loggin
-logger = getLogger('pyogp.lib.base.utilities.helpers')
+logger = getLogger('...utilities.helpers')
 log = logger.log
 
 class Helpers(object):

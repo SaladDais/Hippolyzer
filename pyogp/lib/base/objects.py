@@ -25,8 +25,12 @@ import uuid
 # related
 
 # pyogp
+
+# pyogp message
 from pyogp.lib.base. message.packethandler import PacketHandler
 from pyogp.lib.base.message.packets import *
+
+# pyogp utilities
 from pyogp.lib.base.utilities.helpers import Helpers
 
 # initialize logging
@@ -150,9 +154,9 @@ class Objects(object):
         """ creates the default box, defaulting as 1m to the east, with an option GroupID to set the prim to"""
 
         # self.agent.Position holds where we are. we need to add this tuple to the incoming tuple (vector to a vector)
-        location_to_rez_x = self.agent.Position.data[0] + relative_position[0]
-        location_to_rez_y = self.agent.Position.data[1] + relative_position[1]
-        location_to_rez_z = self.agent.Position.data[2] + relative_position[2]
+        location_to_rez_x = self.agent.Position[0] + relative_position[0]
+        location_to_rez_y = self.agent.Position[1] + relative_position[1]
+        location_to_rez_z = self.agent.Position[2] + relative_position[2]
 
         location_to_rez = (location_to_rez_x, location_to_rez_y, location_to_rez_z)
 
@@ -216,7 +220,7 @@ class Objects(object):
 
     def update_object_permissions(self, ObjectLocalID_list, Field, Set, Mask, Override = False):
         """ update permissions for a list of objects
-        
+
         This will update a specific bit to a specific value.
         """
 
@@ -242,7 +246,7 @@ class Objects(object):
 
     def set_object_name(self, ObjectID_NameMap):
         """ update the name of objects 
-        
+
         Accepts a dictionary mapping LocalID to Name.
         """
 

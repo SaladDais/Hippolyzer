@@ -20,23 +20,33 @@ $/LicenseInfo$
 # standard python libs
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 
+# pyogp
 from pyogp.lib.base.utilities.events import Event
+from pyogp.lib.base.settings import Settings
 
 # initialize logging
-logger = getLogger('...base. message.packethandler')
+logger = getLogger('...message.packethandler')
 log = logger.log
 
 class PacketHandler(object):
     """ general class handling individual packets """
 
-    def __init__(self):
+    def __init__(self, settings = None):
         """ i do nothing """
+
+        # allow the settings to be passed in
+        # otherwise, grab the defaults
+        if settings != None:
+            self.settings = settings
+        else:
+            from pyogp.lib.base.settings import Settings
+            self.settings = Settings()
 
         self.handlers = {}
 
     def _register(self, packet_name):
 
-        log(DEBUG, 'Creating a monitor for %s' % (packet_name))
+        if self.settings.LOG_VERBOSE: log(DEBUG, 'Creating a monitor for %s' % (packet_name))
 
         return self.handlers.setdefault(packet_name + "_Received", PacketReceivedNotifier(packet_name))
 
@@ -51,7 +61,7 @@ class PacketHandler(object):
             # Handle the packet if we have subscribers
             # Conveniently, this will also enable verbose packet logging
             if len(handler) > 0:
-                log(DEBUG, 'Handling packet: %s' % (packet.name))
+                if self.settings.LOG_VERBOSE: log(DEBUG, 'Handling packet: %s' % (packet.name))
                 handler(packet)
 
         except KeyError:

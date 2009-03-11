@@ -58,7 +58,7 @@ class TestRegion(unittest.TestCase):
 
         self.region.enqueue_message(fake_packet)
         self.region.enqueue_message(fake_packet2)
-        
+
         self.assertEquals(len(self.region.packet_queue), 2)
 
         for data in self.region.packet_queue:

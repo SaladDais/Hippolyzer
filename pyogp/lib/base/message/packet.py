@@ -75,4 +75,3 @@ class UDPPacket(object):
         """ a string representation of a packet """
 
         return self.data()
-        

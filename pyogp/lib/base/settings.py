@@ -43,6 +43,9 @@ class Settings(object):
         # enable object tracking
         self.ENABLE_OBJECT_TRACKING = True
 
+        # enable communications monitoring
+        self.ENABLE_COMMUNICATIONS_TRACKING = True
+
         #~~~~~~~~~~~~~~~~~~~~~~~
         # Extended Login Options
         #~~~~~~~~~~~~~~~~~~~~~~~
@@ -59,7 +62,7 @@ class Settings(object):
         #~~~~~~~~~~~~~~~~~~~
 
         # toggle handling a region's event queue
-        self.ENABLE_REGION_EVENT_QUEUE = True
+        self.ENABLE_REGION_EVENT_QUEUE = False
 
         # how many seconds to wait between polling
         # a region's event queue
@@ -87,13 +90,13 @@ class Settings(object):
 
         self.LOG_VERBOSE = True
         self.ENABLE_BYTES_TO_HEX_LOGGING = False
-        self.ENABLE_CAPS_LOGGING = True
+        self.ENABLE_CAPS_LOGGING = False
         self.ENABLE_CAPS_LLSD_LOGGING = False
         self.ENABLE_EQ_LOGGING = True
         self.ENABLE_UDP_LOGGING = True
 
         # allow disabling logging of certain packets
-        self.DISABLE_SPAMMERS = True
+        self.DISABLE_SPAMMERS = False
         self.UDP_SPAMMERS = ['PacketAck', 'AgentUpdate']
 
         #~~~~~~~~~~~~~~~~~~~~~~

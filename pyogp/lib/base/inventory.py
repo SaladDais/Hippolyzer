@@ -233,7 +233,7 @@ class InventoryFolder(object):
         self.ParentID = uuid.UUID(str(ParentID))
         self.Version = Version
         self.Type = Type
-        
+
         self.inventory = []
 
 class InventoryItem(object):
@@ -328,7 +328,7 @@ def onInventoryDescendents(packet, inventory):
                 _Name = FolderData_block.get_variable('Name').data
 
                 folder = InventoryFolder( _Name, _FolderID, _ParentID, None, _Type)
-                
+
                 inventory._add_inventory_folder(folder)
 
 def onFetchInventoryReply(packet, inventory):

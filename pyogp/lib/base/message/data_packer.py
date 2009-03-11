@@ -70,7 +70,7 @@ class DataPacker(object):
         return self.__pack_tuple(endian, vec, 'f')
 
     def __pack_vector3d(self, endian, vec):
-        return self.__pack_tuple(endian,vec, 'd')
+        return self.__pack_tuple(endian, vec, 'd')
 
     def __pack_vector4(self, endian, vec):
         return self.__pack_tuple(endian, vec, 'f')

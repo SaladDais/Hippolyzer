@@ -199,13 +199,13 @@ class EventQueueClient(object):
 
                 if data != None:
 
-                    # this returns packets
-                    parsed_data = self._decode_eq_result(data)
-
                     if self.settings.ENABLE_EQ_LOGGING: log(DEBUG, 'Event Queue result: %s' % (data))
 
-                    # if we are handling packets, hanlde the packet so any subscribers can get the data
+                    # if we are handling packets, handle the packet so any subscribers can get the data
                     if self.settings.HANDLE_PACKETS:
+
+                        # this returns packets
+                        parsed_data = self._decode_eq_result(data)
 
                         for packet in parsed_data:
 

@@ -59,7 +59,8 @@ setup(name='pyogp.lib.base',
            'region_connect = pyogp.lib.base.examples.sample_region_connect:main',
            'inventory_handling = pyogp.lib.base.examples.sample_inventory_handling:main',
            'object_tracking = pyogp.lib.base.examples.sample_object_tracking:main',
-           'object_creation = pyogp.lib.base.examples.sample_object_creation:main'
+           'object_creation = pyogp.lib.base.examples.sample_object_creation:main',
+           'chat_and_instant_messaging = pyogp.lib.base.examples.sample_chat_and_instant_messaging:main'
        ],
      },
 

@@ -236,7 +236,7 @@ class UDPDispatcher(object):
                     acks_this_packet = 0
 
             if acks_this_packet > 0:
-                self.send_message(msg, circuit.host)    
+                self.send_message(msg, circuit.host)
 
             circuit.acks = []
 

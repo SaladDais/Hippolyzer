@@ -363,8 +363,8 @@ class Region(object):
 
         packet = AgentUpdatePacket()
 
-        packet.AgentData['AgentID'] = uuid.UUID(self.agent.agent_id)
-        packet.AgentData['SessionID'] = uuid.UUID(self.agent.session_id)
+        packet.AgentData['AgentID'] = uuid.UUID(str(self.agent.agent_id))
+        packet.AgentData['SessionID'] = uuid.UUID(str(self.agent.session_id))
 
         # configurable data points
         packet.AgentData['BodyRotation'] = BodyRotation
