@@ -23,6 +23,7 @@ import unittest, doctest
 from uuid import UUID
 
 #local libraries
+from pyogp.lib.base.settings import Settings
 from pyogp.lib.base.message.types import MsgType
 from pyogp.lib.base.message.packet import UDPPacket
 from pyogp.lib.base.message.udpdeserializer import UDPPacketDeserializer
@@ -36,20 +37,21 @@ class TestSerializer(unittest.TestCase):
         pass
 
     def setUp(self):
-        pass
+        self.settings = Settings()
+        self.settings.ENABLE_DEFERRED_PACKET_PARSING = False
 
     def test_serialize(self):
         message = '\xff\xff\xff\xfb' + '\x03' + \
                   '\x01\x00\x00\x00' + '\x02\x00\x00\x00' + '\x03\x00\x00\x00'
         message = '\x00' + '\x00\x00\x00\x01' +'\x00' + message
-        deserializer = UDPPacketDeserializer(message)
-        packet = deserializer.deserialize()
+        deserializer = UDPPacketDeserializer(settings = self.settings)
+        packet = deserializer.deserialize(message)
         #print packet.send_flags
         #print packet.packet_id
         data = packet.message_data
 
-        serializer = UDPPacketSerializer(packet)
-        packed_data = serializer.serialize()
+        serializer = UDPPacketSerializer()
+        packed_data = serializer.serialize(packet)
         assert packed_data == message, "Incorrect serialization"
 
 

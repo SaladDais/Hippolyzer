@@ -22,9 +22,7 @@ $/LicenseInfo$
 import struct
 
 # pygop
-from packet import UDPPacket
-from template import MsgData, MsgBlockData, MsgVariableData
-from types import MsgType, MsgBlockType, MsgFrequency, EndianType, sizeof
+from types import MsgType, MsgBlockType, EndianType
 from data_packer import DataPacker
 from template_dict import TemplateDictionary
 from pyogp.lib.base import exc
@@ -36,17 +34,26 @@ class UDPPacketSerializer(object):
         that data in data structure form. A serializer should be used on
         the message produced by this so that it can be sent over a network. """
 
-    def __init__(self, context):
+    def __init__(self):
         """initialize the adapter"""
-        self.context = context	# the UDPPacket
+        self.context = None	# the UDPPacket
 
-        template_dict = TemplateDictionary()
-        self.current_template = template_dict.get_template(context.name)
+        self.template_dict = TemplateDictionary()
+        self.current_template = None
         self.packer = DataPacker()
 
-    def serialize(self):
+    def set_current_template(self):
+        """ establish the template for the current packet """
+
+        self.current_template = self.template_dict.get_template(self.context.name)
+
+    def serialize(self, context):
         """ Builds the message by serializing the data. Creates a packet ready
             to be sent. """
+
+        self.context = context
+
+        self.set_current_template()
 
         #doesn't build in the header flags, sequence number, or data offset
         msg_buffer = ''

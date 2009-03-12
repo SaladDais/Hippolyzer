@@ -23,13 +23,11 @@ from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 #from types import *
 
 # pyogp
-from data import msg_tmpl, msg_details
 from circuit import CircuitManager
-from types import PacketLayout, PackFlags, MsgType, EndianType, sizeof
-from data_unpacker import DataUnpacker
-from data_packer import DataPacker
+from types import MsgType, MsgBlockType, MsgFrequency, PacketLayout, EndianType, PackFlags, sizeof
 from udpserializer import UDPPacketSerializer
 from udpdeserializer import UDPPacketDeserializer
+from data_unpacker import DataUnpacker
 from packet import UDPPacket
 from message import Message, Block
 from pyogp.lib.base.network.net import NetUDPClient
@@ -50,6 +48,7 @@ class UDPDispatcher(object):
         #built, and read
 
         self.circuit_manager = CircuitManager()
+        self.data_unpacker = DataUnpacker()
 
         #the ID of the packet we most recently received
         self.receive_packet_id = -1
@@ -62,8 +61,6 @@ class UDPDispatcher(object):
             self.udp_client = udp_client
 
         self.socket = self.udp_client.start_udp_connection()
-        self.unpacker = DataUnpacker()
-        self.packer = DataPacker()
 
         # allow the settings to be passed in
         # otherwise, grab the defaults
@@ -82,6 +79,10 @@ class UDPDispatcher(object):
             from pyogp.lib.base.message.packethandler import PacketHandler
             self.packet_handler = PacketHandler()
 
+        # set up our parsers
+        self.udp_deserializer = UDPPacketDeserializer(self.packet_handler, self.settings)
+        self.udp_serializer = UDPPacketSerializer()
+
     def find_circuit(self, host):
         circuit = self.circuit_manager.get_circuit(host)
         if circuit == None:
@@ -99,18 +100,29 @@ class UDPDispatcher(object):
 
         #we have a message
         if msg_size > 0:
-            udp_deserializer = UDPPacketDeserializer(msg_buf)
-            recv_packet = udp_deserializer.deserialize()
-
-            #couldn't deserialize
-            if recv_packet == None:
-                return None
 
             #determine sender
             #host = self.udp_client.get_sender()
             circuit = self.find_circuit(host)
             if circuit == None:
                 raise exc.CircuitNotFound(host, 'preparing to check for packets')
+
+            recv_packet = self.udp_deserializer.deserialize(msg_buf)
+
+            #couldn't deserialize
+            if recv_packet == None:
+
+                # if its sent as reliable, we should ack it even if we aren't going to parse it
+                # since we can skip parsing the packet in self.udp_deserializer
+                
+                # this indicate reliable
+                send_flags = ord(msg_buf[0])
+                packet_id = self.data_unpacker.unpack_data(msg_buf, MsgType.MVT_U32, 1, endian_type=EndianType.BIG)
+
+                # queue the ack up
+                circuit.collect_ack(packet_id)
+
+                return None
 
             #Case - trusted packets can only come in over trusted circuits
             if circuit.is_trusted and \
@@ -124,7 +136,7 @@ class UDPDispatcher(object):
                     hex_string = '<=>' + self.helpers.bytes_to_hex(msg_buf)
                 else:
                     hex_string = ''
-                log(DEBUG, 'Received packet: %s%s' % (recv_packet.name, hex_string))
+                log(DEBUG, 'Received packet : %s (%s)%s' % (recv_packet.name, recv_packet.packet_id, hex_string))
 
             if self.settings.HANDLE_PACKETS:
                 self.packet_handler._handle(recv_packet)
@@ -166,10 +178,10 @@ class UDPDispatcher(object):
             circuit.prepare_packet(packet)
 
         # serialize the data
-        serializer = UDPPacketSerializer(packet)
+        #serializer = UDPPacketSerializer(packet)
 
         #serializer = ISerialization(packet)
-        send_buffer = serializer.serialize()
+        send_buffer = self.udp_serializer.serialize(packet)
 
         if self.settings.ENABLE_UDP_LOGGING:
             if packet.name in self.settings.UDP_SPAMMERS and self.settings.DISABLE_SPAMMERS:
@@ -179,7 +191,7 @@ class UDPDispatcher(object):
                     hex_string = '<=>' + self.helpers.bytes_to_hex(send_buffer)
                 else:
                     hex_string = ''
-                log(DEBUG, 'Sent packet: %s%s' % (message.name, hex_string))
+                log(DEBUG, 'Sent packet     : %s (%s)%s' % (packet.name, packet.packet_id, hex_string))
 
         #TODO: remove this when testing a network
         self.udp_client.send_packet(self.socket, send_buffer, host)
@@ -201,15 +213,19 @@ class UDPDispatcher(object):
 
         #go through all circuits in the map
         for circuit in self.circuit_manager.unacked_circuits.values():
+
             for unacked_packet in circuit.unacked_packets.values():
+
                 unacked_packet.retries -= 1
                 #is this correct? should it be serialized or something?
                 #self.reset_send_buffer()
+
                 self.send_buffer = ''
                 self.send_buffer += unacked_packet.buffer
                 self.send_retry(unacked_packet.host, unacked_packet.buffer)
 
                 if unacked_packet.retries <= 0:
+
                     circuit.final_retry_packets[unacked_packet.packet_id] = unacked_packet
                     del circuit.unacked_packets[unacked_packet.packet_id]
 
@@ -220,22 +236,34 @@ class UDPDispatcher(object):
 
     def __send_acks(self):
         """ Acks all packets received that we haven't acked yet. """
+
+        # ToDo: review this, not sure it's right?
         for circuit in self.circuit_manager.circuit_map.values():
+
             acks_this_packet = 0
             msg = None
 
             for packet_id in circuit.acks:
+                
                 if acks_this_packet == 0:
+
                     msg = Message('PacketAck')
 
                 block = Block("Packets", ID=packet_id)
                 msg.add_block(block)
+
+                if self.settings.LOG_VERBOSE and not self.settings.DISABLE_SPAMMERS:
+                    log(DEBUG, "Acking packet id: %s" % (packet_id))
+
                 acks_this_packet += 1
+
                 if acks_this_packet > 250:
+
                     self.send_message(msg, circuit.host)
                     acks_this_packet = 0
 
             if acks_this_packet > 0:
+
                 self.send_message(msg, circuit.host)
 
             circuit.acks = []

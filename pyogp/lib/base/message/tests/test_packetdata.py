@@ -25,6 +25,7 @@ import binascii
 import re, datetime
 
 #local libraries
+from pyogp.lib.base.settings import Settings
 from pyogp.lib.base.message.data import msg_tmpl
 from pyogp.lib.base.message.udpdispatcher import UDPDispatcher
 from pyogp.lib.base.message.udpdeserializer import UDPPacketDeserializer
@@ -51,12 +52,15 @@ class TestPacketDecode(unittest.TestCase):
         self.template_list = parser.message_templates        
         self.template_dict = TemplateDictionary(self.template_list)
 
+        self.settings = Settings()
+        self.settings.ENABLE_DEFERRED_PACKET_PARSING = False
+
     def test_agent_data_update(self):
         """test if the agent data update packet can be decoded"""
         message = AGENT_DATA_UPDATE
         size = len(message)
-        deserializer = UDPPacketDeserializer(message)
-        packet = deserializer.deserialize()
+        deserializer = UDPPacketDeserializer(settings = self.settings)
+        packet = deserializer.deserialize(message)
         assert packet != None, "Wrong data"
         assert packet.message_data.name == 'AgentDataUpdate', "Wrong packet"
         assert packet.message_data.blocks['AgentData'][0].vars['LastName'].data == 'Kraft\x00', \
@@ -68,8 +72,8 @@ class TestPacketDecode(unittest.TestCase):
         """test if the agent data update packet can be decoded"""
         message = AGENT_ANIMATION
         size = len(message)
-        deserializer = UDPPacketDeserializer(message)
-        packet = deserializer.deserialize()
+        deserializer = UDPPacketDeserializer(settings = self.settings)
+        packet = deserializer.deserialize(message)
         assert packet != None, "Wrong data 2"
 
     def test_object_update(self):
@@ -80,7 +84,7 @@ class TestPacketDecode(unittest.TestCase):
         message = OBJECT_UPDATE
         size = len(message)
 
-        deserializer = UDPPacketDeserializer(message)
+        deserializer = UDPPacketDeserializer(settings = self.settings)
         #geeneric timing code, should work 99% of the time unless we're at start time xx:xx:59.9 seconds or thereabouts
 
         secsearch= re.compile('([0-90-9]+)\.([0-9]+)')
@@ -88,7 +92,7 @@ class TestPacketDecode(unittest.TestCase):
         matchobj = secsearch.search(start)
         startsecs = float(matchobj.group(1)+'.'+matchobj.group(2))
 
-        packet = deserializer.deserialize()
+        packet = deserializer.deserialize(message)
         assert packet != None, "Wrong data"
         assert packet.message_data.name == 'ObjectUpdate', "Wrong packet"
 

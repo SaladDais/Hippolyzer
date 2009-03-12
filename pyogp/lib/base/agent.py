@@ -37,6 +37,8 @@ from pyogp.lib.base.inventory import Inventory
 
 # pyogp messaging
 from pyogp.lib.base.message.packethandler import PacketHandler
+from pyogp.lib.base.event_queue import EventQueueHandler
+
 from pyogp.lib.base.message.packets import *
 
 # pyogp utilities
@@ -100,6 +102,7 @@ class Agent(object):
         self.grid_type = None
         self.running = True
         self.packet_handler = PacketHandler(self.settings)
+        self.event_queue_handler = EventQueueHandler()
         self.helpers = Helpers()
 
         # data we store as it comes in from the grid
@@ -133,17 +136,8 @@ class Agent(object):
                 onImprovedInstantMessage_received = self.packet_handler._register('ImprovedInstantMessage')
                 onImprovedInstantMessage_received.subscribe(self.helpers.log_packet, self)
 
-                onChatterBoxInvitation_received = self.packet_handler._register('ChatterBoxInvitation')
-                onChatterBoxInvitation_received.subscribe(self.helpers.log_packet, self)
-
-            if self.settings.MULTIPLE_SIM_CONNECTIONS:
-
-                pass
-
-                '''
-                onEnableSimulator_received = self.packet_handler._register('EnableSimulator')
-                onEnableSimulator_received.subscribe(self.helpers.log_packet, self)
-                '''
+                onChatterBoxInvitation_received = self.event_queue_handler._register('ChatterBoxInvitation')
+                onChatterBoxInvitation_received.subscribe(self.helpers.log_event_queue_data, self)
 
         if self.settings.LOG_VERBOSE: log(DEBUG, 'Initializing agent: %s' % (self))
 
@@ -245,7 +239,7 @@ class Agent(object):
         """ enables an agents current region """
 
         # enable the current region, setting connect = True
-        self.region = Region(self.login_response['region_x'], self.login_response['region_y'], self.login_response['seed_capability'], self.login_response['udp_blacklist'], self.login_response['sim_ip'], self.login_response['sim_port'], self.login_response['circuit_code'], self, settings = self.settings, packet_handler = self.packet_handler)
+        self.region = Region(self.login_response['region_x'], self.login_response['region_y'], self.login_response['seed_capability'], self.login_response['udp_blacklist'], self.login_response['sim_ip'], self.login_response['sim_port'], self.login_response['circuit_code'], self, settings = self.settings, packet_handler = self.packet_handler, event_queue_handler = self.event_queue_handler)
 
         # start the simulator udp and event queue connections
         api.spawn(self.region.connect)
@@ -291,7 +285,7 @@ class Agent(object):
 
     # Instant Message (im, group chat)
 
-    def instant_message(self, ToAgentID = None, Message = None):
+    def instant_message(self, ToAgentID = None, Message = None, _ID = None):
         """ sends an instant message to another avatar
 
         wraps send_ImprovedInstantMessage with some handy defaults """
@@ -299,6 +293,8 @@ class Agent(object):
         #ToDo: this opens a new im window every time a message is sent to a viewer. why is this? fix it.
 
         if ToAgentID != None and Message != None:
+
+            if _ID == None: _ID = uuid.UUID(str(self.agent_id))
 
             _AgentID = uuid.UUID(str(self.agent_id))
             _SessionID = uuid.UUID(str(self.session_id))
@@ -309,7 +305,7 @@ class Agent(object):
             _Position = self.Position
             _Offline = 0
             _Dialog = 0                 # Dialog type 1 = instant message
-            _ID = uuid.uuid4()          # generate a random uuid
+            _ID = _ID
             _Timestamp = 0
             _FromAgentName = self.firstname + ' ' + self.lastname
             _Message = Message

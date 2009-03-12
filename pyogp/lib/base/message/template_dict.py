@@ -30,8 +30,6 @@ from pyogp.lib.base import exc
 class TemplateDictionary(object):
     """the dictionary with all known templates"""
 
-    #grok.implements(ITemplateDictionary)
-
     def __init__(self, template_list=None):
 
         if template_list == None:

@@ -85,6 +85,7 @@ def login():
     while client.connected == False:
         api.sleep(0)
 
+    # let things settle down
     while client.Position == None:
         api.sleep(0)
 
@@ -93,6 +94,8 @@ def login():
     client.say("Hi, I'm a bot!")
 
     client.instant_message(options.uuid, "Look, I can even speak to you in IM-ese")
+    client.instant_message(options.uuid, "I can even send 2 messages!")
+
 
     while client.running:
         api.sleep(0)
@@ -103,6 +106,11 @@ def login():
     print 'Agent attributes:'
     for attr in client.__dict__:
         print attr, ':\t\t\t',  client.__dict__[attr]
+    print ''
+    print ''
+    print 'Region attributes:'
+    for attr in client.region.__dict__:
+        print attr, ':\t\t\t',  client.region.__dict__[attr]
 
 def main():
     return login()    

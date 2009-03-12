@@ -165,7 +165,7 @@ class Capability(object):
 	
         data = deserializer.deserialize(response.body)
 
-        if self.settings.LOG_VERBOSE and self.settings.ENABLE_CAPS_LLSD_LOGGING: log(DEBUG, 'Received the following llsd from %s: %s' % (self.public_url, response.body.strip()))
+        if self.settings.ENABLE_CAPS_LLSD_LOGGING: log(DEBUG, 'Received the following llsd from %s: %s' % (self.public_url, response.body.strip()))
         if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, 'Post to cap %s response is: %s' % (self.public_url, data))        
 
         return data

@@ -28,6 +28,7 @@ util.wrap_socket_with_coroutine_socket()
 
 # pyogp
 from pyogp.lib.base.utilities.events import Event
+from pyogp.lib.base.groups import ChatterBoxInvitation_Message
 
 # messaging
 from pyogp.lib.base.message.packet import UDPPacket
@@ -55,7 +56,7 @@ class EventQueueClient(object):
     Tests: tests/test_event_queue.py
     """
 
-    def __init__(self, capability = None, settings = None, packet_handler = None, region = None):
+    def __init__(self, capability = None, settings = None, packet_handler = None, region = None, event_queue_handler = None):
         """ set up the event queue attributes """
 
         # allow the settings to be passed in
@@ -73,6 +74,13 @@ class EventQueueClient(object):
         elif self.settings.HANDLE_PACKETS:
             from pyogp.lib.base.message.packethandler import PacketHandler
             self.packet_handler = PacketHandler()
+
+        # allow the event_queue_handler to be passed in
+        # otherwise, grab the defaults
+        if event_queue_handler != None:
+            self.event_queue_handler = event_queue_handler
+        elif self.settings.HANDLE_EVENT_QUEUE_DATA:
+            self.event_queue_handler = EventQueueHandler()
 
         self.region = region
 
@@ -153,7 +161,8 @@ class EventQueueClient(object):
                 if self.last_id != -1:
                     self.data = {'ack':self.last_id, 'done':True}
 
-                # ToDo: this is blocking, we need to break this
+                if self.settings.ENABLE_EQ_LOGGING: log(DEBUG, 'Posting to the event queue: %s' % (self.data))
+
                 try:
                     self.result = self.cap.POST(self.data)
                 except Exception, error:
@@ -208,11 +217,10 @@ class EventQueueClient(object):
                         parsed_data = self._decode_eq_result(data)
 
                         for packet in parsed_data:
-
                             self.packet_handler._handle(packet)
 
             except Exception, error:
-                #print error
+                print error
                 pass
 
     def _decode_eq_result(self, data=None):
@@ -238,37 +246,127 @@ class EventQueueClient(object):
 
                         for message in data[i]:
 
-                            # initialize the packet template for the current packet we are parsing
-                            self.current_template = self.template_dict.get_template(message['message'])
+                            # move this to a proper solution, for now, append to some list eq events
+                            # or some dict mapping name to action to take
+                            if message['message'] == 'ChatterBoxInvitation':
 
-                            message_data = MsgData(self.current_template.name)
+                                message['name'] = message['message']
+                                group_chat = ChatterBoxInvitation_Message(ChatterBoxInvitation_Data = message['body'])
 
-                            # treat this like a UDPPacket
-                            packet = UDPPacket(message_data)
-                            packet.name = self.current_template.name
+                                self.event_queue_handler._handle(group_chat)
 
-                            # irrelevant packet attributes since it's from the EQ
-                            '''
-                            packet.send_flags
-                            packet.packet_id
-                            packet.add_ack
-                            packet.reliable
-                            '''
+                            else:
+                                # this is a UDP packet sent over the event queue 
+                                self.current_template = self.template_dict.get_template(message['message'])
+                                message_data = MsgData(self.current_template.name)
 
-                            for block_name in message['body']:
+                                # treat this like a UDPPacket
+                                # in some cases, we will be creating UDPPacket instances
+                                # where there is no corresponding entry in the message_template
+                                # hence the try: except:
+                                # there must be a better solution
+                                packet = UDPPacket(message_data)
+                                packet.name = self.current_template.name
 
-                                # block_data keys off of block.name, which here is the body attribute
-                                block_data = MsgBlockData(block_name)
+                                # irrelevant packet attributes since it's from the EQ
+                                '''
+                                packet.send_flags
+                                packet.packet_id
+                                packet.add_ack
+                                packet.reliable
+                                '''
 
-                                message_data.add_block(block_data)
+                                for block_name in message['body']:
 
-                                for items in message['body'][block_name]:
+                                    # block_data keys off of block.name, which here is the body attribute
+                                    block_data = MsgBlockData(block_name)
 
-                                    for variable in items:
+                                    message_data.add_block(block_data)
 
-                                        var_data = MsgVariableData(variable, items[variable], -1)
-                                        block_data.add_variable(var_data)
+                                    for items in message['body'][block_name]:
 
-                            packet.message_data = message_data
-                            packets.append(packet)
+                                        for variable in items:
+
+                                            var_data = MsgVariableData(variable, items[variable], -1)
+                                            block_data.add_variable(var_data)
+
+                                packet.message_data = message_data
+                                packets.append(packet)
         return packets
+
+
+class EventQueueHandler(object):
+    """ general class handling individual packets """
+
+    def __init__(self, settings = None):
+        """ i do nothing """
+
+        # allow the settings to be passed in
+        # otherwise, grab the defaults
+        if settings != None:
+            self.settings = settings
+        else:
+            from pyogp.lib.base.settings import Settings
+            self.settings = Settings()
+
+        self.handlers = {}
+
+    def _register(self, name):
+
+        if self.settings.LOG_VERBOSE: log(DEBUG, 'Creating a monitor for %s' % (name))
+
+        return self.handlers.setdefault(name, EventQueueReceivedNotifier(name))
+
+    def is_packet_handled(self, name):
+        """ if the data is being monitored, return True, otherwise, return False 
+
+        this can allow us to skip parsing inbound packets if no one is watching a particular one
+        """
+
+        try:
+
+            handler = self.handlers[name]
+            return True
+
+        except KeyError:
+
+            return False
+
+    def _handle(self, data):
+        """ essentially a case statement to pass packets to event notifiers in the form of self attributes """
+
+        try:
+
+            handler = self.handlers[data.name]
+
+            # Handle the packet if we have subscribers
+            # Conveniently, this will also enable verbose packet logging
+            if len(handler) > 0:
+                if self.settings.LOG_VERBOSE: log(DEBUG, 'Handling event queue data : %s' % (data.name))
+                handler(data)
+
+        except KeyError:
+            #log(INFO, "Received an unhandled packet: %s" % (packet.name))
+            pass
+
+class EventQueueReceivedNotifier(object):
+    """ received TestMessage packet """
+
+    def __init__(self, name):
+        self.event = Event()
+        self.name = name
+
+    def subscribe(self, *args, **kwdargs):
+        self.event.subscribe(*args, **kwdargs)
+
+    def received(self, data):
+
+        self.event(data)
+
+    def __len__(self):
+
+        return len(self.event)
+
+    __call__ = received
+
+    

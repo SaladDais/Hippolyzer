@@ -76,10 +76,21 @@ class Helpers(object):
     # Callbacks
     # ~~~~~~~~~
 
-    def log_packet(self, packet, object):
-        """ default logging function for abjects  """
+    def log_packet(self, packet, _object):
+        """ default logging function for packets  """
 
-        log(INFO, "Object %s is monitoring packet type %s: \n%s" % (type(object), packet.name, packet.data()))
+        log(INFO, "Object %s is monitoring packet type %s: \n%s" % (type(_object), packet.name, packet.data()))
+
+    def log_event_queue_data(self, data, _object):
+        """ default logging function for event queue data events  """
+
+        log(INFO, "Object %s is monitoring event queue data event %s: \n%s" % (type(_object), data.name, data.__dict__))
+
+    def null_packet_handler(self, packet, _object):
+        """ just a null event handler for watching aka fully parsing specific packets """
+        
+        pass
+
 
 class ListLLSDSerializer(object):
     """adapter for serializing a list to LLSD

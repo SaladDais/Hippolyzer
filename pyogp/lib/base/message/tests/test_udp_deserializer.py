@@ -23,6 +23,7 @@ import unittest, doctest
 from uuid import UUID
 
 #local libraries
+from pyogp.lib.base.settings import Settings
 from pyogp.lib.base.message.types import MsgType
 from pyogp.lib.base.message.message import Message, Block
 from pyogp.lib.base.message.packet import UDPPacket
@@ -37,14 +38,15 @@ class TestDeserializer(unittest.TestCase):
         pass
 
     def setUp(self):
-        pass
+        self.settings = Settings()
+        self.settings.ENABLE_DEFERRED_PACKET_PARSING = False
 
     def test_deserialize(self):
         message = '\xff\xff\xff\xfb' + '\x03' + \
                   '\x01\x00\x00\x00' + '\x02\x00\x00\x00' + '\x03\x00\x00\x00'
         message = '\x00' + '\x00\x00\x00\x01' +'\x00' + message
-        deserializer = UDPPacketDeserializer(message)
-        packet = deserializer.deserialize()
+        deserializer = UDPPacketDeserializer(settings = self.settings)
+        packet = deserializer.deserialize(message)
         data = packet.message_data
         assert packet.name == 'PacketAck', 'Incorrect deserialization'
 
@@ -55,11 +57,11 @@ class TestDeserializer(unittest.TestCase):
                             SessionID=UUID('550e8400-e29b-41d4-a716-446655440000')),
                        Block('ChatData', Message='Hi Locklainn Tester', Type=1, Channel=0))
         packet = UDPPacket(msg)
-        serializer = UDPPacketSerializer(packet)
-        packed_data = serializer.serialize()
+        serializer = UDPPacketSerializer()
+        packed_data = serializer.serialize(packet)
 
-        deserializer = UDPPacketDeserializer(packed_data)
-        packet = deserializer.deserialize()
+        deserializer = UDPPacketDeserializer(settings = self.settings)
+        packet = deserializer.deserialize(packed_data)
         data = packet.message_data
         assert data.blocks['ChatData'][0].vars['Message'].data == 'Hi Locklainn Tester',\
                'Message for chat is incorrect'

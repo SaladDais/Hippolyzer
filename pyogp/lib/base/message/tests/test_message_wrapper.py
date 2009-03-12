@@ -84,8 +84,8 @@ class TestMessage(unittest.TestCase):
         from pyogp.lib.base.message.udpserializer import UDPPacketSerializer
         from pyogp.lib.base.message.packet import UDPPacket
         packet = UDPPacket(msg)
-        serial = UDPPacketSerializer(packet)
-        msg = serial.serialize()
+        serial = UDPPacketSerializer()
+        msg = serial.serialize(packet)
 
 def test_suite():
     from unittest import TestSuite, makeSuite

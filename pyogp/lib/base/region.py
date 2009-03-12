@@ -36,7 +36,8 @@ from pyogp.lib.base.caps import Capability, SeedCapability
 from pyogp.lib.base.network.stdlib_client import StdLibClient, HTTPError
 import pyogp.lib.base.exc
 from pyogp.lib.base.settings import Settings
-from pyogp.lib.base.event_queue import EventQueueClient
+from pyogp.lib.base.utilities.helpers import Helpers
+from pyogp.lib.base.event_queue import EventQueueClient, EventQueueHandler
 from pyogp.lib.base.objects import Objects
 
 # messaging
@@ -70,7 +71,7 @@ class Region(object):
 
     """
 
-    def __init__(self, global_x = None, global_y = None, seed_capability_url = None, udp_blacklist = None, sim_ip = None, sim_port = None, circuit_code = None, agent = None, settings = None, packet_handler = None):
+    def __init__(self, global_x = None, global_y = None, seed_capability_url = None, udp_blacklist = None, sim_ip = None, sim_port = None, circuit_code = None, agent = None, settings = None, packet_handler = None, event_queue_handler = None):
         """ initialize a region """
 
         # allow the settings to be passed in
@@ -87,6 +88,13 @@ class Region(object):
             self.packet_handler = packet_handler
         elif self.settings.HANDLE_PACKETS:
             self.packet_handler = PacketHandler()
+
+        # allow the event_queue_handler to be passed in
+        # otherwise, grab the defaults
+        if event_queue_handler != None:
+            self.event_queue_handler = event_queue_handler
+        elif self.settings.HANDLE_EVENT_QUEUE_DATA:
+            self.event_queue_handler = EventQueueHandler()
 
         # initialize the init params
         self.global_x = global_x
@@ -114,6 +122,7 @@ class Region(object):
         self.capabilities = {}
         self.event_queue = None
         self.connected = False
+        self.helpers = Helpers()
 
         self._isUDPRunning = False
         self._isEventQueueRunning = False
@@ -125,6 +134,15 @@ class Region(object):
             self.objects = Objects(agent = self.agent, region = self, settings = self.settings, packet_handler = self.packet_handler)
         else:
             self.objects = None
+
+        # required packet handlers
+        onPacketAck_received = self.packet_handler._register('PacketAck')
+        onPacketAck_received.subscribe(self.helpers.null_packet_handler, self)
+
+        if self.settings.MULTIPLE_SIM_CONNECTIONS:
+
+            onEnableSimulator_received = self.packet_handler._register('EnableSimulator')
+            onEnableSimulator_received.subscribe(onEnableSimulator, self)
 
         # data we need
         self.region_caps_list = ['ChatSessionRequest',
@@ -170,6 +188,10 @@ class Region(object):
             pass
 
         if self.settings.LOG_VERBOSE: log(DEBUG, 'initializing region domain: %s' %self)
+
+    def enable_child_simulator(self, IP, Port, Handle):
+        
+        log(INFO, "Would enable a simulator at %s:%s with a handle of %s" % (IP, Port, Handle))
 
     def send_message_next(self, packet, reliable = False):
         """ inserts this packet at the fron of the queue """
@@ -386,7 +408,7 @@ class Region(object):
         packet = RegionHandshakeReplyPacket()
         packet.AgentData['SessionID'] = uuid.UUID(self.agent.session_id)    # MVT_LLUUID
         packet.AgentData['AgentID'] = uuid.UUID(self.agent.agent_id) 
-        packet.RegionInfo['Flags'] = 0x0
+        packet.RegionInfo['Flags'] = 0
 
         self.send_reliable(packet())
 
@@ -439,7 +461,7 @@ class Region(object):
     def _startEventQueue(self):
         """ polls the event queue capability and parses the results  """
 
-        self.event_queue = EventQueueClient(self.capabilities['EventQueueGet'], packet_handler = self.packet_handler, region = self)
+        self.event_queue = EventQueueClient(self.capabilities['EventQueueGet'], packet_handler = self.packet_handler, region = self, event_queue_handler = self.event_queue_handler)
         api.spawn(self.event_queue.start)
         self._isEventQueueRunning = True
 
@@ -487,6 +509,19 @@ def onStartPingCheck(packet, region):
     """ sends the CompletePingCheck packet """
 
     region.sendCompletePingCheck()
+
+def onEnableSimulator(packet, region):
+    """ handler for the EnableSimulator packet sent over the event queue """
+
+    IP = [ord(x) for x in packet.message_data.blocks['SimulatorInfo'][0].get_variable('IP').data]
+    IP = '.'.join([str(x) for x in IP])
+
+    Port = packet.message_data.blocks['SimulatorInfo'][0].get_variable('Port').data
+
+    # nit sure what this is, but pass it up
+    Handle = [ord(x) for x in packet.message_data.blocks['SimulatorInfo'][0].get_variable('Handle').data]
+
+    region.enable_child_simulator(IP, Port, Handle)
 
 class RegionSeedCapability(Capability):
     """ a seed capability which is able to retrieve other capabilities """

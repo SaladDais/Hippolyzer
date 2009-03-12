@@ -48,20 +48,34 @@ class PacketHandler(object):
 
         if self.settings.LOG_VERBOSE: log(DEBUG, 'Creating a monitor for %s' % (packet_name))
 
-        return self.handlers.setdefault(packet_name + "_Received", PacketReceivedNotifier(packet_name))
+        return self.handlers.setdefault(packet_name, PacketReceivedNotifier(packet_name))
+
+    def is_packet_handled(self, packet_name):
+        """ if the packet is being monitored, return True, otherwise, return False 
+        
+        this can allow us to skip parsing inbound packets if no one is watching a particular one
+        """
+
+        try:
+
+            handler = self.handlers[packet_name]
+            return True
+
+        except KeyError:
+
+            return False
 
     def _handle(self, packet):
         """ essentially a case statement to pass packets to event notifiers in the form of self attributes """
 
         try:
 
-            # get the attribute of the self object called packet.name + Received
-            handler = self.handlers[packet.name + "_Received"]
+            handler = self.handlers[packet.name]
 
             # Handle the packet if we have subscribers
             # Conveniently, this will also enable verbose packet logging
             if len(handler) > 0:
-                if self.settings.LOG_VERBOSE: log(DEBUG, 'Handling packet: %s' % (packet.name))
+                if self.settings.LOG_VERBOSE: log(DEBUG, 'Handling packet : %s' % (packet.name))
                 handler(packet)
 
         except KeyError:

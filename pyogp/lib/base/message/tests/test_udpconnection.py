@@ -22,7 +22,8 @@ $/LicenseInfo$
 import unittest, doctest
 import pprint
 
-#local libraries
+# pyogp
+from pyogp.lib.base.settings import Settings
 #from pyogp.lib.base.message.udp_connection import MessageSystem
 from pyogp.lib.base.message.types import MsgType
 from pyogp.lib.base.tests.mockup_net import MockupUDPServer, MockupUDPClient
@@ -37,7 +38,10 @@ class TestUDPConnection(unittest.TestCase):
 
     def setUp(self):
 
-        self.udp_connection = UDPDispatcher(MockupUDPClient())
+        self.settings = Settings()
+        self.settings.ENABLE_DEFERRED_PACKET_PARSING = False
+
+        self.udp_connection = UDPDispatcher(MockupUDPClient(), settings = self.settings)
         self.host = Host( (MockupUDPServer(), 80) )
 
     def test_find_circuit(self):

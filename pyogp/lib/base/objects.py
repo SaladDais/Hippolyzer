@@ -218,72 +218,6 @@ class Objects(object):
 
         self.region.enqueue_message(packet(), True)
 
-    def update_object_permissions(self, ObjectLocalID_list, Field, Set, Mask, Override = False):
-        """ update permissions for a list of objects
-
-        This will update a specific bit to a specific value.
-        """
-
-        packet = ObjectPermissionsPacket()
-
-        # build the AgentData block
-        packet.AgentData['AgentID'] = uuid.UUID(str(self.agent.agent_id))
-        packet.AgentData['SessionID'] = uuid.UUID(str(self.agent.session_id))
-
-        packet.HeaderData['Override'] = Override # BOOL, God-bit.
-
-        for _ID in ObjectLocalID_list:
-
-            ObjectData = {}
-            ObjectData['ObjectLocalID'] = _ID
-            ObjectData['Field'] = Field         # U32
-            ObjectData['Set'] = Set             # U8
-            ObjectData['Mask'] = Mask           # S32
-
-            packet.ObjectDataBlocks.append(ObjectData)
-
-        self.region.enqueue_message(packet())
-
-    def set_object_name(self, ObjectID_NameMap):
-        """ update the name of objects 
-
-        Accepts a dictionary mapping LocalID to Name.
-        """
-
-        packet = ObjectPermissionsPacket()
-
-        # build the AgentData block
-        packet.AgentData['AgentID'] = uuid.UUID(str(self.agent.agent_id))
-        packet.AgentData['SessionID'] = uuid.UUID(str(self.agent.session_id))
-
-        for ObjectID in ObjectID_NameMap:
-
-            ObjectData = {}
-            ObjectData['LocalID'] = ObjectID
-            ObjectData['Name'] = ObjectID_NameMap['ObjectID']
-
-            packet.ObjectDataBlocks.append(ObjectData)
-
-    def set_object_description(self, ObjectID_DescriptionMap):
-        """ update the description of objects 
-
-        Accepts a dictionary mapping LocalID to Description.
-        """
-
-        packet = ObjectPermissionsPacket()
-
-        # build the AgentData block
-        packet.AgentData['AgentID'] = uuid.UUID(str(self.agent.agent_id))
-        packet.AgentData['SessionID'] = uuid.UUID(str(self.agent.session_id))
-
-        for ObjectID in ObjectID_DescriptionMap:
-
-            ObjectData = {}
-            ObjectData['LocalID'] = ObjectID
-            ObjectData['Description'] = ObjectID_NameMap['Description']
-
-            packet.ObjectDataBlocks.append(ObjectData)
-
 class Object(object):
    """ represents an Object
 
@@ -343,6 +277,66 @@ class Object(object):
        self.JointType = JointType                   # U8
        self.JointPivot = JointPivot                 # LLVector3
        self.JointAxisOrAnchor = JointAxisOrAnchor   # LLVector3
+
+   def update_object_permissions(self, agent, Field, Set, Mask, Override = False):
+       """ update permissions for a list of objects
+
+       This will update a specific bit to a specific value.
+       """
+
+       packet = ObjectPermissionsPacket()
+
+       # build the AgentData block
+       packet.AgentData['AgentID'] = uuid.UUID(str(agent.agent_id))
+       packet.AgentData['SessionID'] = uuid.UUID(str(agent.session_id))
+
+       packet.HeaderData['Override'] = Override # BOOL, God-bit.
+
+       ObjectData = {}
+       ObjectData['ObjectLocalID'] = self.ID
+       ObjectData['Field'] = Field         # U32
+       ObjectData['Set'] = Set             # U8
+       ObjectData['Mask'] = Mask           # S32
+
+       packet.ObjectDataBlocks.append(ObjectData)
+
+       self.region.enqueue_message(packet())
+
+   def set_object_name(self, agent, Name):
+       """ update the name of objects 
+
+       Accepts a dictionary mapping LocalID to Name.
+       """
+
+       packet = ObjectPermissionsPacket()
+
+       # build the AgentData block
+       packet.AgentData['AgentID'] = uuid.UUID(str(agent.agent_id))
+       packet.AgentData['SessionID'] = uuid.UUID(str(agent.session_id))
+
+       ObjectData = {}
+       ObjectData['LocalID'] = self.ID
+       ObjectData['Name'] = Name
+
+       packet.ObjectDataBlocks.append(ObjectData)
+
+   def set_object_description(self, agent, Description):
+       """ update the description of objects 
+
+       Accepts a dictionary mapping LocalID to Description.
+       """
+
+       packet = ObjectPermissionsPacket()
+
+       # build the AgentData block
+       packet.AgentData['AgentID'] = uuid.UUID(str(agent.agent_id))
+       packet.AgentData['SessionID'] = uuid.UUID(str(agent.session_id))
+
+       ObjectData = {}
+       ObjectData['LocalID'] = self.ID
+       ObjectData['Description'] = Description
+
+       packet.ObjectDataBlocks.append(ObjectData)
 
 def onObjectUpdate(packet, objects):
    """ populates an Object instance and adds it to the Objects() store """

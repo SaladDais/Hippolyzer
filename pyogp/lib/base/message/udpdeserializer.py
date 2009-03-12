@@ -23,6 +23,8 @@ import struct
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG 
 
 #pyogp libs
+from pyogp.lib.base.settings import Settings
+from pyogp.lib.base.message.packethandler import PacketHandler
 from template_dict import TemplateDictionary
 from template import MsgData, MsgBlockData, MsgVariableData
 from types import MsgType, MsgBlockType, MsgFrequency, PacketLayout, EndianType, PackFlags, sizeof
@@ -36,14 +38,33 @@ log = logger.log
 
 class UDPPacketDeserializer(object):
 
-    def __init__(self, context):
-        self.context = context
+    def __init__(self, packet_handler = None, settings = None):
+
+        self.context = None
         self.unpacker = DataUnpacker()
         self.current_template = None
-        packet = None
         self.current_block = None
 
-    def deserialize(self):
+        self.template_dict = TemplateDictionary()
+
+        # allow the settings to be passed in
+        # otherwise, grab the defaults
+        if settings != None:
+            self.settings = settings
+        else:
+            self.settings = Settings()
+
+        # we can skip parsing all the data in a packet if we know it's not being handled
+        # allow the packet_handler to be passed in
+        # otherwise, grab the defaults
+        if packet_handler != None:
+            self.packet_handler = packet_handler
+        elif self.settings.HANDLE_PACKETS:
+            self.packet_handler = PacketHandler()
+
+    def deserialize(self, context):
+
+        self.context = context
 
         #Must first strip off acks if present, and zero-decode, 
         #if needed, in order to determine proper template
@@ -85,13 +106,24 @@ class UDPPacketDeserializer(object):
             msg_buff = header + msg_buff
 
         if self.__validate_message(msg_buff) == True:
-            msg_buff = msg_buff + ''.join(temp_acks)      #go ahead an merge the acks back in in order for the decode to work
-            try:
-                return self.__decode_data(msg_buff)
-            except exc.DataUnpackingError, error:
-                #log(WARNING, "Error parsing packet due to: %s" % (error))
-                raise exc.MessageDeserializationError("packet parsing", error)
-                return None
+
+            # go ahead an merge the acks back in in order for the decode to work
+            # or to get the send_flags for acks
+            msg_buff = msg_buff + ''.join(temp_acks)
+
+            # if the packet is being handled, or if have have disabled deferred packet parsing, handle it!
+            if self.packet_handler.is_packet_handled(self.current_template.name) or not self.settings.ENABLE_DEFERRED_PACKET_PARSING:
+
+                try:
+                    return self.__decode_data(msg_buff)
+                except exc.DataUnpackingError, error:
+                    #log(WARNING, "Error parsing packet due to: %s" % (error))
+                    raise exc.MessageDeserializationError("packet parsing", error)
+                    return None
+
+            else:
+
+                if self.settings.LOG_VERBOSE and self.settings.ENABLE_UDP_LOGGING: log(DEBUG, 'Received packet : %s (Skipping)' % (self.current_template.name))
 
         return None
 
@@ -121,9 +153,7 @@ class UDPPacketDeserializer(object):
         frequency = self.__decode_frequency(header)
         num = self.__decode_num(header)
 
-        #NEED TO GET THE GLOBAL TEMPLATE DICT
-        template_dict = TemplateDictionary()
-        result = template_dict.get_template_by_pair(frequency, num)
+        result = self.template_dict.get_template_by_pair(frequency, num)
 
         return result
 
