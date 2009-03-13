@@ -33,6 +33,7 @@ from pyogp.lib.base.login import Login, LegacyLoginParams, OGPLoginParams
 from pyogp.lib.base.exc import LoginError
 from pyogp.lib.base.region import Region
 from pyogp.lib.base.inventory import Inventory
+from pyogp.lib.base.groups import GroupManager, Group
 # from pyogp.lib.base.appearance import Appearance
 
 # pyogp messaging
@@ -95,6 +96,8 @@ class Agent(object):
         self.udp_blacklist = None
         self.home = None
         self.inventory = None
+        self.group_manager = GroupManager(self, self.settings)
+
 
         # additional attributes
         self.login_response = None
@@ -106,7 +109,7 @@ class Agent(object):
         self.helpers = Helpers()
 
         # data we store as it comes in from the grid
-        self.Position = None
+        self.Position = (0.0, 0.0, 0.0)     # this will get updated later, but seed it with 000
 
         # should we include these here?
         self.agentdomain = None     # the agent domain the agent is connected to if an OGP context
@@ -127,6 +130,9 @@ class Agent(object):
 
             onHealthMessage_received = self.packet_handler._register('HealthMessage')
             onHealthMessage_received.subscribe(onHealthMessage, self)
+
+            onAgentGroupDataUpdate_received = self.packet_handler._register('AgentGroupDataUpdate')
+            onAgentGroupDataUpdate_received.subscribe(onAgentGroupDataUpdate, self)
 
             if self.settings.ENABLE_COMMUNICATIONS_TRACKING:
 
@@ -417,7 +423,53 @@ def onAgentMovementComplete(packet, agent):
 
 def onHealthMessage(packet, agent):
 
-    agent.health = packet.message_data.blocks['HealthData'][0].get_variable('Health')
+    agent.health = packet.message_data.blocks['HealthData'][0].get_variable('Health').data
+
+def onAgentGroupDataUpdate(packet, agent):
+
+    # AgentData block
+    AgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID')
+
+    # GroupData block
+    for GroupData_block in packet.message_data.blocks['GroupData']:
+
+        AcceptNotices = GroupData_block.get_variable('AcceptNotices').data
+        GroupPowers = GroupData_block.get_variable('GroupPowers').data
+        GroupID = uuid.UUID(str(GroupData_block.get_variable('GroupID').data))
+        GroupName = GroupData_block.get_variable('GroupName').data
+        ListInProfile = GroupData_block.get_variable('ListInProfile').data
+        Contribution = GroupData_block.get_variable('Contribution').data
+        GroupInsigniaID = uuid.UUID(str(GroupData_block.get_variable('GroupInsigniaID').data))
+
+        # make sense of group powers
+        GroupPowers = [ord(x) for x in GroupPowers]
+        GroupPowers = ''.join([str(x) for x in GroupPowers])
+
+        group = Group(AcceptNotices, GroupPowers, GroupID, GroupName, ListInProfile, Contribution,GroupInsigniaID )
+
+        agent.group_manager.store_group(group)
+
+    '''
+    Name: AgentGroupDataUpdate
+        Block Name:    GroupData
+            AcceptNotices:    True
+            GroupPowers:    ?
+            GroupID:    69fd708c-3f20-a01b-f9b5-b5c4b310e5ca
+            GroupName:    EnusBot Army
+            ListInProfile:    False
+            Contribution:    0
+            GroupInsigniaID:    00000000-0000-0000-0000-000000000000
+            AcceptNotices:    True
+            GroupPowers:    ?
+            GroupID:    69fd708c-3f20-a01b-f9b5-b5c4b310e5ca
+            GroupName:    EnusBot Army
+            ListInProfile:    False
+            Contribution:    0
+            GroupInsigniaID:    00000000-0000-0000-0000-000000000000
+        Block Name:    AgentData
+            AgentID:    a517168d-1af5-4854-ba6d-672c8a59e439
+    
+    '''
 
 def onChatFromSimulator(packet, agent):
 

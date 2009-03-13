@@ -380,7 +380,7 @@ class Region(object):
 
         self.send_message(packet())
 
-    def sendAgentUpdate(self, BodyRotation = (0.0,0.0,0.0,0.0), HeadRotation = (0.0,0.0,0.0,0.0), State = 0x00, CameraCenter = (0.0,0.0,0.0), CameraAtAxis = (0.0,0.0,0.0), CameraLeftAxis = (0.0,0.0,0.0), CameraUpAxis = (0.0,0.0,0.0), Far = 0, ControlFlags = 0x00, Flags = 0x00):
+    def sendAgentUpdate(self, BodyRotation = (0.0,0.0,0.0,1.0), HeadRotation = (0.0,0.0,0.0,1.0), State = 0x00, CameraCenter = (0.0,0.0,0.0), CameraAtAxis = (0.0,0.0,0.0), CameraLeftAxis = (0.0,0.0,0.0), CameraUpAxis = (0.0,0.0,0.0), Far = 0, ControlFlags = 0x00, Flags = 0x00):
         """ sends an AgentUpdate packet """
 
         packet = AgentUpdatePacket()
@@ -449,7 +449,7 @@ class Region(object):
             if self.messenger.has_unacked():
 
                 self.messenger.process_acks()
-                self.sendAgentUpdate()
+                self.sendAgentUpdate(CameraCenter = self.agent.Position, CameraAtAxis = self.settings.DEFAULT_CAMERA_AT_AXIS, CameraLeftAxis = self.settings.DEFAULT_CAMERA_AT_AXIS, CameraUpAxis = self.settings.DEFAULT_CAMERA_UP_AXIS, Far = self.settings.DEFAULT_CAMERA_DRAW_DISTANCE)
 
             # send pending messages in the queue
             for (packet, reliable) in self.packet_queue:
@@ -518,7 +518,7 @@ def onEnableSimulator(packet, region):
 
     Port = packet.message_data.blocks['SimulatorInfo'][0].get_variable('Port').data
 
-    # nit sure what this is, but pass it up
+    # not sure what this is, but pass it up
     Handle = [ord(x) for x in packet.message_data.blocks['SimulatorInfo'][0].get_variable('Handle').data]
 
     region.enable_child_simulator(IP, Port, Handle)

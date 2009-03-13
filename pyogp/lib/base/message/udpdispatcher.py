@@ -165,6 +165,10 @@ class UDPDispatcher(object):
 
         packet = UDPPacket(message)
 
+        # enable monitoring of outgoing packets
+        if self.settings.HANDLE_PACKETS:
+            self.packet_handler._handle(packet)
+
         #use circuit manager to get the circuit to send on
         circuit = self.find_circuit(host)
 

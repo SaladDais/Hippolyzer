@@ -48,7 +48,7 @@ class PacketHandler(object):
 
         if self.settings.LOG_VERBOSE: log(DEBUG, 'Creating a monitor for %s' % (packet_name))
 
-        return self.handlers.setdefault(packet_name, PacketReceivedNotifier(packet_name))
+        return self.handlers.setdefault(packet_name, PacketReceivedNotifier(packet_name, self.settings))
 
     def is_packet_handled(self, packet_name):
         """ if the packet is being monitored, return True, otherwise, return False 
@@ -85,9 +85,10 @@ class PacketHandler(object):
 class PacketReceivedNotifier(object):
     """ received TestMessage packet """
 
-    def __init__(self, packet_name):
+    def __init__(self, packet_name, settings):
         self.event = Event()
         self.packet_name = packet_name
+        self.settings = settings
 
     def subscribe(self, *args, **kwdargs):
         self.event.subscribe(*args, **kwdargs)
@@ -95,6 +96,11 @@ class PacketReceivedNotifier(object):
     def received(self, packet):
 
         self.event(packet)
+
+    def unsubscribe(self, *args, **kwdargs):
+        self.event.unsubscribe(*args, **kwdargs)
+
+        if self.settings.LOG_VERBOSE: log(DEBUG, "Removed the monitor for %s by %s" % (args, kwdargs))
 
     def __len__(self):
 

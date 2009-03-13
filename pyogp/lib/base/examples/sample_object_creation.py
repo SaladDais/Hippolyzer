@@ -110,7 +110,7 @@ def login():
    print ''
    print ''
    for _object in client.region.objects.object_store:
-       print 'ID:', _object.ID, '\tUUID: ', _object.FullID
+       print 'ID:', _object.ID, '\tUUID: ', _object.FullID, '\tOwnerID: ', _object.OwnerID
    print ''
    print ''
    print 'Region attributes:'

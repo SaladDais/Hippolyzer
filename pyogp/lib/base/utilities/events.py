@@ -32,13 +32,16 @@ class Event(object):
 
         return self
 
-    def unsubscribe(self, handler):
+    def unsubscribe(self, handler, *args, **kwargs):
         """ remove the subscriber (handler) to this event """
 
         try:
-            self.subscribers.delete(handler)
+
+            self.subscribers.remove((handler, args, kwargs))
+
         except:
             raise ValueError("Handler is not subscribed to this event.")
+
         return self
 
     def notify(self, args):
@@ -63,25 +66,3 @@ class Event(object):
     __isub__ = unsubscribe
     __call__ = notify
     __len__  = getSubscriberCount
-
-'''
-class MockFileWatcher:
-    def __init__(self):
-        self.fileChanged = Event()
-
-    def watchFiles(self):
-        source_path = "foo"
-        self.fileChanged(source_path)
-
-def log_file_change(source_path):
-    print "%r changed." % (source_path,)
-
-def log_file_change2(source_path):
-    print "%r changed!" % (source_path,)
-
-watcher              = MockFileWatcher()
-watcher.fileChanged += log_file_change2
-watcher.fileChanged += log_file_change
-watcher.fileChanged -= log_file_change2
-watcher.watchFiles()
-'''

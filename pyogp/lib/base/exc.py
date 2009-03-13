@@ -37,7 +37,7 @@ class LoginError(Error):
         self.error = error
 
     def __str__(self):
-        return "Agent credential error: %s" % (self.error)
+        return "Agent login error: %s" % (self.error)
 
 class ParseStartLocError(LoginError):
     """ raised when the is an error in parsing the user specified start location """

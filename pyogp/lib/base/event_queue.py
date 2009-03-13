@@ -315,7 +315,7 @@ class EventQueueHandler(object):
 
         if self.settings.LOG_VERBOSE: log(DEBUG, 'Creating a monitor for %s' % (name))
 
-        return self.handlers.setdefault(name, EventQueueReceivedNotifier(name))
+        return self.handlers.setdefault(name, EventQueueReceivedNotifier(name, self.settings))
 
     def is_packet_handled(self, name):
         """ if the data is being monitored, return True, otherwise, return False 
@@ -352,9 +352,10 @@ class EventQueueHandler(object):
 class EventQueueReceivedNotifier(object):
     """ received TestMessage packet """
 
-    def __init__(self, name):
+    def __init__(self, name, settings):
         self.event = Event()
         self.name = name
+        self.settings = settings
 
     def subscribe(self, *args, **kwdargs):
         self.event.subscribe(*args, **kwdargs)
@@ -362,6 +363,11 @@ class EventQueueReceivedNotifier(object):
     def received(self, data):
 
         self.event(data)
+
+    def unsubscribe(self, *args, **kwdargs):
+        self.event.unsubscribe(*args, **kwdargs)
+
+        if self.settings.LOG_VERBOSE: log(DEBUG, "Removed the monitor for %s by %s" % (args, kwdargs))
 
     def __len__(self):
 

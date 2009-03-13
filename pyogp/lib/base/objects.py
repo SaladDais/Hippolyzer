@@ -345,6 +345,8 @@ def onObjectUpdate(packet, objects):
    _RegionHandle = packet.message_data.blocks['RegionData'][0].get_variable('RegionHandle').data
    _TimeDilation = packet.message_data.blocks['RegionData'][0].get_variable('TimeDilation').data
 
+   print packet
+
    for ObjectData_block in packet.message_data.blocks['ObjectData']:
 
        _ID = ObjectData_block.get_variable('ID').data

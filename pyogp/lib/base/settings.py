@@ -20,12 +20,14 @@ $/LicenseInfo$
 
 class Settings(object):
 
-    def __init__(self):
+    def __init__(self, quiet_logging = False):
         """ some lovely configurable settings 
 
         These are applied application wide, and can be
         overridden at any time in a specific instance
         """
+
+        self.quiet_logging = quiet_logging
 
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         # Application behavior settings
@@ -46,7 +48,17 @@ class Settings(object):
         # enable communications monitoring
         self.ENABLE_COMMUNICATIONS_TRACKING = True
 
+        # toggle parsing all/handled packets
         self.ENABLE_DEFERRED_PACKET_PARSING = True
+
+        # ~~~~~~
+        # Camera
+        # ~~~~~~
+        
+        self.DEFAULT_CAMERA_DRAW_DISTANCE = 128
+        self.DEFAULT_CAMERA_AT_AXIS = (1.0, 0.0, 0.0)
+        self.DEFAULT_CAMERA_LEFT_AXIS = (0.0, 1.0, 0.0)
+        self.DEFAULT_CAMERA_UP_AXIS = (0.0, 0.0, 1.0)
 
         #~~~~~~~~~~~~~~~~~~~~~~~
         # Extended Login Options
@@ -103,6 +115,15 @@ class Settings(object):
         # allow disabling logging of certain packets
         self.DISABLE_SPAMMERS = True
         self.UDP_SPAMMERS = ['PacketAck', 'AgentUpdate']
+
+        # override the defaults
+        if self.quiet_logging:
+            self.LOG_VERBOSE = False
+            self.ENABLE_BYTES_TO_HEX_LOGGING = False
+            self.ENABLE_CAPS_LOGGING = False
+            self.ENABLE_CAPS_LLSD_LOGGING = False
+            self.ENABLE_EQ_LOGGING = False
+            self.ENABLE_UDP_LOGGING = False   
 
         #~~~~~~~~~~~~~~~~~~~~~~
         # Test related settings

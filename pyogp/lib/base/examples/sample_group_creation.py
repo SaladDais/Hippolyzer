@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """
-@file sample_agent_login.py
-@date 2009-02-16
+@file sample_group_creation.py
+@date 2009-03-05
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
 
@@ -23,6 +23,10 @@ $/LicenseInfo$
 import re
 import getpass, sys, logging
 from optparse import OptionParser
+import uuid
+
+# related
+from eventlet import api
 
 # pyogp
 from pyogp.lib.base.agent import Agent
@@ -63,9 +67,11 @@ def login():
 
     # example from a pure agent perspective
 
+    print "Attention: Creating a group will cost you 100 Lindens. Stop now if you don't like the sound of that."
     #grab a password!
     password = getpass.getpass()
 
+    # let's disable inventory handling for this example
     settings = Settings()
     settings.ENABLE_INVENTORY_MANAGEMENT = False
     settings.ENABLE_OBJECT_TRACKING = False
@@ -74,13 +80,27 @@ def login():
     settings.ENABLE_EQ_LOGGING = False
 
     #First, initialize the agent
-    client = Agent(settings)
-
-    # In this example, let's disable inventory handling
-    client.settings.ENABLE_INVENTORY_MANAGEMENT = False
+    client = Agent(settings = settings)
 
     # Now let's log it in
-    client.login(options.loginuri, args[0], args[1], password, start_location = options.region, connect_region = True)
+    api.spawn(client.login, options.loginuri, args[0], args[1], password, start_location = options.region, connect_region = True)
+
+    # wait for the agent to connect to it's region
+    while client.connected == False:
+        api.sleep(0)
+
+    while client.region.connected == False:
+        api.sleep(0)
+
+    # do sample script specific stuff here
+
+    # use a random uuid for a good chance at having success with creating a group
+    # Warning: this will cost you 100 Lindens
+    group_name = str(uuid.uuid4())
+    client.group_manager.create_group(Name = group_name.split('-')[4])
+
+    while client.running:
+        api.sleep(0)
 
     print ''
     print ''
@@ -90,9 +110,9 @@ def login():
         print attr, ':\t\t\t',  client.__dict__[attr]
     print ''
     print ''
-    print 'Region attributes:'
-    for attr in client.region.__dict__:
-        print attr, ':\t\t\t',  client.region.__dict__[attr]
+    print 'Known Groups:'
+    for group in client.group_manager.group_store:
+        print ':\t\t\t',  group.GroupName
 
 def main():
     return login()    
