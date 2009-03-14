@@ -110,6 +110,7 @@ class Agent(object):
 
         # data we store as it comes in from the grid
         self.Position = (0.0, 0.0, 0.0)     # this will get updated later, but seed it with 000
+        self.ActiveGroupID = uuid.UUID('00000000-0000-0000-0000-000000000000')
 
         # should we include these here?
         self.agentdomain = None     # the agent domain the agent is connected to if an OGP context
