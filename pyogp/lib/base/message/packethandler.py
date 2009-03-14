@@ -75,7 +75,8 @@ class PacketHandler(object):
             # Handle the packet if we have subscribers
             # Conveniently, this will also enable verbose packet logging
             if len(handler) > 0:
-                if self.settings.LOG_VERBOSE: log(DEBUG, 'Handling packet : %s' % (packet.name))
+                if self.settings.LOG_VERBOSE and not (self.settings.UDP_SPAMMERS and self.settings.DISABLE_SPAMMERS): log(DEBUG, 'Handling packet : %s' % (packet.name))
+ 
                 handler(packet)
 
         except KeyError:

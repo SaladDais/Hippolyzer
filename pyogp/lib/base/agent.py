@@ -122,6 +122,9 @@ class Agent(object):
         # set up callbacks (is this a decent place to do this? it's perhaps premature)
         if self.settings.HANDLE_PACKETS:
 
+            onAlertMessage_received = self.packet_handler._register('AlertMessage')
+            onAlertMessage_received.subscribe(onAlertMessage, self)
+
             onAgentDataUpdate_received = self.packet_handler._register('AgentDataUpdate')
             onAgentDataUpdate_received.subscribe(onAgentDataUpdate, self)
 
@@ -428,7 +431,7 @@ def onHealthMessage(packet, agent):
 def onAgentGroupDataUpdate(packet, agent):
 
     # AgentData block
-    AgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID')
+    AgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
 
     # GroupData block
     for GroupData_block in packet.message_data.blocks['GroupData']:
@@ -528,6 +531,12 @@ def onImprovedInstantMessage(packet, agent):
         }
     }
     '''
+
+def onAlertMessage(packet, agent):
+
+    AlertMessage = packet.message_data.blocks['AlertData'][0].get_variable('Message').data
+
+    log(WARNING, "AlertMessage from simulator: %s" % (AlertMessage))
 
 class Home(object):
     """ contains the parameters descibing an agent's home location """

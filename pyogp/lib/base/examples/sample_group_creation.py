@@ -76,8 +76,9 @@ def login():
     settings.ENABLE_INVENTORY_MANAGEMENT = False
     settings.ENABLE_OBJECT_TRACKING = False
     settings.ENABLE_COMMUNICATIONS_TRACKING = False
-    settings.ENABLE_UDP_LOGGING = False
+    settings.ENABLE_UDP_LOGGING =True
     settings.ENABLE_EQ_LOGGING = False
+    settings.ENABLE_CAPS_LOGGING = True
 
     #First, initialize the agent
     client = Agent(settings = settings)

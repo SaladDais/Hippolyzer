@@ -181,10 +181,6 @@ class UDPDispatcher(object):
         else:
             circuit.prepare_packet(packet)
 
-        # serialize the data
-        #serializer = UDPPacketSerializer(packet)
-
-        #serializer = ISerialization(packet)
         send_buffer = self.udp_serializer.serialize(packet)
 
         if self.settings.ENABLE_UDP_LOGGING:

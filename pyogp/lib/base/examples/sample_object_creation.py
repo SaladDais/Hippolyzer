@@ -72,6 +72,7 @@ def login():
    # let's disable inventory handling for this example
    settings = Settings()
    settings.ENABLE_INVENTORY_MANAGEMENT = False
+   settings.OBJECT_TRACKING = False
 
    #First, initialize the agent
    client = Agent(settings = settings)
@@ -88,12 +89,12 @@ def login():
 
    # in this case, wait for the client.Position to become populated, as we need to rez a box
    # relative to our current position
-   while client.Position == None:
+   while client.Position == (0.0, 0.0, 0.0):
        api.sleep(0)
 
    # do sample script specific stuff here
 
-   client.region.objects.create_default_box()
+   client.region.objects.create_default_box(GroupID = client.ActiveGroupID)
 
    while client.running:
        api.sleep(0)
