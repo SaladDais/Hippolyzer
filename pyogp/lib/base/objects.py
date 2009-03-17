@@ -65,6 +65,11 @@ class Objects(object):
         # of Object() instances
         self.object_store = []
 
+        # the avatar store consists of a list
+        # of Avatar() instances
+        # ToDo: should this go here, or be separate?
+        self.avatar_store = []
+
         # other useful things
         self.helpers = Helpers()
 
@@ -75,9 +80,6 @@ class Objects(object):
             else:
                 self.packet_handler = PacketHandler()
 
-            onObjectAdd_sent = self.packet_handler._register('ObjectAdd')
-            onObjectAdd_sent.subscribe(self.helpers.log_packet, self)
-
             onObjectUpdate_received = self.packet_handler._register('ObjectUpdate')
             onObjectUpdate_received.subscribe(onObjectUpdate, self)
 
@@ -86,6 +88,10 @@ class Objects(object):
 
             onObjectUpdateCompressed_received= self.packet_handler._register('ObjectUpdateCompressed')
             onObjectUpdateCompressed_received.subscribe(onObjectUpdateCompressed, self)
+
+            onKillObject_received= self.packet_handler._register('KillObject')
+            onKillObject_received.subscribe(onKillObject, self)
+
 
         if self.settings.LOG_VERBOSE: log(INFO, "Initializing object storage")
 
@@ -120,6 +126,13 @@ class Objects(object):
         else:
             return None
 
+    def remove_object_from_store(self, ID = None):
+        """ removes an item from teh object store """
+
+        self.object_store.remove(ID)
+
+        if self.LOG_VERBOSE: log(DEBUG, "Deleted a killed object from the store")
+
     def request_object_update(self, ID = None, ID_list = None):
         """ requests object updates from the simulator
 
@@ -153,8 +166,6 @@ class Objects(object):
 
     def create_default_box(self, GroupID = uuid.UUID('00000000-0000-0000-0000-000000000000'), relative_position = (1, 0, 0)):
         """ creates the default box, defaulting as 1m to the east, with an option GroupID to set the prim to"""
-
-        print self.agent.Position
 
         # self.agent.Position holds where we are. we need to add this tuple to the incoming tuple (vector to a vector)
         location_to_rez_x = self.agent.Position[0] + relative_position[0]
@@ -303,12 +314,11 @@ class Object(object):
 
         packet.ObjectDataBlocks.append(ObjectData)
 
-        self.region.enqueue_message(packet())
+        agent.region.enqueue_message(packet())
 
     def set_object_name(self, agent, Name):
-        """ update the name of objects 
+        """ update the name of an object 
 
-        Accepts a dictionary mapping LocalID to Name.
         """
 
         packet = ObjectPermissionsPacket()
@@ -323,10 +333,11 @@ class Object(object):
 
         packet.ObjectDataBlocks.append(ObjectData)
 
-    def set_object_description(self, agent, Description):
-        """ update the description of objects 
+        agent.region.enqueue_message(packet())
 
-        Accepts a dictionary mapping LocalID to Description.
+    def set_object_description(self, agent, Description):
+        """ update the description of an objects 
+
         """
 
         packet = ObjectPermissionsPacket()
@@ -340,6 +351,44 @@ class Object(object):
         ObjectData['Description'] = Description
 
         packet.ObjectDataBlocks.append(ObjectData)
+
+        agent.region.enqueue_message(packet())
+
+    def select(self, agent):
+        """ select an object
+        
+        """
+
+        packet = ObjectSelectPacket()
+
+        # build the AgentData block
+        packet.AgentData['AgentID'] = uuid.UUID(str(agent.agent_id))
+        packet.AgentData['SessionID'] = uuid.UUID(str(agent.session_id))
+
+        ObjectData = {}
+        ObjectData['ObjectLocalID'] = self.ID
+
+        packet.ObjectDataBlocks.append(ObjectData)
+
+        agent.region.enqueue_message(packet())
+
+    def deselect(self, agent):
+        """ deselect an object
+
+        """
+
+        packet = ObjectDeselectPacket()
+
+        # build the AgentData block
+        packet.AgentData['AgentID'] = uuid.UUID(str(agent.agent_id))
+        packet.AgentData['SessionID'] = uuid.UUID(str(agent.session_id))
+
+        ObjectData = {}
+        ObjectData['ObjectLocalID'] = self.ID
+
+        packet.ObjectDataBlocks.append(ObjectData)
+
+        agent.region.enqueue_message(packet())
 
 def onObjectUpdate(packet, objects):
     """ populates an Object instance and adds it to the Objects() store """
@@ -434,7 +483,13 @@ def onObjectUpdateCached(packet, objects):
 
 def onObjectUpdateCompressed(packet, objects):
 
-    objects.helpers.log_packet(packet, objects)
+    pass
+
+def onKillObject(packet, objects):
+
+    _KillID = packet.message_data.blocks['ObjectData'][0].get_variable('ID').data
+
+    objects.remove_object_from_store(_KillID)
 
     '''
     {

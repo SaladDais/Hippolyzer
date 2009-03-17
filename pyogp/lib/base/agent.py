@@ -105,7 +105,7 @@ class Agent(object):
         self.grid_type = None
         self.running = True
         self.packet_handler = PacketHandler(self.settings)
-        self.event_queue_handler = EventQueueHandler()
+        self.event_queue_handler = EventQueueHandler(self.settings)
         self.helpers = Helpers()
 
         # data we store as it comes in from the grid

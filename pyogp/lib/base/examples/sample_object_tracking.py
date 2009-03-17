@@ -72,6 +72,8 @@ def login():
     # let's disable inventory handling for this example
     settings = Settings()
     settings.ENABLE_INVENTORY_MANAGEMENT = False
+    settings.ENABLE_EQ_LOGGING = False
+    settings.ENABLE_CAPS_LOGGING = False
 
     #First, initialize the agent
     client = Agent(settings = settings)
@@ -104,7 +106,7 @@ def login():
     print ''
     print ''
     for _object in client.region.objects.object_store:
-        print 'ID:', _object.ID, '\tUUID: ', _object.FullID , '\tUUID: ', _object.OwnerID
+        print 'ID:', _object.ID, '\tUUID: ', _object.FullID , '\tUUID: ', _object.OwnerID, '\tUUID: ', _object.NameValue 
     print ''
     print ''
     print 'Region attributes:'

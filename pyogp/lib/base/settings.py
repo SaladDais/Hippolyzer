@@ -42,6 +42,9 @@ class Settings(object):
         # enable inventory management
         self.ENABLE_INVENTORY_MANAGEMENT = True
 
+        # enable library
+        self.ENABLE_LIBRARY = False
+
         # enable object tracking
         self.ENABLE_OBJECT_TRACKING = True
 
@@ -65,7 +68,10 @@ class Settings(object):
         #~~~~~~~~~~~~~~~~~~~~~~~
 
         # self.HANDLE_INVENTORY is set above, and triggers the use of these options in the login params
-        self.INVENTORY_LOGIN_OPTIONS = [ "inventory-root", "inventory-skeleton", "inventory-lib-root", "inventory-lib-owner", "inventory-skel-lib"]
+        self.INVENTORY_LOGIN_OPTIONS = ["inventory-root", "inventory-skeleton", "inventory-lib-owner"]
+
+        # self.HANDLE_LIBRARY is set above, and triggers the use of these options in the login params
+        self.LIBRARY_LOGIN_OPTIONS = ["inventory-lib-root", "inventory-lib-owner"]
 
         # ToDo: handle this!
         self.ENABLE_EXTENDED_LOGIN_OPTIONS = False
@@ -139,6 +145,10 @@ class Settings(object):
 
         if self.ENABLE_INVENTORY_MANAGEMENT:
             for option in self.INVENTORY_LOGIN_OPTIONS:
+                login_options.append(option)
+
+        if self.ENABLE_LIBRARY:
+            for option in self.LIBRARY_LOGIN_OPTIONS:
                 login_options.append(option)
 
         if self.ENABLE_EXTENDED_LOGIN_OPTIONS:

@@ -94,7 +94,7 @@ class Region(object):
         if event_queue_handler != None:
             self.event_queue_handler = event_queue_handler
         elif self.settings.HANDLE_EVENT_QUEUE_DATA:
-            self.event_queue_handler = EventQueueHandler()
+            self.event_queue_handler = EventQueueHandler(settings = self.settings)
 
         # initialize the init params
         self.global_x = global_x
@@ -242,7 +242,7 @@ class Region(object):
 
         if url != None:
             self.seed_capability_url = url
-        self.seed_cap = RegionSeedCapability('seed_cap', self.seed_capability_url)
+        self.seed_cap = RegionSeedCapability('seed_cap', self.seed_capability_url, settings = self.settings)
 
         if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, 'setting region domain seed cap: %s' % (self.seed_capability_url))
 
@@ -277,7 +277,7 @@ class Region(object):
             if self.settings.ENABLE_CAPS_LOGGING: log(INFO, 'Getting caps from region seed cap %s' % (self.seed_cap))
 
             # use self.region_caps.keys() to pass a list to be parsed into LLSD            
-            self.capabilities = self.seed_cap.get(self.region_caps_list)
+            self.capabilities = self.seed_cap.get(self.region_caps_list, self.settings)
 
     def connect(self):
         """ connect to the udp circuit code and event queue"""
@@ -461,7 +461,7 @@ class Region(object):
     def _startEventQueue(self):
         """ polls the event queue capability and parses the results  """
 
-        self.event_queue = EventQueueClient(self.capabilities['EventQueueGet'], packet_handler = self.packet_handler, region = self, event_queue_handler = self.event_queue_handler)
+        self.event_queue = EventQueueClient(self.capabilities['EventQueueGet'], settings = self.settings, packet_handler = self.packet_handler, region = self, event_queue_handler = self.event_queue_handler)
         api.spawn(self.event_queue.start)
         self._isEventQueueRunning = True
 
@@ -505,6 +505,8 @@ def onRegionHandshake(packet, region):
     # we are connected
     region.connected = True
 
+    log(INFO, "Rezzed agent \'%s %s\' in region %s" % (region.agent.firstname, region.agent.lastname, region.SimName))
+
 def onStartPingCheck(packet, region):
     """ sends the CompletePingCheck packet """
 
@@ -526,8 +528,16 @@ def onEnableSimulator(packet, region):
 class RegionSeedCapability(Capability):
     """ a seed capability which is able to retrieve other capabilities """
 
-    def get(self, names=[]):
+    def get(self, names=[], settings = None):
         """if this is a seed cap we can retrieve other caps here"""
+
+        # allow the settings to be passed in
+        # otherwise, grab the defaults
+        if settings != None:
+            self.settings = settings
+        else:
+            from pyogp.lib.base.settings import Settings
+            self.settings = Settings()
 
         #log(INFO, 'requesting from the region domain the following caps: %s' % (names))
 
@@ -539,7 +549,7 @@ class RegionSeedCapability(Capability):
         for name in names:
             # TODO: some caps might be seed caps, how do we know? 
             if parsed_result.has_key(name):
-                caps[name]=Capability(name, parsed_result[name])
+                caps[name]=Capability(name, parsed_result[name], settings = self.settings)
             else:
                 if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, 'Requested capability \'%s\' is not available' %  (name))
             #log(INFO, 'got cap: %s' % (name))

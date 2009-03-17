@@ -20,6 +20,7 @@ $/LicenseInfo$
 
 # standard python libs
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
+import traceback
 #from types import *
 
 # pyogp
@@ -181,22 +182,29 @@ class UDPDispatcher(object):
         else:
             circuit.prepare_packet(packet)
 
-        send_buffer = self.udp_serializer.serialize(packet)
+        try:
+            send_buffer = self.udp_serializer.serialize(packet)
 
-        if self.settings.ENABLE_UDP_LOGGING:
-            if packet.name in self.settings.UDP_SPAMMERS and self.settings.DISABLE_SPAMMERS:
-                pass
-            else:
-                if self.settings.ENABLE_BYTES_TO_HEX_LOGGING:
-                    hex_string = '<=>' + self.helpers.bytes_to_hex(send_buffer)
+            if self.settings.ENABLE_UDP_LOGGING:
+                if packet.name in self.settings.UDP_SPAMMERS and self.settings.DISABLE_SPAMMERS:
+                    pass
                 else:
-                    hex_string = ''
-                log(DEBUG, 'Sent packet     : %s (%s)%s' % (packet.name, packet.packet_id, hex_string))
+                    if self.settings.ENABLE_BYTES_TO_HEX_LOGGING:
+                        hex_string = '<=>' + self.helpers.bytes_to_hex(send_buffer)
+                    else:
+                        hex_string = ''
+                    log(DEBUG, 'Sent packet     : %s (%s)%s' % (packet.name, packet.packet_id, hex_string))
 
-        #TODO: remove this when testing a network
-        self.udp_client.send_packet(self.socket, send_buffer, host)
+            #TODO: remove this when testing a network
+            self.udp_client.send_packet(self.socket, send_buffer, host)
 
-        return send_buffer
+            return send_buffer
+
+        except Exception, error:
+            log(WARNING, "Error trying to serialize the following packet: %s" % (packet))
+            traceback.print_exc()
+
+            return
 
     def process_acks(self):
         """ resends all of our messages that were unacked, and acks all

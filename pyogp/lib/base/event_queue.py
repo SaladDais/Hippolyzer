@@ -73,14 +73,14 @@ class EventQueueClient(object):
             self.packet_handler = packet_handler
         elif self.settings.HANDLE_PACKETS:
             from pyogp.lib.base.message.packethandler import PacketHandler
-            self.packet_handler = PacketHandler()
+            self.packet_handler = PacketHandler(settings = self.settings)
 
         # allow the event_queue_handler to be passed in
         # otherwise, grab the defaults
         if event_queue_handler != None:
             self.event_queue_handler = event_queue_handler
         elif self.settings.HANDLE_EVENT_QUEUE_DATA:
-            self.event_queue_handler = EventQueueHandler()
+            self.event_queue_handler = EventQueueHandler(settings = self.settings)
 
         self.region = region
 
@@ -220,8 +220,8 @@ class EventQueueClient(object):
                             self.packet_handler._handle(packet)
 
             except Exception, error:
-                print error
-                pass
+
+                log(WARNING, "Error parsing even queue results, data was: %s" % (data))
 
     def _decode_eq_result(self, data=None):
         """ parse the event queue data, return a list of packets

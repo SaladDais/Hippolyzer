@@ -47,7 +47,8 @@ def login():
 #http://ec2-75-101-203-98.compute-1.amazonaws.com:9000
     parser.add_option("-q", "--quiet", dest="verbose", default=True, action="store_false",
                     help="enable verbose mode")
-
+    parser.add_option("-s", "--search", dest="search", default=None,
+                    help="inventory item to search for an rez (optional)")
 
     (options, args) = parser.parse_args()
 
@@ -96,21 +97,21 @@ def login():
     # next, let's wait 30 seconds and FetchInventory for items we know about
     now = time.time()
     start = now
-    while now - start < 30 and client.running:
+    while now - start < 5 and client.running:
         api.sleep()
         now = time.time()
 
-    '''
-    folders = [folder for folder in client.inventory.folders if len(folder.inventory) > 0]
 
-    for inventory in folders:
-        print str(type(inventory))
+    if options.search != None:
+        # and next, let's search the inventory by name
+        matches = client.inventory.search_inventory(name = options.search)
 
-    known_inventory_ids = [inventory.ItemID for inventory in folders if str(type(inventory)) == '<class \'pyogp.lib.base.inventory.InventoryItem\'>']
+        # now, if we have a match, let's try and rez the first matching object
+        item_to_rez = matches[0]
+        print item_to_rez.__dict__
+        print dir(item_to_rez)
 
-    # let's just grab the first five (because that's not an unreasonable number)
-    client.inventory.request_inventory_by_id(known_inventory_ids[0-4])
-    '''
+        item_to_rez.rez_object(client)
 
     # next, let's wait another 30 seconds then bail
     now = time.time()

@@ -20,6 +20,7 @@ $/LicenseInfo$
 
 # standard python libs
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
+import re
 
 # related
 import uuid
@@ -60,6 +61,7 @@ class Inventory(object):
         # Ditto the library
 
         self.folders = []
+        self.library_folders = []
 
         # the root inventory and library root folder are special cases
         self.inventory_root = None
@@ -115,11 +117,89 @@ class Inventory(object):
 
             if self.settings.LOG_VERBOSE: log(DEBUG, 'Storing a new inventory item: %s in agent \'%s\'' % (inventory_item.ItemID, self.agent.agent_id))
 
-    def search_inventory_by_id(self, item_id):
-        """ search through all inventory folders for a uuid, return the match, or None if no match """ 
+    def search_inventory(self, folder_list = [], item_id = None, name = None, match_list = []):
+        """ search through all inventory folders for an id(uuid) or Name, and
+        return a list of matching InventoryItems or InventoryFolders
 
-        pass
+        recursive search, based on folder_id. if no folder id is specified
+        look through everything in self.folders
 
+        This does not request inventory from the grid. It could, were we to go about enabling this...
+        """ 
+
+        # search our inventory storage if we aren't told what to look in
+        if folder_list == []: 
+            search_folders = self.folders
+        else:
+            search_folders = folder_list
+
+        if item_id != None:
+
+            item_id = uuid.UIUD(str(item_id))
+
+            for item in search_folders:
+
+                if str(type(item)) == '<class \'pyogp.lib.base.inventory.InventoryItem\'>':
+                    if uuid.UIUD(str(item.ItemID)) == item_id:
+                        match_list.append(item)
+
+                elif str(type(item)) == '<class \'pyogp.lib.base.inventory.InventoryFolder\'>':
+                    matches = self.search_inventory_folder(item.FolderID, _id = item_id)
+                    match_list.extend(matches)
+
+            return match_list
+
+        elif name != None:
+
+            for item in search_folders:
+
+                pattern = re.compile(name)
+
+                if str(type(item)) == '<class \'pyogp.lib.base.inventory.InventoryItem\'>':
+                    if pattern.match(item.Name):
+                        match_list.append(item)
+
+                elif str(type(item)) == '<class \'pyogp.lib.base.inventory.InventoryFolder\'>':
+                    matches = self.search_inventory_folder(item.FolderID, name = name.strip())
+                    match_list.extend(matches)
+
+            return match_list
+
+        else:
+
+            # return an empty list
+            return []
+
+    def search_inventory_folder(self, folder_id, _id = None, name = None):
+        """ search an inventory folder for _id or name
+        
+        return a list of matches
+        """ 
+
+        match_list = []
+
+        search_folder = [folder for folder in self.folders if folder.FolderID == folder_id][0]
+
+        for item in search_folder.inventory:
+
+            if _id != None:
+
+                if str(type(item)) == '<class \'pyogp.lib.base.inventory.InventoryItem\'>':
+                    if item.ItemID == _id:
+                        match_list.append(item)
+
+                elif str(type(item)) == '<class \'pyogp.lib.base.inventory.InventoryFolder\'>':
+                    if item.FolderID== _id:
+                        match_list.append(item)
+
+            elif name != None:
+
+                pattern = re.compile(name)
+
+                if pattern.match(item.Name):
+                    match_list.append(item)
+
+        return match_list
 
     def _add_inventory_folder(self, folder_data):
         """ inventory folder data comes from either packets or login """
@@ -246,7 +326,7 @@ class InventoryItem(object):
     Tests: tests/test_inventory.py
     """
 
-    def __init__(self, ItemID = None, FolderID = None, CreatorID = None, OwnerID = None, GroupID = None, BaseMask = None, OwnerMask = None, GroupMask = None, EveryoneMask = None, NextOwnerMask = None, GroupOwned = None, AssetID = None, Type = None, InvType = None, Flags = None, SaleType = None, SalePrice = None, Name = None, Description = None, CreationDate = None, CRC = None):
+    def __init__(self, ItemID = None, FolderID = None, CreatorID = None, OwnerID = None, GroupID = None, BaseMask = None, OwnerMask = None, GroupMask = None, EveryoneMask = None, NextOwnerMask = 0, GroupOwned = None, AssetID = None, Type = None, InvType = None, Flags = None, SaleType = None, SalePrice = None, Name = None, Description = None, CreationDate = None, CRC = None):
         """ initialize the inventory item """
 
         self.type = 'InventoryItem'
@@ -260,7 +340,7 @@ class InventoryItem(object):
         self.OwnerMask = OwnerMask                      # U32
         self.GroupMask = GroupMask                      # U32
         self.EveryoneMask = EveryoneMask                # U32
-        self.NextOwnerMask = NextOwnerMask              # U32
+        self.NextOwnerMask = NextOwnerMask 
         self.GroupOwned = GroupOwned                    # Bool
         self.AssetID = uuid.UUID(str(AssetID))          # LLUUID
         self.Type = Type                                # S8
@@ -272,6 +352,116 @@ class InventoryItem(object):
         self.Description = Description                  # Variable 1
         self.CreationDate = CreationDate                # S32
         self.CRC = CRC                                  # U32
+
+    def rez_object(self, agent, relative_position = (1, 0, 0)):
+        """ try and rez an inventory item """
+
+        # self.agent.Position holds where we are. we need to add this tuple to the incoming tuple (vector to a vector)
+        location_to_rez_x = agent.Position[0] + relative_position[0]
+        location_to_rez_y = agent.Position[1] + relative_position[1]
+        location_to_rez_z = agent.Position[2] + relative_position[2]
+
+        location_to_rez = (location_to_rez_x, location_to_rez_y, location_to_rez_z)
+
+        sendRezObject(agent, self, location_to_rez, location_to_rez)
+
+    def update(agent, name = None, value = None):
+        """ allow arbitraty update to any data in the inventory item """
+        
+        if self.__dict__.has_key(name):
+            self.setattr(self, name, value)
+            sendUpdateInventoryItem(agent, [self])
+        else:
+            raise DataParsingError('Inventory item attribute update failes, no field named \'%s\'' % (name))
+
+# ~~~~~~~~~~~~~~~
+# Packet Wrappers
+# ~~~~~~~~~~~~~~~
+
+def sendUpdateInventoryItem(agent, inventory_items = [], ):
+    """ sends an UpdateInventoryItem packet to a region 
+    
+    this function expects an already transformed InventoryItem instance
+    """
+
+    packet - UpdateInventoryItemPacket()
+
+    packet.AgentData["AgentID"] = uuid.UUID(str(agent.agent_id))
+    packet.AgentData["SessionID"] = uuid.UUID(str(agent.session_id))
+    packet.AgentData["TransactionID"] = uuid.UUID('00000000-0000-0000-0000-000000000000')
+
+    for item in inventory_items:
+
+        packet.InventoryData['ItemID'] = uuid.UUID(str(item.ItemID))
+        packet.InventoryData['FolderID'] = uuid.UUID(str(item.FolderID))
+        packet.InventoryData['CallbackID'] = uuid.UUID('00000000-0000-0000-0000-000000000000')
+        packet.InventoryData['CreatorID'] = uuid.UUID(str(item.CreatorID))
+        packet.InventoryData['OwnerID'] = uuid.UUID(str(item.OwnerID))
+        packet.InventoryData['GroupID'] = uuid.UUID(str(item.GroupID))
+        packet.InventoryData['BaseMask'] = item.BaseMask
+        packet.InventoryData['OwnerMask'] = item.OwnerMask
+        packet.InventoryData['GroupMask'] = item.GroupMask
+        packet.InventoryData['EveryoneMask'] = item.EveryoneMask
+        packet.InventoryData['NextOwnerMask'] = item.NextOwnerMask
+        packet.InventoryData['GroupOwned'] = item.GroupOwned
+        packet.InventoryData['TransactionID'] = uuid.UUID('00000000-0000-0000-0000-000000000000')
+        packet.InventoryData['Type'] = item.Type 
+        packet.InventoryData['InvType'] = item.InvType
+        packet.InventoryData['Flags'] = item.Flags
+        packet.InventoryData['SaleType'] = item.SaleType
+        packet.InventoryData['SalePrice'] = item.SalePrice
+        packet.InventoryData['Name'] = item.Name
+        packet.InventoryData['Description'] = item.Description
+        packet.InventoryData['CreationDate'] = item.CreationDate
+        packet.InventoryData['CRC'] = item.CRC
+
+    agent.region.enqueue_message(packet())
+
+def sendRezObject(agent, inventory_item, RayStart, RayEnd, FromTaskID = uuid.UUID('00000000-0000-0000-0000-000000000000'), BypassRaycast = 1,  RayTargetID = uuid.UUID('00000000-0000-0000-0000-000000000000'), RayEndIsIntersection = False, RezSelected = False, RemoveItem = False, ItemFlags = 0, GroupMask = 0, EveryoneMask = 0, NextOwnerMask = 0):
+    """ sends a RezObject packet to a region """
+
+    packet = RezObjectPacket()
+
+    packet.AgentData['AgentID'] = uuid.UUID(str(agent.agent_id))
+    packet.AgentData['SessionID'] = uuid.UUID(str(agent.session_id))
+    packet.AgentData['GroupID'] = uuid.UUID(str(agent.ActiveGroupID))
+
+    packet.RezData['FromTaskID'] = uuid.UUID(str(FromTaskID))
+    packet.RezData['BypassRaycast'] = BypassRaycast     # ???
+    packet.RezData['RayStart'] = RayStart
+    packet.RezData['RayEnd'] = RayEnd
+    packet.RezData['RayTargetID'] = uuid.UUID(str(RayTargetID))
+    packet.RezData['RayEndIsIntersection'] = RayEndIsIntersection
+    packet.RezData['RezSelected'] = RezSelected
+    packet.RezData['RemoveItem'] = RemoveItem
+    packet.RezData['ItemFlags'] = ItemFlags
+    packet.RezData['GroupMask'] = GroupMask
+    packet.RezData['EveryoneMask'] = EveryoneMask
+    packet.RezData['NextOwnerMask'] = inventory_item.NextOwnerMask
+
+    packet.InventoryData['ItemID'] = uuid.UUID(str(inventory_item.ItemID))
+    packet.InventoryData['FolderID'] = uuid.UUID(str(inventory_item.FolderID))
+    packet.InventoryData['CreatorID'] = uuid.UUID(str(inventory_item.CreatorID))
+    packet.InventoryData['OwnerID'] = uuid.UUID(str(inventory_item.OwnerID))
+    packet.InventoryData['GroupID'] = uuid.UUID(str(inventory_item.GroupID))
+    packet.InventoryData['BaseMask'] = inventory_item.BaseMask
+    packet.InventoryData['OwnerMask'] = inventory_item.OwnerMask
+    packet.InventoryData['GroupMask'] = inventory_item.GroupMask
+    packet.InventoryData['EveryoneMask'] = inventory_item.EveryoneMask
+    packet.InventoryData['GroupOwned'] = inventory_item.GroupOwned
+    packet.InventoryData['TransactionID'] = uuid.UUID('00000000-0000-0000-0000-000000000000')
+    packet.InventoryData['Type'] = inventory_item.Type 
+    packet.InventoryData['InvType'] = inventory_item.InvType
+    packet.InventoryData['Flags'] = inventory_item.Flags
+    packet.InventoryData['SaleType'] = inventory_item.SaleType
+    packet.InventoryData['SalePrice'] = inventory_item.SalePrice
+    packet.InventoryData['Name'] = inventory_item.Name
+    packet.InventoryData['Description'] = inventory_item.Description
+    packet.InventoryData['CreationDate'] = inventory_item.CreationDate
+    packet.InventoryData['CRC'] = inventory_item.CRC
+    packet.InventoryData['NextOwnerMask'] = inventory_item.NextOwnerMask
+
+    agent.region.enqueue_message(packet())
 
 #~~~~~~~~~~
 # Callbacks
@@ -288,7 +478,7 @@ def onInventoryDescendents(packet, inventory):
         _version = packet.message_data.blocks['AgentData'][0].get_variable('Version')
         _descendents = packet.message_data.blocks['AgentData'][0].get_variable('Descendents')
 
-        if packet.message_data.blocks['ItemData'][0].get_variable('FolderID').data != uuid.UUID('00000000-0000-0000-0000-000000000000'):
+        if packet.message_data.blocks['ItemData'][0].get_variable('ItemID').data != uuid.UUID('00000000-0000-0000-0000-000000000000'):
 
             for ItemData_block in packet.message_data.blocks['ItemData']:
 

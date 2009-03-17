@@ -72,7 +72,8 @@ def login():
    # let's disable inventory handling for this example
    settings = Settings()
    settings.ENABLE_INVENTORY_MANAGEMENT = False
-   settings.OBJECT_TRACKING = False
+   settings.ENABLE_EQ_LOGGING = False
+   settings.ENABLE_CAPS_LOGGING = False
 
    #First, initialize the agent
    client = Agent(settings = settings)
