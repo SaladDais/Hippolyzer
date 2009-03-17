@@ -23,6 +23,7 @@ $/LicenseInfo$
 import re
 import getpass, sys, logging
 from optparse import OptionParser
+import time
 
 # related
 from eventlet import api
@@ -90,6 +91,14 @@ def login():
 
     # do sample script specific stuff here
 
+    now = time.time()
+    start = now
+    while now - start < 30 and client.running:
+        api.sleep()
+
+    # matches = client.region.objects.find_objects_by_name("mini panda particles")
+
+    # print matches
 
     while client.running:
         api.sleep(0)
@@ -106,7 +115,7 @@ def login():
     print ''
     print ''
     for _object in client.region.objects.object_store:
-        print 'ID:', _object.ID, '\tUUID: ', _object.FullID , '\tUUID: ', _object.OwnerID, '\tUUID: ', _object.NameValue 
+        print 'ID:', _object.ID, '\tUUID: ', _object.FullID , '\tUUID: ', _object.OwnerID, '\tNameValue: ', _object.NameValue 
     print ''
     print ''
     print 'Region attributes:'

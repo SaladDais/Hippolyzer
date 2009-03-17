@@ -21,6 +21,8 @@ $/LicenseInfo$
 # standard python libs
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import uuid
+import re
+from binascii import b2a_base64
 
 # related
 
@@ -114,7 +116,7 @@ class Objects(object):
 
             if self.settings.LOG_VERBOSE: log(DEBUG, 'Stored a new object: %s in region \'%s\'' % (_object.ID, self.region.SimName))
 
-    def get_object_from_store(self, ID = None, FullID = None):
+    def get_object_from_store(self, ID = None, FullID = None, Name = None):
         """ searches the store and returns object if stored, None otherwise """
 
         if ID != None:
@@ -125,6 +127,18 @@ class Objects(object):
             return _object
         else:
             return None
+
+    def find_objects_by_name(self, Name):
+        """ searches the store for known objects by name 
+        
+        returns a list of all such known objects
+        """
+
+        pattern = re.compile(Name)
+
+        matches = [_object for _object in self.object_store if pattern.match(_object.NameValue)]
+
+        return matches
 
     def remove_object_from_store(self, ID = None):
         """ removes an item from teh object store """
@@ -446,6 +460,74 @@ def onObjectUpdate(packet, objects):
         _JointPivot = ObjectData_block.get_variable('JointPivot').data
         _JointAxisOrAnchor = ObjectData_block.get_variable('JointAxisOrAnchor').data
 
+        # deal with the data stored in _ObjectData
+        # see http://wiki.secondlife.com/wiki/ObjectUpdate#ObjectData_Format for details
+
+        Foot_Collision_Plane = None 
+        Position = None
+        Velocity = None
+        Acceleration = None
+        Rotation = None
+        AngularVelocity = None
+
+        if len(_ObjectData) == 76:
+
+            # Foot collision plane. LLVector4.
+            # Angular velocity is ignored and set to 0. Falls through to 60 bytes parser. 
+            print len(_ObjectData)
+            data = [ord(x) for x in b2a_base64(_ObjectData)]
+
+        elif len(_ObjectData) == 60:
+
+            # 32 bit precision update.
+
+            # Position. LLVector3.
+            # Velocity. LLVector3.
+            # Acceleration. LLVector3.
+            # Rotation. LLVector3.
+            # Angular velocity. LLVector3.
+            print len(_ObjectData)
+            string = b2a_base64(_ObjectData)
+            data = [ord(x) for x in b2a_base64(_ObjectData)]
+            print data
+
+        elif len(_ObjectData) == 48:
+
+            # Foot collision plane. LLVector4 
+            # Falls through to 32 bytes parser.
+            print len(_ObjectData)
+            string = b2a_base64(_ObjectData)
+            data = [ord(x) for x in b2a_base64(_ObjectData)]
+            print data
+
+        elif len(_ObjectData) == 32:
+
+            # 16 bit precision update.
+
+            # Position. U16Vec3.
+            # Velocity. U16Vec3.
+            # Acceleration. U16Vec3.
+            # Rotation. U16Rot(4xU16).
+            # Angular velocity. LLVector3.
+            print len(_ObjectData)
+            string = b2a_base64(_ObjectData)
+            data = [ord(x) for x in b2a_base64(_ObjectData)]
+            print data
+
+        elif len(_ObjectData) == 16:
+
+            # 8 bit precision update.
+
+            # Position. U8Vec3.
+            # Velocity. U8Vec3.
+            # Acceleration. U8Vec3.
+            # Rotation. U8Rot(4xU8).
+            # Angular velocity. U8Vec3
+            print len(_ObjectData)
+            string = b2a_base64(_ObjectData)
+            data = [ord(x) for x in b2a_base64(_ObjectData)]
+            print data
+
         _object = Object(_ID, _State, _FullID, _CRC, _PCode, _Material, _ClickAction, _Scale, _ObjectData, _ParentID, _UpdateFlags, _PathCurve, _ProfileCurve, _PathBegin, _PathEnd, _PathScaleX, _PathScaleY, _PathShearX, _PathShearY, _PathTwist, _PathTwistBegin, _PathRadiusOffset, _PathTaperX, _PathTaperY, _PathRevolutions, _PathSkew, _ProfileBegin, _ProfileEnd, _ProfileHollow, _TextureEntry, _TextureAnim, _NameValue, _Data, _Text, _TextColor, _MediaURL, _PSBlock, _ExtraParams, _Sound, _OwnerID, _Gain, _Flags, _Radius, _JointType, _JointPivot, _JointAxisOrAnchor)
 
         # add the object to the store
@@ -489,7 +571,10 @@ def onKillObject(packet, objects):
 
     _KillID = packet.message_data.blocks['ObjectData'][0].get_variable('ID').data
 
-    objects.remove_object_from_store(_KillID)
+    try:
+        objects.remove_object_from_store(_KillID)
+    except:
+        pass
 
     '''
     {
