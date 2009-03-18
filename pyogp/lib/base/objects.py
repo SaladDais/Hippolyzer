@@ -22,21 +22,24 @@ $/LicenseInfo$
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import uuid
 import re
-from binascii import b2a_base64
+from binascii import hexlify
+import struct
 
 # related
 
 # pyogp
+from pyogp.lib.base import *
 
 # pyogp message
-from pyogp.lib.base. message.packethandler import PacketHandler
+from pyogp.lib.base.message.packethandler import PacketHandler
 from pyogp.lib.base.message.packets import *
+from pyogp.lib.base.datatypes import *
 
 # pyogp utilities
 from pyogp.lib.base.utilities.helpers import Helpers
 
 # initialize logging
-logger = getLogger('pyogp.lib.base.inventory')
+logger = getLogger('pyogp.lib.base.objects')
 log = logger.log
 
 class Objects(object):
@@ -69,7 +72,6 @@ class Objects(object):
 
         # the avatar store consists of a list
         # of Avatar() instances
-        # ToDo: should this go here, or be separate?
         self.avatar_store = []
 
         # other useful things
@@ -97,40 +99,93 @@ class Objects(object):
 
         if self.settings.LOG_VERBOSE: log(INFO, "Initializing object storage")
 
-    def store_object(self, _object):
+    def parse_object_update(self, _object):
         """ append to or replace an object in self.objects """
+
+        # this is an avatar
+        if _object.PCode == 47:
+
+            self.store_avatar(_object)
+
+        # this is a Primitive
+        elif _object.PCode == 9:
+
+            self.store_object(_object)
+
+        else:
+
+            if self.settings.LOG_VERBOSE: log(DEBUG, "Not processing object update of type %s" % (PCode(PCode)))
+
+    def store_object(self, _object):
 
         # replace an existing list member, else, append
 
-        try:
+        index = [self.object_store.index(_object_) for _object_ in self.object_store if _object_.ID == _object.ID]
 
-            index = [self.object_store.index(_object_) for _object_ in self.object_store if _object_.ID == _object.ID]
+        if index != []:
 
             self.object_store[index[0]] = _object
 
             if self.settings.LOG_VERBOSE: log(DEBUG, 'Replacing a stored object: %s in region \'%s\'' % (_object.ID, self.region.SimName))
 
-        except:
+        else:
 
             self.object_store.append(_object)
 
             if self.settings.LOG_VERBOSE: log(DEBUG, 'Stored a new object: %s in region \'%s\'' % (_object.ID, self.region.SimName))
 
-    def get_object_from_store(self, ID = None, FullID = None, Name = None):
+    def store_avatar(self, _objectdata):
+
+        # if the object data pertains to us, update our data!
+        if str(_objectdata.FullID) == str(self.agent.agent_id):
+            self.agent.Position = _objectdata.Position.data()
+            self.agent.FootCollisionPlane = _objectdata.FootCollisionPlane.data()
+            self.agent.Velocity = _objectdata.Velocity.data()
+            self.agent.Acceleration = _objectdata.Acceleration.data()
+            self.agent.Rotation = _objectdata.Rotation.data()
+            self.agent.AngularVelocity = _objectdata.AngularVelocity.data()
+
+        index = [self.avatar_store.index(_avatar_) for _avatar_ in self.avatar_store if _avatar_.ID == _objectdata.ID]
+
+        if index != []:
+
+            self.avatar_store[index[0]] = _objectdata
+
+            if self.settings.LOG_VERBOSE: log(DEBUG, 'Replacing a stored avatar: %s in region \'%s\'' % (_objectdata.ID, self.region.SimName))
+
+        else:
+
+            self.avatar_store.append(_objectdata)
+
+            if self.settings.LOG_VERBOSE: log(DEBUG, 'Stored a new avatar: %s in region \'%s\'' % (_objectdata.ID, self.region.SimName))
+
+    def get_object_from_store(self, ID = None, FullID = None):
         """ searches the store and returns object if stored, None otherwise """
 
         if ID != None:
             _object = [_object for _object in self.object_store if _object.ID == ID]
             return _object
         elif FullID != None:
-            [_object for _object in self.object_store if _object.FullID == FullID]
+            _object = [_object for _object in self.object_store if _object.FullID == FullID]
             return _object
+        else:
+            return None
+
+    def get_avatar_from_store(self, ID = None, FullID = None):
+        """ searches the store and returns object if stored, None otherwise """
+
+        if ID != None:
+            _avatar = [_avatar for _avatar in self.avatar_store if _avatar.ID == ID]
+            return _avatar
+        elif FullID != None:
+            _avatar = [_avatar for _avatar in self.avatar_store if _avatar.FullID == FullID]
+            return _avatar
         else:
             return None
 
     def find_objects_by_name(self, Name):
         """ searches the store for known objects by name 
-        
+
         returns a list of all such known objects
         """
 
@@ -141,11 +196,36 @@ class Objects(object):
         return matches
 
     def remove_object_from_store(self, ID = None):
-        """ removes an item from teh object store """
 
-        self.object_store.remove(ID)
+        # this is an avatar
+        if _object.PCode == 47:
 
-        if self.LOG_VERBOSE: log(DEBUG, "Deleted a killed object from the store")
+            self.kill_stored_avatar(ID)
+
+        # this is a Primitive
+        elif _object.PCode == 9:
+
+            self.kill_stored_object(ID)
+
+        else:
+
+            if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Not processing kill of unstored object type %s" % (PCode(PCode)))
+
+    def kill_stored_avatar(self, ID):
+
+        index = [self.avatar_store.index(_avatar_) for _avatar_ in self.avatar_store if _avatar_.ID == ID]
+
+        if index != []:
+            del self.avatar_store[index[0]]
+            if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Kill on object data for avatar tracked as local id %s" % (ID))
+
+    def kill_stored_object(self, ID):
+
+        index = [self.object_store.index(_avatar_) for _object_ in self.object_store if _object_.ID == ID]
+
+        if index != []:
+            del self.object_store[index[0]]
+            if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Kill on object data for object tracked as local id %s" % (ID))
 
     def request_object_update(self, ID = None, ID_list = None):
         """ requests object updates from the simulator
@@ -256,7 +336,7 @@ class Object(object):
     Tests: tests/test_objects.py
     """
 
-    def __init__(self, ID = None, State = None, FullID = None, CRC = None, PCode = None, Material = None, ClickAction = None, Scale = None, ObjectData = None, ParentID = None, UpdateFlags = None, PathCurve = None, ProfileCurve = None, PathBegin = None, PathEnd = None, PathScaleX = None, PathScaleY = None, PathShearX = None, PathShearY = None, PathTwist = None, PathTwistBegin = None, PathRadiusOffset = None, PathTaperX = None, PathTaperY = None, PathRevolutions = None, PathSkew = None, ProfileBegin = None, ProfileEnd = None, ProfileHollow = None, TextureEntry = None, TextureAnim = None, NameValue = None, Data = None, Text = None, TextColor = None, MediaURL = None, PSBlock = None, ExtraParams = None, Sound = None, OwnerID = None, Gain = None, Flags = None, Radius = None, JointType = None, JointPivot = None, JointAxisOrAnchor = None):
+    def __init__(self, ID = None, State = None, FullID = None, CRC = None, PCode = None, Material = None, ClickAction = None, Scale = None, ObjectData = None, ParentID = None, UpdateFlags = None, PathCurve = None, ProfileCurve = None, PathBegin = None, PathEnd = None, PathScaleX = None, PathScaleY = None, PathShearX = None, PathShearY = None, PathTwist = None, PathTwistBegin = None, PathRadiusOffset = None, PathTaperX = None, PathTaperY = None, PathRevolutions = None, PathSkew = None, ProfileBegin = None, ProfileEnd = None, ProfileHollow = None, TextureEntry = None, TextureAnim = None, NameValue = None, Data = None, Text = None, TextColor = None, MediaURL = None, PSBlock = None, ExtraParams = None, Sound = None, OwnerID = None, Gain = None, Flags = None, Radius = None, JointType = None, JointPivot = None, JointAxisOrAnchor = None, FootCollisionPlane = None, Position = None, Velocity = None, Acceleration = None, Rotation = None, AngularVelocity = None):
         """ set up the event queue attributes """
 
         self.ID = ID                                 # U32
@@ -305,6 +385,13 @@ class Object(object):
         self.JointType = JointType                   # U8
         self.JointPivot = JointPivot                 # LLVector3
         self.JointAxisOrAnchor = JointAxisOrAnchor   # LLVector3
+
+        self.FootCollisionPlane = FootCollisionPlane
+        self.Position = Position
+        self.Velocity = Velocity
+        self.Acceleration = Acceleration
+        self.Rotation = Rotation
+        self.AngularVelocity = AngularVelocity
 
     def update_object_permissions(self, agent, Field, Set, Mask, Override = False):
         """ update permissions for a list of objects
@@ -370,7 +457,7 @@ class Object(object):
 
     def select(self, agent):
         """ select an object
-        
+
         """
 
         packet = ObjectSelectPacket()
@@ -403,6 +490,30 @@ class Object(object):
         packet.ObjectDataBlocks.append(ObjectData)
 
         agent.region.enqueue_message(packet())
+
+class PCode(object):
+    """ classifying the PCode of objects """
+
+    def __init__(self, pcode):
+        """ just a simple map """
+
+        # http://wiki.secondlife.com/wiki/PCode
+
+        self.Primitive = 9          # 0x09
+        self.Avatar = 47            # 0x2F
+        self.Grass = 95             # 0x5F
+        self.NewTree = 111          # 0x6F
+        self.ParticleSystem = 143   # 0x8F
+        self.Tree = 255             # 0xFF
+
+        self.types = {9: 'Primitive', 47: 'Avatar', 95: 'Grass', 111: 'NewTree', 143: 'ParticleSystem', 255: 'Tree'}
+
+        if pcode: self.get_type(pcode)
+
+        def get_type(self, pcode):
+
+            return self.types[pcode]
+
 
 def onObjectUpdate(packet, objects):
     """ populates an Object instance and adds it to the Objects() store """
@@ -463,7 +574,7 @@ def onObjectUpdate(packet, objects):
         # deal with the data stored in _ObjectData
         # see http://wiki.secondlife.com/wiki/ObjectUpdate#ObjectData_Format for details
 
-        Foot_Collision_Plane = None 
+        FootCollisionPlane = None 
         Position = None
         Velocity = None
         Acceleration = None
@@ -474,45 +585,41 @@ def onObjectUpdate(packet, objects):
 
             # Foot collision plane. LLVector4.
             # Angular velocity is ignored and set to 0. Falls through to 60 bytes parser. 
-            print len(_ObjectData)
-            data = [ord(x) for x in b2a_base64(_ObjectData)]
+
+            FootCollisionPlane = Quaternion(_ObjectData, 0)
+            Position = Vector3(_ObjectData, 16)
+            Velocity = Vector3(_ObjectData, 28)
+            Acceleration = Vector3(_ObjectData, 40)
+            Rotation = Vector3(_ObjectData, 52)
+            AngularVelocity = Vector3(_ObjectData, 60)
 
         elif len(_ObjectData) == 60:
 
             # 32 bit precision update.
 
-            # Position. LLVector3.
-            # Velocity. LLVector3.
-            # Acceleration. LLVector3.
-            # Rotation. LLVector3.
-            # Angular velocity. LLVector3.
-            print len(_ObjectData)
-            string = b2a_base64(_ObjectData)
-            data = [ord(x) for x in b2a_base64(_ObjectData)]
-            print data
+            Position = Vector3(_ObjectData, 0)
+            Velocity = Vector3(_ObjectData, 12)
+            Acceleration = Vector3(_ObjectData, 24)
+            Rotation = Vector3(_ObjectData, 36)
+            AngularVelocity = Vector3(_ObjectData, 48)
 
         elif len(_ObjectData) == 48:
 
             # Foot collision plane. LLVector4 
             # Falls through to 32 bytes parser.
-            print len(_ObjectData)
-            string = b2a_base64(_ObjectData)
-            data = [ord(x) for x in b2a_base64(_ObjectData)]
-            print data
+
+            log(DEBUG, "48 bit ObjectData precision not implemented")
 
         elif len(_ObjectData) == 32:
 
-            # 16 bit precision update.
+            # 32 bit precision update.
 
             # Position. U16Vec3.
             # Velocity. U16Vec3.
             # Acceleration. U16Vec3.
             # Rotation. U16Rot(4xU16).
             # Angular velocity. LLVector3.
-            print len(_ObjectData)
-            string = b2a_base64(_ObjectData)
-            data = [ord(x) for x in b2a_base64(_ObjectData)]
-            print data
+            log(DEBUG, "32 bit ObjectData precision not implemented")
 
         elif len(_ObjectData) == 16:
 
@@ -523,15 +630,12 @@ def onObjectUpdate(packet, objects):
             # Acceleration. U8Vec3.
             # Rotation. U8Rot(4xU8).
             # Angular velocity. U8Vec3
-            print len(_ObjectData)
-            string = b2a_base64(_ObjectData)
-            data = [ord(x) for x in b2a_base64(_ObjectData)]
-            print data
+            log(DEBUG, "16 bit ObjectData precision not implemented")
 
-        _object = Object(_ID, _State, _FullID, _CRC, _PCode, _Material, _ClickAction, _Scale, _ObjectData, _ParentID, _UpdateFlags, _PathCurve, _ProfileCurve, _PathBegin, _PathEnd, _PathScaleX, _PathScaleY, _PathShearX, _PathShearY, _PathTwist, _PathTwistBegin, _PathRadiusOffset, _PathTaperX, _PathTaperY, _PathRevolutions, _PathSkew, _ProfileBegin, _ProfileEnd, _ProfileHollow, _TextureEntry, _TextureAnim, _NameValue, _Data, _Text, _TextColor, _MediaURL, _PSBlock, _ExtraParams, _Sound, _OwnerID, _Gain, _Flags, _Radius, _JointType, _JointPivot, _JointAxisOrAnchor)
+        _object = Object(_ID, _State, _FullID, _CRC, _PCode, _Material, _ClickAction, _Scale, _ObjectData, _ParentID, _UpdateFlags, _PathCurve, _ProfileCurve, _PathBegin, _PathEnd, _PathScaleX, _PathScaleY, _PathShearX, _PathShearY, _PathTwist, _PathTwistBegin, _PathRadiusOffset, _PathTaperX, _PathTaperY, _PathRevolutions, _PathSkew, _ProfileBegin, _ProfileEnd, _ProfileHollow, _TextureEntry, _TextureAnim, _NameValue, _Data, _Text, _TextColor, _MediaURL, _PSBlock, _ExtraParams, _Sound, _OwnerID, _Gain, _Flags, _Radius, _JointType, _JointPivot, _JointAxisOrAnchor, FootCollisionPlane, Position, Velocity, Acceleration, Rotation, AngularVelocity)
 
         # add the object to the store
-        objects.store_object(_object)
+        objects.parse_object_update(_object)
 
 def onObjectUpdateCached(packet, objects):
     """ borrowing from libomv, we'll request object data for all data coming in via ObjectUpdateCached"""
@@ -571,10 +675,7 @@ def onKillObject(packet, objects):
 
     _KillID = packet.message_data.blocks['ObjectData'][0].get_variable('ID').data
 
-    try:
-        objects.remove_object_from_store(_KillID)
-    except:
-        pass
+    objects.remove_object_from_store(_KillID)
 
     '''
     {

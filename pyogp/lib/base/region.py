@@ -190,7 +190,7 @@ class Region(object):
         if self.settings.LOG_VERBOSE: log(DEBUG, 'initializing region domain: %s' %self)
 
     def enable_child_simulator(self, IP, Port, Handle):
-        
+
         log(INFO, "Would enable a simulator at %s:%s with a handle of %s" % (IP, Port, Handle))
 
     def send_message_next(self, packet, reliable = False):

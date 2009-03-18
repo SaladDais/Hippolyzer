@@ -33,7 +33,7 @@ from packet import UDPPacket
 
 from pyogp.lib.base import exc
 
-logger = getLogger('...base.message.udpdeserializer') 
+logger = getLogger('message.udpdeserializer') 
 log = logger.log 
 
 class UDPPacketDeserializer(object):

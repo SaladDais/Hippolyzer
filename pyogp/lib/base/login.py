@@ -220,7 +220,7 @@ class Login(object):
         # This handles the standard 'login_to_simulator' case
         # plus, all the transforms that may need to be followed
         login_handler = self.handler.__getattr__(login_method)
-        
+
         try:
             self.response = login_handler(self.login_params)
         except ProtocolError, error:

@@ -472,7 +472,7 @@ def onAgentGroupDataUpdate(packet, agent):
             GroupInsigniaID:    00000000-0000-0000-0000-000000000000
         Block Name:    AgentData
             AgentID:    a517168d-1af5-4854-ba6d-672c8a59e439
-    
+
     '''
 
 def onChatFromSimulator(packet, agent):

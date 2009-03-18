@@ -57,7 +57,7 @@ class Settings(object):
         # ~~~~~~
         # Camera
         # ~~~~~~
-        
+
         self.DEFAULT_CAMERA_DRAW_DISTANCE = 128
         self.DEFAULT_CAMERA_AT_AXIS = (1.0, 0.0, 0.0)
         self.DEFAULT_CAMERA_LEFT_AXIS = (0.0, 1.0, 0.0)
@@ -117,6 +117,7 @@ class Settings(object):
         self.ENABLE_CAPS_LLSD_LOGGING = False
         self.ENABLE_EQ_LOGGING = True
         self.ENABLE_UDP_LOGGING = True
+        self.ENABLE_OBJECT_LOGGING = True
 
         # allow disabling logging of certain packets
         self.DISABLE_SPAMMERS = True

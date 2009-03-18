@@ -91,7 +91,7 @@ def login():
    # in this case, wait for the client.Position to become populated, as we need to rez a box
    # relative to our current position
    while client.Position == (0.0, 0.0, 0.0):
-       api.sleep(0)
+       api.sleep(10)
 
    # do sample script specific stuff here
 
@@ -111,8 +111,26 @@ def login():
    print 'Objects being tracked: %s' % len(client.region.objects.object_store)
    print ''
    print ''
+   states = {}
    for _object in client.region.objects.object_store:
-       print 'ID:', _object.ID, '\tUUID: ', _object.FullID, '\tOwnerID: ', _object.OwnerID
+       if _object.State == 0:
+           print 'ID:', _object.ID, '\tUUID: ', _object.FullID , '\tState: ', _object.State, '\tPosition: ', _object.Position
+       else:
+           if states.has_key(_object.State):
+               states[_object.State]+=1
+           else:
+               states[_object.State] = 1
+   print ''
+   print 'Object states I don\'t care about atm'
+   for state in states:
+       print '\t State: ', state, '\tFrequency: ', states[state]
+   print ''
+   print ''
+   print 'Avatars being tracked: %s' % len(client.region.objects.avatar_store)
+   print ''
+   print ''
+   for _avatar in client.region.objects.avatar_store:
+       print 'ID:', _avatar.ID, '\tUUID: ', _avatar.FullID , '\tNameValue: ', _avatar.NameValue, '\tPosition: ', _avatar.Position
    print ''
    print ''
    print 'Region attributes:'

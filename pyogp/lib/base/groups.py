@@ -34,7 +34,7 @@ log = logger.log
 
 class GroupManager(object):
     """ a storage bin for groups
-    
+
     also, a functional area for group creation operations
     """
 
@@ -82,7 +82,7 @@ class GroupManager(object):
 
     def create_group(self, AgentID = None, SessionID = None, Name = None, Charter = '', ShowInList = True, InsigniaID = uuid.UUID('00000000-0000-0000-0000-000000000000'), MembershipFee = 0, OpenEnrollment = False, AllowPublish = False, MaturePublish = False):
         """ sends a message to the agent's current region requesting to create a group
-        
+
         enables a callback (which should be unsubscribed from once we get a response)
         """
 

@@ -37,7 +37,7 @@ from pyogp.lib.base.settings import Settings
 from pyogp.lib.base.utilities.helpers import Helpers
 
 # initialize logging
-logger = getLogger('...base.message.udpdispatcher')
+logger = getLogger('message.udpdispatcher')
 log = logger.log
 
 #maybe make a global utility
@@ -115,7 +115,7 @@ class UDPDispatcher(object):
 
                 # if its sent as reliable, we should ack it even if we aren't going to parse it
                 # since we can skip parsing the packet in self.udp_deserializer
-                
+
                 # this indicate reliable
                 send_flags = ord(msg_buf[0])
                 packet_id = self.data_unpacker.unpack_data(msg_buf, MsgType.MVT_U32, 1, endian_type=EndianType.BIG)
@@ -252,7 +252,7 @@ class UDPDispatcher(object):
             msg = None
 
             for packet_id in circuit.acks:
-                
+
                 if acks_this_packet == 0:
 
                     msg = Message('PacketAck')

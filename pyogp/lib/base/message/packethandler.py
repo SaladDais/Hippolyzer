@@ -52,7 +52,7 @@ class PacketHandler(object):
 
     def is_packet_handled(self, packet_name):
         """ if the packet is being monitored, return True, otherwise, return False 
-        
+
         this can allow us to skip parsing inbound packets if no one is watching a particular one
         """
 
@@ -76,7 +76,7 @@ class PacketHandler(object):
             # Conveniently, this will also enable verbose packet logging
             if len(handler) > 0:
                 if self.settings.LOG_VERBOSE and not (self.settings.UDP_SPAMMERS and self.settings.DISABLE_SPAMMERS): log(DEBUG, 'Handling packet : %s' % (packet.name))
- 
+
                 handler(packet)
 
         except KeyError:

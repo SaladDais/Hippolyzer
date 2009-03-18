@@ -88,7 +88,7 @@ class Helpers(object):
 
     def null_packet_handler(self, packet, _object):
         """ just a null event handler for watching aka fully parsing specific packets """
-        
+
         pass
 
 

@@ -375,4 +375,3 @@ class EventQueueReceivedNotifier(object):
 
     __call__ = received
 
-    

@@ -172,7 +172,7 @@ class Inventory(object):
 
     def search_inventory_folder(self, folder_id, _id = None, name = None):
         """ search an inventory folder for _id or name
-        
+
         return a list of matches
         """ 
 
@@ -367,7 +367,7 @@ class InventoryItem(object):
 
     def update(agent, name = None, value = None):
         """ allow arbitraty update to any data in the inventory item """
-        
+
         if self.__dict__.has_key(name):
             self.setattr(self, name, value)
             sendUpdateInventoryItem(agent, [self])
@@ -380,7 +380,7 @@ class InventoryItem(object):
 
 def sendUpdateInventoryItem(agent, inventory_items = [], ):
     """ sends an UpdateInventoryItem packet to a region 
-    
+
     this function expects an already transformed InventoryItem instance
     """
 
