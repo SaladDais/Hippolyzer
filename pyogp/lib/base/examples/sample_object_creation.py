@@ -113,7 +113,7 @@ def login():
    print ''
    states = {}
    for _object in client.region.objects.object_store:
-       if _object.State == 0:
+       if _object.State != None:
            print 'ID:', _object.ID, '\tUUID: ', _object.FullID , '\tState: ', _object.State, '\tPosition: ', _object.Position
        else:
            if states.has_key(_object.State):

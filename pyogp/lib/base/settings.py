@@ -58,6 +58,7 @@ class Settings(object):
         # Camera
         # ~~~~~~
 
+        # these defaults are for facing due east
         self.DEFAULT_CAMERA_DRAW_DISTANCE = 128
         self.DEFAULT_CAMERA_AT_AXIS = (1.0, 0.0, 0.0)
         self.DEFAULT_CAMERA_LEFT_AXIS = (0.0, 1.0, 0.0)

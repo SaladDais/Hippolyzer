@@ -99,7 +99,7 @@ class Objects(object):
 
         if self.settings.LOG_VERBOSE: log(INFO, "Initializing object storage")
 
-    def parse_object_update(self, _object):
+    def process_object_update(self, _object):
         """ append to or replace an object in self.objects """
 
         # this is an avatar
@@ -635,7 +635,7 @@ def onObjectUpdate(packet, objects):
         _object = Object(_ID, _State, _FullID, _CRC, _PCode, _Material, _ClickAction, _Scale, _ObjectData, _ParentID, _UpdateFlags, _PathCurve, _ProfileCurve, _PathBegin, _PathEnd, _PathScaleX, _PathScaleY, _PathShearX, _PathShearY, _PathTwist, _PathTwistBegin, _PathRadiusOffset, _PathTaperX, _PathTaperY, _PathRevolutions, _PathSkew, _ProfileBegin, _ProfileEnd, _ProfileHollow, _TextureEntry, _TextureAnim, _NameValue, _Data, _Text, _TextColor, _MediaURL, _PSBlock, _ExtraParams, _Sound, _OwnerID, _Gain, _Flags, _Radius, _JointType, _JointPivot, _JointAxisOrAnchor, FootCollisionPlane, Position, Velocity, Acceleration, Rotation, AngularVelocity)
 
         # add the object to the store
-        objects.parse_object_update(_object)
+        objects.process_object_update(_object)
 
 def onObjectUpdateCached(packet, objects):
     """ borrowing from libomv, we'll request object data for all data coming in via ObjectUpdateCached"""
@@ -668,6 +668,166 @@ def onObjectUpdateCached(packet, objects):
     objects.request_object_update(ID_list = _request_list)
 
 def onObjectUpdateCompressed(packet, objects):
+
+    # ToDo: handle these 2 variables properly
+    _RegionHandle = packet.message_data.blocks['RegionData'][0].get_variable('RegionHandle').data
+    _TimeDilation = packet.message_data.blocks['RegionData'][0].get_variable('TimeDilation').data
+
+    for ObjectData_block in packet.message_data.blocks['ObjectData']:
+
+        _UpdateFlags = ObjectData_block.get_variable('UpdateFlags').data
+        _Data = ObjectData_block.get_variable('Data').data
+
+        print '_FullID = %s' % uuid.UUID(bytes = _Data[0:16])        # LLUUID
+        print '_LocalID = %s' % struct.unpack("<I", _Data[16:20])
+        print '_PCode = %s' % struct.unpack(">B", _Data[20:21])
+        print '_State = %s' % struct.unpack(">B", _Data[21:22])
+        print '_CRC = %s' % struct.unpack("<I", _Data[22:26])
+        print '_Material = %s' % struct.unpack(">B", _Data[26:27])
+        print '_ClickAction = %s' % struct.unpack(">B", _Data[27:28])
+        print '_Scale = %s' % Vector3(_Data, 28)
+        print '_Position = %s' % Vector3(_Data, 40)
+        print '_Rotation = %s' % Vector3(_Data, 52)
+        print '_Flags = %s' % struct.unpack(">B", _Data[52:53])
+        print '_OwnerID = %s' % uuid.UUID(bytes = _Data[53:69])
+        print '_AngularVelocity = %s' % Vector3(_Data, 69)
+        print '_ParentID = %s' % uuid.UUID(bytes = _Data[81:97])
+        #Velocity = Vector3(_ObjectData, 28)
+        #Acceleration = Vector3(_ObjectData, 40)
+        #
+
+        '''
+        _ID = ObjectData_block.get_variable('ID').data
+         _State = ObjectData_block.get_variable('State').data
+         _FullID = ObjectData_block.get_variable('FullID').data
+         _CRC = ObjectData_block.get_variable('CRC').data
+         _PCode = ObjectData_block.get_variable('PCode').data
+         _Material = ObjectData_block.get_variable('Material').data
+         _ClickAction = ObjectData_block.get_variable('ClickAction').data
+         _Scale = ObjectData_block.get_variable('Scale').data
+         _ObjectData = ObjectData_block.get_variable('ObjectData').data
+         _ParentID = ObjectData_block.get_variable('ParentID').data
+         _UpdateFlags = ObjectData_block.get_variable('UpdateFlags').data
+         _PathCurve = ObjectData_block.get_variable('PathCurve').data
+         _ProfileCurve = ObjectData_block.get_variable('ProfileCurve').data
+         _PathBegin = ObjectData_block.get_variable('PathBegin').data
+         _PathEnd = ObjectData_block.get_variable('PathEnd').data
+         _PathScaleX = ObjectData_block.get_variable('PathScaleX').data
+         _PathScaleY = ObjectData_block.get_variable('PathScaleY').data
+         _PathShearX = ObjectData_block.get_variable('PathShearX').data
+         _PathShearY = ObjectData_block.get_variable('PathShearY').data
+         _PathTwist = ObjectData_block.get_variable('PathTwist').data
+         _PathTwistBegin = ObjectData_block.get_variable('PathTwistBegin').data
+         _PathRadiusOffset = ObjectData_block.get_variable('PathRadiusOffset').data
+         _PathTaperX = ObjectData_block.get_variable('PathTaperX').data
+         _PathTaperY = ObjectData_block.get_variable('PathTaperY').data
+         _PathRevolutions = ObjectData_block.get_variable('PathRevolutions').data
+         _PathSkew = ObjectData_block.get_variable('PathSkew').data
+         _ProfileBegin = ObjectData_block.get_variable('ProfileBegin').data
+         _ProfileEnd = ObjectData_block.get_variable('ProfileEnd').data
+         _ProfileHollow = ObjectData_block.get_variable('ProfileHollow').data
+         _TextureEntry = ObjectData_block.get_variable('TextureEntry').data
+         _TextureAnim = ObjectData_block.get_variable('TextureAnim').data
+         _NameValue = ObjectData_block.get_variable('NameValue').data
+         _Data = ObjectData_block.get_variable('Data').data
+         _Text = ObjectData_block.get_variable('Text').data
+         _TextColor = ObjectData_block.get_variable('TextColor').data
+         _MediaURL = ObjectData_block.get_variable('MediaURL').data
+         _PSBlock = ObjectData_block.get_variable('PSBlock').data
+         _ExtraParams = ObjectData_block.get_variable('ExtraParams').data
+         _Sound = ObjectData_block.get_variable('Sound').data
+         _OwnerID = ObjectData_block.get_variable('OwnerID').data
+         _Gain = ObjectData_block.get_variable('Gain').data
+         _Flags = ObjectData_block.get_variable('Flags').data
+         _Radius = ObjectData_block.get_variable('Radius').data
+         _JointType = ObjectData_block.get_variable('JointType').data
+         _JointPivot = ObjectData_block.get_variable('JointPivot').data
+         _JointAxisOrAnchor = ObjectData_block.get_variable('JointAxisOrAnchor').data
+
+         # deal with the data stored in _ObjectData
+         # see http://wiki.secondlife.com/wiki/ObjectUpdate#ObjectData_Format for details
+
+         FootCollisionPlane = None 
+         Position = None
+         Velocity = None
+         Acceleration = None
+         Rotation = None
+         AngularVelocity = None
+
+         if len(_ObjectData) == 76:
+
+             # Foot collision plane. LLVector4.
+             # Angular velocity is ignored and set to 0. Falls through to 60 bytes parser. 
+
+             FootCollisionPlane = Quaternion(_ObjectData, 0)
+             Position = Vector3(_ObjectData, 16)
+             Velocity = Vector3(_ObjectData, 28)
+             Acceleration = Vector3(_ObjectData, 40)
+             Rotation = Vector3(_ObjectData, 52)
+             AngularVelocity = Vector3(_ObjectData, 60)
+
+         elif len(_ObjectData) == 60:
+
+             # 32 bit precision update.
+
+             Position = Vector3(_ObjectData, 0)
+             Velocity = Vector3(_ObjectData, 12)
+             Acceleration = Vector3(_ObjectData, 24)
+             Rotation = Vector3(_ObjectData, 36)
+             AngularVelocity = Vector3(_ObjectData, 48)
+
+         elif len(_ObjectData) == 48:
+
+             # Foot collision plane. LLVector4 
+             # Falls through to 32 bytes parser.
+
+             log(DEBUG, "48 bit ObjectData precision not implemented")
+
+         elif len(_ObjectData) == 32:
+
+             # 32 bit precision update.
+
+             # Position. U16Vec3.
+             # Velocity. U16Vec3.
+             # Acceleration. U16Vec3.
+             # Rotation. U16Rot(4xU16).
+             # Angular velocity. LLVector3.
+             log(DEBUG, "32 bit ObjectData precision not implemented")
+
+         elif len(_ObjectData) == 16:
+
+             # 8 bit precision update.
+
+             # Position. U8Vec3.
+             # Velocity. U8Vec3.
+             # Acceleration. U8Vec3.
+             # Rotation. U8Rot(4xU8).
+             # Angular velocity. U8Vec3
+             log(DEBUG, "16 bit ObjectData precision not implemented")
+
+         _object = Object(_ID, _State, _FullID, _CRC, _PCode, _Material, _ClickAction, _Scale, _ObjectData, _ParentID, _UpdateFlags, _PathCurve, _ProfileCurve, _PathBegin, _PathEnd, _PathScaleX, _PathScaleY, _PathShearX, _PathShearY, _PathTwist, _PathTwistBegin, _PathRadiusOffset, _PathTaperX, _PathTaperY, _PathRevolutions, _PathSkew, _ProfileBegin, _ProfileEnd, _ProfileHollow, _TextureEntry, _TextureAnim, _NameValue, _Data, _Text, _TextColor, _MediaURL, _PSBlock, _ExtraParams, _Sound, _OwnerID, _Gain, _Flags, _Radius, _JointType, _JointPivot, _JointAxisOrAnchor, FootCollisionPlane, Position, Velocity, Acceleration, Rotation, AngularVelocity)
+
+         # add the object to the store
+         objects.parse_object_update(_object)
+         '''
+
+
+    '''
+    // ObjectUpdateCompressed
+    {
+    	ObjectUpdateCompressed High 13 Trusted Unencoded
+    	{
+    		RegionData			Single
+    		{	RegionHandle	U64		}
+    		{   TimeDilation	U16		}
+    	}
+    	{
+    		ObjectData			Variable
+    		{   UpdateFlags			U32	}
+    		{	Data			Variable   2	}
+    	}
+    }
+    '''
 
     pass
 

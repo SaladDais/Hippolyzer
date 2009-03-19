@@ -449,7 +449,11 @@ class Region(object):
             if self.messenger.has_unacked():
 
                 self.messenger.process_acks()
-                self.sendAgentUpdate(CameraCenter = self.agent.Position, CameraAtAxis = self.settings.DEFAULT_CAMERA_AT_AXIS, CameraLeftAxis = self.settings.DEFAULT_CAMERA_AT_AXIS, CameraUpAxis = self.settings.DEFAULT_CAMERA_UP_AXIS, Far = self.settings.DEFAULT_CAMERA_DRAW_DISTANCE)
+
+                # pull the camera back a bit
+                # we are currently facing east, so pull back on the x axis
+                CameraCenter = (self.agent.Position[0] - 20.0, self.agent.Position[1], self.agent.Position[2])
+                self.sendAgentUpdate(CameraCenter = CameraCenter, CameraAtAxis = self.settings.DEFAULT_CAMERA_AT_AXIS, CameraLeftAxis = self.settings.DEFAULT_CAMERA_AT_AXIS, CameraUpAxis = self.settings.DEFAULT_CAMERA_UP_AXIS, Far = self.settings.DEFAULT_CAMERA_DRAW_DISTANCE)
 
             # send pending messages in the queue
             for (packet, reliable) in self.packet_queue:
