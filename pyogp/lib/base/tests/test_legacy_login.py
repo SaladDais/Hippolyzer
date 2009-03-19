@@ -120,6 +120,25 @@ class TestLegacyLogin(unittest.TestCase):
 
         self.assertEquals(startloc, 'uri:region&128&128&30')
 
+    def test_parse_legacy_start_location_string_2(self):
+
+        startloc = self.login._parse_legacy_start_location('region/128')
+
+        self.assertEquals(startloc, 'uri:region&128&128&30')
+
+    def test_parse_legacy_start_location_string_3(self):
+
+        startloc = self.login._parse_legacy_start_location('region/128/128')
+
+        self.assertEquals(startloc, 'uri:region&128&128&30')
+
+    def test_parse_legacy_start_location_string_4(self):
+
+        startloc = self.login._parse_legacy_start_location('region/128/128/30')
+
+        self.assertEquals(startloc, 'uri:region&128&128&30')
+
+
     def test_parse_legacy_start_location_default(self):
 
         startloc = self.login._parse_legacy_start_location(21)

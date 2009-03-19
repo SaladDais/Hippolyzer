@@ -43,8 +43,7 @@ def login():
     parser.add_option("-l", "--loginuri", dest="loginuri", default="https://login.aditi.lindenlab.com/cgi-bin/login.cgi",
                       help="specified the target loginuri")
     parser.add_option("-r", "--region", dest="region", default=None,
-                      help="specifies the region to connect to")
-#http://ec2-75-101-203-98.compute-1.amazonaws.com:9000
+                      help="specifies the region (regionname/x/y/z) to connect to")
     parser.add_option("-q", "--quiet", dest="verbose", default=True, action="store_false",
                     help="enable verbose mode")
 
