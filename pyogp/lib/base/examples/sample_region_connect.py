@@ -77,6 +77,7 @@ def login():
 
     # In this example, let's disable inventory handling
     client.settings.ENABLE_INVENTORY_MANAGEMENT = False
+    client.settings.ENABLE_OBJECT_TRACKING = False
 
     # Now let's log it in
     client.login(options.loginuri, args[0], args[1], password, start_location = options.region, connect_region = True)

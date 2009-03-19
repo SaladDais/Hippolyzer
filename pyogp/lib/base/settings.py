@@ -93,7 +93,7 @@ class Settings(object):
         self.REGION_EVENT_QUEUE_POLL_INTERVAL = 1
 
         # allow connecting to multiple simulators
-        self.MULTIPLE_SIM_CONNECTIONS = True      
+        self.MULTIPLE_SIM_CONNECTIONS = False      
 
         #~~~~~~~~~~~~~~~~~~~~~~
         # Agent Domain specific

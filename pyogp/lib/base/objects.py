@@ -514,6 +514,19 @@ class PCode(object):
 
             return self.types[pcode]
 
+class CompressedUpdateFlags(object):
+    """ map of ObjectData.Flags """
+
+    ScratchPad = 0x01
+    Tree = 0x02
+    contains_Text = 0x04
+    contains_Particles = 0x08
+    contains_Sound = 0x10
+    contains_Parent = 0x20
+    TextureAnim = 0x40
+    contains_AngularVelocity = 0x80
+    contains_NameValues = 0x100
+    MediaURL = 0x200
 
 def onObjectUpdate(packet, objects):
     """ populates an Object instance and adds it to the Objects() store """
@@ -678,132 +691,186 @@ def onObjectUpdateCompressed(packet, objects):
         _UpdateFlags = ObjectData_block.get_variable('UpdateFlags').data
         _Data = ObjectData_block.get_variable('Data').data
 
-        print '_FullID = %s' % uuid.UUID(bytes = _Data[0:16])        # LLUUID
-        print '_LocalID = %s' % struct.unpack("<I", _Data[16:20])
-        print '_PCode = %s' % struct.unpack(">B", _Data[20:21])
-        print '_State = %s' % struct.unpack(">B", _Data[21:22])
-        print '_CRC = %s' % struct.unpack("<I", _Data[22:26])
-        print '_Material = %s' % struct.unpack(">B", _Data[26:27])
-        print '_ClickAction = %s' % struct.unpack(">B", _Data[27:28])
-        print '_Scale = %s' % Vector3(_Data, 28)
-        print '_Position = %s' % Vector3(_Data, 40)
-        print '_Rotation = %s' % Vector3(_Data, 52)
-        print '_Flags = %s' % struct.unpack(">B", _Data[52:53])
-        print '_OwnerID = %s' % uuid.UUID(bytes = _Data[53:69])
-        print '_AngularVelocity = %s' % Vector3(_Data, 69)
-        print '_ParentID = %s' % uuid.UUID(bytes = _Data[81:97])
-        #Velocity = Vector3(_ObjectData, 28)
-        #Acceleration = Vector3(_ObjectData, 40)
-        #
+        _FullID = uuid.UUID(bytes = _Data[0:16])        # LLUUID
+        _LocalID = struct.unpack("<I", _Data[16:20])[0]
+        _PCode = struct.unpack(">B", _Data[20:21])[0]
+
+        if _PCode != 9:         # if it is not a prim, stop.
+            return
+        
+        _State = struct.unpack(">B", _Data[21:22])[0]
+        _CRC = struct.unpack("<I", _Data[22:26])[0]
+        _Material = struct.unpack(">B", _Data[26:27])[0]
+        _ClickAction = struct.unpack(">B", _Data[27:28])[0]
+        _Scale = Vector3(_Data, 28)
+        _Position = Vector3(_Data, 40)
+        _Rotation = Vector3(_Data, 52)
+        flags = struct.unpack(">B", _Data[52:53])[0]
+        _OwnerID = uuid.UUID(bytes = _Data[53:69])
+
+        pos = 69
+
+        _AngularVelocity = Vector3()
+        _ParentID = uuid.UUID('00000000-0000-0000-0000-000000000000')
+        _Text = ''
+        _MediaURL = ''
+        _Sound = uuid.UUID('00000000-0000-0000-0000-000000000000')
+        _Gain = 0
+        _Flags = 0
+        _Radius = 0
+
+        if flags != 0:
+            if (flags & CompressedUpdateFlags.contains_AngularVelocity) != 0:
+                _AngularVelocity = Vector3(_Data, pos)
+                pos += 12
+            else:
+                _AngularVelocity = None
+
+            if (flags & CompressedUpdateFlags.contains_Parent) != 0:
+                _ParentID = uuid.UUID(bytes = _Data[pos:pos+16])
+                pos += 16
+            else:
+                _ParentID = None
+
+            if (flags & CompressedUpdateFlags.Tree) != 0:
+                # skip it, only iterate the position
+                pos += 1
+
+            if (flags & CompressedUpdateFlags.ScratchPad) != 0:
+                # skip it, only iterate the position
+                size = struct.unpack(">B", _Data[pos:pos+1])
+                pos += size
+
+            if (flags & CompressedUpdateFlags.contains_Text) != 0:
+                # skip it, only iterate the position
+                _Text = ''
+                while struct.unpack(">B", _Data[pos:pos+1]) != 0:
+                    pos += 1
+                pos += 1
+                pos += 4
+
+            if (flags & CompressedUpdateFlags.MediaURL) != 0:
+                # skip it, only iterate the position
+                _MediaURL = ''
+                while struct.unpack(">B", _Data[pos:pos+1]) != 0:
+                    pos += 1
+                pos += 1
+
+            if (flags & CompressedUpdateFlags.contains_Particles) != 0:
+                # skip it, only iterate the position
+                pos += 86
+
+            if (flags & CompressedUpdateFlags.contains_Sound) != 0:
+                # skip it, only iterate the position
+                #_Sound = uuid.UUID(bytes = _Data[pos:pos+16])
+                pos += 16
+
+                #_Gain = struct.unpack(">f", _Data[pos:pos+4])[0]
+                pos += 4
+
+                #_Flags = stuct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1
+
+                #_Radius = struct.unpack(">f", _Data[pos:pos+4])[0]
+                pos += 4
+
+            if (flags & CompressedUpdateFlags.contains_NameValue) != 0:
+                # skip it, only iterate the position
+                _NameValue = ''
+
+                while _Data[pos:pos+1] != 0:
+                    #_NameValue += struct.unpack(">c", _Data[pos:pos+1])[0]
+                    pos += 1
+
+
+        _PathCurve = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _PathBegin = struct.unpack("<H", _Data[pos:pos+2])[0]
+        pos += 2
+        _PathEnd = struct.unpack("<H", _Data[pos:pos+2])[0]
+        pos += 2
+        _PathScaleX = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _PathScaleY = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _PathShearX = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _PathShearY = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _PathTwist = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _PathTwistBegin = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _PathRadiusOffset = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _PathTaperX = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _PathTaperY = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _PathRevolutions = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _PathSkew = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _ProfileCurve = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _ProfileBegin = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _ProfileEnd = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _ProfileHollow = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1 
+
+        # Texture handling
+        size = struct.unpack("<H", _Data[pos:pos+2])[0]
+        pos += 2
+        _TextureEntry = _Data[pos:pos+size]
+        pos += size
+
+        if (flags & CompressedUpdateFlags.TextureAnim) != 0:
+            _TextureAnim = struct.unpack("<H", _Data[pos:pos+2])[0]
+            pos += 2
+        else:
+            _TextureAnim = None
+
+        print 'UpdateFlags: ', _UpdateFlags
+        print 'FullID: ', _FullID
+        print 'LocalID: ', _LocalID
+        print 'PCode: ', _PCode
+        print 'State: ', _State
+        print 'CRC: ', _CRC
+        print 'Material: ', _Material
+        print 'ClickAction: ', _ClickAction
+        print 'Scale: ', _Scale
+        print 'Position: ', _Position
+        print 'Rotation: ', _Rotation
+        print 'Flags: ', _Flags
+        print 'OwnerID: ', _OwnerID
+        print 'AngularVelocity: ', _AngularVelocity
+        print 'ParentID: ', _ParentID
+        print 'PathCurve: ', _PathCurve
+        print 'PathBegin: ', _PathBegin
+        print 'PathEnd: ', _PathEnd
+        print 'PathScaleX: ', _PathScaleX
+        print 'PathScaleY: ', _PathScaleY
+        print 'PathShearX: ', _PathShearX
+        print 'PathShearY: ', _PathShearY
+        print 'PathTwist: ', _PathTwist
+        print 'PathTwistBegin: ', _PathTwistBegin
+        print 'PathRadiusOffset: ', _PathRadiusOffset
+        print 'PathTaperX: ', _PathTaperX
+        print 'PathTaperY: ', _PathTaperY
+        print 'PathRevolutions: ', _PathRevolutions
+        print 'PathSkew: ', _PathSkew
+        print 'ProfileCurve: ', _ProfileCurve
+        print 'ProfileBegin: ', _ProfileBegin
+        print 'ProfileEnd: ', _ProfileEnd
+        print 'ProfileHollow: ', _ProfileHollow
+        print 'TextureEntry: ', _TextureEntry
+        print 'TextureAnim: ', _TextureAnim
+
 
         '''
-        _ID = ObjectData_block.get_variable('ID').data
-         _State = ObjectData_block.get_variable('State').data
-         _FullID = ObjectData_block.get_variable('FullID').data
-         _CRC = ObjectData_block.get_variable('CRC').data
-         _PCode = ObjectData_block.get_variable('PCode').data
-         _Material = ObjectData_block.get_variable('Material').data
-         _ClickAction = ObjectData_block.get_variable('ClickAction').data
-         _Scale = ObjectData_block.get_variable('Scale').data
-         _ObjectData = ObjectData_block.get_variable('ObjectData').data
-         _ParentID = ObjectData_block.get_variable('ParentID').data
          _UpdateFlags = ObjectData_block.get_variable('UpdateFlags').data
-         _PathCurve = ObjectData_block.get_variable('PathCurve').data
-         _ProfileCurve = ObjectData_block.get_variable('ProfileCurve').data
-         _PathBegin = ObjectData_block.get_variable('PathBegin').data
-         _PathEnd = ObjectData_block.get_variable('PathEnd').data
-         _PathScaleX = ObjectData_block.get_variable('PathScaleX').data
-         _PathScaleY = ObjectData_block.get_variable('PathScaleY').data
-         _PathShearX = ObjectData_block.get_variable('PathShearX').data
-         _PathShearY = ObjectData_block.get_variable('PathShearY').data
-         _PathTwist = ObjectData_block.get_variable('PathTwist').data
-         _PathTwistBegin = ObjectData_block.get_variable('PathTwistBegin').data
-         _PathRadiusOffset = ObjectData_block.get_variable('PathRadiusOffset').data
-         _PathTaperX = ObjectData_block.get_variable('PathTaperX').data
-         _PathTaperY = ObjectData_block.get_variable('PathTaperY').data
-         _PathRevolutions = ObjectData_block.get_variable('PathRevolutions').data
-         _PathSkew = ObjectData_block.get_variable('PathSkew').data
-         _ProfileBegin = ObjectData_block.get_variable('ProfileBegin').data
-         _ProfileEnd = ObjectData_block.get_variable('ProfileEnd').data
-         _ProfileHollow = ObjectData_block.get_variable('ProfileHollow').data
-         _TextureEntry = ObjectData_block.get_variable('TextureEntry').data
-         _TextureAnim = ObjectData_block.get_variable('TextureAnim').data
-         _NameValue = ObjectData_block.get_variable('NameValue').data
-         _Data = ObjectData_block.get_variable('Data').data
-         _Text = ObjectData_block.get_variable('Text').data
-         _TextColor = ObjectData_block.get_variable('TextColor').data
-         _MediaURL = ObjectData_block.get_variable('MediaURL').data
-         _PSBlock = ObjectData_block.get_variable('PSBlock').data
-         _ExtraParams = ObjectData_block.get_variable('ExtraParams').data
-         _Sound = ObjectData_block.get_variable('Sound').data
-         _OwnerID = ObjectData_block.get_variable('OwnerID').data
-         _Gain = ObjectData_block.get_variable('Gain').data
-         _Flags = ObjectData_block.get_variable('Flags').data
-         _Radius = ObjectData_block.get_variable('Radius').data
-         _JointType = ObjectData_block.get_variable('JointType').data
-         _JointPivot = ObjectData_block.get_variable('JointPivot').data
-         _JointAxisOrAnchor = ObjectData_block.get_variable('JointAxisOrAnchor').data
-
-         # deal with the data stored in _ObjectData
-         # see http://wiki.secondlife.com/wiki/ObjectUpdate#ObjectData_Format for details
-
-         FootCollisionPlane = None 
-         Position = None
-         Velocity = None
-         Acceleration = None
-         Rotation = None
-         AngularVelocity = None
-
-         if len(_ObjectData) == 76:
-
-             # Foot collision plane. LLVector4.
-             # Angular velocity is ignored and set to 0. Falls through to 60 bytes parser. 
-
-             FootCollisionPlane = Quaternion(_ObjectData, 0)
-             Position = Vector3(_ObjectData, 16)
-             Velocity = Vector3(_ObjectData, 28)
-             Acceleration = Vector3(_ObjectData, 40)
-             Rotation = Vector3(_ObjectData, 52)
-             AngularVelocity = Vector3(_ObjectData, 60)
-
-         elif len(_ObjectData) == 60:
-
-             # 32 bit precision update.
-
-             Position = Vector3(_ObjectData, 0)
-             Velocity = Vector3(_ObjectData, 12)
-             Acceleration = Vector3(_ObjectData, 24)
-             Rotation = Vector3(_ObjectData, 36)
-             AngularVelocity = Vector3(_ObjectData, 48)
-
-         elif len(_ObjectData) == 48:
-
-             # Foot collision plane. LLVector4 
-             # Falls through to 32 bytes parser.
-
-             log(DEBUG, "48 bit ObjectData precision not implemented")
-
-         elif len(_ObjectData) == 32:
-
-             # 32 bit precision update.
-
-             # Position. U16Vec3.
-             # Velocity. U16Vec3.
-             # Acceleration. U16Vec3.
-             # Rotation. U16Rot(4xU16).
-             # Angular velocity. LLVector3.
-             log(DEBUG, "32 bit ObjectData precision not implemented")
-
-         elif len(_ObjectData) == 16:
-
-             # 8 bit precision update.
-
-             # Position. U8Vec3.
-             # Velocity. U8Vec3.
-             # Acceleration. U8Vec3.
-             # Rotation. U8Rot(4xU8).
-             # Angular velocity. U8Vec3
-             log(DEBUG, "16 bit ObjectData precision not implemented")
 
          _object = Object(_ID, _State, _FullID, _CRC, _PCode, _Material, _ClickAction, _Scale, _ObjectData, _ParentID, _UpdateFlags, _PathCurve, _ProfileCurve, _PathBegin, _PathEnd, _PathScaleX, _PathScaleY, _PathShearX, _PathShearY, _PathTwist, _PathTwistBegin, _PathRadiusOffset, _PathTaperX, _PathTaperY, _PathRevolutions, _PathSkew, _ProfileBegin, _ProfileEnd, _ProfileHollow, _TextureEntry, _TextureAnim, _NameValue, _Data, _Text, _TextColor, _MediaURL, _PSBlock, _ExtraParams, _Sound, _OwnerID, _Gain, _Flags, _Radius, _JointType, _JointPivot, _JointAxisOrAnchor, FootCollisionPlane, Position, Velocity, Acceleration, Rotation, AngularVelocity)
 
@@ -815,17 +882,17 @@ def onObjectUpdateCompressed(packet, objects):
     '''
     // ObjectUpdateCompressed
     {
-    	ObjectUpdateCompressed High 13 Trusted Unencoded
-    	{
-    		RegionData			Single
-    		{	RegionHandle	U64		}
-    		{   TimeDilation	U16		}
-    	}
-    	{
-    		ObjectData			Variable
-    		{   UpdateFlags			U32	}
-    		{	Data			Variable   2	}
-    	}
+        ObjectUpdateCompressed High 13 Trusted Unencoded
+        {
+            RegionData          Single
+            {   RegionHandle    U64     }
+            {   TimeDilation    U16     }
+        }
+        {
+            ObjectData          Variable
+            {   UpdateFlags         U32 }
+            {   Data            Variable   2    }
+        }
     }
     '''
 
@@ -839,17 +906,17 @@ def onKillObject(packet, objects):
 
     '''
     {
-    	ObjectUpdateCompressed High 13 Trusted Unencoded
-    	{
-    		RegionData			Single
-    		{	RegionHandle	U64		}
-    		{   TimeDilation	U16		}
-    	}
-    	{
-    		ObjectData			Variable
-    		{   UpdateFlags			U32	}
-    		{	Data			Variable   2	}
-    	}
+        ObjectUpdateCompressed High 13 Trusted Unencoded
+        {
+            RegionData          Single
+            {   RegionHandle    U64     }
+            {   TimeDilation    U16     }
+        }
+        {
+            ObjectData          Variable
+            {   UpdateFlags         U32 }
+            {   Data            Variable   2    }
+        }
     }
     '''
 
@@ -870,66 +937,66 @@ Object Related Messages
 // 
 // Data field is opaque type-specific data for this object
 {
-	ObjectAdd Medium 1 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-		{	GroupID			LLUUID	}
-	}
-	{
-		ObjectData			Single
-		{	PCode			U8	}
-		{	Material		U8	}
-		{	AddFlags		U32	}	// see object_flags.h
+    ObjectAdd Medium 1 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+        {   GroupID         LLUUID  }
+    }
+    {
+        ObjectData          Single
+        {   PCode           U8  }
+        {   Material        U8  }
+        {   AddFlags        U32 }   // see object_flags.h
 
-		{	PathCurve		U8	}
-		{	ProfileCurve	U8	}
-		{	PathBegin		U16	}	// 0 to 1, quanta = 0.01
-		{	PathEnd			U16	}	// 0 to 1, quanta = 0.01
-		{	PathScaleX		U8	}	// 0 to 1, quanta = 0.01
-		{	PathScaleY		U8	}	// 0 to 1, quanta = 0.01
-		{	PathShearX		U8	}	// -.5 to .5, quanta = 0.01
-		{	PathShearY		U8	}	// -.5 to .5, quanta = 0.01
-		{	PathTwist		S8	}	// -1 to 1, quanta = 0.01
-		{	PathTwistBegin		S8	}	// -1 to 1, quanta = 0.01
-		{ 	PathRadiusOffset 	S8	} 	// -1 to 1, quanta = 0.01
-		{ 	PathTaperX		S8	}	// -1 to 1, quanta = 0.01
-		{	PathTaperY		S8	}	// -1 to 1, quanta = 0.01
-		{	PathRevolutions		U8	}	// 0 to 3, quanta = 0.015
-		{	PathSkew		S8	}	// -1 to 1, quanta = 0.01
-		{	ProfileBegin	U16	}	// 0 to 1, quanta = 0.01
-		{	ProfileEnd		U16	}	// 0 to 1, quanta = 0.01
-		{	ProfileHollow	U16	}	// 0 to 1, quanta = 0.01
+        {   PathCurve       U8  }
+        {   ProfileCurve    U8  }
+        {   PathBegin       U16 }   // 0 to 1, quanta = 0.01
+        {   PathEnd         U16 }   // 0 to 1, quanta = 0.01
+        {   PathScaleX      U8  }   // 0 to 1, quanta = 0.01
+        {   PathScaleY      U8  }   // 0 to 1, quanta = 0.01
+        {   PathShearX      U8  }   // -.5 to .5, quanta = 0.01
+        {   PathShearY      U8  }   // -.5 to .5, quanta = 0.01
+        {   PathTwist       S8  }   // -1 to 1, quanta = 0.01
+        {   PathTwistBegin      S8  }   // -1 to 1, quanta = 0.01
+        {   PathRadiusOffset    S8  }   // -1 to 1, quanta = 0.01
+        {   PathTaperX      S8  }   // -1 to 1, quanta = 0.01
+        {   PathTaperY      S8  }   // -1 to 1, quanta = 0.01
+        {   PathRevolutions     U8  }   // 0 to 3, quanta = 0.015
+        {   PathSkew        S8  }   // -1 to 1, quanta = 0.01
+        {   ProfileBegin    U16 }   // 0 to 1, quanta = 0.01
+        {   ProfileEnd      U16 }   // 0 to 1, quanta = 0.01
+        {   ProfileHollow   U16 }   // 0 to 1, quanta = 0.01
 
-		{	BypassRaycast	U8	}
-		{	RayStart		LLVector3	}
-		{	RayEnd			LLVector3	}
-		{	RayTargetID		LLUUID	}
-		{	RayEndIsIntersection	U8	}
+        {   BypassRaycast   U8  }
+        {   RayStart        LLVector3   }
+        {   RayEnd          LLVector3   }
+        {   RayTargetID     LLUUID  }
+        {   RayEndIsIntersection    U8  }
 
-		{	Scale			LLVector3	}
-		{	Rotation		LLQuaternion	}
+        {   Scale           LLVector3   }
+        {   Rotation        LLQuaternion    }
 
-		{	State			U8	}
-	}
+        {   State           U8  }
+    }
 }
 
 
 // ObjectDelete
 // viewer -> simulator
 {
-	ObjectDelete Low 89 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-		{	Force		BOOL	}	// BOOL, god trying to force delete
-	}
-	{
-		ObjectData		Variable
-		{	ObjectLocalID	U32	}
-	}
+    ObjectDelete Low 89 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+        {   Force       BOOL    }   // BOOL, god trying to force delete
+    }
+    {
+        ObjectData      Variable
+        {   ObjectLocalID   U32 }
+    }
 }
 
 
@@ -937,22 +1004,22 @@ Object Related Messages
 // viewer -> simulator
 // Makes a copy of a set of objects, offset by a given amount
 {
-	ObjectDuplicate Low 90 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-		{	GroupID		LLUUID	}
-	}
-	{
-		SharedData			Single
-		{	Offset			LLVector3	}
-		{	DuplicateFlags	U32			}	// see object_flags.h
-	}
-	{
-		ObjectData			Variable
-		{	ObjectLocalID		U32		}
-	}
+    ObjectDuplicate Low 90 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+        {   GroupID     LLUUID  }
+    }
+    {
+        SharedData          Single
+        {   Offset          LLVector3   }
+        {   DuplicateFlags  U32         }   // see object_flags.h
+    }
+    {
+        ObjectData          Variable
+        {   ObjectLocalID       U32     }
+    }
 }
 
 
@@ -961,25 +1028,25 @@ Object Related Messages
 // Makes a copy of an object, using the add object raycast
 // code to abut it to other objects.
 {
-	ObjectDuplicateOnRay Low 91 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID					LLUUID	}
-		{	SessionID				LLUUID	}
-		{	GroupID					LLUUID	}
-		{	RayStart				LLVector3	}	// region local
-		{	RayEnd					LLVector3	}	// region local
-		{	BypassRaycast			BOOL	}
-		{	RayEndIsIntersection	BOOL	}
-		{	CopyCenters				BOOL	}
-		{	CopyRotates				BOOL	}
-		{	RayTargetID				LLUUID	}
-		{	DuplicateFlags			U32		}	// see object_flags.h
-	}
-	{
-		ObjectData			Variable
-		{	ObjectLocalID			U32		}
-	}
+    ObjectDuplicateOnRay Low 91 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID                 LLUUID  }
+        {   SessionID               LLUUID  }
+        {   GroupID                 LLUUID  }
+        {   RayStart                LLVector3   }   // region local
+        {   RayEnd                  LLVector3   }   // region local
+        {   BypassRaycast           BOOL    }
+        {   RayEndIsIntersection    BOOL    }
+        {   CopyCenters             BOOL    }
+        {   CopyRotates             BOOL    }
+        {   RayTargetID             LLUUID  }
+        {   DuplicateFlags          U32     }   // see object_flags.h
+    }
+    {
+        ObjectData          Variable
+        {   ObjectLocalID           U32     }
+    }
 }
 
 
@@ -988,18 +1055,18 @@ Object Related Messages
 // updates position, rotation and scale in one message
 // positions sent as region-local floats
 {
-	MultipleObjectUpdate Medium 2 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID			LLUUID	}
-		{	SessionID		LLUUID	}
-	}
-	{
-		ObjectData		Variable 
-		{	ObjectLocalID	U32		}
-		{   Type			U8		}
-		{	Data			Variable	1	}	// custom type
-	}
+    MultipleObjectUpdate Medium 2 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID         LLUUID  }
+        {   SessionID       LLUUID  }
+    }
+    {
+        ObjectData      Variable 
+        {   ObjectLocalID   U32     }
+        {   Type            U8      }
+        {   Data            Variable    1   }   // custom type
+    }
 }
 
 // RequestMultipleObjects
@@ -1013,17 +1080,17 @@ Object Related Messages
 // CacheMissType 0 => full object (viewer doesn't have it)
 // CacheMissType 1 => CRC mismatch only
 {
-	RequestMultipleObjects Medium 3 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID		LLUUID	}
-	}
-	{
-		ObjectData	Variable 
-		{	CacheMissType	U8	}
-		{	ID				U32	}
-	}
+    RequestMultipleObjects Medium 3 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID       LLUUID  }
+    }
+    {
+        ObjectData  Variable 
+        {   CacheMissType   U8  }
+        {   ID              U32 }
+    }
 }
 
 
@@ -1039,17 +1106,17 @@ Object Related Messages
 // == New Location ==
 // MultipleObjectUpdate can be used instead.
 {
-	ObjectPosition Medium 4 NotTrusted Zerocoded Deprecated
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData		Variable
-		{	ObjectLocalID	U32			}
-		{	Position		LLVector3	}	// region
-	}
+    ObjectPosition Medium 4 NotTrusted Zerocoded Deprecated
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData      Variable
+        {   ObjectLocalID   U32         }
+        {   Position        LLVector3   }   // region
+    }
 }
 
 
@@ -1065,150 +1132,150 @@ Object Related Messages
 // == New Location ==
 // MultipleObjectUpdate can be used instead.
 {
-	ObjectScale Low 92 NotTrusted Zerocoded Deprecated
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData		Variable
-		{	ObjectLocalID	U32			}
-		{	Scale			LLVector3	}
-	}
+    ObjectScale Low 92 NotTrusted Zerocoded Deprecated
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData      Variable
+        {   ObjectLocalID   U32         }
+        {   Scale           LLVector3   }
+    }
 }
 
 
 // ObjectRotation
 // viewer -> simulator
 {
-	ObjectRotation Low 93 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData		Variable
-		{	ObjectLocalID	U32				}
-		{	Rotation		LLQuaternion	}
-	}
+    ObjectRotation Low 93 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData      Variable
+        {   ObjectLocalID   U32             }
+        {   Rotation        LLQuaternion    }
+    }
 }
 
 
 // ObjectFlagUpdate
 // viewer -> simulator
 {
-	ObjectFlagUpdate Low 94 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-		{	ObjectLocalID	U32		}
-		{	UsePhysics		BOOL	}
-		{	IsTemporary		BOOL	}
-		{	IsPhantom		BOOL	}
-		{	CastsShadows	BOOL	}
-	}
+    ObjectFlagUpdate Low 94 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+        {   ObjectLocalID   U32     }
+        {   UsePhysics      BOOL    }
+        {   IsTemporary     BOOL    }
+        {   IsPhantom       BOOL    }
+        {   CastsShadows    BOOL    }
+    }
 }
 
 
 // ObjectClickAction
 // viewer -> simulator
 {
-	ObjectClickAction Low 95 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData		Variable
-		{	ObjectLocalID	U32		}
-		{	ClickAction		U8		}
-	}
+    ObjectClickAction Low 95 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData      Variable
+        {   ObjectLocalID   U32     }
+        {   ClickAction     U8      }
+    }
 }
 
 
 // ObjectImage
 // viewer -> simulator
 {
-	ObjectImage Low 96 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData			Variable
-		{	ObjectLocalID		U32				}
-		{	MediaURL			Variable	1	}
-		{	TextureEntry		Variable	2	}
-	}
+    ObjectImage Low 96 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData          Variable
+        {   ObjectLocalID       U32             }
+        {   MediaURL            Variable    1   }
+        {   TextureEntry        Variable    2   }
+    }
 }
 
 
 {
-	ObjectMaterial Low 97 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData		Variable
-		{	ObjectLocalID	U32	}
-		{	Material	U8	}
-	}
+    ObjectMaterial Low 97 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData      Variable
+        {   ObjectLocalID   U32 }
+        {   Material    U8  }
+    }
 }
 
 
 {
-	ObjectShape Low 98 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData			Variable
-		{	ObjectLocalID	U32	}
-		{	PathCurve		U8	}
-		{	ProfileCurve	U8	}
-		{	PathBegin		U16	}	// 0 to 1, quanta = 0.01
-		{	PathEnd			U16	}	// 0 to 1, quanta = 0.01
-		{	PathScaleX		U8	}	// 0 to 1, quanta = 0.01
-		{	PathScaleY		U8	}	// 0 to 1, quanta = 0.01
-		{	PathShearX		U8	}	// -.5 to .5, quanta = 0.01
-		{	PathShearY		U8	}	// -.5 to .5, quanta = 0.01
-		{	PathTwist		S8	}	// -1 to 1, quanta = 0.01
-		{	PathTwistBegin		S8	}	// -1 to 1, quanta = 0.01
-		{ 	PathRadiusOffset 	S8	} 	// -1 to 1, quanta = 0.01
-		{ 	PathTaperX		S8	}	// -1 to 1, quanta = 0.01
-		{	PathTaperY		S8	}	// -1 to 1, quanta = 0.01
-		{	PathRevolutions		U8	}	// 0 to 3, quanta = 0.015
-		{	PathSkew		S8	}	// -1 to 1, quanta = 0.01
-		{	ProfileBegin	U16	}	// 0 to 1, quanta = 0.01
-		{	ProfileEnd		U16	}	// 0 to 1, quanta = 0.01
-		{	ProfileHollow	U16	}	// 0 to 1, quanta = 0.01
-	}
+    ObjectShape Low 98 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData          Variable
+        {   ObjectLocalID   U32 }
+        {   PathCurve       U8  }
+        {   ProfileCurve    U8  }
+        {   PathBegin       U16 }   // 0 to 1, quanta = 0.01
+        {   PathEnd         U16 }   // 0 to 1, quanta = 0.01
+        {   PathScaleX      U8  }   // 0 to 1, quanta = 0.01
+        {   PathScaleY      U8  }   // 0 to 1, quanta = 0.01
+        {   PathShearX      U8  }   // -.5 to .5, quanta = 0.01
+        {   PathShearY      U8  }   // -.5 to .5, quanta = 0.01
+        {   PathTwist       S8  }   // -1 to 1, quanta = 0.01
+        {   PathTwistBegin      S8  }   // -1 to 1, quanta = 0.01
+        {   PathRadiusOffset    S8  }   // -1 to 1, quanta = 0.01
+        {   PathTaperX      S8  }   // -1 to 1, quanta = 0.01
+        {   PathTaperY      S8  }   // -1 to 1, quanta = 0.01
+        {   PathRevolutions     U8  }   // 0 to 3, quanta = 0.015
+        {   PathSkew        S8  }   // -1 to 1, quanta = 0.01
+        {   ProfileBegin    U16 }   // 0 to 1, quanta = 0.01
+        {   ProfileEnd      U16 }   // 0 to 1, quanta = 0.01
+        {   ProfileHollow   U16 }   // 0 to 1, quanta = 0.01
+    }
 }
 
 {
-	ObjectExtraParams Low 99 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData			Variable
-		{	ObjectLocalID	U32				}
-		{	ParamType		U16				}
-		{	ParamInUse		BOOL			}
-		{	ParamSize		U32				}
-		{	ParamData		Variable	1	}
-	}
+    ObjectExtraParams Low 99 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData          Variable
+        {   ObjectLocalID   U32             }
+        {   ParamType       U16             }
+        {   ParamInUse      BOOL            }
+        {   ParamSize       U32             }
+        {   ParamData       Variable    1   }
+    }
 }
 
 
@@ -1217,57 +1284,57 @@ Object Related Messages
 // TODO: Eliminate god-bit. Maybe not. God-bit is ok, because it's
 // known on the server.
 {
-	ObjectOwner Low 100 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		HeaderData		Single
-		{	Override	BOOL	}	// BOOL, God-bit.
-		{	OwnerID		LLUUID	}
-		{	GroupID		LLUUID	}
-	}
-	{
-		ObjectData	Variable
-		{	ObjectLocalID	U32	}
-	}
+    ObjectOwner Low 100 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        HeaderData      Single
+        {   Override    BOOL    }   // BOOL, God-bit.
+        {   OwnerID     LLUUID  }
+        {   GroupID     LLUUID  }
+    }
+    {
+        ObjectData  Variable
+        {   ObjectLocalID   U32 }
+    }
 }
 
 // ObjectGroup
 // To make the object part of no group, set GroupID = LLUUID::null.
 // This call only works if objectid.ownerid == agentid.
 {
-	ObjectGroup	Low	101 NotTrusted Zerocoded
-	{
-		AgentData	Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-		{	GroupID		LLUUID	}
-	}
-	{
-		ObjectData	Variable
-		{	ObjectLocalID	U32	}
-	}
+    ObjectGroup Low 101 NotTrusted Zerocoded
+    {
+        AgentData   Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+        {   GroupID     LLUUID  }
+    }
+    {
+        ObjectData  Variable
+        {   ObjectLocalID   U32 }
+    }
 }
 
 // Attempt to buy an object. This will only pack root objects.
 {
-	ObjectBuy Low 102 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-		{	GroupID		LLUUID	}
-		{	CategoryID	LLUUID	}	// folder where it goes (if derezed)
-	}
-	{
-		ObjectData		Variable
-		{	ObjectLocalID	U32	}
-		{	SaleType		U8	}   // U8 -> EForSale
-		{	SalePrice		S32	}
-	}
+    ObjectBuy Low 102 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+        {   GroupID     LLUUID  }
+        {   CategoryID  LLUUID  }   // folder where it goes (if derezed)
+    }
+    {
+        ObjectData      Variable
+        {   ObjectLocalID   U32 }
+        {   SaleType        U8  }   // U8 -> EForSale
+        {   SalePrice       S32 }
+    }
 }
 
 // viewer -> simulator
@@ -1275,29 +1342,29 @@ Object Related Messages
 // buy object inventory. If the transaction succeeds, it will add
 // inventory to the agent, and potentially remove the original.
 {
-	BuyObjectInventory	Low	103 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		Data	Single
-		{	ObjectID	LLUUID	}
-		{	ItemID		LLUUID	}
-		{	FolderID	LLUUID	}
-	}
+    BuyObjectInventory  Low 103 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        Data    Single
+        {   ObjectID    LLUUID  }
+        {   ItemID      LLUUID  }
+        {   FolderID    LLUUID  }
+    }
 }
 
 // sim -> viewer
 // Used to propperly handle buying asset containers
 {
-	DerezContainer		Low	104 	Trusted Zerocoded
-	{
-		Data			Single
-		{	ObjectID	LLUUID	}
-		{	Delete		BOOL	}  // BOOL
-	}
+    DerezContainer      Low 104     Trusted Zerocoded
+    {
+        Data            Single
+        {   ObjectID    LLUUID  }
+        {   Delete      BOOL    }  // BOOL
+    }
 }
 
 // ObjectPermissions
@@ -1306,217 +1373,217 @@ Object Related Messages
 // If set is false, tries to turn off bits in mask.
 // BUG: This just forces the permissions field.
 {
-	ObjectPermissions Low 105 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		HeaderData		Single
-		{	Override	BOOL	}	// BOOL, God-bit.
-	}
-	{
-		ObjectData	Variable
-		{	ObjectLocalID	U32	}
-		{	Field		U8	}
-		{	Set			U8	}
-		{	Mask		U32	}
-	}
+    ObjectPermissions Low 105 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        HeaderData      Single
+        {   Override    BOOL    }   // BOOL, God-bit.
+    }
+    {
+        ObjectData  Variable
+        {   ObjectLocalID   U32 }
+        {   Field       U8  }
+        {   Set         U8  }
+        {   Mask        U32 }
+    }
 }
 
 // set object sale information
 {
-	ObjectSaleInfo Low 106 NotTrusted Zerocoded
-	{
-		AgentData			Single
-		{	AgentID			LLUUID	}
-		{	SessionID		LLUUID	}
-	}
-	{
-		ObjectData			Variable
-		{	LocalID			U32	}
-		{	SaleType		U8	}   // U8 -> EForSale
-		{	SalePrice		S32	}
-	}
+    ObjectSaleInfo Low 106 NotTrusted Zerocoded
+    {
+        AgentData           Single
+        {   AgentID         LLUUID  }
+        {   SessionID       LLUUID  }
+    }
+    {
+        ObjectData          Variable
+        {   LocalID         U32 }
+        {   SaleType        U8  }   // U8 -> EForSale
+        {   SalePrice       S32 }
+    }
 }
 
 
 // set object names
 {
-	ObjectName Low 107 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData		Variable
-		{	LocalID		U32	}
-		{	Name		Variable	1	}
-	}
+    ObjectName Low 107 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData      Variable
+        {   LocalID     U32 }
+        {   Name        Variable    1   }
+    }
 }
 
 // set object descriptions
 {
-	ObjectDescription Low 108 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData		Variable
-		{	LocalID		U32	}
-		{	Description	Variable	1	}
-	}
+    ObjectDescription Low 108 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData      Variable
+        {   LocalID     U32 }
+        {   Description Variable    1   }
+    }
 }
 
 // set object category
 {
-	ObjectCategory Low 109 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData		Variable
-		{	LocalID		U32	}
-		{	Category	U32	}
-	}
+    ObjectCategory Low 109 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData      Variable
+        {   LocalID     U32 }
+        {   Category    U32 }
+    }
 }
 
 // ObjectSelect
 // Variable object data because rectangular selection can
 // generate a large list very quickly.
 {
-	ObjectSelect Low 110 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData		Variable
-		{	ObjectLocalID	U32	}
-	}
+    ObjectSelect Low 110 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData      Variable
+        {   ObjectLocalID   U32 }
+    }
 
 }
 
 
 // ObjectDeselect
 {
-	ObjectDeselect Low 111 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData		Variable
-		{	ObjectLocalID	U32	}
-	}
+    ObjectDeselect Low 111 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData      Variable
+        {   ObjectLocalID   U32 }
+    }
 
 }
 
 // ObjectAttach
 {
-	ObjectAttach Low 112 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-		{	AttachmentPoint	U8	}
-	}
-	{
-		ObjectData		Variable
-		{	ObjectLocalID	U32				}
-		{	Rotation		LLQuaternion	}
-	}
+    ObjectAttach Low 112 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+        {   AttachmentPoint U8  }
+    }
+    {
+        ObjectData      Variable
+        {   ObjectLocalID   U32             }
+        {   Rotation        LLQuaternion    }
+    }
 }
 
 // ObjectDetach -- derezzes an attachment, marking its item in your inventory as not "(worn)"
 {
-	ObjectDetach Low 113 NotTrusted Unencoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData		Variable
-		{	ObjectLocalID	U32	}
-	}
+    ObjectDetach Low 113 NotTrusted Unencoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData      Variable
+        {   ObjectLocalID   U32 }
+    }
 }
 
 
 // ObjectDrop -- drops an attachment from your avatar onto the ground
 {
-	ObjectDrop Low 114 NotTrusted Unencoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData		Variable
-		{	ObjectLocalID	U32	}
-	}
+    ObjectDrop Low 114 NotTrusted Unencoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData      Variable
+        {   ObjectLocalID   U32 }
+    }
 }
 
 
 // ObjectLink
 {
-	ObjectLink Low 115 NotTrusted Unencoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData		Variable
-		{	ObjectLocalID	U32	}
-	}
+    ObjectLink Low 115 NotTrusted Unencoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData      Variable
+        {   ObjectLocalID   U32 }
+    }
 }
 
 // ObjectDelink
 {
-	ObjectDelink Low 116 NotTrusted Unencoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData		Variable
-		{	ObjectLocalID	U32	}
-	}
+    ObjectDelink Low 116 NotTrusted Unencoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData      Variable
+        {   ObjectLocalID   U32 }
+    }
 }
 
 
 // ObjectGrab
 {
-	ObjectGrab Low 117 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData			Single
-		{	LocalID				U32  }
-		{	GrabOffset			LLVector3 }
-	}
-	{
-		SurfaceInfo     Variable
-		{   UVCoord     LLVector3 }
-		{   STCoord     LLVector3 }
-       	{   FaceIndex   S32 }
-       	{   Position    LLVector3 }
-       	{   Normal      LLVector3 }
-       	{   Binormal    LLVector3 }
-	}
+    ObjectGrab Low 117 NotTrusted Zerocoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData          Single
+        {   LocalID             U32  }
+        {   GrabOffset          LLVector3 }
+    }
+    {
+        SurfaceInfo     Variable
+        {   UVCoord     LLVector3 }
+        {   STCoord     LLVector3 }
+        {   FaceIndex   S32 }
+        {   Position    LLVector3 }
+        {   Normal      LLVector3 }
+        {   Binormal    LLVector3 }
+    }
 }
 
 
@@ -1525,115 +1592,115 @@ Object Related Messages
 // TimeSinceLast could go to 1 byte, since capped
 // at 100 on sim.
 {
-	ObjectGrabUpdate Low 118 NotTrusted Zerocoded
-	{
-		AgentData	Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData	Single
-		{	ObjectID			LLUUID	}
-		{	GrabOffsetInitial	LLVector3	}	// LLVector3
-		{	GrabPosition		LLVector3	}	// LLVector3, region local
-		{	TimeSinceLast		U32	}
-	}
-	{
-		SurfaceInfo     Variable
-		{   UVCoord     LLVector3 }
-		{   STCoord     LLVector3 }
-       	{   FaceIndex   S32 }
-       	{   Position    LLVector3 }
-       	{   Normal      LLVector3 }
-       	{   Binormal    LLVector3 }
-	}
+    ObjectGrabUpdate Low 118 NotTrusted Zerocoded
+    {
+        AgentData   Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData  Single
+        {   ObjectID            LLUUID  }
+        {   GrabOffsetInitial   LLVector3   }   // LLVector3
+        {   GrabPosition        LLVector3   }   // LLVector3, region local
+        {   TimeSinceLast       U32 }
+    }
+    {
+        SurfaceInfo     Variable
+        {   UVCoord     LLVector3 }
+        {   STCoord     LLVector3 }
+        {   FaceIndex   S32 }
+        {   Position    LLVector3 }
+        {   Normal      LLVector3 }
+        {   Binormal    LLVector3 }
+    }
 
 }
 
 
-// ObjectDeGrab				
+// ObjectDeGrab             
 {
-	ObjectDeGrab Low 119 NotTrusted Unencoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ObjectData			Single
-		{	LocalID				U32  }
-	}
-	{
-		SurfaceInfo     Variable
-		{   UVCoord     LLVector3 }
-		{   STCoord     LLVector3 }
-       	{   FaceIndex   S32 }
-       	{   Position    LLVector3 }
-       	{   Normal      LLVector3 }
-       	{   Binormal    LLVector3 }
-	}
+    ObjectDeGrab Low 119 NotTrusted Unencoded
+    {
+        AgentData       Single
+        {   AgentID     LLUUID  }
+        {   SessionID   LLUUID  }
+    }
+    {
+        ObjectData          Single
+        {   LocalID             U32  }
+    }
+    {
+        SurfaceInfo     Variable
+        {   UVCoord     LLVector3 }
+        {   STCoord     LLVector3 }
+        {   FaceIndex   S32 }
+        {   Position    LLVector3 }
+        {   Normal      LLVector3 }
+        {   Binormal    LLVector3 }
+    }
 }
 
 
 // ObjectSpinStart
 {
-	ObjectSpinStart Low 120 NotTrusted Zerocoded
-	{
-		AgentData			Single
-		{	AgentID			LLUUID	}
-		{	SessionID		LLUUID	}
-	}
-	{
-		ObjectData			Single
-		{	ObjectID		LLUUID	}
-	}
+    ObjectSpinStart Low 120 NotTrusted Zerocoded
+    {
+        AgentData           Single
+        {   AgentID         LLUUID  }
+        {   SessionID       LLUUID  }
+    }
+    {
+        ObjectData          Single
+        {   ObjectID        LLUUID  }
+    }
 }
 
 
 // ObjectSpinUpdate
 {
-	ObjectSpinUpdate Low 121 NotTrusted Zerocoded
-	{
-		AgentData			Single
-		{	AgentID			LLUUID	}
-		{	SessionID		LLUUID	}
-	}
-	{
-		ObjectData			Single
-		{	ObjectID		LLUUID	}
-		{	Rotation		LLQuaternion }
-	}
+    ObjectSpinUpdate Low 121 NotTrusted Zerocoded
+    {
+        AgentData           Single
+        {   AgentID         LLUUID  }
+        {   SessionID       LLUUID  }
+    }
+    {
+        ObjectData          Single
+        {   ObjectID        LLUUID  }
+        {   Rotation        LLQuaternion }
+    }
 }
 
 
 // ObjectSpinStop
 {
-	ObjectSpinStop Low 122 NotTrusted Zerocoded
-	{
-		AgentData			Single
-		{	AgentID			LLUUID	}
-		{	SessionID		LLUUID	}
-	}
-	{
-		ObjectData			Single
-		{	ObjectID		LLUUID	}
-	}
+    ObjectSpinStop Low 122 NotTrusted Zerocoded
+    {
+        AgentData           Single
+        {   AgentID         LLUUID  }
+        {   SessionID       LLUUID  }
+    }
+    {
+        ObjectData          Single
+        {   ObjectID        LLUUID  }
+    }
 }
 
 // Export selected objects
 // viewer->sim
 {
-	ObjectExportSelected Low 123 NotTrusted Zerocoded
-	{
-		AgentData			Single
-		{	AgentID			LLUUID	}
-		{	RequestID		LLUUID  }
-		{	VolumeDetail	S16		}
-	}
-	{
-		ObjectData			Variable
-		{	ObjectID		LLUUID	}
-	}
+    ObjectExportSelected Low 123 NotTrusted Zerocoded
+    {
+        AgentData           Single
+        {   AgentID         LLUUID  }
+        {   RequestID       LLUUID  }
+        {   VolumeDetail    S16     }
+    }
+    {
+        ObjectData          Variable
+        {   ObjectID        LLUUID  }
+    }
 }
 
 '''
