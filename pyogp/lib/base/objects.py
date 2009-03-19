@@ -494,25 +494,12 @@ class Object(object):
 class PCode(object):
     """ classifying the PCode of objects """
 
-    def __init__(self, pcode):
-        """ just a simple map """
-
-        # http://wiki.secondlife.com/wiki/PCode
-
-        self.Primitive = 9          # 0x09
-        self.Avatar = 47            # 0x2F
-        self.Grass = 95             # 0x5F
-        self.NewTree = 111          # 0x6F
-        self.ParticleSystem = 143   # 0x8F
-        self.Tree = 255             # 0xFF
-
-        self.types = {9: 'Primitive', 47: 'Avatar', 95: 'Grass', 111: 'NewTree', 143: 'ParticleSystem', 255: 'Tree'}
-
-        if pcode: self.get_type(pcode)
-
-        def get_type(self, pcode):
-
-            return self.types[pcode]
+    Primitive = 9          # 0x09
+    Avatar = 47            # 0x2F
+    Grass = 95             # 0x5F
+    NewTree = 111          # 0x6F
+    ParticleSystem = 143   # 0x8F
+    Tree = 255             # 0xFF
 
 class CompressedUpdateFlags(object):
     """ map of ObjectData.Flags """
