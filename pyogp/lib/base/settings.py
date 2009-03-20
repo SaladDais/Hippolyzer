@@ -113,7 +113,7 @@ class Settings(object):
         # make sure we can tone it down as well
 
         self.LOG_VERBOSE = True
-        self.ENABLE_BYTES_TO_HEX_LOGGING = False
+        self.ENABLE_BYTES_TO_HEX_LOGGING =False
         self.ENABLE_CAPS_LOGGING = True
         self.ENABLE_CAPS_LLSD_LOGGING = False
         self.ENABLE_EQ_LOGGING = True

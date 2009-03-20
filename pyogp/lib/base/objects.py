@@ -99,6 +99,11 @@ class Objects(object):
 
         if self.settings.LOG_VERBOSE: log(INFO, "Initializing object storage")
 
+    def process_multiple_object_updates(self, objects):
+        """ process a list of object updates """
+
+        [self.process_object_update(_object) for _object in objects]
+
     def process_object_update(self, _object):
         """ append to or replace an object in self.objects """
 
@@ -191,7 +196,7 @@ class Objects(object):
 
         pattern = re.compile(Name)
 
-        matches = [_object for _object in self.object_store if pattern.match(_object.NameValue)]
+        matches = [_object for _object in self.object_store if pattern.match(_object.Name)]
 
         return matches
 
@@ -226,6 +231,18 @@ class Objects(object):
         if index != []:
             del self.object_store[index[0]]
             if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Kill on object data for object tracked as local id %s" % (ID))
+
+    def update_object_properties(self, object_properties):
+        """ update the attributes of a known object """
+
+        _object = get_object_from_store(FullID = object_properties['ObjectID'])
+        
+        if _object == None:
+            log(WARNING, "Failed to locate object to update properties. Creating a new object")
+            _object = Object()
+            _object.update_properties(object_properties)
+        else:
+            _object.update_properties(object_properties)
 
     def request_object_update(self, ID = None, ID_list = None):
         """ requests object updates from the simulator
@@ -293,7 +310,7 @@ class Objects(object):
         packet.AgentData['SessionID'] = uuid.UUID(str(self.agent.session_id))
         packet.AgentData['GroupID'] = uuid.UUID(str(GroupID))
 
-        # build the ObjactData block (it's a Single)
+        # build the ObjectData block (it's a Single)
         packet.ObjectData['PCode'] = PCode
         packet.ObjectData['Material'] = Material
         packet.ObjectData['AddFlags'] = AddFlags
@@ -337,7 +354,7 @@ class Object(object):
     """
 
     def __init__(self, ID = None, State = None, FullID = None, CRC = None, PCode = None, Material = None, ClickAction = None, Scale = None, ObjectData = None, ParentID = None, UpdateFlags = None, PathCurve = None, ProfileCurve = None, PathBegin = None, PathEnd = None, PathScaleX = None, PathScaleY = None, PathShearX = None, PathShearY = None, PathTwist = None, PathTwistBegin = None, PathRadiusOffset = None, PathTaperX = None, PathTaperY = None, PathRevolutions = None, PathSkew = None, ProfileBegin = None, ProfileEnd = None, ProfileHollow = None, TextureEntry = None, TextureAnim = None, NameValue = None, Data = None, Text = None, TextColor = None, MediaURL = None, PSBlock = None, ExtraParams = None, Sound = None, OwnerID = None, Gain = None, Flags = None, Radius = None, JointType = None, JointPivot = None, JointAxisOrAnchor = None, FootCollisionPlane = None, Position = None, Velocity = None, Acceleration = None, Rotation = None, AngularVelocity = None):
-        """ set up the event queue attributes """
+        """ set up the object attributes """
 
         self.ID = ID                                 # U32
         self.State = State                           # U8
@@ -491,6 +508,13 @@ class Object(object):
 
         agent.region.enqueue_message(packet())
 
+    def update_properties(properties):
+        """ takes a dictionary of attribute:value and makes it so """
+
+        for attribute in properties:
+
+            setdefault(attribute, properties[attribute])
+
 class PCode(object):
     """ classifying the PCode of objects """
 
@@ -517,6 +541,8 @@ class CompressedUpdateFlags(object):
 
 def onObjectUpdate(packet, objects):
     """ populates an Object instance and adds it to the Objects() store """
+
+    object_updates = []
 
     # ToDo: handle these 2 variables properly
     _RegionHandle = packet.message_data.blocks['RegionData'][0].get_variable('RegionHandle').data
@@ -634,8 +660,10 @@ def onObjectUpdate(packet, objects):
 
         _object = Object(_ID, _State, _FullID, _CRC, _PCode, _Material, _ClickAction, _Scale, _ObjectData, _ParentID, _UpdateFlags, _PathCurve, _ProfileCurve, _PathBegin, _PathEnd, _PathScaleX, _PathScaleY, _PathShearX, _PathShearY, _PathTwist, _PathTwistBegin, _PathRadiusOffset, _PathTaperX, _PathTaperY, _PathRevolutions, _PathSkew, _ProfileBegin, _ProfileEnd, _ProfileHollow, _TextureEntry, _TextureAnim, _NameValue, _Data, _Text, _TextColor, _MediaURL, _PSBlock, _ExtraParams, _Sound, _OwnerID, _Gain, _Flags, _Radius, _JointType, _JointPivot, _JointAxisOrAnchor, FootCollisionPlane, Position, Velocity, Acceleration, Rotation, AngularVelocity)
 
-        # add the object to the store
-        objects.process_object_update(_object)
+        object_updates.append(_object)
+
+    # add the object to the store
+    objects.process_multiple_object_updates(object_updates)
 
 def onObjectUpdateCached(packet, objects):
     """ borrowing from libomv, we'll request object data for all data coming in via ObjectUpdateCached"""
@@ -669,6 +697,8 @@ def onObjectUpdateCached(packet, objects):
 
 def onObjectUpdateCompressed(packet, objects):
 
+    object_updates = []
+
     # ToDo: handle these 2 variables properly
     _RegionHandle = packet.message_data.blocks['RegionData'][0].get_variable('RegionHandle').data
     _TimeDilation = packet.message_data.blocks['RegionData'][0].get_variable('TimeDilation').data
@@ -678,33 +708,48 @@ def onObjectUpdateCompressed(packet, objects):
         _UpdateFlags = ObjectData_block.get_variable('UpdateFlags').data
         _Data = ObjectData_block.get_variable('Data').data
 
-        _FullID = uuid.UUID(bytes = _Data[0:16])        # LLUUID
-        _LocalID = struct.unpack("<I", _Data[16:20])[0]
-        _PCode = struct.unpack(">B", _Data[20:21])[0]
+        pos = 0         # position in the binary string
+        _FullID = UUID(bytes = _Data, offset = 0)        # LLUUID
+        pos += 16
+        _LocalID = struct.unpack("<I", _Data[pos:pos+4])[0]
+        pos += 4
+        _PCode = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
 
         if _PCode != 9:         # if it is not a prim, stop.
             return
         
-        _State = struct.unpack(">B", _Data[21:22])[0]
-        _CRC = struct.unpack("<I", _Data[22:26])[0]
-        _Material = struct.unpack(">B", _Data[26:27])[0]
-        _ClickAction = struct.unpack(">B", _Data[27:28])[0]
-        _Scale = Vector3(_Data, 28)
-        _Position = Vector3(_Data, 40)
-        _Rotation = Vector3(_Data, 52)
-        flags = struct.unpack(">B", _Data[52:53])[0]
-        _OwnerID = uuid.UUID(bytes = _Data[53:69])
+        _State = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _CRC = struct.unpack("<I", _Data[pos:pos+4])[0]
+        pos += 4
+        _Material = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _ClickAction = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _Scale = Vector3(_Data, pos)
+        pos += 12
+        _Position = Vector3(_Data, pos)
+        pos += 12
+        _Rotation = Vector3(_Data, pos)
+        pos += 12
+        flags = struct.unpack(">B", _Data[pos:pos+1])[0]
+        pos += 1
+        _OwnerID = UUID(_Data, pos)
+        pos += 16
 
-        pos = 69
-
+        # Placeholder vars, to be populated via flags if present
         _AngularVelocity = Vector3()
-        _ParentID = uuid.UUID('00000000-0000-0000-0000-000000000000')
+        _ParentID = UUID()
         _Text = ''
+        _TextColor = None
         _MediaURL = ''
-        _Sound = uuid.UUID('00000000-0000-0000-0000-000000000000')
+        _Sound = UUID()
         _Gain = 0
         _Flags = 0
         _Radius = 0
+        _NameValue = ''
+        _ExtraParams = None
 
         if flags != 0:
             if (flags & CompressedUpdateFlags.contains_AngularVelocity) != 0:
@@ -714,7 +759,7 @@ def onObjectUpdateCompressed(packet, objects):
                 _AngularVelocity = None
 
             if (flags & CompressedUpdateFlags.contains_Parent) != 0:
-                _ParentID = uuid.UUID(bytes = _Data[pos:pos+16])
+                _ParentID = UUID(_Data, pos)
                 pos += 16
             else:
                 _ParentID = None
@@ -734,6 +779,7 @@ def onObjectUpdateCompressed(packet, objects):
                 while struct.unpack(">B", _Data[pos:pos+1]) != 0:
                     pos += 1
                 pos += 1
+                _TextColor = _Data[pos:pos+4]
                 pos += 4
 
             if (flags & CompressedUpdateFlags.MediaURL) != 0:
@@ -746,6 +792,10 @@ def onObjectUpdateCompressed(packet, objects):
             if (flags & CompressedUpdateFlags.contains_Particles) != 0:
                 # skip it, only iterate the position
                 pos += 86
+
+            # ToDo: Deal with extra parameters
+            log(WARNING, "Incomplete implementation in onObjectUpdateCompressed when flags are present. Skipping parsing this object...")
+            return
 
             if (flags & CompressedUpdateFlags.contains_Sound) != 0:
                 # skip it, only iterate the position
@@ -819,71 +869,12 @@ def onObjectUpdateCompressed(packet, objects):
         else:
             _TextureAnim = None
 
-        print 'UpdateFlags: ', _UpdateFlags
-        print 'FullID: ', _FullID
-        print 'LocalID: ', _LocalID
-        print 'PCode: ', _PCode
-        print 'State: ', _State
-        print 'CRC: ', _CRC
-        print 'Material: ', _Material
-        print 'ClickAction: ', _ClickAction
-        print 'Scale: ', _Scale
-        print 'Position: ', _Position
-        print 'Rotation: ', _Rotation
-        print 'Flags: ', _Flags
-        print 'OwnerID: ', _OwnerID
-        print 'AngularVelocity: ', _AngularVelocity
-        print 'ParentID: ', _ParentID
-        print 'PathCurve: ', _PathCurve
-        print 'PathBegin: ', _PathBegin
-        print 'PathEnd: ', _PathEnd
-        print 'PathScaleX: ', _PathScaleX
-        print 'PathScaleY: ', _PathScaleY
-        print 'PathShearX: ', _PathShearX
-        print 'PathShearY: ', _PathShearY
-        print 'PathTwist: ', _PathTwist
-        print 'PathTwistBegin: ', _PathTwistBegin
-        print 'PathRadiusOffset: ', _PathRadiusOffset
-        print 'PathTaperX: ', _PathTaperX
-        print 'PathTaperY: ', _PathTaperY
-        print 'PathRevolutions: ', _PathRevolutions
-        print 'PathSkew: ', _PathSkew
-        print 'ProfileCurve: ', _ProfileCurve
-        print 'ProfileBegin: ', _ProfileBegin
-        print 'ProfileEnd: ', _ProfileEnd
-        print 'ProfileHollow: ', _ProfileHollow
-        print 'TextureEntry: ', _TextureEntry
-        print 'TextureAnim: ', _TextureAnim
+        _object = Object(_LocalID, _State, _FullID, _CRC, _PCode, _Material, _ClickAction, _Scale, None, _ParentID, _UpdateFlags, _PathCurve, _ProfileCurve, _PathBegin, _PathEnd, _PathScaleX, _PathScaleY, _PathShearX, _PathShearY, _PathTwist, _PathTwistBegin, _PathRadiusOffset, _PathTaperX, _PathTaperY, _PathRevolutions, _PathSkew, _ProfileBegin, _ProfileEnd, _ProfileHollow, _TextureEntry, _TextureAnim, _NameValue, None, _Text, _TextColor, _MediaURL, None, _ExtraParams, _Sound, _OwnerID, _Gain, _Flags, _Radius, None, None, None, None, _Position, None, None, _Rotation, _AngularVelocity)
 
+        object_updates.append(_object)
 
-        '''
-         _UpdateFlags = ObjectData_block.get_variable('UpdateFlags').data
-
-         _object = Object(_ID, _State, _FullID, _CRC, _PCode, _Material, _ClickAction, _Scale, _ObjectData, _ParentID, _UpdateFlags, _PathCurve, _ProfileCurve, _PathBegin, _PathEnd, _PathScaleX, _PathScaleY, _PathShearX, _PathShearY, _PathTwist, _PathTwistBegin, _PathRadiusOffset, _PathTaperX, _PathTaperY, _PathRevolutions, _PathSkew, _ProfileBegin, _ProfileEnd, _ProfileHollow, _TextureEntry, _TextureAnim, _NameValue, _Data, _Text, _TextColor, _MediaURL, _PSBlock, _ExtraParams, _Sound, _OwnerID, _Gain, _Flags, _Radius, _JointType, _JointPivot, _JointAxisOrAnchor, FootCollisionPlane, Position, Velocity, Acceleration, Rotation, AngularVelocity)
-
-         # add the object to the store
-         objects.parse_object_update(_object)
-         '''
-
-
-    '''
-    // ObjectUpdateCompressed
-    {
-        ObjectUpdateCompressed High 13 Trusted Unencoded
-        {
-            RegionData          Single
-            {   RegionHandle    U64     }
-            {   TimeDilation    U16     }
-        }
-        {
-            ObjectData          Variable
-            {   UpdateFlags         U32 }
-            {   Data            Variable   2    }
-        }
-    }
-    '''
-
-    pass
+    # add the object to the store
+    objects.process_multiple_object_updates(object_updates)
 
 def onKillObject(packet, objects):
 
@@ -891,19 +882,79 @@ def onKillObject(packet, objects):
 
     objects.remove_object_from_store(_KillID)
 
+def onObjectProperties(packet, objects):
+
+    object_properties = {}
+
+    for ObjectData_block in packet.message_data.blocks['ObjectData']:
+
+        object_properties['ObjectID'] = ObjectData_block.get_variable('ObjectID').data
+        object_properties['CreatorID'] = ObjectData_block.get_variable('CreatorID').data
+        object_properties['OwnerID'] = ObjectData_block.get_variable('OwnerID').data
+        object_properties['GroupID'] = ObjectData_block.get_variable('GroupID').data
+        object_properties['CreationDate'] = ObjectData_block.get_variable('CreationDate').data
+        object_properties['BaseMask'] = ObjectData_block.get_variable('BaseMask').data
+        object_properties['OwnerMask'] = ObjectData_block.get_variable('OwnerMask').data
+        object_properties['GroupMask'] = ObjectData_block.get_variable('GroupMask').data
+        object_properties['EveryoneMask'] = ObjectData_block.get_variable('EveryoneMask').data
+        object_properties['NextOwnerMask'] = ObjectData_block.get_variable('NextOwnerMask').data
+        object_properties['OwnershipCost'] = ObjectData_block.get_variable('OwnershipCost').data
+        object_properties['TaxRate'] = ObjectData_block.get_variable('TaxRate').data
+        object_properties['SaleType'] = ObjectData_block.get_variable('SaleType').data
+        object_properties['SalePrice'] = ObjectData_block.get_variable('SalePrice').data
+        object_properties['AggregatePerms'] = ObjectData_block.get_variable('AggregatePerms').data
+        object_properties['AggregatePermTextures'] = ObjectData_block.get_variable('AggregatePermTextures').data
+        object_properties['AggregatePermTexturesOwner'] = ObjectData_block.get_variable('AggregatePermTexturesOwner').data
+        object_properties['Category'] = ObjectData_block.get_variable('Category').data
+        object_properties['InventorySerial'] = ObjectData_block.get_variable('InventorySerial').data
+        object_properties['ItemID'] = ObjectData_block.get_variable('ItemID').data
+        object_properties['FolderID'] = ObjectData_block.get_variable('FolderID').data
+        object_properties['FromTaskID'] = ObjectData_block.get_variable('FromTaskID').data
+        object_properties['LastOwnerID'] = ObjectData_block.get_variable('LastOwnerID').data
+        object_properties['Name'] = ObjectData_block.get_variable('Name').data
+        object_properties['Description'] = ObjectData_block.get_variable('Description').data
+        object_properties['TouchName'] = ObjectData_block.get_variable('TouchName').data
+        object_properties['SitName'] = ObjectData_block.get_variable('SitName').data
+        object_properties['TextureID'] = ObjectData_block.get_variable('TextureID').data
+
+        objects.update_object_properties(object_properties)
     '''
+    // ObjectProperties
+    // Extended information such as creator, permissions, etc.
+    // Medium because potentially driven by mouse hover events.
     {
-        ObjectUpdateCompressed High 13 Trusted Unencoded
-        {
-            RegionData          Single
-            {   RegionHandle    U64     }
-            {   TimeDilation    U16     }
-        }
-        {
-            ObjectData          Variable
-            {   UpdateFlags         U32 }
-            {   Data            Variable   2    }
-        }
+    	ObjectProperties Medium 9 Trusted Zerocoded
+    	{
+    		ObjectData			Variable
+    		{	ObjectID		LLUUID	}
+    		{	CreatorID		LLUUID	}
+    		{	OwnerID			LLUUID	}
+    		{	GroupID			LLUUID	}
+    		{	CreationDate	U64	}
+    		{	BaseMask		U32	}
+    		{	OwnerMask		U32	}
+    		{	GroupMask		U32	}
+    		{	EveryoneMask	U32	}
+    		{	NextOwnerMask	U32	}
+    		{	OwnershipCost	S32	}
+    //		{	TaxRate			F32	}	// F32
+    		{	SaleType		U8	}   // U8 -> EForSale
+    		{	SalePrice		S32	}
+    		{	AggregatePerms	U8	}
+    		{	AggregatePermTextures		U8	}
+    		{	AggregatePermTexturesOwner	U8	}
+    		{	Category		U32	}	// LLCategory
+    		{	InventorySerial	S16	}	// S16
+    		{	ItemID			LLUUID	}
+    		{	FolderID		LLUUID	}
+    		{	FromTaskID		LLUUID	}
+    		{	LastOwnerID		LLUUID	}
+    		{	Name			Variable	1	}
+    		{	Description		Variable	1	}
+    		{	TouchName		Variable	1	}
+    		{	SitName			Variable	1	}
+    		{	TextureID		Variable	1	}
+    	}
     }
     '''
 

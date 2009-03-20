@@ -79,19 +79,9 @@ class TestPacketDecode(unittest.TestCase):
     def test_object_update(self):
         """test if the object update packet can be decoded"""
 
-
-
         message = OBJECT_UPDATE
-        size = len(message)
 
         deserializer = UDPPacketDeserializer(settings = self.settings)
-        #geeneric timing code, should work 99% of the time unless we're at start time xx:xx:59.9 seconds or thereabouts
-
-        secsearch= re.compile('([0-90-9]+)\.([0-9]+)')
-        start = str(datetime.datetime.now())
-        matchobj = secsearch.search(start)
-        startsecs = float(matchobj.group(1)+'.'+matchobj.group(2))
-
         packet = deserializer.deserialize(message)
         assert packet != None, "Wrong data"
         assert packet.message_data.name == 'ObjectUpdate', "Wrong packet"
@@ -103,22 +93,6 @@ class TestPacketDecode(unittest.TestCase):
 
         self.assert_("RegionData" in blocks)
         self.assert_("ObjectData" in blocks)
-
-        #pretty printer for packets. Should work with any (not tested though).
-        '''
-        print "Packetname is:", packet.name
-        for ablock in packet.message_data.blocks:
-            print "\tblockname is:", ablock
-
-            for somevars in packet.message_data.blocks[ablock]:
-                for avar in somevars.var_list:
-                    zvar = somevars.get_variable(avar)
-                    print "\t\t"+ zvar.name, zvar.get_var_type_as_string(), zvar.get_data_as_string()
-
-        #finish off timing code
-        matchobj = secsearch.search(str(datetime.datetime.now()))
-        print "TIME =", float(matchobj.group(1)+'.'+matchobj.group(2)) - startsecs     
-        '''
 
 def test_suite():
     from unittest import TestSuite, makeSuite

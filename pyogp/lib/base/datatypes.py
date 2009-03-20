@@ -108,3 +108,42 @@ class Quaternion(object):
         """ represent a quaternion as a tuple """
 
         return (self.X, self.Y, self.Z, self.W)
+
+class UUID(object):
+    """ represents a uuid as, well, a uuid 
+
+    inbound LLUUID data from packets is already UUID(), they are 
+    already the same 'datatype'
+    """
+
+    def __init__(self, bytes = None, offset = 0, string = '00000000-0000-0000-0000-000000000000'):
+
+        if bytes != None:
+
+            self.unpack_from_bytes(bytes, offset)
+
+        else:
+
+            self.uuid = uuid.UUID(string)
+
+    def unpack_from_bytes(self, bytes, offset):
+        """ unpack uuid from binary """
+
+        # unpack from binary
+        self.uuid = uuid.UUID(bytes = bytes[offset:offset+16])
+
+    def data(self):
+        """ represent a uuid as, well, a uuid """
+
+        return self.uuid
+
+    def __repr__(self):
+        """ represent a uuid as a string """
+
+        return str(self.uuid)
+
+    def __call__(self):
+        """ represent a uuid as, well, a uuid """
+
+        return self.uuid
+

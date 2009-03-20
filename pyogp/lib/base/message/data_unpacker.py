@@ -17,14 +17,17 @@ http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 
 $/LicenseInfo$
 """
-
+# standard python libs
 import struct
 import binascii
-from uuid import UUID
 import array
 
-from types import MsgType, EndianType, sizeof
+# pyogp
 from pyogp.lib.base.exc import *
+from pyogp.lib.base.datatypes import *
+
+# pygop messaging
+from types import MsgType, EndianType, sizeof
 
 class DataUnpacker(object):
     def __init__(self):
@@ -83,6 +86,7 @@ class DataUnpacker(object):
 
     def __unpack_vector3(self, endian, vec, var_size=None):
         return self.__unpack_tuple(endian, vec, 'f')
+        #return Vector3(vec, 0)
 
     def __unpack_vector3d(self, endian, vec, var_size=None):
         return self.__unpack_tuple(endian, vec, 'd')
@@ -97,7 +101,8 @@ class DataUnpacker(object):
         return self.__unpack_vector3(endian, quat)
 
     def __unpack_uuid(self, endian, uuid_data, var_size=None):
-        return UUID(bytes=uuid_data)
+        # return datatypes.UUID
+        return UUID(bytes=uuid_data, offset = 0)
 
     def __unpack_string(self, endian, pack_string, var_size):
         return pack_string

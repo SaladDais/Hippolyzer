@@ -21,7 +21,8 @@ $/LicenseInfo$
 # standard python modules
 import unittest
 from struct import pack
-from binascii import unhexlify 
+from binascii import unhexlify
+import uuid
 
 # pyogp
 from pyogp.lib.base.datatypes import *
@@ -85,6 +86,30 @@ class TestDatatypes(unittest.TestCase):
 
         self.assertEquals(quat.__dict__, {'Y': 128.0, 'X': 128.0, 'Z': 22.0, 'W': 0.0})
         self.assertEquals(quat(), (128.0, 128.0, 22.0, 0.0))
+
+    def test_UUID_from_bytes(self):
+
+        tmp_uuid = uuid.UUID('2b7f7a6e-32c5-dbfd-e2c7-926d1a9f0aca')
+        tmp_uuid2 = uuid.UUID('1dd5efe2-faaf-1864-5ac9-bc61c5d8d7ea')
+
+        test_uuid = UUID(tmp_uuid.bytes, 0)
+        test_uuid2 = UUID(tmp_uuid2.bytes, 0)
+
+        self.assertEquals(test_uuid.data(), uuid.UUID('2b7f7a6e-32c5-dbfd-e2c7-926d1a9f0aca'))
+        self.assertEquals(test_uuid2.data(), uuid.UUID('1dd5efe2-faaf-1864-5ac9-bc61c5d8d7ea'))
+
+    def test_UUID_new(self):
+
+        tmp_uuid = UUID()
+        
+        self.assertEquals(tmp_uuid.__dict__, {'uuid': uuid.UUID('00000000-0000-0000-0000-000000000000')})
+        self.assertEquals(tmp_uuid(), uuid.UUID('00000000-0000-0000-0000-000000000000'))
+
+    def test_UUID_from_string(self):
+
+        uuid_string = '2b7f7a6e-32c5-dbfd-e2c7-926d1a9f0aca'
+
+        self.assertEquals(UUID(string = uuid_string).data(), uuid.UUID('2b7f7a6e-32c5-dbfd-e2c7-926d1a9f0aca'))
 
 def test_suite():
     from unittest import TestSuite, makeSuite
