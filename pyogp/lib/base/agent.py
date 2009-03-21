@@ -30,6 +30,7 @@ from eventlet import api
 
 # pyogp
 from pyogp.lib.base.login import Login, LegacyLoginParams, OGPLoginParams
+from pyogp.lib.base.datatypes import *
 from pyogp.lib.base.exc import LoginError
 from pyogp.lib.base.region import Region
 from pyogp.lib.base.inventory import Inventory
@@ -109,7 +110,7 @@ class Agent(object):
         self.helpers = Helpers()
 
         # data we store as it comes in from the grid
-        self.Position = (0.0, 0.0, 0.0)     # this will get updated later, but seed it with 000
+        self.Position = Vector3()     # this will get updated later, but seed it with 000
         self.ActiveGroupID = uuid.UUID('00000000-0000-0000-0000-000000000000')
 
         # should we include these here?

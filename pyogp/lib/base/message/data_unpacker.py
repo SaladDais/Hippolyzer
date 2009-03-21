@@ -85,8 +85,8 @@ class DataUnpacker(object):
         return struct.unpack(endian + str(size) + tp, tup)
 
     def __unpack_vector3(self, endian, vec, var_size=None):
-        return self.__unpack_tuple(endian, vec, 'f')
-        #return Vector3(vec, 0)
+        #return self.__unpack_tuple(endian, vec, 'f')
+        return Vector3(vec, 0)
 
     def __unpack_vector3d(self, endian, vec, var_size=None):
         return self.__unpack_tuple(endian, vec, 'd')
@@ -98,7 +98,7 @@ class DataUnpacker(object):
         #first, pack to vector3
         #print "WARNING: UNPACKING A QUAT...."
         #vec = quat_to_vec3(quat)
-        return self.__unpack_vector3(endian, quat)
+        return Quaternion(quat, 0)
 
     def __unpack_uuid(self, endian, uuid_data, var_size=None):
         # return datatypes.UUID

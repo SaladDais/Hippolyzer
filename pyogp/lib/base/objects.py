@@ -143,12 +143,12 @@ class Objects(object):
 
         # if the object data pertains to us, update our data!
         if str(_objectdata.FullID) == str(self.agent.agent_id):
-            self.agent.Position = _objectdata.Position.data()
-            self.agent.FootCollisionPlane = _objectdata.FootCollisionPlane.data()
-            self.agent.Velocity = _objectdata.Velocity.data()
-            self.agent.Acceleration = _objectdata.Acceleration.data()
-            self.agent.Rotation = _objectdata.Rotation.data()
-            self.agent.AngularVelocity = _objectdata.AngularVelocity.data()
+            self.agent.Position = _objectdata.Position
+            self.agent.FootCollisionPlane = _objectdata.FootCollisionPlane
+            self.agent.Velocity = _objectdata.Velocity
+            self.agent.Acceleration = _objectdata.Acceleration
+            self.agent.Rotation = _objectdata.Rotation
+            self.agent.AngularVelocity = _objectdata.AngularVelocity
 
         index = [self.avatar_store.index(_avatar_) for _avatar_ in self.avatar_store if _avatar_.ID == _objectdata.ID]
 
@@ -765,7 +765,7 @@ def onObjectUpdateCompressed(packet, objects):
 
         if flags != 0:
 
-            log(WARNING, "Quiting parsing an ObjectUpdateCompressed packet with flags due to incomplete implemention. Storing a partial representation of an object with uuid os %s" % (_FullID))
+            log(WARNING, "FixMe! Quiting parsing an ObjectUpdateCompressed packet with flags due to incomplete implemention. Storing a partial representation of an object with uuid os %s" % (_FullID))
             
             # the commented code is not working right, we need to figure out why!
             # ExtraParams in particular seemed troublesome

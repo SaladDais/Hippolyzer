@@ -57,7 +57,7 @@ class Vector3(object):
 
     def data(self):
 
-        return (self.X, self.Y, self.Z)
+        return ((self.X, self.Y, self.Z))
 
     def __repr__(self):
         """ represent a vector as a string """
@@ -67,7 +67,7 @@ class Vector3(object):
     def __call__(self):
         """ represent a vector as a tuple """
 
-        return (self.X, self.Y, self.Z)
+        return ((self.X, self.Y, self.Z))
 
 class Quaternion(object):
     """ represents a quaternion as a tuple"""
@@ -97,7 +97,7 @@ class Quaternion(object):
 
     def data(self):
 
-        return (self.X, self.Y, self.Z, self.W)
+        return ((self.X, self.Y, self.Z, self.W))
 
     def __repr__(self):
         """ represent a quaternion as a string """
@@ -107,7 +107,7 @@ class Quaternion(object):
     def __call__(self):
         """ represent a quaternion as a tuple """
 
-        return (self.X, self.Y, self.Z, self.W)
+        return ((self.X, self.Y, self.Z, self.W))
 
 class UUID(object):
     """ represents a uuid as, well, a uuid 
