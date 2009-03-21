@@ -68,37 +68,7 @@ class TestObjects(unittest.TestCase):
         for _object in  self.object_store.object_store:
             known_objects.append((_object.FullID, _object.ID))
 
-        self.assertEquals(known_objects, [(uuid.UUID('2b7f7a6e-32c5-dbfd-e2c7-926d1a9f0aca'), 30452L), (uuid.UUID('1dd5efe2-faaf-1864-5ac9-bc61c5d8d7ea'), 30451L), (uuid.UUID('50b8926a-9efe-aa75-c4e9-d8946ba812a5'), 30400L), (uuid.UUID('cab68676-a725-e9d9-25b0-6d925f0bc5f2'), 30399L), (uuid.UUID('78716204-2664-69ba-eaa5-2587d877d4ef'), 29840L), (uuid.UUID('93cbc3e1-8dab-07ea-d4ed-2631aaa569fc'), 30348L)])    
-
-        def new packet(_ID, _State, _FullID, _CRC, _PCode, _Material, _ClickAction, _Scale, _ObjectData, _ParentID, _UpdateFlags, _PathCurve, _ProfileCurve, _PathBegin, _PathEnd, _PathScaleX, _PathScaleY, _PathS hearX, _PathShearY, _PathTwist, _PathTwistBegin, _PathRadiusOffset, _PathTaperX, _PathTaperY, _PathRevolutions, _PathSkew, _ProfileBegin, _ProfileEnd, _ProfileHollow, _TextureEntry, _TextureAnim, _NameValue, _Data , _Text, _TextColor, _MediaURL, _PSBlock, _ExtraParams, _Sound, _OwnerID, _Gain, _Flags, _Radius, _JointType, _JointPivot, _JointAxisOrAnchor, FootCollisionPlane, Position, Velocity, Acceleration, Rotation, AngularVelocity):
-
-            packet = ObjectUpdateCompressedPacket() # from message/packets.py
-
-            packet.ObjectData['UpdateFlags'] = _UpdateFlags 
-            
-            # Prepare the Data 
-            Data['LocalID']  = struct.pack("<I",_ID)
-            Data['FullID']   = UUID(_FullID).get_bytes()
-            Data['PCode']    = struct.pack(">B",PCode)
-            
-            # If this is a Primitive (PCode = 9)
-            if PCode = 9:
-                Data['State'] = struct.pack(">B", _State)[0]
-                Data['CRC']   = struct.pack("<I", _CRC)[0]
-                Data['Material'] = struct.pack(">B", _Material)[0]
-                Data['ClickAction'] = struct.pack(">B", ClickAction)[0]
-                Data['Scale'] = Vector3(_Scale).get_bytes()
-                Data['Position'] = Vector3(Position).get_bytes()
-                Data['Rotation'] = Vector3(Rotation).get_bytes()
-                Data['Flags'] = struct.pack(">B",_Flags)[0]
-                Data['OwnerID'] = uuid.UUID(_OwnerID)
-                Data['PathCurve'] = struct.pack(">B",_PathCurve)
-                Data['PathBegin'] = struct.pack("<H",_PathBegin)
-                Data['PathEnd'] = struct.pack("<H",_PathEnd)
-                Data['PathScaleX'] = struct.pack("<B",_PathScaleX)
-                Data['PathScaleY'] = struct.pack("<
-
-            packet.ObjectData['ObjectData'] = binary represesentation of uuids vectors and blah
+        self.assertEquals(known_objects, [(uuid.UUID('2b7f7a6e-32c5-dbfd-e2c7-926d1a9f0aca'), 30452L), (uuid.UUID('1dd5efe2-faaf-1864-5ac9-bc61c5d8d7ea'), 30451L), (uuid.UUID('50b8926a-9efe-aa75-c4e9-d8946ba812a5'), 30400L), (uuid.UUID('cab68676-a725-e9d9-25b0-6d925f0bc5f2'), 30399L), (uuid.UUID('78716204-2664-69ba-eaa5-2587d877d4ef'), 29840L), (uuid.UUID('93cbc3e1-8dab-07ea-d4ed-2631aaa569fc'), 30348L)])
 
 def test_suite():
     from unittest import TestSuite, makeSuite

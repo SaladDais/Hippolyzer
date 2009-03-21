@@ -71,7 +71,7 @@ class Region(object):
 
     """
 
-    def __init__(self, global_x = None, global_y = None, seed_capability_url = None, udp_blacklist = None, sim_ip = None, sim_port = None, circuit_code = None, agent = None, settings = None, packet_handler = None, event_queue_handler = None):
+    def __init__(self, global_x = 0, global_y = 0, seed_capability_url = None, udp_blacklist = None, sim_ip = None, sim_port = None, circuit_code = None, agent = None, settings = None, packet_handler = None, event_queue_handler = None):
         """ initialize a region """
 
         # allow the settings to be passed in
