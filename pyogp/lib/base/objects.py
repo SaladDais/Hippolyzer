@@ -200,6 +200,11 @@ class Objects(object):
 
         return matches
 
+    def find_objects_within_radius(self, radius):
+        """ returns objects nearby"""
+
+        pass
+
     def remove_object_from_store(self, ID = None):
 
         # this is an avatar
@@ -539,6 +544,13 @@ class CompressedUpdateFlags(object):
     contains_NameValues = 0x100
     MediaURL = 0x200
 
+class ExtraParam(object):
+    """ extended Object attributes buried in some packets """
+
+    Flexible = 0x10
+    Light = 0x20
+    Sculpt = 0x30
+
 def onObjectUpdate(packet, objects):
     """ populates an Object instance and adds it to the Objects() store """
 
@@ -752,55 +764,98 @@ def onObjectUpdateCompressed(packet, objects):
         _ExtraParams = None
 
         if flags != 0:
+
+            log(WARNING, "Quiting parsing an ObjectUpdateCompressed packet with flags due to incomplete implemention. Storing a partial representation of an object with uuid os %s" % (_FullID))
+            
+            # the commented code is not working right, we need to figure out why!
+            # ExtraParams in particular seemed troublesome
+
+            '''
+            print 'Flags: ', flags
+
             if (flags & CompressedUpdateFlags.contains_AngularVelocity) != 0:
                 _AngularVelocity = Vector3(_Data, pos)
                 pos += 12
+                print 'AngularVelocity: ', _AngularVelocity
             else:
                 _AngularVelocity = None
 
             if (flags & CompressedUpdateFlags.contains_Parent) != 0:
                 _ParentID = UUID(_Data, pos)
                 pos += 16
+                print 'ParentID: ', _ParentID
             else:
                 _ParentID = None
 
             if (flags & CompressedUpdateFlags.Tree) != 0:
                 # skip it, only iterate the position
                 pos += 1
+                print 'Tree'
 
             if (flags & CompressedUpdateFlags.ScratchPad) != 0:
                 # skip it, only iterate the position
-                size = struct.unpack(">B", _Data[pos:pos+1])
+                size = struct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1
                 pos += size
+                print 'Scratchpad size'
 
             if (flags & CompressedUpdateFlags.contains_Text) != 0:
                 # skip it, only iterate the position
                 _Text = ''
-                while struct.unpack(">B", _Data[pos:pos+1]) != 0:
+                while struct.unpack(">B", _Data[pos:pos+1])[0] != 0:
                     pos += 1
                 pos += 1
-                _TextColor = _Data[pos:pos+4]
+                _TextColor = struct.unpack("<I", _Data[pos:pos+4])[0]
                 pos += 4
+                print '_TextColor: ', _TextColor
 
             if (flags & CompressedUpdateFlags.MediaURL) != 0:
                 # skip it, only iterate the position
                 _MediaURL = ''
-                while struct.unpack(">B", _Data[pos:pos+1]) != 0:
+                while struct.unpack(">B", _Data[pos:pos+1])[0] != 0:
                     pos += 1
                 pos += 1
+                print '_MediaURL: ', _MediaURL
 
             if (flags & CompressedUpdateFlags.contains_Particles) != 0:
                 # skip it, only iterate the position
+                ParticleData = _Data[pos:pos+86]
                 pos += 86
+                print 'Particles'
+
+            # parse ExtraParams
+            # ToDo: finish this up, for now we are just incrementing the position and not dealing with the data
+
+            _ExtraParams = None
+            _Flexible = None
+            _Light = None
+            _Sculpt = None
+
+            num_extra_params =  struct.unpack(">b", _Data[pos:pos+1])[0]
+            print 'Number of extra params: ', num_extra_params
+            pos += 1
+
+            for i in range(num_extra_params):
+                
+                # ExtraParam type
+                extraparam_type = struct.unpack("<H", _Data[pos:pos+2])[0]
+                pos += 2
+
+                datalength = struct.unpack("<I", _Data[pos:pos+4])[0]
+                print 'ExtraParams type: %s length: %s' % (extraparam_type, datalength)
+                pos += 4
+
+                pos += int(datalength)
 
             # ToDo: Deal with extra parameters
-            log(WARNING, "Incomplete implementation in onObjectUpdateCompressed when flags are present. Skipping parsing this object...")
-            return
+            #log(WARNING, "Incomplete implementation in onObjectUpdateCompressed when flags are present. Skipping parsing this object...")
+            #continue
 
             if (flags & CompressedUpdateFlags.contains_Sound) != 0:
                 # skip it, only iterate the position
                 #_Sound = uuid.UUID(bytes = _Data[pos:pos+16])
                 pos += 16
+                print 'Sound'
 
                 #_Gain = struct.unpack(">f", _Data[pos:pos+4])[0]
                 pos += 4
@@ -811,63 +866,88 @@ def onObjectUpdateCompressed(packet, objects):
                 #_Radius = struct.unpack(">f", _Data[pos:pos+4])[0]
                 pos += 4
 
-            if (flags & CompressedUpdateFlags.contains_NameValue) != 0:
+            if (flags & CompressedUpdateFlags.contains_NameValues) != 0:
                 # skip it, only iterate the position
                 _NameValue = ''
 
                 while _Data[pos:pos+1] != 0:
                     #_NameValue += struct.unpack(">c", _Data[pos:pos+1])[0]
                     pos += 1
+                pos += 1
+            '''
 
-
-        _PathCurve = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        _PathBegin = struct.unpack("<H", _Data[pos:pos+2])[0]
-        pos += 2
-        _PathEnd = struct.unpack("<H", _Data[pos:pos+2])[0]
-        pos += 2
-        _PathScaleX = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        _PathScaleY = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        _PathShearX = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        _PathShearY = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        _PathTwist = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        _PathTwistBegin = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        _PathRadiusOffset = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        _PathTaperX = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        _PathTaperY = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        _PathRevolutions = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        _PathSkew = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        _ProfileCurve = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        _ProfileBegin = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        _ProfileEnd = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        _ProfileHollow = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1 
-
-        # Texture handling
-        size = struct.unpack("<H", _Data[pos:pos+2])[0]
-        pos += 2
-        _TextureEntry = _Data[pos:pos+size]
-        pos += size
-
-        if (flags & CompressedUpdateFlags.TextureAnim) != 0:
-            _TextureAnim = struct.unpack("<H", _Data[pos:pos+2])[0]
-            pos += 2
-        else:
+            _PathCurve = None
+            _PathBegin = None
+            _PathEnd = None
+            _PathScaleX = None
+            _PathScaleY = None
+            _PathShearX = None
+            _PathShearY = None
+            _PathTwist = None
+            _PathTwistBegin = None
+            _PathRadiusOffset = None
+            _PathTaperX = None
+            _PathTaperY = None
+            _PathRevolutions = None
+            _PathSkew = None
+            _ProfileCurve = None
+            _ProfileBegin = None
+            _ProfileEnd = None
+            _ProfileHollow = None
+            _TextureEntry = None
             _TextureAnim = None
+            _TextureAnim = None
+
+        else:
+
+            _PathCurve = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            _PathBegin = struct.unpack("<H", _Data[pos:pos+2])[0]
+            pos += 2
+            _PathEnd = struct.unpack("<H", _Data[pos:pos+2])[0]
+            pos += 2
+            _PathScaleX = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            _PathScaleY = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            _PathShearX = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            _PathShearY = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            _PathTwist = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            _PathTwistBegin = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            _PathRadiusOffset = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            _PathTaperX = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            _PathTaperY = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            _PathRevolutions = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            _PathSkew = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            _ProfileCurve = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            _ProfileBegin = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            _ProfileEnd = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            _ProfileHollow = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1 
+
+            # Texture handling
+            size = struct.unpack("<H", _Data[pos:pos+2])[0]
+            pos += 2
+            _TextureEntry = _Data[pos:pos+size]
+            pos += size
+
+            if (flags & CompressedUpdateFlags.TextureAnim) != 0:
+                _TextureAnim = struct.unpack("<H", _Data[pos:pos+2])[0]
+                pos += 2
+            else:
+                _TextureAnim = None
 
         _object = Object(_LocalID, _State, _FullID, _CRC, _PCode, _Material, _ClickAction, _Scale, None, _ParentID, _UpdateFlags, _PathCurve, _ProfileCurve, _PathBegin, _PathEnd, _PathScaleX, _PathScaleY, _PathShearX, _PathShearY, _PathTwist, _PathTwistBegin, _PathRadiusOffset, _PathTaperX, _PathTaperY, _PathRevolutions, _PathSkew, _ProfileBegin, _ProfileEnd, _ProfileHollow, _TextureEntry, _TextureAnim, _NameValue, None, _Text, _TextColor, _MediaURL, None, _ExtraParams, _Sound, _OwnerID, _Gain, _Flags, _Radius, None, None, None, None, _Position, None, None, _Rotation, _AngularVelocity)
 
