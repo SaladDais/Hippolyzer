@@ -60,6 +60,7 @@ setup(name='pyogp.lib.base',
            'inventory_handling = pyogp.lib.base.examples.sample_inventory_handling:main',
            'object_tracking = pyogp.lib.base.examples.sample_object_tracking:main',
            'object_creation = pyogp.lib.base.examples.sample_object_creation:main',
+           'object_properties = pyogp.lib.base.examples.sample_object_properties:main',
            'chat_and_instant_messaging = pyogp.lib.base.examples.sample_chat_and_instant_messaging:main',
            'group_creation = pyogp.lib.base.examples.sample_group_creation:main'
        ],

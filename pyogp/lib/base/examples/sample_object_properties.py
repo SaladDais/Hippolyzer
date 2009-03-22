@@ -90,13 +90,18 @@ def login():
 
     # do sample script specific stuff here
 
+    # wait 30 seconds from some object data to come in
     now = time.time()
     start = now
-    while now - start < 30 and client.running:
+    while now - start < 15 and client.running:
         api.sleep()
+        now = time.time()
 
-    # matches = client.region.objects.find_objects_by_name("mini panda particles")
-    #client.region.objects.get_object_from_store(ID = 27720)
+    # let's see what's nearby
+    objects_nearby = client.region.objects.find_objects_within_radius(20)
+
+    for item in objects_nearby:
+        item.select(client)
 
     # print matches
 
@@ -117,7 +122,12 @@ def login():
     states = {}
     for _object in client.region.objects.object_store:
         if _object.State == 0:
-            print 'ID:', _object.LocalID, '\tUUID: ', _object.FullID , '\tState: ', _object.State, '\tPosition: ', _object.Position
+            #items = _object.__dict__.items()
+            #items.sort()
+            print 'Object attributes'
+            for attr in _object.__dict__:
+                print '\t\t%s:\t\t%s' % (attr, _object.__dict__[attr])
+            print ''
         else:
             if states.has_key(_object.State):
                 states[_object.State]+=1
@@ -133,7 +143,7 @@ def login():
     print ''
     print ''
     for _avatar in client.region.objects.avatar_store:
-        print 'ID:', _avatar.ID, '\tUUID: ', _avatar.FullID , '\tNameValue: ', _avatar.NameValue, '\tPosition: ', _avatar.Position
+        print 'ID:', _avatar.LocalID, '\tUUID: ', _avatar.FullID , '\tNameValue: ', _avatar.NameValue, '\tPosition: ', _avatar.Position
     print ''
     print ''
     print 'Region attributes:'

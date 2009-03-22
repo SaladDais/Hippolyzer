@@ -93,6 +93,9 @@ class Objects(object):
             onObjectUpdateCompressed_received= self.packet_handler._register('ObjectUpdateCompressed')
             onObjectUpdateCompressed_received.subscribe(onObjectUpdateCompressed, self)
 
+            onObjectProperties_received = self.packet_handler._register('ObjectProperties')
+            onObjectProperties_received.subscribe(onObjectProperties, self)
+
             onKillObject_received= self.packet_handler._register('KillObject')
             onKillObject_received.subscribe(onKillObject, self)
 
@@ -125,19 +128,19 @@ class Objects(object):
 
         # replace an existing list member, else, append
 
-        index = [self.object_store.index(_object_) for _object_ in self.object_store if _object_.ID == _object.ID]
+        index = [self.object_store.index(_object_) for _object_ in self.object_store if _object_.LocalID == _object.LocalID]
 
         if index != []:
 
             self.object_store[index[0]] = _object
 
-            if self.settings.LOG_VERBOSE: log(DEBUG, 'Replacing a stored object: %s in region \'%s\'' % (_object.ID, self.region.SimName))
+            if self.settings.LOG_VERBOSE: log(DEBUG, 'Updating a stored object: %s in region \'%s\'' % (_object.FullID, self.region.SimName))
 
         else:
 
             self.object_store.append(_object)
 
-            if self.settings.LOG_VERBOSE: log(DEBUG, 'Stored a new object: %s in region \'%s\'' % (_object.ID, self.region.SimName))
+            if self.settings.LOG_VERBOSE: log(DEBUG, 'Stored a new object: %s in region \'%s\'' % (_object.LocalID, self.region.SimName))
 
     def store_avatar(self, _objectdata):
 
@@ -150,37 +153,40 @@ class Objects(object):
             self.agent.Rotation = _objectdata.Rotation
             self.agent.AngularVelocity = _objectdata.AngularVelocity
 
-        index = [self.avatar_store.index(_avatar_) for _avatar_ in self.avatar_store if _avatar_.ID == _objectdata.ID]
+        index = [self.avatar_store.index(_avatar_) for _avatar_ in self.avatar_store if _avatar_.LocalID == _objectdata.LocalID]
 
         if index != []:
 
             self.avatar_store[index[0]] = _objectdata
 
-            if self.settings.LOG_VERBOSE: log(DEBUG, 'Replacing a stored avatar: %s in region \'%s\'' % (_objectdata.ID, self.region.SimName))
+            if self.settings.LOG_VERBOSE: log(DEBUG, 'Replacing a stored avatar: %s in region \'%s\'' % (_objectdata.LocalID, self.region.SimName))
 
         else:
 
             self.avatar_store.append(_objectdata)
 
-            if self.settings.LOG_VERBOSE: log(DEBUG, 'Stored a new avatar: %s in region \'%s\'' % (_objectdata.ID, self.region.SimName))
+            if self.settings.LOG_VERBOSE: log(DEBUG, 'Stored a new avatar: %s in region \'%s\'' % (_objectdata.LocalID, self.region.SimName))
 
-    def get_object_from_store(self, ID = None, FullID = None):
+    def get_object_from_store(self, LocalID = None, FullID = None):
         """ searches the store and returns object if stored, None otherwise """
 
-        if ID != None:
-            _object = [_object for _object in self.object_store if _object.ID == ID]
-            return _object
+        _object = []
+
+        if LocalID != None:
+            _object = [_object for _object in self.object_store if _object.LocalID == LocalID]
         elif FullID != None:
-            _object = [_object for _object in self.object_store if _object.FullID == FullID]
-            return _object
-        else:
-            return None
+            _object = [_object for _object in self.object_store if str(_object.FullID) == str(FullID)]
 
-    def get_avatar_from_store(self, ID = None, FullID = None):
+        if _object == []:
+            return None
+        else:
+            return _object[0]
+
+    def get_avatar_from_store(self, LocalID = None, FullID = None):
         """ searches the store and returns object if stored, None otherwise """
 
-        if ID != None:
-            _avatar = [_avatar for _avatar in self.avatar_store if _avatar.ID == ID]
+        if LocalID != None:
+            _avatar = [_avatar for _avatar in self.avatar_store if _avatar.LocalID == LocalID]
             return _avatar
         elif FullID != None:
             _avatar = [_avatar for _avatar in self.avatar_store if _avatar.FullID == FullID]
@@ -201,9 +207,21 @@ class Objects(object):
         return matches
 
     def find_objects_within_radius(self, radius):
-        """ returns objects nearby"""
+        """ returns objects nearby. returns a list of objects """
 
-        pass
+        if type(radius) != float:
+            radius = float(radius)
+
+        objects_nearby = []
+
+        for item in self.object_store:
+
+            if item.Position == None: continue
+
+            if abs(item.Position.X - self.agent.Position.X) <= radius and abs(item.Position.Y - self.agent.Position.Y) and abs(item.Position.Z - self.agent.Position.Z):
+                objects_nearby.append(item)
+
+        return objects_nearby
 
     def remove_object_from_store(self, ID = None):
 
@@ -237,17 +255,56 @@ class Objects(object):
             del self.object_store[index[0]]
             if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Kill on object data for object tracked as local id %s" % (ID))
 
-    def update_object_properties(self, object_properties):
-        """ update the attributes of a known object """
+    def update_multiple_objects_properties(self, object_list):
+        """ update the attributes of objects """
 
-        _object = get_object_from_store(FullID = object_properties['ObjectID'])
+        if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Processing multiple object properties updates: %s" % (len(object_list)))
+
+
+        for object_properties in object_list:
+
+            self.update_object_properties(object_properties)
+
+    def update_object_properties(self, object_properties):
+        """ update the attributes of an object
         
-        if _object == None:
-            log(WARNING, "Failed to locate object to update properties. Creating a new object")
-            _object = Object()
-            _object.update_properties(object_properties)
+        If the object is known, we update the properties. 
+        If not, we create a new object
+        """
+
+        if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Processing object properties update for FullID: %s" % (object_properties['FullID']))
+
+        if object_properties.has_key('PCode'):
+            # this is an avatar
+            if object_properties['PCode'] == 47:
+
+                #if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Creating a new avatar and storing their attributes. LocalID = %s" % (object_properties['LocalID']))
+
+                _object = Object()
+                _object.update_properties(object_properties)
+
+                self.store_avatar(_object)
+
+            else:
+
+                self.update_prim_properties(object_properties)
+
         else:
-            _object.update_properties(object_properties)
+
+                self.update_prim_properties(object_properties)
+
+    def update_prim_properties(self, prim_properties):
+
+            _object = self.get_object_from_store(FullID = prim_properties['FullID'])
+
+            if _object == None:
+                #if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Creating a new object and storing it's attributes. LocalID = %s" % (object_properties['LocalID']))
+                _object = Object()
+                _object.update_properties(prim_properties)
+                self.store_object(_object)
+            else:
+                #if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Updating an object's attributes. LocalID = %s" % (object_properties['LocalID']))
+                _object.update_properties(prim_properties)
 
     def request_object_update(self, ID = None, ID_list = None):
         """ requests object updates from the simulator
@@ -358,12 +415,12 @@ class Object(object):
     Tests: tests/test_objects.py
     """
 
-    def __init__(self, ID = None, State = None, FullID = None, CRC = None, PCode = None, Material = None, ClickAction = None, Scale = None, ObjectData = None, ParentID = None, UpdateFlags = None, PathCurve = None, ProfileCurve = None, PathBegin = None, PathEnd = None, PathScaleX = None, PathScaleY = None, PathShearX = None, PathShearY = None, PathTwist = None, PathTwistBegin = None, PathRadiusOffset = None, PathTaperX = None, PathTaperY = None, PathRevolutions = None, PathSkew = None, ProfileBegin = None, ProfileEnd = None, ProfileHollow = None, TextureEntry = None, TextureAnim = None, NameValue = None, Data = None, Text = None, TextColor = None, MediaURL = None, PSBlock = None, ExtraParams = None, Sound = None, OwnerID = None, Gain = None, Flags = None, Radius = None, JointType = None, JointPivot = None, JointAxisOrAnchor = None, FootCollisionPlane = None, Position = None, Velocity = None, Acceleration = None, Rotation = None, AngularVelocity = None):
+    def __init__(self, LocalID = None, State = None, FullID = None, CRC = None, PCode = None, Material = None, ClickAction = None, Scale = None, ObjectData = None, ParentID = None, UpdateFlags = None, PathCurve = None, ProfileCurve = None, PathBegin = None, PathEnd = None, PathScaleX = None, PathScaleY = None, PathShearX = None, PathShearY = None, PathTwist = None, PathTwistBegin = None, PathRadiusOffset = None, PathTaperX = None, PathTaperY = None, PathRevolutions = None, PathSkew = None, ProfileBegin = None, ProfileEnd = None, ProfileHollow = None, TextureEntry = None, TextureAnim = None, NameValue = None, Data = None, Text = None, TextColor = None, MediaURL = None, PSBlock = None, ExtraParams = None, Sound = None, OwnerID = None, Gain = None, Flags = None, Radius = None, JointType = None, JointPivot = None, JointAxisOrAnchor = None, FootCollisionPlane = None, Position = None, Velocity = None, Acceleration = None, Rotation = None, AngularVelocity = None):
         """ set up the object attributes """
 
-        self.ID = ID                                 # U32
+        self.LocalID = LocalID                                 # U32
         self.State = State                           # U8
-        self.FullID = uuid.UUID(str(FullID))         # LLUUID
+        self.FullID = FullID        # LLUUID
         self.CRC = CRC                               # U32 // TEMPORARY HACK FOR JAMES
         self.PCode = PCode                           # U8
         self.Material = Material                     # U8
@@ -399,8 +456,8 @@ class Object(object):
         self.MediaURL = MediaURL                     # Variable 1 // URL for web page, movie, etc.
         self.PSBlock = PSBlock                       # Variable 1
         self.ExtraParams = ExtraParams               # Variable 1
-        self.Sound = uuid.UUID(str(Sound))           # LLUUID
-        self.OwnerID = uuid.UUID(str(OwnerID))       # LLUUID // HACK object's owner id, only set if non-null sound, for muting
+        self.Sound = Sound                           # LLUUID
+        self.OwnerID = OwnerID                       # LLUUID // HACK object's owner id, only set if non-null sound, for muting
         self.Gain = Gain                             # F32
         self.Flags = Flags                           # U8
         self.Radius = Radius                         # F32 // cutoff radius
@@ -430,7 +487,7 @@ class Object(object):
         packet.HeaderData['Override'] = Override # BOOL, God-bit.
 
         ObjectData = {}
-        ObjectData['ObjectLocalID'] = self.ID
+        ObjectData['ObjectLocalID'] = self.LocalID
         ObjectData['Field'] = Field         # U32
         ObjectData['Set'] = Set             # U8
         ObjectData['Mask'] = Mask           # S32
@@ -451,7 +508,7 @@ class Object(object):
         packet.AgentData['SessionID'] = uuid.UUID(str(agent.session_id))
 
         ObjectData = {}
-        ObjectData['LocalID'] = self.ID
+        ObjectData['LocalID'] = self.LocalID
         ObjectData['Name'] = Name
 
         packet.ObjectDataBlocks.append(ObjectData)
@@ -470,7 +527,7 @@ class Object(object):
         packet.AgentData['SessionID'] = uuid.UUID(str(agent.session_id))
 
         ObjectData = {}
-        ObjectData['LocalID'] = self.ID
+        ObjectData['LocalID'] = self.LocalID
         ObjectData['Description'] = Description
 
         packet.ObjectDataBlocks.append(ObjectData)
@@ -489,7 +546,7 @@ class Object(object):
         packet.AgentData['SessionID'] = uuid.UUID(str(agent.session_id))
 
         ObjectData = {}
-        ObjectData['ObjectLocalID'] = self.ID
+        ObjectData['ObjectLocalID'] = self.LocalID
 
         packet.ObjectDataBlocks.append(ObjectData)
 
@@ -507,18 +564,18 @@ class Object(object):
         packet.AgentData['SessionID'] = uuid.UUID(str(agent.session_id))
 
         ObjectData = {}
-        ObjectData['ObjectLocalID'] = self.ID
+        ObjectData['ObjectLocalID'] = self.LocalID
 
         packet.ObjectDataBlocks.append(ObjectData)
 
         agent.region.enqueue_message(packet())
 
-    def update_properties(properties):
+    def update_properties(self, properties):
         """ takes a dictionary of attribute:value and makes it so """
 
         for attribute in properties:
 
-            setdefault(attribute, properties[attribute])
+            setattr(self, attribute, properties[attribute])
 
 class PCode(object):
     """ classifying the PCode of objects """
@@ -554,7 +611,7 @@ class ExtraParam(object):
 def onObjectUpdate(packet, objects):
     """ populates an Object instance and adds it to the Objects() store """
 
-    object_updates = []
+    object_list = []
 
     # ToDo: handle these 2 variables properly
     _RegionHandle = packet.message_data.blocks['RegionData'][0].get_variable('RegionHandle').data
@@ -562,93 +619,95 @@ def onObjectUpdate(packet, objects):
 
     for ObjectData_block in packet.message_data.blocks['ObjectData']:
 
-        _ID = ObjectData_block.get_variable('ID').data
-        _State = ObjectData_block.get_variable('State').data
-        _FullID = ObjectData_block.get_variable('FullID').data
-        _CRC = ObjectData_block.get_variable('CRC').data
-        _PCode = ObjectData_block.get_variable('PCode').data
-        _Material = ObjectData_block.get_variable('Material').data
-        _ClickAction = ObjectData_block.get_variable('ClickAction').data
-        _Scale = ObjectData_block.get_variable('Scale').data
-        _ObjectData = ObjectData_block.get_variable('ObjectData').data
-        _ParentID = ObjectData_block.get_variable('ParentID').data
-        _UpdateFlags = ObjectData_block.get_variable('UpdateFlags').data
-        _PathCurve = ObjectData_block.get_variable('PathCurve').data
-        _ProfileCurve = ObjectData_block.get_variable('ProfileCurve').data
-        _PathBegin = ObjectData_block.get_variable('PathBegin').data
-        _PathEnd = ObjectData_block.get_variable('PathEnd').data
-        _PathScaleX = ObjectData_block.get_variable('PathScaleX').data
-        _PathScaleY = ObjectData_block.get_variable('PathScaleY').data
-        _PathShearX = ObjectData_block.get_variable('PathShearX').data
-        _PathShearY = ObjectData_block.get_variable('PathShearY').data
-        _PathTwist = ObjectData_block.get_variable('PathTwist').data
-        _PathTwistBegin = ObjectData_block.get_variable('PathTwistBegin').data
-        _PathRadiusOffset = ObjectData_block.get_variable('PathRadiusOffset').data
-        _PathTaperX = ObjectData_block.get_variable('PathTaperX').data
-        _PathTaperY = ObjectData_block.get_variable('PathTaperY').data
-        _PathRevolutions = ObjectData_block.get_variable('PathRevolutions').data
-        _PathSkew = ObjectData_block.get_variable('PathSkew').data
-        _ProfileBegin = ObjectData_block.get_variable('ProfileBegin').data
-        _ProfileEnd = ObjectData_block.get_variable('ProfileEnd').data
-        _ProfileHollow = ObjectData_block.get_variable('ProfileHollow').data
-        _TextureEntry = ObjectData_block.get_variable('TextureEntry').data
-        _TextureAnim = ObjectData_block.get_variable('TextureAnim').data
-        _NameValue = ObjectData_block.get_variable('NameValue').data
-        _Data = ObjectData_block.get_variable('Data').data
-        _Text = ObjectData_block.get_variable('Text').data
-        _TextColor = ObjectData_block.get_variable('TextColor').data
-        _MediaURL = ObjectData_block.get_variable('MediaURL').data
-        _PSBlock = ObjectData_block.get_variable('PSBlock').data
-        _ExtraParams = ObjectData_block.get_variable('ExtraParams').data
-        _Sound = ObjectData_block.get_variable('Sound').data
-        _OwnerID = ObjectData_block.get_variable('OwnerID').data
-        _Gain = ObjectData_block.get_variable('Gain').data
-        _Flags = ObjectData_block.get_variable('Flags').data
-        _Radius = ObjectData_block.get_variable('Radius').data
-        _JointType = ObjectData_block.get_variable('JointType').data
-        _JointPivot = ObjectData_block.get_variable('JointPivot').data
-        _JointAxisOrAnchor = ObjectData_block.get_variable('JointAxisOrAnchor').data
+        object_properties = {}
+
+        object_properties['LocalID'] = ObjectData_block.get_variable('ID').data
+        object_properties['State'] = ObjectData_block.get_variable('State').data
+        object_properties['FullID'] = ObjectData_block.get_variable('FullID').data
+        object_properties['CRC'] = ObjectData_block.get_variable('CRC').data
+        object_properties['PCode'] = ObjectData_block.get_variable('PCode').data
+        object_properties['Material'] = ObjectData_block.get_variable('Material').data
+        object_properties['ClickAction'] = ObjectData_block.get_variable('ClickAction').data
+        object_properties['Scale'] = ObjectData_block.get_variable('Scale').data
+        object_properties['ObjectData'] = ObjectData_block.get_variable('ObjectData').data
+        object_properties['ParentID'] = ObjectData_block.get_variable('ParentID').data
+        object_properties['UpdateFlags'] = ObjectData_block.get_variable('UpdateFlags').data
+        object_properties['PathCurve'] = ObjectData_block.get_variable('PathCurve').data
+        object_properties['ProfileCurve'] = ObjectData_block.get_variable('ProfileCurve').data
+        object_properties['PathBegin'] = ObjectData_block.get_variable('PathBegin').data
+        object_properties['PathEnd'] = ObjectData_block.get_variable('PathEnd').data
+        object_properties['PathScaleX'] = ObjectData_block.get_variable('PathScaleX').data
+        object_properties['PathScaleY'] = ObjectData_block.get_variable('PathScaleY').data
+        object_properties['PathShearX'] = ObjectData_block.get_variable('PathShearX').data
+        object_properties['PathShearY'] = ObjectData_block.get_variable('PathShearY').data
+        object_properties['PathTwist'] = ObjectData_block.get_variable('PathTwist').data
+        object_properties['PathTwistBegin'] = ObjectData_block.get_variable('PathTwistBegin').data
+        object_properties['PathRadiusOffset'] = ObjectData_block.get_variable('PathRadiusOffset').data
+        object_properties['PathTaperX'] = ObjectData_block.get_variable('PathTaperX').data
+        object_properties['PathTaperY'] = ObjectData_block.get_variable('PathTaperY').data
+        object_properties['PathRevolutions'] = ObjectData_block.get_variable('PathRevolutions').data
+        object_properties['PathSkew'] = ObjectData_block.get_variable('PathSkew').data
+        object_properties['ProfileBegin'] = ObjectData_block.get_variable('ProfileBegin').data
+        object_properties['ProfileEnd'] = ObjectData_block.get_variable('ProfileEnd').data
+        object_properties['ProfileHollow'] = ObjectData_block.get_variable('ProfileHollow').data
+        object_properties['TextureEntry'] = ObjectData_block.get_variable('TextureEntry').data
+        object_properties['TextureAnim'] = ObjectData_block.get_variable('TextureAnim').data
+        object_properties['NameValue'] = ObjectData_block.get_variable('NameValue').data
+        object_properties['Data'] = ObjectData_block.get_variable('Data').data
+        object_properties['Text'] = ObjectData_block.get_variable('Text').data
+        object_properties['TextColor'] = ObjectData_block.get_variable('TextColor').data
+        object_properties['MediaURL'] = ObjectData_block.get_variable('MediaURL').data
+        object_properties['PSBlock'] = ObjectData_block.get_variable('PSBlock').data
+        object_properties['ExtraParams'] = ObjectData_block.get_variable('ExtraParams').data
+        object_properties['Sound'] = ObjectData_block.get_variable('Sound').data
+        object_properties['OwnerID'] = ObjectData_block.get_variable('OwnerID').data
+        object_properties['Gain'] = ObjectData_block.get_variable('Gain').data
+        object_properties['Flags'] = ObjectData_block.get_variable('Flags').data
+        object_properties['Radius'] = ObjectData_block.get_variable('Radius').data
+        object_properties['JointType'] = ObjectData_block.get_variable('JointType').data
+        object_properties['JointPivot'] = ObjectData_block.get_variable('JointPivot').data
+        object_properties['JointAxisOrAnchor'] = ObjectData_block.get_variable('JointAxisOrAnchor').data
 
         # deal with the data stored in _ObjectData
         # see http://wiki.secondlife.com/wiki/ObjectUpdate#ObjectData_Format for details
 
-        FootCollisionPlane = None 
-        Position = None
-        Velocity = None
-        Acceleration = None
-        Rotation = None
-        AngularVelocity = None
+        object_properties['FootCollisionPlane'] = None 
+        object_properties['Position'] = None
+        object_properties['Velocity'] = None
+        object_properties['Acceleration'] = None
+        object_properties['Rotation'] = None
+        object_properties['AngularVelocity'] = None
 
-        if len(_ObjectData) == 76:
+        if len(object_properties['ObjectData']) == 76:
 
             # Foot collision plane. LLVector4.
             # Angular velocity is ignored and set to 0. Falls through to 60 bytes parser. 
 
-            FootCollisionPlane = Quaternion(_ObjectData, 0)
-            Position = Vector3(_ObjectData, 16)
-            Velocity = Vector3(_ObjectData, 28)
-            Acceleration = Vector3(_ObjectData, 40)
-            Rotation = Vector3(_ObjectData, 52)
-            AngularVelocity = Vector3(_ObjectData, 60)
+            object_properties['FootCollisionPlane'] = Quaternion(object_properties['ObjectData'], 0)
+            object_properties['Position'] = Vector3(object_properties['ObjectData'], 16)
+            object_properties['Velocity'] = Vector3(object_properties['ObjectData'], 28)
+            object_properties['Acceleration'] = Vector3(object_properties['ObjectData'], 40)
+            object_properties['Rotation'] = Vector3(object_properties['ObjectData'], 52)
+            object_properties['AngularVelocity'] = Vector3(object_properties['ObjectData'], 60)
 
-        elif len(_ObjectData) == 60:
+        elif len(object_properties['ObjectData']) == 60:
 
             # 32 bit precision update.
 
-            Position = Vector3(_ObjectData, 0)
-            Velocity = Vector3(_ObjectData, 12)
-            Acceleration = Vector3(_ObjectData, 24)
-            Rotation = Vector3(_ObjectData, 36)
-            AngularVelocity = Vector3(_ObjectData, 48)
+            object_properties['Position'] = Vector3(object_properties['ObjectData'], 0)
+            object_properties['Velocity'] = Vector3(object_properties['ObjectData'], 12)
+            object_properties['Acceleration'] = Vector3(object_properties['ObjectData'], 24)
+            object_properties['Rotation'] = Vector3(object_properties['ObjectData'], 36)
+            object_properties['AngularVelocity'] = Vector3(object_properties['ObjectData'], 48)
 
-        elif len(_ObjectData) == 48:
+        elif len(object_properties['ObjectData']) == 48:
 
             # Foot collision plane. LLVector4 
             # Falls through to 32 bytes parser.
 
-            log(DEBUG, "48 bit ObjectData precision not implemented")
+            log(WARNING, "48 bit ObjectData precision not implemented")
 
-        elif len(_ObjectData) == 32:
+        elif len(object_properties['ObjectData']) == 32:
 
             # 32 bit precision update.
 
@@ -657,9 +716,9 @@ def onObjectUpdate(packet, objects):
             # Acceleration. U16Vec3.
             # Rotation. U16Rot(4xU16).
             # Angular velocity. LLVector3.
-            log(DEBUG, "32 bit ObjectData precision not implemented")
+            log(WARNING, "32 bit ObjectData precision not implemented")
 
-        elif len(_ObjectData) == 16:
+        elif len(object_properties['ObjectData']) == 16:
 
             # 8 bit precision update.
 
@@ -668,14 +727,11 @@ def onObjectUpdate(packet, objects):
             # Acceleration. U8Vec3.
             # Rotation. U8Rot(4xU8).
             # Angular velocity. U8Vec3
-            log(DEBUG, "16 bit ObjectData precision not implemented")
+            log(WARNING, "16 bit ObjectData precision not implemented")
 
-        _object = Object(_ID, _State, _FullID, _CRC, _PCode, _Material, _ClickAction, _Scale, _ObjectData, _ParentID, _UpdateFlags, _PathCurve, _ProfileCurve, _PathBegin, _PathEnd, _PathScaleX, _PathScaleY, _PathShearX, _PathShearY, _PathTwist, _PathTwistBegin, _PathRadiusOffset, _PathTaperX, _PathTaperY, _PathRevolutions, _PathSkew, _ProfileBegin, _ProfileEnd, _ProfileHollow, _TextureEntry, _TextureAnim, _NameValue, _Data, _Text, _TextColor, _MediaURL, _PSBlock, _ExtraParams, _Sound, _OwnerID, _Gain, _Flags, _Radius, _JointType, _JointPivot, _JointAxisOrAnchor, FootCollisionPlane, Position, Velocity, Acceleration, Rotation, AngularVelocity)
+        object_list.append(object_properties)
 
-        object_updates.append(_object)
-
-    # add the object to the store
-    objects.process_multiple_object_updates(object_updates)
+    objects.update_multiple_objects_properties(object_list)
 
 def onObjectUpdateCached(packet, objects):
     """ borrowing from libomv, we'll request object data for all data coming in via ObjectUpdateCached"""
@@ -688,28 +744,28 @@ def onObjectUpdateCached(packet, objects):
 
     for ObjectData_block in packet.message_data.blocks['ObjectData']:
 
-        _ID = ObjectData_block.get_variable('ID').data
+        LocalID = ObjectData_block.get_variable('ID').data
         _CRC = ObjectData_block.get_variable('CRC').data
         _UpdateFlags = ObjectData_block.get_variable('UpdateFlags').data
 
         # Objects.request_object_update() expects a tuple of (_ID, CacheMissType)
 
         # see if we have the object stored already
-        _object = objects.get_object_from_store(ID = _ID)
+        _object = objects.get_object_from_store(LocalID = LocalID)
 
         if _object == None or _object == []:
             CacheMissType = 1
         else:
             CacheMissType = 0
 
-        _request_list.append((_ID, CacheMissType))
+        _request_list.append((LocalID, CacheMissType))
 
     # ask the simulator for updates
     objects.request_object_update(ID_list = _request_list)
 
 def onObjectUpdateCompressed(packet, objects):
 
-    object_updates = []
+    object_list = []
 
     # ToDo: handle these 2 variables properly
     _RegionHandle = packet.message_data.blocks['RegionData'][0].get_variable('RegionHandle').data
@@ -717,89 +773,94 @@ def onObjectUpdateCompressed(packet, objects):
 
     for ObjectData_block in packet.message_data.blocks['ObjectData']:
 
-        _UpdateFlags = ObjectData_block.get_variable('UpdateFlags').data
-        _Data = ObjectData_block.get_variable('Data').data
+        object_properties = {}
+
+        object_properties['UpdateFlags'] = ObjectData_block.get_variable('UpdateFlags').data
+        object_properties['Data'] = ObjectData_block.get_variable('Data').data
+        _Data = object_properties['Data']
 
         pos = 0         # position in the binary string
-        _FullID = UUID(bytes = _Data, offset = 0)        # LLUUID
+        object_properties['FullID'] = UUID(bytes = _Data, offset = 0)        # LLUUID
         pos += 16
-        _LocalID = struct.unpack("<I", _Data[pos:pos+4])[0]
+        object_properties['LocalID'] = struct.unpack("<I", _Data[pos:pos+4])[0]
         pos += 4
-        _PCode = struct.unpack(">B", _Data[pos:pos+1])[0]
+        object_properties['PCode'] = struct.unpack(">B", _Data[pos:pos+1])[0]
         pos += 1
 
-        if _PCode != 9:         # if it is not a prim, stop.
-            return
+        if object_properties['PCode'] != 9:         # if it is not a prim, stop.
+            log(WARNING, 'Fix Me!! Skipping parsing of ObjectUpdateCompressed packet when it is not a prim.')
+            # we ought to parse it and make sense of the data...
+            continue
         
-        _State = struct.unpack(">B", _Data[pos:pos+1])[0]
+        object_properties['State'] = struct.unpack(">B", _Data[pos:pos+1])[0]
         pos += 1
-        _CRC = struct.unpack("<I", _Data[pos:pos+4])[0]
+        object_properties['CRC'] = struct.unpack("<I", _Data[pos:pos+4])[0]
         pos += 4
-        _Material = struct.unpack(">B", _Data[pos:pos+1])[0]
+        object_properties['Material'] = struct.unpack(">B", _Data[pos:pos+1])[0]
         pos += 1
-        _ClickAction = struct.unpack(">B", _Data[pos:pos+1])[0]
+        object_properties['ClickAction'] = struct.unpack(">B", _Data[pos:pos+1])[0]
         pos += 1
-        _Scale = Vector3(_Data, pos)
+        object_properties['Scale'] = Vector3(_Data, pos)
         pos += 12
-        _Position = Vector3(_Data, pos)
+        object_properties['Position'] = Vector3(_Data, pos)
         pos += 12
-        _Rotation = Vector3(_Data, pos)
+        object_properties['Rotation'] = Vector3(_Data, pos)
         pos += 12
-        flags = struct.unpack(">B", _Data[pos:pos+1])[0]
+        object_properties['Flags'] = struct.unpack(">B", _Data[pos:pos+1])[0]
         pos += 1
-        _OwnerID = UUID(_Data, pos)
+        object_properties['OwnerID'] = UUID(_Data, pos)
         pos += 16
 
         # Placeholder vars, to be populated via flags if present
-        _AngularVelocity = Vector3()
-        _ParentID = UUID()
-        _Text = ''
-        _TextColor = None
-        _MediaURL = ''
-        _Sound = UUID()
-        _Gain = 0
-        _Flags = 0
-        _Radius = 0
-        _NameValue = ''
-        _ExtraParams = None
+        object_properties['AngularVelocity'] = Vector3()
+        object_properties['ParentID'] = UUID()
+        object_properties['Text'] = ''
+        object_properties['TextColor'] = None
+        object_properties['MediaURL'] = ''
+        object_properties['Sound'] = UUID()
+        object_properties['Gain'] = 0
+        object_properties['Flags'] = 0
+        object_properties['Radius'] = 0
+        object_properties['NameValue'] = ''
+        object_properties['ExtraParams'] = None
 
-        if flags != 0:
+        if object_properties['Flags'] != 0:
 
-            log(WARNING, "FixMe! Quiting parsing an ObjectUpdateCompressed packet with flags due to incomplete implemention. Storing a partial representation of an object with uuid os %s" % (_FullID))
+            log(WARNING, "FixMe! Quiting parsing an ObjectUpdateCompressed packet with flags due to incomplete implemention. Storing a partial representation of an object with uuid of %s" % (_FullID))
             
             # the commented code is not working right, we need to figure out why!
             # ExtraParams in particular seemed troublesome
 
             '''
-            print 'Flags: ', flags
+            print 'Flags: ', Flags
 
-            if (flags & CompressedUpdateFlags.contains_AngularVelocity) != 0:
+            if (Flags & CompressedUpdateFlags.contains_AngularVelocity) != 0:
                 _AngularVelocity = Vector3(_Data, pos)
                 pos += 12
                 print 'AngularVelocity: ', _AngularVelocity
             else:
                 _AngularVelocity = None
 
-            if (flags & CompressedUpdateFlags.contains_Parent) != 0:
+            if (Flags & CompressedUpdateFlags.contains_Parent) != 0:
                 _ParentID = UUID(_Data, pos)
                 pos += 16
                 print 'ParentID: ', _ParentID
             else:
                 _ParentID = None
 
-            if (flags & CompressedUpdateFlags.Tree) != 0:
+            if (Flags & CompressedUpdateFlags.Tree) != 0:
                 # skip it, only iterate the position
                 pos += 1
                 print 'Tree'
 
-            if (flags & CompressedUpdateFlags.ScratchPad) != 0:
+            if (Flags & CompressedUpdateFlags.ScratchPad) != 0:
                 # skip it, only iterate the position
                 size = struct.unpack(">B", _Data[pos:pos+1])[0]
                 pos += 1
                 pos += size
                 print 'Scratchpad size'
 
-            if (flags & CompressedUpdateFlags.contains_Text) != 0:
+            if (Flags & CompressedUpdateFlags.contains_Text) != 0:
                 # skip it, only iterate the position
                 _Text = ''
                 while struct.unpack(">B", _Data[pos:pos+1])[0] != 0:
@@ -809,7 +870,7 @@ def onObjectUpdateCompressed(packet, objects):
                 pos += 4
                 print '_TextColor: ', _TextColor
 
-            if (flags & CompressedUpdateFlags.MediaURL) != 0:
+            if (Flags & CompressedUpdateFlags.MediaURL) != 0:
                 # skip it, only iterate the position
                 _MediaURL = ''
                 while struct.unpack(">B", _Data[pos:pos+1])[0] != 0:
@@ -817,7 +878,7 @@ def onObjectUpdateCompressed(packet, objects):
                 pos += 1
                 print '_MediaURL: ', _MediaURL
 
-            if (flags & CompressedUpdateFlags.contains_Particles) != 0:
+            if (Flags & CompressedUpdateFlags.contains_Particles) != 0:
                 # skip it, only iterate the position
                 ParticleData = _Data[pos:pos+86]
                 pos += 86
@@ -826,7 +887,6 @@ def onObjectUpdateCompressed(packet, objects):
             # parse ExtraParams
             # ToDo: finish this up, for now we are just incrementing the position and not dealing with the data
 
-            _ExtraParams = None
             _Flexible = None
             _Light = None
             _Sculpt = None
@@ -851,7 +911,7 @@ def onObjectUpdateCompressed(packet, objects):
             #log(WARNING, "Incomplete implementation in onObjectUpdateCompressed when flags are present. Skipping parsing this object...")
             #continue
 
-            if (flags & CompressedUpdateFlags.contains_Sound) != 0:
+            if (Flags & CompressedUpdateFlags.contains_Sound) != 0:
                 # skip it, only iterate the position
                 #_Sound = uuid.UUID(bytes = _Data[pos:pos+16])
                 pos += 16
@@ -866,7 +926,7 @@ def onObjectUpdateCompressed(packet, objects):
                 #_Radius = struct.unpack(">f", _Data[pos:pos+4])[0]
                 pos += 4
 
-            if (flags & CompressedUpdateFlags.contains_NameValues) != 0:
+            if (Flags & CompressedUpdateFlags.contains_NameValues) != 0:
                 # skip it, only iterate the position
                 _NameValue = ''
 
@@ -876,85 +936,82 @@ def onObjectUpdateCompressed(packet, objects):
                 pos += 1
             '''
 
-            _PathCurve = None
-            _PathBegin = None
-            _PathEnd = None
-            _PathScaleX = None
-            _PathScaleY = None
-            _PathShearX = None
-            _PathShearY = None
-            _PathTwist = None
-            _PathTwistBegin = None
-            _PathRadiusOffset = None
-            _PathTaperX = None
-            _PathTaperY = None
-            _PathRevolutions = None
-            _PathSkew = None
-            _ProfileCurve = None
-            _ProfileBegin = None
-            _ProfileEnd = None
-            _ProfileHollow = None
-            _TextureEntry = None
-            _TextureAnim = None
-            _TextureAnim = None
+            object_properties['PathCurve'] = None
+            object_properties['PathBegin'] = None
+            object_properties['PathEnd'] = None
+            object_properties['PathScaleX'] = None
+            object_properties['PathScaleY'] = None
+            object_properties['PathShearX'] = None
+            object_properties['PathShearY'] = None
+            object_properties['PathTwist'] = None
+            object_properties['PathTwistBegin'] = None
+            object_properties['PathRadiusOffset'] = None
+            object_properties['PathTaperX'] = None
+            object_properties['PathTaperY'] = None
+            object_properties['PathRevolutions'] = None
+            object_properties['PathSkew'] = None
+            object_properties['ProfileCurve'] = None
+            object_properties['ProfileBegin'] = None
+            object_properties['ProfileEnd'] = None
+            object_properties['ProfileHollow'] = None
+            object_properties['TextureEntry'] = None
+            object_properties['TextureAnim'] = None
+            object_properties['TextureAnim'] = None
 
         else:
 
-            _PathCurve = struct.unpack(">B", _Data[pos:pos+1])[0]
+            object_properties['PathCurve'] = struct.unpack(">B", _Data[pos:pos+1])[0]
             pos += 1
-            _PathBegin = struct.unpack("<H", _Data[pos:pos+2])[0]
+            object_properties['PathBegin'] = struct.unpack("<H", _Data[pos:pos+2])[0]
             pos += 2
-            _PathEnd = struct.unpack("<H", _Data[pos:pos+2])[0]
+            object_properties['PathEnd'] = struct.unpack("<H", _Data[pos:pos+2])[0]
             pos += 2
-            _PathScaleX = struct.unpack(">B", _Data[pos:pos+1])[0]
+            object_properties['PathScaleX'] = struct.unpack(">B", _Data[pos:pos+1])[0]
             pos += 1
-            _PathScaleY = struct.unpack(">B", _Data[pos:pos+1])[0]
+            object_properties['PathScaleY'] = struct.unpack(">B", _Data[pos:pos+1])[0]
             pos += 1
-            _PathShearX = struct.unpack(">B", _Data[pos:pos+1])[0]
+            object_properties['PathShearX'] = struct.unpack(">B", _Data[pos:pos+1])[0]
             pos += 1
-            _PathShearY = struct.unpack(">B", _Data[pos:pos+1])[0]
+            object_properties['PathShearY'] = struct.unpack(">B", _Data[pos:pos+1])[0]
             pos += 1
-            _PathTwist = struct.unpack(">B", _Data[pos:pos+1])[0]
+            object_properties['PathTwist'] = struct.unpack(">B", _Data[pos:pos+1])[0]
             pos += 1
-            _PathTwistBegin = struct.unpack(">B", _Data[pos:pos+1])[0]
+            object_properties['PathTwistBegin'] = struct.unpack(">B", _Data[pos:pos+1])[0]
             pos += 1
-            _PathRadiusOffset = struct.unpack(">B", _Data[pos:pos+1])[0]
+            object_properties['PathRadiusOffset'] = struct.unpack(">B", _Data[pos:pos+1])[0]
             pos += 1
-            _PathTaperX = struct.unpack(">B", _Data[pos:pos+1])[0]
+            object_properties['PathTaperX'] = struct.unpack(">B", _Data[pos:pos+1])[0]
             pos += 1
-            _PathTaperY = struct.unpack(">B", _Data[pos:pos+1])[0]
+            object_properties['PathTaperY'] = struct.unpack(">B", _Data[pos:pos+1])[0]
             pos += 1
-            _PathRevolutions = struct.unpack(">B", _Data[pos:pos+1])[0]
+            object_properties['PathRevolutions'] = struct.unpack(">B", _Data[pos:pos+1])[0]
             pos += 1
-            _PathSkew = struct.unpack(">B", _Data[pos:pos+1])[0]
+            object_properties['PathSkew'] = struct.unpack(">B", _Data[pos:pos+1])[0]
             pos += 1
-            _ProfileCurve = struct.unpack(">B", _Data[pos:pos+1])[0]
+            object_properties['ProfileCurve'] = struct.unpack(">B", _Data[pos:pos+1])[0]
             pos += 1
-            _ProfileBegin = struct.unpack(">B", _Data[pos:pos+1])[0]
+            object_properties['ProfileBegin'] = struct.unpack(">B", _Data[pos:pos+1])[0]
             pos += 1
-            _ProfileEnd = struct.unpack(">B", _Data[pos:pos+1])[0]
+            object_properties['ProfileEnd'] = struct.unpack(">B", _Data[pos:pos+1])[0]
             pos += 1
-            _ProfileHollow = struct.unpack(">B", _Data[pos:pos+1])[0]
+            object_properties['ProfileHollow'] = struct.unpack(">B", _Data[pos:pos+1])[0]
             pos += 1 
 
             # Texture handling
             size = struct.unpack("<H", _Data[pos:pos+2])[0]
             pos += 2
-            _TextureEntry = _Data[pos:pos+size]
+            object_properties['TextureEntry'] = _Data[pos:pos+size]
             pos += size
 
-            if (flags & CompressedUpdateFlags.TextureAnim) != 0:
-                _TextureAnim = struct.unpack("<H", _Data[pos:pos+2])[0]
+            if (object_properties['Flags'] & CompressedUpdateFlags.TextureAnim) != 0:
+                object_properties['TextureAnim'] = struct.unpack("<H", _Data[pos:pos+2])[0]
                 pos += 2
             else:
-                _TextureAnim = None
+                object_properties['TextureAnim'] = None
 
-        _object = Object(_LocalID, _State, _FullID, _CRC, _PCode, _Material, _ClickAction, _Scale, None, _ParentID, _UpdateFlags, _PathCurve, _ProfileCurve, _PathBegin, _PathEnd, _PathScaleX, _PathScaleY, _PathShearX, _PathShearY, _PathTwist, _PathTwistBegin, _PathRadiusOffset, _PathTaperX, _PathTaperY, _PathRevolutions, _PathSkew, _ProfileBegin, _ProfileEnd, _ProfileHollow, _TextureEntry, _TextureAnim, _NameValue, None, _Text, _TextColor, _MediaURL, None, _ExtraParams, _Sound, _OwnerID, _Gain, _Flags, _Radius, None, None, None, None, _Position, None, None, _Rotation, _AngularVelocity)
+        object_list.append(object_properties)
 
-        object_updates.append(_object)
-
-    # add the object to the store
-    objects.process_multiple_object_updates(object_updates)
+    objects.update_multiple_objects_properties(object_list)
 
 def onKillObject(packet, objects):
 
@@ -964,11 +1021,13 @@ def onKillObject(packet, objects):
 
 def onObjectProperties(packet, objects):
 
-    object_properties = {}
+    object_list = []
 
     for ObjectData_block in packet.message_data.blocks['ObjectData']:
 
-        object_properties['ObjectID'] = ObjectData_block.get_variable('ObjectID').data
+        object_properties = {}
+
+        object_properties['FullID'] = ObjectData_block.get_variable('ObjectID').data
         object_properties['CreatorID'] = ObjectData_block.get_variable('CreatorID').data
         object_properties['OwnerID'] = ObjectData_block.get_variable('OwnerID').data
         object_properties['GroupID'] = ObjectData_block.get_variable('GroupID').data
@@ -979,7 +1038,7 @@ def onObjectProperties(packet, objects):
         object_properties['EveryoneMask'] = ObjectData_block.get_variable('EveryoneMask').data
         object_properties['NextOwnerMask'] = ObjectData_block.get_variable('NextOwnerMask').data
         object_properties['OwnershipCost'] = ObjectData_block.get_variable('OwnershipCost').data
-        object_properties['TaxRate'] = ObjectData_block.get_variable('TaxRate').data
+        #object_properties['TaxRate'] = ObjectData_block.get_variable('TaxRate').data
         object_properties['SaleType'] = ObjectData_block.get_variable('SaleType').data
         object_properties['SalePrice'] = ObjectData_block.get_variable('SalePrice').data
         object_properties['AggregatePerms'] = ObjectData_block.get_variable('AggregatePerms').data
@@ -997,7 +1056,11 @@ def onObjectProperties(packet, objects):
         object_properties['SitName'] = ObjectData_block.get_variable('SitName').data
         object_properties['TextureID'] = ObjectData_block.get_variable('TextureID').data
 
-        objects.update_object_properties(object_properties)
+        object_list.append(object_properties)
+
+    objects.update_multiple_objects_properties(object_list)
+
+        #objects.update_object_properties(object_properties)
     '''
     // ObjectProperties
     // Extended information such as creator, permissions, etc.
