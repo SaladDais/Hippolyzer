@@ -66,9 +66,9 @@ class TestObjects(unittest.TestCase):
         known_objects = []
 
         for _object in  self.object_store.object_store:
-            known_objects.append((_object.FullID, _object.ID))
+            known_objects.append((str(_object.FullID), _object.LocalID))
 
-        self.assertEquals(known_objects, [(uuid.UUID('2b7f7a6e-32c5-dbfd-e2c7-926d1a9f0aca'), 30452L), (uuid.UUID('1dd5efe2-faaf-1864-5ac9-bc61c5d8d7ea'), 30451L), (uuid.UUID('50b8926a-9efe-aa75-c4e9-d8946ba812a5'), 30400L), (uuid.UUID('cab68676-a725-e9d9-25b0-6d925f0bc5f2'), 30399L), (uuid.UUID('78716204-2664-69ba-eaa5-2587d877d4ef'), 29840L), (uuid.UUID('93cbc3e1-8dab-07ea-d4ed-2631aaa569fc'), 30348L)])
+        self.assertEquals(known_objects, [(str(uuid.UUID('2b7f7a6e-32c5-dbfd-e2c7-926d1a9f0aca')), 30452), (str(uuid.UUID('1dd5efe2-faaf-1864-5ac9-bc61c5d8d7ea')), 30451), (str(uuid.UUID('50b8926a-9efe-aa75-c4e9-d8946ba812a5')), 30400), (str(uuid.UUID('cab68676-a725-e9d9-25b0-6d925f0bc5f2')), 30399), (str(uuid.UUID('78716204-2664-69ba-eaa5-2587d877d4ef')), 29840), (str(uuid.UUID('93cbc3e1-8dab-07ea-d4ed-2631aaa569fc')), 30348)])
 
     '''
     def test_onObjectUpdateCompressed_with_extraparams(self):
