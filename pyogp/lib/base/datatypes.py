@@ -43,9 +43,18 @@ class Vector3(object):
 
         else:
 
-            self.X = X
-            self.Y = Y
-            self.Z = Z
+            if type(X) != float: 
+                self.X = float(X)
+            else:
+                self.X = X
+            if type(Y) != float:
+                self.Y = float(Y)
+            else:
+                self.Y = Y
+            if type(Z) != float:
+                self.Z = float(Z)
+            else:
+                self.Z = Z
 
     def unpack_from_bytes(self, bytes, offset):
         """ unpack floats from binary """
@@ -54,6 +63,11 @@ class Vector3(object):
         self.X = struct.unpack("<f", bytes[offset:offset+4])[0]
         self.Y = struct.unpack("<f", bytes[offset+4:offset+8])[0]
         self.Z = struct.unpack("<f", bytes[offset+8:offset+12])[0]
+
+    def get_bytes(self):
+        """ get bytes """
+
+        return struct.pack("<3f", self.X, self.Y, self.Z)
 
     def data(self):
 
@@ -80,10 +94,22 @@ class Quaternion(object):
 
         else:
 
-            self.X = X
-            self.Y = Y
-            self.Z = Z
-            self.W = W
+            if type(X) != float:
+                self.X = float(X)
+            else:
+                self.X = X
+            if type(Y) != float:
+                self.Y = float(Y)
+            else:
+                self.Y = Y            
+            if type(Z) != float: 
+                self.Z = float(Z)
+            else:
+                self.Z = Z
+            if type(W) != float: 
+                self.W = float(W)
+            else:
+                self.W = W
 
     def unpack_from_bytes(self, bytes, offset):
         """ unpack floats from binary """
@@ -94,6 +120,10 @@ class Quaternion(object):
         self.Z = struct.unpack("<f", bytes[offset+8:offset+12])[0]
         self.W = struct.unpack("<f", bytes[offset+12:offset+16])[0]
 
+    def get_bytes(self):
+        """ get bytes """
+
+        return struct.pack("<4f", self.X, self.Y, self.Z, self.W)
 
     def data(self):
 
@@ -131,6 +161,11 @@ class UUID(object):
 
         # unpack from binary
         self.uuid = uuid.UUID(bytes = bytes[offset:offset+16])
+
+    def get_bytes(self):
+        """ get bytes """
+
+        return self.uuid.bytes
 
     def data(self):
         """ represent a uuid as, well, a uuid """
