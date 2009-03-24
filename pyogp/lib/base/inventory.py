@@ -103,9 +103,10 @@ class Inventory(object):
 
         index = [self.folders.index(folder) for folder in self.folders if folder.FolderID == inventory_item.FolderID]
 
-        if self.settings.LOG_VERBOSE: log(DEBUG, 'in _add_inventory_item: length of index is : %d' % len(index))
-
+        # did not find a folder for this item
+        # this is probably a case we are not handling correctly
         if len(index) == 0:
+            if self.settings.LOG_VERBOSE: log(DEBUG, 'Did not find parent folder %s for Inventory Item %s: %s' % (inventory_item.ItemID, inventory_item.FolderID, inventory_item.Name))
             return
 
         try:
