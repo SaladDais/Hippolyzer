@@ -20,9 +20,11 @@ $/LicenseInfo$
 
 # standard python libs
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
+import time
 
 # related
 from indra.base import llsd
+from eventlet import api
 
 # pyogp
 from pyogp.lib.base.exc import DataParsingError, DeserializationFailed
@@ -90,7 +92,6 @@ class Helpers(object):
         """ just a null event handler for watching aka fully parsing specific packets """
 
         pass
-
 
 class ListLLSDSerializer(object):
     """adapter for serializing a list to LLSD
@@ -206,3 +207,35 @@ class LLSDDeserializer(object):
         data = fp.read()
         return self.deserialize_string(data)
 
+class Wait(object):
+    """ a simple timer that blocks a calling routine for the specified number of seconds
+
+    done since we were writing timing loops in test scripts repeatedly
+    returns True when it's done
+     """
+
+    def __init__(self, duration):
+
+        self.duration = int(duration)
+
+        # let's be nice and enabled a kill switch
+        self.enabled = False
+
+        self.run()
+
+    def run(self):
+
+        now = time.time()
+        start = now
+        self.enabled = True
+
+        while self.enabled and now - start < self.duration:
+
+            api.sleep()
+            now = time.time()
+
+        return True
+
+    def stop(self):
+
+        self.enabled = False

@@ -134,13 +134,13 @@ class Objects(object):
 
             self.object_store[index[0]] = _object
 
-            if self.settings.LOG_VERBOSE: log(DEBUG, 'Updating a stored object: %s in region \'%s\'' % (_object.FullID, self.region.SimName))
+            #if self.settings.LOG_VERBOSE: log(DEBUG, 'Updating a stored object: %s in region \'%s\'' % (_object.FullID, self.region.SimName))
 
         else:
 
             self.object_store.append(_object)
 
-            if self.settings.LOG_VERBOSE: log(DEBUG, 'Stored a new object: %s in region \'%s\'' % (_object.LocalID, self.region.SimName))
+            #if self.settings.LOG_VERBOSE: log(DEBUG, 'Stored a new object: %s in region \'%s\'' % (_object.LocalID, self.region.SimName))
 
     def store_avatar(self, _objectdata):
 
@@ -159,13 +159,13 @@ class Objects(object):
 
             self.avatar_store[index[0]] = _objectdata
 
-            if self.settings.LOG_VERBOSE: log(DEBUG, 'Replacing a stored avatar: %s in region \'%s\'' % (_objectdata.LocalID, self.region.SimName))
+            #if self.settings.LOG_VERBOSE: log(DEBUG, 'Replacing a stored avatar: %s in region \'%s\'' % (_objectdata.LocalID, self.region.SimName))
 
         else:
 
             self.avatar_store.append(_objectdata)
 
-            if self.settings.LOG_VERBOSE: log(DEBUG, 'Stored a new avatar: %s in region \'%s\'' % (_objectdata.LocalID, self.region.SimName))
+            #if self.settings.LOG_VERBOSE: log(DEBUG, 'Stored a new avatar: %s in region \'%s\'' % (_objectdata.LocalID, self.region.SimName))
 
     def get_object_from_store(self, LocalID = None, FullID = None):
         """ searches the store and returns object if stored, None otherwise """
@@ -187,12 +187,18 @@ class Objects(object):
 
         if LocalID != None:
             _avatar = [_avatar for _avatar in self.avatar_store if _avatar.LocalID == LocalID]
-            return _avatar
         elif FullID != None:
             _avatar = [_avatar for _avatar in self.avatar_store if _avatar.FullID == FullID]
-            return _avatar
-        else:
+
+        if _avatar == []:
             return None
+        else:
+            return _avatar[0]
+
+    def my_objects(self):
+        """ returns a list of known objects where the calling client is the owner """
+
+        return [_object for _object in self.object_store if str(_object.OwnerID) == str(self.agent.agent_id)]
 
     def find_objects_by_name(self, Name):
         """ searches the store for known objects by name 
@@ -225,13 +231,17 @@ class Objects(object):
 
     def remove_object_from_store(self, ID = None):
 
+        victim = self.get_object_from_store(LocalID = ID)
+        if victim == None:
+            victim = self.get_avatar_from_store(LocalID = ID)
+
         # this is an avatar
-        if _object.PCode == 47:
+        if _victim.PCode == 47:
 
             self.kill_stored_avatar(ID)
 
         # this is a Primitive
-        elif _object.PCode == 9:
+        elif _victim.PCode == 9:
 
             self.kill_stored_object(ID)
 
@@ -258,7 +268,7 @@ class Objects(object):
     def update_multiple_objects_properties(self, object_list):
         """ update the attributes of objects """
 
-        if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Processing multiple object properties updates: %s" % (len(object_list)))
+        #if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Processing multiple object properties updates: %s" % (len(object_list)))
 
 
         for object_properties in object_list:
@@ -272,7 +282,7 @@ class Objects(object):
         If not, we create a new object
         """
 
-        if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Processing object properties update for FullID: %s" % (object_properties['FullID']))
+        #if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Processing object properties update for FullID: %s" % (object_properties['FullID']))
 
         if object_properties.has_key('PCode'):
             # this is an avatar
@@ -341,9 +351,9 @@ class Objects(object):
         """ creates the default box, defaulting as 1m to the east, with an option GroupID to set the prim to"""
 
         # self.agent.Position holds where we are. we need to add this tuple to the incoming tuple (vector to a vector)
-        location_to_rez_x = self.agent.Position[0] + relative_position[0]
-        location_to_rez_y = self.agent.Position[1] + relative_position[1]
-        location_to_rez_z = self.agent.Position[2] + relative_position[2]
+        location_to_rez_x = self.agent.Position.X + relative_position[0]
+        location_to_rez_y = self.agent.Position.Y + relative_position[1]
+        location_to_rez_z = self.agent.Position.Z + relative_position[2]
 
         location_to_rez = (location_to_rez_x, location_to_rez_y, location_to_rez_z)
 
@@ -465,12 +475,41 @@ class Object(object):
         self.JointPivot = JointPivot                 # LLVector3
         self.JointAxisOrAnchor = JointAxisOrAnchor   # LLVector3
 
+        # from ObjectUpdateCompressed
         self.FootCollisionPlane = FootCollisionPlane
         self.Position = Position
         self.Velocity = Velocity
         self.Acceleration = Acceleration
         self.Rotation = Rotation
         self.AngularVelocity = AngularVelocity
+
+        # from ObjectProperties
+        self.CreatorID = None
+        self.GroupID = None
+        self.CreationDate = None
+        self.BaseMask = None
+        self.OwnerMask = None
+        self.GroupMask = None
+        self.EveryoneMask = None
+        self.NextOwnerMask = None
+        self.OwnershipCost = None
+        # TaxRate
+        self.SaleType = None
+        self.SalePrice = None
+        self.AggregatePerms = None
+        self.AggregatePermTextures = None
+        self.AggregatePermTexturesOwner = None
+        self.Category = None
+        self.InventorySerial = None
+        self.ItemID = None
+        self.FolderID = None
+        self.FromTaskID = None
+        self.LastOwnerID = None
+        self.Name = None
+        self.Description = None
+        self.TouchName = None
+        self.SitName = None
+        self.TextureID = None
 
     def update_object_permissions(self, agent, Field, Set, Mask, Override = False):
         """ update permissions for a list of objects
