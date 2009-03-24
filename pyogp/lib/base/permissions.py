@@ -42,7 +42,9 @@ class PermissionsMask(object):
     # Reserved
     #Unrestricted = Modify | Copy | Transfer
 
-    # who the permissions apply to
+class PermissionTarget(object):
+    """ who the permissions apply to """
+
     Base = 0x01
     Owner = 0x02
     Group = 0x04
@@ -60,3 +62,4 @@ class Permissions(object):
         self.GroupMask = GroupMask
         self.EveryoneMask = EveryoneMask
         self.NextOwnerMask = NextOwnerMask
+

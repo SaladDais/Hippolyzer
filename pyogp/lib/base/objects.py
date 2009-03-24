@@ -24,6 +24,7 @@ import uuid
 import re
 from binascii import hexlify
 import struct
+import math
 
 # related
 
@@ -198,7 +199,9 @@ class Objects(object):
     def my_objects(self):
         """ returns a list of known objects where the calling client is the owner """
 
-        return [_object for _object in self.object_store if str(_object.OwnerID) == str(self.agent.agent_id)]
+        matches = [_object for _object in self.object_store if str(_object.OwnerID) == str(self.agent.agent_id)]
+
+        return matches
 
     def find_objects_by_name(self, Name):
         """ searches the store for known objects by name 
@@ -224,7 +227,7 @@ class Objects(object):
 
             if item.Position == None: continue
 
-            if abs(item.Position.X - self.agent.Position.X) <= radius and abs(item.Position.Y - self.agent.Position.Y) and abs(item.Position.Z - self.agent.Position.Z):
+            if math.sqrt(math.pow((item.Position.X - self.agent.Position.X),2) +  math.pow((item.Position.Y - self.agent.Position.Y),2) + math.pow((item.Position.Z - self.agent.Position.Z),2)) <= radius:
                 objects_nearby.append(item)
 
         return objects_nearby
@@ -540,7 +543,7 @@ class Object(object):
 
         """
 
-        packet = ObjectPermissionsPacket()
+        packet = ObjectNamePacket()
 
         # build the AgentData block
         packet.AgentData['AgentID'] = uuid.UUID(str(agent.agent_id))
@@ -559,7 +562,7 @@ class Object(object):
 
         """
 
-        packet = ObjectPermissionsPacket()
+        packet = ObjectDescriptionPacket()
 
         # build the AgentData block
         packet.AgentData['AgentID'] = uuid.UUID(str(agent.agent_id))
