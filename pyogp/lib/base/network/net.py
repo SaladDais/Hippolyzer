@@ -53,7 +53,10 @@ class NetUDPClient(object):
     def start_udp_connection(self):
         """ Starts a udp connection, returning socket and port. """
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.settimeout(10)
+        
+        # 24-Mar-2009 settimeout is not needed since we wrap the socket for coroutines.
+        # However, we may need to check eventlet/greenlet versions in the future and call this if needed.
+        # sock.settimeout(10)
         #error check - make sure sock is good
 
         #will probably be other setup for this
