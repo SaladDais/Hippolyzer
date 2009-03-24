@@ -103,6 +103,11 @@ class Inventory(object):
 
         index = [self.folders.index(folder) for folder in self.folders if folder.FolderID == inventory_item.FolderID]
 
+        if self.settings.LOG_VERBOSE: log(DEBUG, 'in _add_inventory_item: length of index is : %d' % len(index))
+
+        if len(index) == 0:
+            return
+
         try:
 
             inventory_index = [self.folders[index].index(item) for item in self.folders[index].inventory]
@@ -354,12 +359,11 @@ class InventoryItem(object):
         self.CRC = CRC                                  # U32
 
     def rez_object(self, agent, relative_position = (1, 0, 0)):
-        """ try and rez an inventory item """
 
-        # self.agent.Position holds where we are. we need to add this tuple to the incoming tuple (vector to a vector)
-        location_to_rez_x = agent.Position[0] + relative_position[0]
-        location_to_rez_y = agent.Position[1] + relative_position[1]
-        location_to_rez_z = agent.Position[2] + relative_position[2]
+        # self.agent.Position holds where we are. we need to add this Vector3 to the incoming tuple (vector to a vector)
+        location_to_rez_x = agent.Position.X + relative_position[0]
+        location_to_rez_y = agent.Position.Y  + relative_position[1]
+        location_to_rez_z = agent.Position.Z + relative_position[2]
 
         location_to_rez = (location_to_rez_x, location_to_rez_y, location_to_rez_z)
 
