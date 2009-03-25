@@ -42,7 +42,7 @@ class PermissionsMask(object):
     # Reserved
     #Unrestricted = Modify | Copy | Transfer
 
-class PermissionTarget(object):
+class PermissionsTarget(object):
     """ who the permissions apply to """
 
     Base = 0x01

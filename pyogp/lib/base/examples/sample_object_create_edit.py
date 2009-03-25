@@ -31,6 +31,7 @@ from eventlet import api
 # pyogp
 from pyogp.lib.base.agent import Agent
 from pyogp.lib.base.settings import Settings
+from pyogp.lib.base.permissions import *
 
 # pyogp utilites
 from pyogp.lib.base.utilities.helpers import Wait
@@ -117,6 +118,14 @@ def login():
         item.set_object_name(client, 'Pyogp is teh K00l')
 
     # print matches
+
+    waiter = Wait(15)
+
+    print 'Hey! Will try to set copy permissions.'
+
+    for item in my_objects:
+        print ' for LocalID %s' % item.LocalID
+        item.update_object_permissions(client, PermissionsTarget.NextOwner, 1, PermissionsMask.Copy)
 
     while client.running:
         api.sleep(0)
