@@ -30,6 +30,7 @@ import math
 
 # pyogp
 from pyogp.lib.base import *
+from pyogp.lib.base.permissions import *
 
 # pyogp message
 from pyogp.lib.base.message.packethandler import PacketHandler
@@ -537,6 +538,64 @@ class Object(object):
         packet.ObjectDataBlocks.append(ObjectData)
 
         agent.region.enqueue_message(packet())
+
+    def set_object_full_permissions(self, agent):
+        """ 
+        Set Next Owner Permissions Copy, Modify, Transfer 
+        This is also called 'full permissions'.
+        """
+
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 1, PermissionsMask.Copy)
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 1, PermissionsMask.Modify)
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 1, PermissionsMask.Transfer)
+
+    def set_object_copy_mod_permissions(self, agent):
+        """ 
+        Set Next Owner Permissions to Copy/Mod
+        This is a common permission set for attachements.
+        """
+
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 1, PermissionsMask.Copy)
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 1, PermissionsMask.Modify)
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 0, PermissionsMask.Transfer)
+
+    def set_object_mod_transfer_permissions(self, agent):
+        """
+        Set Next Owner Permissions to Mod/Transfer
+        This is a common permission set for clothing.
+        """
+
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 0, PermissionsMask.Copy)
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 1, PermissionsMask.Modify)
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 1, PermissionsMask.Transfer)
+
+    def set_object_transfer_only_permissions(self, agent):
+        """
+        Set Next Owner Permissions to Transfer Only
+        This is the most restrictive set of permissions allowed.
+        """
+
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 0, PermissionsMask.Copy)
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 0, PermissionsMask.Modify)
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 1, PermissionsMask.Transfer)
+
+    def set_object_copy_transfer_permissions(self, agent):
+        """
+        Set Next Owner Permissions to Copy/Transfer
+        """
+
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 1, PermissionsMask.Copy)
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 0, PermissionsMask.Modify)
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 1, PermissionsMask.Transfer)
+
+    def set_object_copy_only_permissions(self, agent):
+        """
+        Set Next Owner Permissions to Copy Only
+        """
+
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 1, PermissionsMask.Copy)
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 0, PermissionsMask.Modify)
+        self.update_object_permissions(agent, PermissionsTarget.NextOwner, 0, PermissionsMask.Transfer)
 
     def set_object_name(self, agent, Name):
         """ update the name of an object 
