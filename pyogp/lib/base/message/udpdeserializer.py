@@ -123,7 +123,7 @@ class UDPPacketDeserializer(object):
 
             else:
 
-                if self.settings.LOG_VERBOSE and self.settings.ENABLE_UDP_LOGGING: log(DEBUG, 'Received packet : %s (Skipping)' % (self.current_template.name))
+                if self.settings.LOG_VERBOSE and self.settings.ENABLE_UDP_LOGGING and self.settings.LOG_SKIPPED_PACKETS: log(DEBUG, 'Received packet : %s (Skipping)' % (self.current_template.name))
 
         return None
 

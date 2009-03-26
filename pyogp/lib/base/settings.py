@@ -43,7 +43,7 @@ class Settings(object):
         self.ENABLE_INVENTORY_MANAGEMENT = True
 
         # enable library
-        self.ENABLE_LIBRARY = False
+        self.ENABLE_LIBRARY = True
 
         # enable object tracking
         self.ENABLE_OBJECT_TRACKING = True
@@ -93,7 +93,7 @@ class Settings(object):
         self.REGION_EVENT_QUEUE_POLL_INTERVAL = 1
 
         # allow connecting to multiple simulators
-        self.MULTIPLE_SIM_CONNECTIONS = False      
+        self.MULTIPLE_SIM_CONNECTIONS = False
 
         #~~~~~~~~~~~~~~~~~~~~~~
         # Agent Domain specific
@@ -119,6 +119,7 @@ class Settings(object):
         self.ENABLE_EQ_LOGGING = True
         self.ENABLE_UDP_LOGGING = True
         self.ENABLE_OBJECT_LOGGING = True
+        self.LOG_SKIPPED_PACKETS = True
 
         # allow disabling logging of certain packets
         self.DISABLE_SPAMMERS = True
@@ -131,7 +132,9 @@ class Settings(object):
             self.ENABLE_CAPS_LOGGING = False
             self.ENABLE_CAPS_LLSD_LOGGING = False
             self.ENABLE_EQ_LOGGING = False
-            self.ENABLE_UDP_LOGGING = False   
+            self.ENABLE_UDP_LOGGING = False
+            self.LOG_SKIPPED_PACKETS = False
+            self.ENABLE_OBJECT_LOGGING = False
 
         #~~~~~~~~~~~~~~~~~~~~~~
         # Test related settings

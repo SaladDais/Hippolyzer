@@ -71,7 +71,7 @@ class Region(object):
 
     """
 
-    def __init__(self, global_x = 0, global_y = 0, seed_capability_url = None, udp_blacklist = None, sim_ip = None, sim_port = None, circuit_code = None, agent = None, settings = None, packet_handler = None, event_queue_handler = None):
+    def __init__(self, global_x = 0, global_y = 0, seed_capability_url = None, udp_blacklist = None, sim_ip = None, sim_port = None, circuit_code = None, agent = None, settings = None, packet_handler = None, event_queue_handler = None, handle = None):
         """ initialize a region """
 
         # allow the settings to be passed in
@@ -107,6 +107,7 @@ class Region(object):
         self.sim_port = sim_port
         self.circuit_code = circuit_code
         self.agent = agent   # an agent object
+        self.handle = handle
 
         # UDP connection information
         if (self.sim_ip != None) and (self.sim_port != None):
@@ -138,11 +139,6 @@ class Region(object):
         # required packet handlers
         onPacketAck_received = self.packet_handler._register('PacketAck')
         onPacketAck_received.subscribe(self.helpers.null_packet_handler, self)
-
-        if self.settings.MULTIPLE_SIM_CONNECTIONS:
-
-            onEnableSimulator_received = self.packet_handler._register('EnableSimulator')
-            onEnableSimulator_received.subscribe(onEnableSimulator, self)
 
         # data we need
         self.region_caps_list = ['ChatSessionRequest',
@@ -282,11 +278,19 @@ class Region(object):
     def connect(self):
         """ connect to the udp circuit code and event queue"""
 
-        # set up the seed capability
-        self._set_seed_capability()
+        # if this is the agent's host region, spawn the event queue
+        # spawn an eventlet api instance that runs the event queue connection
+        if self.seed_capability_url != None:
 
-        # grab the agent's capabilities from the sim
-        self._get_region_capabilities()
+            # set up the seed capability
+            self._set_seed_capability()
+
+            # grab the agent's capabilities from the sim
+            self._get_region_capabilities()
+
+            log(DEBUG, 'Spawning region event queue connection')
+            self._startEventQueue()
+
 
         # send the first few packets necessary to establish presence
         self._init_agent_in_region()
@@ -297,11 +301,19 @@ class Region(object):
         log(DEBUG, 'Spawning region UDP connection')
         api.spawn(self._processUDP)
 
-        # spawn an eventlet api instance that runs the event queue connection
-        log(DEBUG, 'Spawning region event queue connection')
-        self._startEventQueue()
-
         log(DEBUG, "Spawned region data connections")
+
+    def connect_child(self):
+        """ connect to the a child region udp circuit code """
+
+        # send the UseCircuitCode packet
+        self.sendUseCircuitCode()
+
+        self.last_ping = 0
+
+        # spawn an eventlet api instance that runs the UDP connection
+        log(DEBUG, 'Spawning region UDP connection for child region %s' % (str(self.sim_ip) + ":" + str(self.sim_port)))
+        api.spawn(self._processUDP)
 
     def logout(self):
         """ send a logout packet """
@@ -311,8 +323,8 @@ class Region(object):
         try:
             # this should move to a handled method
             packet = LogoutRequestPacket()
-            packet.AgentData['AgentID'] = uuid.UUID(self.agent.session_id)
-            packet.AgentData['SessionID'] = uuid.UUID(self.agent.session_id)
+            packet.AgentData['AgentID'] = UUID(string = self.agent.agent_id)
+            packet.AgentData['SessionID'] = UUID(string = self.agent.session_id)
 
             self.send_message(packet())
 
@@ -509,25 +521,12 @@ def onRegionHandshake(packet, region):
     # we are connected
     region.connected = True
 
-    log(INFO, "Rezzed agent \'%s %s\' in region %s" % (region.agent.firstname, region.agent.lastname, region.SimName))
+    log(INFO, "Connected agent \'%s %s\' to region %s" % (region.agent.firstname, region.agent.lastname, region.SimName))
 
 def onStartPingCheck(packet, region):
     """ sends the CompletePingCheck packet """
 
     region.sendCompletePingCheck()
-
-def onEnableSimulator(packet, region):
-    """ handler for the EnableSimulator packet sent over the event queue """
-
-    IP = [ord(x) for x in packet.message_data.blocks['SimulatorInfo'][0].get_variable('IP').data]
-    IP = '.'.join([str(x) for x in IP])
-
-    Port = packet.message_data.blocks['SimulatorInfo'][0].get_variable('Port').data
-
-    # not sure what this is, but pass it up
-    Handle = [ord(x) for x in packet.message_data.blocks['SimulatorInfo'][0].get_variable('Handle').data]
-
-    region.enable_child_simulator(IP, Port, Handle)
 
 class RegionSeedCapability(Capability):
     """ a seed capability which is able to retrieve other capabilities """

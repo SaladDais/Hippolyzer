@@ -20,6 +20,7 @@ $/LicenseInfo$
 
 # standard python libs
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
+import sys, traceback
 
 # related
 from eventlet import api, util
@@ -28,7 +29,7 @@ util.wrap_socket_with_coroutine_socket()
 
 # pyogp
 from pyogp.lib.base.utilities.events import Event
-from pyogp.lib.base.groups import ChatterBoxInvitation_Message
+from pyogp.lib.base.groups import *
 
 # messaging
 from pyogp.lib.base.message.packet import UDPPacket
@@ -159,7 +160,7 @@ class EventQueueClient(object):
                 api.sleep(self.settings.REGION_EVENT_QUEUE_POLL_INTERVAL)
 
                 if self.last_id != -1:
-                    self.data = {'ack':self.last_id, 'done':True}
+                    self.data = {'ack':self.last_id, 'done':False}
 
                 if self.settings.ENABLE_EQ_LOGGING: log(DEBUG, 'Posting to the event queue: %s' % (self.data))
 
@@ -217,11 +218,11 @@ class EventQueueClient(object):
                         parsed_data = self._decode_eq_result(data)
 
                         for packet in parsed_data:
-                            self.packet_handler._handle(packet)
+                            self.event_queue_handler._handle(packet)
 
             except Exception, error:
 
-                log(WARNING, "Error parsing even queue results, data was: %s" % (data))
+                log(WARNING, "Error parsing even queue results. Error: %s. Data was: %s" % (error, data))
 
     def _decode_eq_result(self, data=None):
         """ parse the event queue data, return a list of packets
@@ -255,8 +256,30 @@ class EventQueueClient(object):
 
                                 self.event_queue_handler._handle(group_chat)
 
+                            elif message['message'] == 'ChatterBoxSessionEventReply':
+
+                                message['name'] = message['message']
+
+                                chat_response = ChatterBoxSessionEventReply_Message(message['body'])
+                                self.event_queue_handler._handle(chat_response)
+
+                            elif message['message'] == 'ChatterBoxSessionAgentListUpdates':
+
+                                message['name'] = message['message']
+
+                                group_agent_update = ChatterBoxSessionAgentListUpdates_Message(message['body'])
+                                self.event_queue_handler._handle(group_agent_update)
+
+                            elif message['message'] == 'ChatterBoxSessionStartReply':
+
+                                message['name'] = message['message']
+
+                                group_chat_session_data = ChatterBoxSessionStartReply_Message(message['body'])
+                                self.event_queue_handler._handle(group_chat_session_data)
+
                             else:
                                 # this is a UDP packet sent over the event queue 
+                                
                                 self.current_template = self.template_dict.get_template(message['message'])
                                 message_data = MsgData(self.current_template.name)
 
@@ -278,12 +301,12 @@ class EventQueueClient(object):
 
                                 for block_name in message['body']:
 
-                                    # block_data keys off of block.name, which here is the body attribute
-                                    block_data = MsgBlockData(block_name)
-
-                                    message_data.add_block(block_data)
-
                                     for items in message['body'][block_name]:
+
+                                        # block_data keys off of block.name, which here is the body attribute
+                                        block_data = MsgBlockData(block_name)
+
+                                        message_data.add_block(block_data)                                        
 
                                         for variable in items:
 
@@ -292,7 +315,7 @@ class EventQueueClient(object):
 
                                 packet.message_data = message_data
                                 packets.append(packet)
-        return packets
+            return packets
 
 
 class EventQueueHandler(object):

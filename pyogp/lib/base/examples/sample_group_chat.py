@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """
-@file sample_agent_login.py
-@date 2009-02-16
+@file sample_group_chat.py
+@date 2009-03-05
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
 
@@ -23,10 +23,16 @@ $/LicenseInfo$
 import re
 import getpass, sys, logging
 from optparse import OptionParser
+import uuid
+
+# related
+from eventlet import api
 
 # pyogp
 from pyogp.lib.base.agent import Agent
 from pyogp.lib.base.settings import Settings
+from pyogp.lib.base.groups import MockChatInterface
+from pyogp.lib.base.utilities.helpers import Helpers, Wait
 
 
 def login():
@@ -61,26 +67,56 @@ def login():
         print "Attention: This script will print nothing if you use -q. So it might be boring to use it like that ;-)"
 
     # example from a pure agent perspective
+    print 'we are going to try and group chat with the agent\'s active group. set one active, or get the uuid and create a new script that does it for you!'
+    print ''
+    print 'This only works on unix like machines ATM.'
 
     #grab a password!
     password = getpass.getpass()
 
-    # prep instance settings
+    # let's disable inventory handling for this example
     settings = Settings()
-
     settings.ENABLE_INVENTORY_MANAGEMENT = False
-    settings.ENABLE_COMMUNICATIONS_TRACKING = False
     settings.ENABLE_OBJECT_TRACKING = False
-    settings.ENABLE_UDP_LOGGING =True
-    settings.ENABLE_EQ_LOGGING = True
-    settings.ENABLE_CAPS_LOGGING = True
-    settings.MULTIPLE_SIM_CONNECTIONS = True
+    settings.ENABLE_COMMUNICATIONS_TRACKING = True
+    settings.ENABLE_UDP_LOGGING = False
+    settings.ENABLE_EQ_LOGGING = False
+    settings.ENABLE_CAPS_LOGGING = False
 
     #First, initialize the agent
-    client = Agent(settings)
+    client = Agent(settings = settings)
 
     # Now let's log it in
-    client.login(options.loginuri, args[0], args[1], password, start_location = options.region, connect_region = True)
+    api.spawn(client.login, options.loginuri, args[0], args[1], password, start_location = options.region, connect_region = True)
+
+    # wait for the agent to connect to it's region
+    while client.connected == False:
+        api.sleep(0)
+
+    while client.region.connected == False:
+        api.sleep(0)
+
+    # wait 10 seconds, hoping group data populates by then
+    Wait(10)
+
+    # do sample script specific stuff here
+
+    chat_group = client.group_manager.get_group(client.ActiveGroupID)
+
+    # until the implementation is done, add the agent to the group object
+    chat_group.agent = client
+
+    print ''
+    print 'I know, this interface is not an interface, you\'ll see, just type when prompted. Saijanai, sounds like you are up for a wx application. Hit Escape to trigger the message prompt.'
+
+    if chat_group != None:
+        chaty_kathy = MockChatInterface(client, chat_group.chat)    # this object is l-a-m-e
+        chaty_kathy.start()
+    else:
+        print "We failed to find the group to start chat session :(. Continuing"
+
+    while client.running:
+        api.sleep(0)
 
     print ''
     print ''
@@ -90,16 +126,11 @@ def login():
         print attr, ':\t\t\t',  client.__dict__[attr]
     print ''
     print ''
-    print 'Region attributes:'
-    for attr in client.region.__dict__:
-        print attr, ':\t\t\t',  client.region.__dict__[attr]
-    print ''
-    print ''
-    print 'Child Regions:'
-    for region in client.regions:
-        print ''
-        for attr in client.region.__dict__:
-            print attr, ':\t\t\t',  client.region.__dict__[attr]
+    print 'Known Groups:'
+    for group in client.group_manager.group_store:
+        print ':\t\t\t',  group.GroupName
+        for attr in group.__dict__:
+            print '\t\t\t\t', attr, ':\t', group.__dict__[attr]
 
 def main():
     return login()    

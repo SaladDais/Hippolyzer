@@ -34,7 +34,7 @@ from pyogp.lib.base.datatypes import *
 from pyogp.lib.base.exc import LoginError
 from pyogp.lib.base.region import Region
 from pyogp.lib.base.inventory import Inventory
-from pyogp.lib.base.groups import GroupManager, Group
+from pyogp.lib.base.groups import *
 # from pyogp.lib.base.appearance import Appearance
 
 # pyogp messaging
@@ -85,8 +85,8 @@ class Agent(object):
         # storage containers for agent attributes
         # we store what the grid tells us, rather than what
         # is passed in and stored in Login()
-        self.firstname = None
-        self.lastname = None
+        self.firstname = ''
+        self.lastname = ''
         self.agent_id = None
         self.session_id = None
         self.secure_session_id = None
@@ -97,8 +97,6 @@ class Agent(object):
         self.udp_blacklist = None
         self.home = None
         self.inventory = None
-        self.group_manager = GroupManager(self, self.settings)
-
 
         # additional attributes
         self.login_response = None
@@ -108,6 +106,7 @@ class Agent(object):
         self.packet_handler = PacketHandler(self.settings)
         self.event_queue_handler = EventQueueHandler(self.settings)
         self.helpers = Helpers()
+        self.group_manager = GroupManager(self, self.settings)
 
         # data we store as it comes in from the grid
         self.Position = Vector3()     # this will get updated later, but seed it with 000
@@ -120,6 +119,11 @@ class Agent(object):
 
         # init Appearance()
         # self.appearance = Appearance(self.settings, self)
+
+        if self.settings.MULTIPLE_SIM_CONNECTIONS:
+
+            onEnableSimulator_received = self.event_queue_handler._register('EnableSimulator')
+            onEnableSimulator_received.subscribe(onEnableSimulator, self)
 
         # set up callbacks (is this a decent place to do this? it's perhaps premature)
         if self.settings.HANDLE_PACKETS:
@@ -136,9 +140,6 @@ class Agent(object):
             onHealthMessage_received = self.packet_handler._register('HealthMessage')
             onHealthMessage_received.subscribe(onHealthMessage, self)
 
-            onAgentGroupDataUpdate_received = self.packet_handler._register('AgentGroupDataUpdate')
-            onAgentGroupDataUpdate_received.subscribe(onAgentGroupDataUpdate, self)
-
             if self.settings.ENABLE_COMMUNICATIONS_TRACKING:
 
                 onChatFromSimulator_received = self.packet_handler._register('ChatFromSimulator')
@@ -147,10 +148,11 @@ class Agent(object):
                 onImprovedInstantMessage_received = self.packet_handler._register('ImprovedInstantMessage')
                 onImprovedInstantMessage_received.subscribe(self.helpers.log_packet, self)
 
-                onChatterBoxInvitation_received = self.event_queue_handler._register('ChatterBoxInvitation')
-                onChatterBoxInvitation_received.subscribe(self.helpers.log_event_queue_data, self)
-
         if self.settings.LOG_VERBOSE: log(DEBUG, 'Initializing agent: %s' % (self))
+
+    def Name(self):
+
+        return self.firstname + ' ' + self.lastname
 
     def login(self, loginuri, firstname=None, lastname=None, password=None, login_params = None, start_location=None, handler=None, connect_region = False):
         """ login to a login endpoint. this should move to a login class in time """
@@ -249,12 +251,27 @@ class Agent(object):
     def _enable_current_region(self, region_x = None, region_y = None, seed_capability = None, udp_blacklist = None, sim_ip = None, sim_port = None, circuit_code = None):
         """ enables an agents current region """
 
+        self.circuit_code = self.login_response['circuit_code']
+
         # enable the current region, setting connect = True
         self.region = Region(self.login_response['region_x'], self.login_response['region_y'], self.login_response['seed_capability'], self.login_response['udp_blacklist'], self.login_response['sim_ip'], self.login_response['sim_port'], self.login_response['circuit_code'], self, settings = self.settings, packet_handler = self.packet_handler, event_queue_handler = self.event_queue_handler)
 
         # start the simulator udp and event queue connections
         api.spawn(self.region.connect)
         #self.region.connect()
+        while self.running:
+            api.sleep(0)
+
+    def _enable_child_region(self, sim_ip, sim_port, handle):
+        """ enables a child region. eligible simulators are sent in EnableSimulator over the event queue, and routed through the packet handler """
+
+        child_region = Region(circuit_code = self.circuit_code, sim_ip = sim_ip, sim_port = sim_port, handle = handle, agent = self, settings = self.settings, packet_handler = self.packet_handler, event_queue_handler = self.event_queue_handler)
+
+        self.regions.append(child_region)
+
+        log(INFO, "Enabling a child region with ip:port of %s" % (str(sim_ip) + ":" + str(sim_port)))
+
+        api.spawn(child_region.connect_child)
         while self.running:
             api.sleep(0)
 
@@ -300,8 +317,6 @@ class Agent(object):
         """ sends an instant message to another avatar
 
         wraps send_ImprovedInstantMessage with some handy defaults """
-
-        #ToDo: this opens a new im window every time a message is sent to a viewer. why is this? fix it.
 
         if ToAgentID != None and Message != None:
 
@@ -360,7 +375,7 @@ class Agent(object):
             packet.MessageBlock['ToAgentID'] = uuid.UUID(str(ToAgentID))   # LLUUID
             packet.MessageBlock['ParentEstateID'] = ParentEstateID         # U32
             packet.MessageBlock['RegionID'] = uuid.UUID(str(RegionID))     # LLUUID
-            packet.MessageBlock['Position'] = Position                     # LLVector3
+            packet.MessageBlock['Position'] = Position()                     # LLVector3
             packet.MessageBlock['Offline'] = Offline                       # U8
             packet.MessageBlock['Dialog'] = Dialog                         # U8 IM Type
             packet.MessageBlock['ID'] = uuid.UUID(str(_ID))                # LLUUID
@@ -563,3 +578,16 @@ class Home(object):
         self.local_x = self.position[0]
         self.local_y = self.position[1]
         self.local_z = self.position[2]
+
+def onEnableSimulator(packet, agent):
+    """ handler for the EnableSimulator packet sent over the event queue """
+
+    IP = [ord(x) for x in packet.message_data.blocks['SimulatorInfo'][0].get_variable('IP').data]
+    IP = '.'.join([str(x) for x in IP])
+
+    Port = packet.message_data.blocks['SimulatorInfo'][0].get_variable('Port').data
+
+    # not sure what this is, but pass it up
+    Handle = [ord(x) for x in packet.message_data.blocks['SimulatorInfo'][0].get_variable('Handle').data]
+
+    agent._enable_child_region(IP, Port, Handle)
