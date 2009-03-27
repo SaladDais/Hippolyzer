@@ -68,7 +68,7 @@ class Agent(object):
 
     """
 
-    def __init__(self, settings = None):
+    def __init__(self, settings = None, firstname = '', lastname = '', password = '', agent_id = None):
         """ initialize this agent """
 
         # allow the settings to be passed in
@@ -85,8 +85,9 @@ class Agent(object):
         # storage containers for agent attributes
         # we store what the grid tells us, rather than what
         # is passed in and stored in Login()
-        self.firstname = ''
-        self.lastname = ''
+        self.firstname = firstname
+        self.lastname = lastname
+        self.password = password
         self.agent_id = None
         self.session_id = None
         self.secure_session_id = None
@@ -106,7 +107,6 @@ class Agent(object):
         self.packet_handler = PacketHandler(self.settings)
         self.event_queue_handler = EventQueueHandler(self.settings)
         self.helpers = Helpers()
-        self.group_manager = GroupManager(self, self.settings)
 
         # data we store as it comes in from the grid
         self.Position = Vector3()     # this will get updated later, but seed it with 000
@@ -119,6 +119,9 @@ class Agent(object):
 
         # init Appearance()
         # self.appearance = Appearance(self.settings, self)
+
+        if self.settings.ENABLE_GROUP_CHAT:
+            self.group_manager = GroupManager(self, self.settings)
 
         if self.settings.MULTIPLE_SIM_CONNECTIONS:
 
@@ -154,7 +157,7 @@ class Agent(object):
 
         return self.firstname + ' ' + self.lastname
 
-    def login(self, loginuri, firstname=None, lastname=None, password=None, login_params = None, start_location=None, handler=None, connect_region = False):
+    def login(self, loginuri, firstname=None, lastname=None, password=None, login_params = None, start_location=None, handler=None, connect_region = True):
         """ login to a login endpoint. this should move to a login class in time """
 
         if (re.search('auth.cgi$', loginuri)):
@@ -169,16 +172,23 @@ class Agent(object):
             log(WARNING, 'Unable to identify the loginuri schema. Stopping')
             sys.exit(-1)
 
+        if firstname != None:
+            self.firstname = firstname
+        if lastname != None:
+            self.lastname = None
+        if password != None:
+            self.password = None
+
         # handle either login params passed in, or, account info
         if login_params == None:
 
-            if (firstname == None) or (lastname == None) or (password == None):
+            if (self.firstname == '') or (self.lastname == '') or (self.password == ''):
 
                 raise LoginError('Unable to login an unknown agent.')
 
             else:
 
-                self._login_params = self._get_login_params(loginuri, firstname, lastname, password)
+                self._login_params = self._get_login_params(loginuri, self.firstname, self.lastname, self.password)
 
         else:
 
@@ -205,8 +215,15 @@ class Agent(object):
     def logout(self):
         """ logs an agent out of the current region """
 
-        if self.region.logout():
+        self.running = False
+
+        if self.region == None:
+            return
+        elif self.region.logout():
             self.connected = False
+
+        # zero out the password in case we dump it somewhere
+        self.password = ''
 
     def _get_login_params(self, loginuri, firstname, lastname, password):
         """ get the proper login parameters """
@@ -398,7 +415,7 @@ class Agent(object):
 
     def sigint_handler(self, signal, frame):
         log(INFO, "Caught signal... %d. Stopping" % signal)
-        self.running = False
+        #self.running = False
         self.logout()
         #sys.exit(0)
 

@@ -65,7 +65,8 @@ setup(name='pyogp.lib.base',
            'object_properties = pyogp.lib.base.examples.sample_object_properties:main',
            'chat_and_instant_messaging = pyogp.lib.base.examples.sample_chat_and_instant_messaging:main',
            'group_creation = pyogp.lib.base.examples.sample_group_creation:main',
-           'group_chat = pyogp.lib.base.examples.sample_group_chat:main'
+           'group_chat = pyogp.lib.base.examples.sample_group_chat:main',
+           'agent_manager = pyogp.lib.base.examples.sample_agent_manager:main'
        ],
      },
 

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """
-@file sample_agent_login.py
+@file sample_multi_agent_login.py
 @date 2009-02-16
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
@@ -21,10 +21,15 @@ $/LicenseInfo$
 
 # standard
 import re
+import sys
 import getpass, sys, logging
 from optparse import OptionParser
 
+# related
+from eventlet import api
+
 # pyogp
+from pyogp.lib.base.agentmanager import AgentManager
 from pyogp.lib.base.agent import Agent
 from pyogp.lib.base.settings import Settings
 
@@ -42,9 +47,30 @@ def login():
                       help="specifies the region (regionname/x/y/z) to connect to")
     parser.add_option("-q", "--quiet", dest="verbose", default=True, action="store_false",
                     help="enable verbose mode")
+    parser.add_option("-f", "--file", dest="file", default='', help="csv formatted file containing first, last,pass for multi agent login")
 
 
     (options, args) = parser.parse_args()
+
+    if options.file == '':
+        print '-f is a required parameter for logging in multiple agents'
+        return
+
+    try:
+        f = open(options.file, 'r')
+    except IOError, error:
+        print 'File not found. Stopping. Error: %s' % (error)
+        return
+
+    clients = []
+
+    for line in f:
+
+        if len(line.strip().split(',')) != 3:
+            print 'We expect a line with 3 comma separated parameters, we got %s' % (line.strip().split(','))
+            print 'Stopping.'
+
+        clients.append(line.strip().split(','))
 
     if options.verbose:
         console = logging.StreamHandler()
@@ -63,7 +89,8 @@ def login():
     # example from a pure agent perspective
 
     #grab a password!
-    password = getpass.getpass()
+    #password = getpass.getpass()
+    clients = [['EnusBot1', 'LLQABot', '0MGbotsRC00l'], ['EnusBot2', 'LLQABot', '0MGbotsRC00l'], ['EnusBot3', 'LLQABot', '0MGbotsRC00l'], ['EnusBot4', 'LLQABot', '0MGbotsRC00l'], ['EnusBot5', 'LLQABot', '0MGbotsRC00l'], ['EnusBot6', 'LLQABot', '0MGbotsRC00l'], ['EnusBot7', 'LLQABot', '0MGbotsRC00l'], ['EnusBot8', 'LLQABot', '0MGbotsRC00l'], ['EnusBot9', 'LLQABot', '0MGbotsRC00l'], ['EnusBot10', 'LLQABot', '0MGbotsRC00l'], ['EnusBot11', 'LLQABot', '0MGbotsRC00l'], ['EnusBot12', 'LLQABot', '0MGbotsRC00l'], ['EnusBot13', 'LLQABot', '0MGbotsRC00l'], ['EnusBot14', 'LLQABot', '0MGbotsRC00l'], ['EnusBot15', 'LLQABot', '0MGbotsRC00l'], ['EnusBot16', 'LLQABot', '0MGbotsRC00l'], ['EnusBot17', 'LLQABot', '0MGbotsRC00l'], ['EnusBot18', 'LLQABot', '0MGbotsRC00l'], ['EnusBot19', 'LLQABot', '0MGbotsRC00l'], ['EnusBot20', 'LLQABot', '0MGbotsRC00l']]
 
     # prep instance settings
     settings = Settings()
@@ -76,30 +103,28 @@ def login():
     settings.ENABLE_CAPS_LOGGING = True
     settings.MULTIPLE_SIM_CONNECTIONS = False
 
-    #First, initialize the agent
-    client = Agent(settings)
+    agents = []
 
-    # Now let's log it in
-    client.login(options.loginuri, args[0], args[1], password, start_location = options.region, connect_region = True)
+    # Now let's prime the accounts for login
+    for params in clients:
+        #First, initialize the agent
+        agents.append(Agent(settings, params[0], params[1], params[2]))
 
-    print ''
-    print ''
-    print 'At this point, we have an Agent object, Inventory dirs, and with a Region attribute'
-    print 'Agent attributes:'
-    for attr in client.__dict__:
-        print attr, ':\t\t\t',  client.__dict__[attr]
-    print ''
-    print ''
-    print 'Region attributes:'
-    for attr in client.region.__dict__:
-        print attr, ':\t\t\t',  client.region.__dict__[attr]
-    print ''
-    print ''
-    print 'Child Regions:'
-    for region in client.regions:
-        print ''
-        for attr in client.region.__dict__:
-            print attr, ':\t\t\t',  client.region.__dict__[attr]
+    agentmanager = AgentManager()
+    agentmanager.initialize(agents)
+
+    #print 'Storing agents:'
+    #for agent in agentmanager.agents:
+        #print '\t' + agentmanager.agents[agent].Name()
+
+    # log them in
+    for key in agentmanager.agents:
+        agentmanager.login(key, options.loginuri, options.region)
+
+    while agentmanager.has_agents_running():
+        api.sleep(0)
+
+
 
 def main():
     return login()    

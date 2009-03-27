@@ -156,6 +156,15 @@ class UUID(object):
 
             self.uuid = uuid.UUID(string)
 
+    def random(self):
+
+        if str(self.uuid) == '00000000-0000-0000-0000-000000000000':
+            self.uuid = uuid.uuid4()
+            return self.uuid
+
+        else:
+            log(WARNING, "Attempted to overwrite a stored uuid %s with a random, that is a bad idea..." % (str(self.uuid)))
+
     def unpack_from_bytes(self, bytes, offset):
         """ unpack uuid from binary """
 
