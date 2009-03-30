@@ -74,7 +74,7 @@ def login():
     settings.ENABLE_UDP_LOGGING =True
     settings.ENABLE_EQ_LOGGING = True
     settings.ENABLE_CAPS_LOGGING = True
-    settings.MULTIPLE_SIM_CONNECTIONS = False
+    settings.MULTIPLE_SIM_CONNECTIONS = True
 
     #First, initialize the agent
     client = Agent(settings)

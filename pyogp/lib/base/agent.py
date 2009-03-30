@@ -83,7 +83,7 @@ class Agent(object):
         self.signal_handler = signal.signal(signal.SIGINT, self.sigint_handler)
 
         # storage containers for agent attributes
-        # we store what the grid tells us, rather than what
+        # we overwrite with what the grid tells us, rather than what
         # is passed in and stored in Login()
         self.firstname = firstname
         self.lastname = lastname
@@ -91,6 +91,7 @@ class Agent(object):
         self.agent_id = None
         self.session_id = None
         self.secure_session_id = None
+        self.name = self.Name()
 
         # other storage containers
         self.inventory_host = None
@@ -175,9 +176,9 @@ class Agent(object):
         if firstname != None:
             self.firstname = firstname
         if lastname != None:
-            self.lastname = None
+            self.lastname = lastname
         if password != None:
-            self.password = None
+            self.password = password
 
         # handle either login params passed in, or, account info
         if login_params == None:
@@ -281,6 +282,12 @@ class Agent(object):
 
     def _enable_child_region(self, sim_ip, sim_port, handle):
         """ enables a child region. eligible simulators are sent in EnableSimulator over the event queue, and routed through the packet handler """
+
+        # if this is the sim we are already connected to, skip it
+        if self.region.sim_ip == sim_ip and self.region.sim_port == sim_port:
+            #self.region.sendCompleteAgentMovement()
+            log(DEBUG, "Not enabling a region we are already connected to: %s" % (str(sim_ip) + ":" + str(sim_port)))
+            return
 
         child_region = Region(circuit_code = self.circuit_code, sim_ip = sim_ip, sim_port = sim_port, handle = handle, agent = self, settings = self.settings, packet_handler = self.packet_handler, event_queue_handler = self.event_queue_handler)
 

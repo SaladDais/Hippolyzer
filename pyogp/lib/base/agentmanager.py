@@ -78,6 +78,8 @@ class AgentManager(object):
 
             self.agents[key] = agent
 
+            log(INFO, "Stored agent %s with a key of %s" % (agent.name, key))
+
         else: 
 
             if agent.firstname != None and agent.lastname != None:

@@ -274,6 +274,9 @@ class Group(object):
             setattr(self, attribute, properties[attribute])
 
     def request_join_group_chat(self):
+        """ sends an ImprovedInstantMessage packet with the atributes necessary to join a group chat """
+
+        log(INFO, "Requesting to join group chat session for \'%s\'" % (self.GroupName))
 
         _AgentID = self.agent.agent_id
         _SessionID = self.agent.session_id
