@@ -17,7 +17,7 @@ Setup test: import of the mock network client handler
     >>> loginhandler = MockXMLRPC(MockXMLRPCLogin(), loginuri)
 
 Now let's log it in
-    >>> client.login('http://localhost:12345/login.cgi', 'firstname', 'lastname', 'password', start_location = 'start_location', handler = loginhandler)
+    >>> client.login('http://localhost:12345/login.cgi', 'firstname', 'lastname', 'password', start_location = 'start_location', handler = loginhandler, connect_region = False)
 
 Evaluate the login response
     >>> client.login_response

@@ -269,7 +269,8 @@ class Agent(object):
     def _enable_current_region(self, region_x = None, region_y = None, seed_capability = None, udp_blacklist = None, sim_ip = None, sim_port = None, circuit_code = None):
         """ enables an agents current region """
 
-        self.circuit_code = self.login_response['circuit_code']
+        if self.login_response.has_key('circuit_code'):
+            self.circuit_code = self.login_response['circuit_code']
 
         # enable the current region, setting connect = True
         self.region = Region(self.login_response['region_x'], self.login_response['region_y'], self.login_response['seed_capability'], self.login_response['udp_blacklist'], self.login_response['sim_ip'], self.login_response['sim_port'], self.login_response['circuit_code'], self, settings = self.settings, packet_handler = self.packet_handler, event_queue_handler = self.event_queue_handler)

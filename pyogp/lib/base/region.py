@@ -97,8 +97,8 @@ class Region(object):
             self.event_queue_handler = EventQueueHandler(settings = self.settings)
 
         # initialize the init params
-        self.global_x = global_x
-        self.global_y = global_y
+        self.global_x = int(global_x)
+        self.global_y = int(global_y)
         self.grid_x = self.global_x/256
         self.grid_y = self.global_y/256
         self.seed_capability_url = seed_capability_url

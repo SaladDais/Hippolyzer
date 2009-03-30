@@ -53,7 +53,7 @@ class TestAgent(unittest.TestCase):
         # override the network client with the mock client pointed at the mock login handler
         self.loginhandler = MockXMLRPC(MockXMLRPCLogin(), self.legacy_loginuri)  
 
-        self.client.login(self.legacy_loginuri, self.firstname, self.lastname, self.password, start_location = 'start', handler = self.loginhandler)
+        self.client.login(self.legacy_loginuri, self.firstname, self.lastname, self.password, start_location = 'start', handler = self.loginhandler, connect_region = False)
 
         self.assertEquals(self.client.login_response, {'region_y': '256', 'region_x': '256', 'first_name': '"first"', 'secure_session_id': '00000000-0000-0000-0000-000000000000', 'sim_ip': '127.0.0.1', 'agent_access': 'M', 'circuit_code': '600000000', 'look_at': '[r0.9963859999999999939,r-0.084939700000000006863,r0]', 'session_id': '00000000-0000-0000-0000-000000000000', 'udp_blacklist': 'EnableSimulator,TeleportFinish,CrossedRegion', 'seed_capability': 'https://somesim:12043/cap/00000000-0000-0000-0000-000000000000', 'agent_id': '00000000-0000-0000-0000-000000000000', 'last_name': 'last', 'inventory_host': 'someinvhost', 'start_location': 'last', 'sim_port': '13001', 'message': 'message', 'login': 'true', 'seconds_since_epoch': '1234567890'})
 
@@ -64,7 +64,7 @@ class TestAgent(unittest.TestCase):
 
         login_params = LegacyLoginParams(self.firstname, self.lastname, self.password)
 
-        self.client.login(self.legacy_loginuri, login_params = login_params, start_location = 'start', handler = self.loginhandler)
+        self.client.login(self.legacy_loginuri, login_params = login_params, start_location = 'start', handler = self.loginhandler, connect_region = False)
 
         self.assertEquals(self.client.login_response, {'region_y': '256', 'region_x': '256', 'first_name': '"first"', 'secure_session_id': '00000000-0000-0000-0000-000000000000', 'sim_ip': '127.0.0.1', 'agent_access': 'M', 'circuit_code': '600000000', 'look_at': '[r0.9963859999999999939,r-0.084939700000000006863,r0]', 'session_id': '00000000-0000-0000-0000-000000000000', 'udp_blacklist': 'EnableSimulator,TeleportFinish,CrossedRegion', 'seed_capability': 'https://somesim:12043/cap/00000000-0000-0000-0000-000000000000', 'agent_id': '00000000-0000-0000-0000-000000000000', 'last_name': 'last', 'inventory_host': 'someinvhost', 'start_location': 'last', 'sim_port': '13001', 'message': 'message', 'login': 'true', 'seconds_since_epoch': '1234567890'})
 
@@ -73,7 +73,7 @@ class TestAgent(unittest.TestCase):
         # override the network client with the mock client pointed at the mock login handler
         self.loginhandler = MockupClient(MockAgentDomainLogin())
 
-        self.client.login(self.ogp_loginuri, self.firstname, self.lastname, self.password, start_location = 'start', handler = self.loginhandler)
+        self.client.login(self.ogp_loginuri, self.firstname, self.lastname, self.password, start_location = 'start', handler = self.loginhandler, connect_region = False)
 
         self.assertEquals(self.client.login_response,  {'agent_seed_capability': 'http://127.0.0.1:12345/seed_cap', 'authenticated': True})
 
@@ -84,7 +84,7 @@ class TestAgent(unittest.TestCase):
 
         login_params = OGPLoginParams(self.firstname, self.lastname, self.password)
 
-        self.client.login(self.ogp_loginuri, self.firstname, self.lastname, self.password, start_location = 'start', handler = self.loginhandler)
+        self.client.login(self.ogp_loginuri, self.firstname, self.lastname, self.password, start_location = 'start', handler = self.loginhandler, connect_region = False)
 
         self.assertEquals(self.client.login_response,  {'agent_seed_capability': 'http://127.0.0.1:12345/seed_cap', 'authenticated': True})
 
