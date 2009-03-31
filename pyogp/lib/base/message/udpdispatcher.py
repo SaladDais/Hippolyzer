@@ -137,7 +137,11 @@ class UDPDispatcher(object):
                     hex_string = '<=>' + self.helpers.bytes_to_hex(msg_buf)
                 else:
                     hex_string = ''
-                log(DEBUG, 'Received packet : %s (%s)%s' % (recv_packet.name, recv_packet.packet_id, hex_string))
+                if self.settings.ENABLE_HOST_LOGGING:
+                    host_string = ' (%s)' % (host)
+                else:
+                    host_string = ''
+                log(DEBUG, 'Received packet%s : %s (%s)%s' % (host_string, recv_packet.name, recv_packet.packet_id, hex_string))
 
             if self.settings.HANDLE_PACKETS:
                 self.packet_handler._handle(recv_packet)
@@ -193,7 +197,11 @@ class UDPDispatcher(object):
                         hex_string = '<=>' + self.helpers.bytes_to_hex(send_buffer)
                     else:
                         hex_string = ''
-                    log(DEBUG, 'Sent packet     : %s (%s)%s' % (packet.name, packet.packet_id, hex_string))
+                    if self.settings.ENABLE_HOST_LOGGING:
+                        host_string = ' (%s)' % (host)
+                    else:
+                        host_string = ''
+                    log(DEBUG, 'Sent packet    %s : %s (%s)%s' % (host_string, packet.name, packet.packet_id, hex_string))
 
             #TODO: remove this when testing a network
             self.udp_client.send_packet(self.socket, send_buffer, host)

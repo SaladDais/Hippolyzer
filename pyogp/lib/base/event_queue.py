@@ -157,25 +157,31 @@ class EventQueueClient(object):
 
             while self.stop != True:
 
-                api.sleep(self.settings.REGION_EVENT_QUEUE_POLL_INTERVAL)
-
-                if self.last_id != -1:
-                    self.data = {'ack':self.last_id, 'done':False}
-
-                if self.settings.ENABLE_EQ_LOGGING: log(DEBUG, 'Posting to the event queue: %s' % (self.data))
-
                 try:
-                    self.result = self.cap.POST(self.data)
+                    api.sleep(self.settings.REGION_EVENT_QUEUE_POLL_INTERVAL)
+
+                    if self.last_id != -1:
+                        self.data = {'ack':self.last_id, 'done':True}
+
+                    if self.settings.ENABLE_EQ_LOGGING: log(DEBUG, 'Posting to the event queue: %s' % (self.data))
+
+                    try:
+                        self.result = self.cap.POST(self.data)
+                    except Exception, error:
+                        log(INFO, "Received an error we ought not care about: %s" % (error))
+                        pass
+
+                    if self.result != None: 
+                        self.last_id = self.result['id']
+                    else:
+                        self.last_id = -1
+
+                    self._parse_result(self.result)
+
                 except Exception, error:
-                    log(INFO, "Received an error we ought not care about: %s" % (error))
-                    pass
-
-                if self.result != None: 
-                    self.last_id = self.result['id']
-                else:
-                    self.last_id = -1
-
-                self._parse_result(self.result)
+                    log(WARNING, "Error in a post to the event queue. Error was: %s" % (error))
+                #finally:
+                    #log(CRITICAL, "Why am i here?")
 
             self._running = False
 

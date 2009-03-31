@@ -91,10 +91,11 @@ class Region(object):
 
         # allow the event_queue_handler to be passed in
         # otherwise, grab the defaults
-        if event_queue_handler != None:
-            self.event_queue_handler = event_queue_handler
-        elif self.settings.HANDLE_EVENT_QUEUE_DATA:
-            self.event_queue_handler = EventQueueHandler(settings = self.settings)
+        if seed_capability_url != None:
+            if event_queue_handler != None:
+                self.event_queue_handler = event_queue_handler
+            elif self.settings.HANDLE_EVENT_QUEUE_DATA:
+                self.event_queue_handler = EventQueueHandler(settings = self.settings)
 
         # initialize the init params
         self.global_x = int(global_x)
@@ -478,7 +479,7 @@ class Region(object):
         """ polls the event queue capability and parses the results  """
 
         self.event_queue = EventQueueClient(self.capabilities['EventQueueGet'], settings = self.settings, packet_handler = self.packet_handler, region = self, event_queue_handler = self.event_queue_handler)
-        api.spawn(self.event_queue.start)
+        self.event_queue.start()
         self._isEventQueueRunning = True
 
     def _stopEventQueue(self):

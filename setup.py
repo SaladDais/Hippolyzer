@@ -66,7 +66,8 @@ setup(name='pyogp.lib.base',
            'chat_and_instant_messaging = pyogp.lib.base.examples.sample_chat_and_instant_messaging:main',
            'group_creation = pyogp.lib.base.examples.sample_group_creation:main',
            'group_chat = pyogp.lib.base.examples.sample_group_chat:main',
-           'agent_manager = pyogp.lib.base.examples.sample_agent_manager:main'
+           'agent_manager = pyogp.lib.base.examples.sample_agent_manager:main',
+           'multi_region_connect = pyogp.lib.base.examples.sample_multi_region_connect:main'
        ],
      },
 

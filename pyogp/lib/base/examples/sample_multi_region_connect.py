@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """
-@file sample_agent_login.py
+@file sample_multi_region_connect.py
 @date 2009-02-16
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
@@ -74,7 +74,7 @@ def login():
     settings.ENABLE_UDP_LOGGING =True
     settings.ENABLE_EQ_LOGGING = True
     settings.ENABLE_CAPS_LOGGING = True
-    settings.MULTIPLE_SIM_CONNECTIONS = False
+    settings.MULTIPLE_SIM_CONNECTIONS = True
 
     #First, initialize the agent
     client = Agent(settings)
