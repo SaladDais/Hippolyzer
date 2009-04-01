@@ -86,6 +86,10 @@ class UDPPacketSerializer(object):
             msg_buffer += packed_block
             bytes += block_size
 
+        if self.current_template.name == 'RegionHandshakeReply':
+            # testing a hack to let RegionHandshakeReply get parsed
+            msg_buffer += struct.pack(">I", 0)
+
         self.message_buffer = msg_buffer
 
         return msg_buffer

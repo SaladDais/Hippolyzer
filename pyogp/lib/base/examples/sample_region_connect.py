@@ -93,13 +93,6 @@ def login():
     print 'Region attributes:'
     for attr in client.region.__dict__:
         print attr, ':\t\t\t',  client.region.__dict__[attr]
-    print ''
-    print ''
-    print 'Child Regions:'
-    for region in client.regions:
-        print ''
-        for attr in client.region.__dict__:
-            print attr, ':\t\t\t',  client.region.__dict__[attr]
 
 def main():
     return login()    

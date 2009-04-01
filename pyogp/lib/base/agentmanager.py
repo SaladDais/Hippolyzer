@@ -40,7 +40,16 @@ class AgentManager(object):
     This class can perhaps begin to manage sessions in time.
     """
 
-    def __init__(self):
+    def __init__(self, settings = None):
+        """ initialize the agent manager """
+
+        # allow the settings to be passed in
+        # otherwise, grab the defaults
+        if settings != None:
+            self.settings = settings
+        else:
+            from pyogp.lib.base.settings import Settings
+            self.settings = Settings()
 
         # store the agents in a dictionary keyed by a uuid
         # this could be agent_id, if we know it ahead of time
@@ -49,6 +58,8 @@ class AgentManager(object):
 
         # signal handler to capture erm signals
         self.signal_handler = signal.signal(signal.SIGINT, self.sigint_handler)
+
+        if self.settings.LOG_VERBOSE: log(DEBUG, 'Initializing agent manager for %s agents' % (len(self.agents)))
 
     def initialize(self, agents):
         """ accept a list of Agent() instances, and store them in the agents attribute """
@@ -120,6 +131,8 @@ class AgentManager(object):
 
     def login(self, key, loginuri, start_location):
         """ spawns a new agent via an eventlet coroutine """
+
+        if self.settings.LOG_COROUTINE_SPAWNS: log(INFO, "Spawning a coroutine for agent login for %s." % (self.agents[key].Name()))
 
         api.spawn(self.agents[key].login, loginuri = loginuri, start_location = start_location)
 

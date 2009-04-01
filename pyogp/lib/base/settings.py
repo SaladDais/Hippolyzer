@@ -123,7 +123,8 @@ class Settings(object):
         self.ENABLE_UDP_LOGGING = True
         self.ENABLE_OBJECT_LOGGING = True
         self.LOG_SKIPPED_PACKETS = True
-        self.ENABLE_HOST_LOGGING = False
+        self.ENABLE_HOST_LOGGING = True
+        self.LOG_COROUTINE_SPAWNS = True
 
         # allow disabling logging of certain packets
         self.DISABLE_SPAMMERS = True
@@ -140,6 +141,7 @@ class Settings(object):
             self.LOG_SKIPPED_PACKETS = False
             self.ENABLE_OBJECT_LOGGING = False
             self.ENABLE_HOST_LOGGING = False
+            self.LOG_COROUTINE_SPAWNS = False
 
         #~~~~~~~~~~~~~~~~~~~~~~
         # Test related settings

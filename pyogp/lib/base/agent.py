@@ -38,7 +38,7 @@ from pyogp.lib.base.groups import *
 # from pyogp.lib.base.appearance import Appearance
 
 # pyogp messaging
-from pyogp.lib.base.message.packethandler import PacketHandler
+#from pyogp.lib.base.message.packethandler import PacketHandler
 from pyogp.lib.base.event_queue import EventQueueHandler
 
 from pyogp.lib.base.message.packets import *
@@ -105,7 +105,7 @@ class Agent(object):
         self.connected = False
         self.grid_type = None
         self.running = True
-        self.packet_handler = PacketHandler(self.settings)
+        #self.packet_handler = PacketHandler(self.settings)
         self.event_queue_handler = EventQueueHandler(self.settings)
         self.helpers = Helpers()
 
@@ -115,42 +115,12 @@ class Agent(object):
 
         # should we include these here?
         self.agentdomain = None     # the agent domain the agent is connected to if an OGP context
-        self.regions = []           # all known regions
+        self.child_regions = []     # all neighboring regions
+        self._pending_child_regions = []    # neighbor regions an agent may connect to
         self.region = None          # the host simulation for the agent
 
         # init Appearance()
         # self.appearance = Appearance(self.settings, self)
-
-        if self.settings.ENABLE_GROUP_CHAT:
-            self.group_manager = GroupManager(self, self.settings)
-
-        if self.settings.MULTIPLE_SIM_CONNECTIONS:
-
-            onEnableSimulator_received = self.event_queue_handler._register('EnableSimulator')
-            onEnableSimulator_received.subscribe(onEnableSimulator, self)
-
-        # set up callbacks (is this a decent place to do this? it's perhaps premature)
-        if self.settings.HANDLE_PACKETS:
-
-            onAlertMessage_received = self.packet_handler._register('AlertMessage')
-            onAlertMessage_received.subscribe(onAlertMessage, self)
-
-            onAgentDataUpdate_received = self.packet_handler._register('AgentDataUpdate')
-            onAgentDataUpdate_received.subscribe(onAgentDataUpdate, self)
-
-            onAgentMovementComplete_received = self.packet_handler._register('AgentMovementComplete')
-            onAgentMovementComplete_received.subscribe(onAgentMovementComplete, self)
-
-            onHealthMessage_received = self.packet_handler._register('HealthMessage')
-            onHealthMessage_received.subscribe(onHealthMessage, self)
-
-            if self.settings.ENABLE_COMMUNICATIONS_TRACKING:
-
-                onChatFromSimulator_received = self.packet_handler._register('ChatFromSimulator')
-                onChatFromSimulator_received.subscribe(self.helpers.log_packet, self)
-
-                onImprovedInstantMessage_received = self.packet_handler._register('ImprovedInstantMessage')
-                onImprovedInstantMessage_received.subscribe(self.helpers.log_packet, self)
 
         if self.settings.LOG_VERBOSE: log(DEBUG, 'Initializing agent: %s' % (self))
 
@@ -210,6 +180,9 @@ class Agent(object):
 
         # ToDo: what to do with self.login_response['look_at']?
 
+        if self.settings.MULTIPLE_SIM_CONNECTIONS:
+            api.spawn(self._monitor_for_new_regions)
+
         if connect_region:
             self._enable_current_region()
 
@@ -220,8 +193,13 @@ class Agent(object):
 
         if self.region == None:
             return
-        elif self.region.logout():
-            self.connected = False
+        else:
+
+            # kill udp and or event queue for child regions
+            [region._kill_coroutines() for region in self.child_regions]
+
+            if self.region.logout():
+                self.connected = False
 
         # zero out the password in case we dump it somewhere
         self.password = ''
@@ -246,9 +224,9 @@ class Agent(object):
 
             self.firstname = re.sub(r'\"', '', self.login_response['first_name'])
             self.lastname = self.login_response['last_name']
-            self.agent_id = self.login_response['agent_id']
-            self.session_id = self.login_response['session_id']
-            self.secure_session_id = self.login_response['secure_session_id']
+            self.agent_id = uuid.UUID(self.login_response['agent_id'])
+            self.session_id = uuid.UUID(self.login_response['session_id'])
+            self.secure_session_id = uuid.UUID(self.login_response['secure_session_id'])
 
             self.connected = bool(self.login_response['login'])
             self.inventory_host = self.login_response['inventory_host']
@@ -273,32 +251,98 @@ class Agent(object):
             self.circuit_code = self.login_response['circuit_code']
 
         # enable the current region, setting connect = True
-        self.region = Region(self.login_response['region_x'], self.login_response['region_y'], self.login_response['seed_capability'], self.login_response['udp_blacklist'], self.login_response['sim_ip'], self.login_response['sim_port'], self.login_response['circuit_code'], self, settings = self.settings, packet_handler = self.packet_handler, event_queue_handler = self.event_queue_handler)
+        self.region = Region(self.login_response['region_x'], self.login_response['region_y'], self.login_response['seed_capability'], self.login_response['udp_blacklist'], self.login_response['sim_ip'], self.login_response['sim_port'], self.login_response['circuit_code'], self, settings = self.settings, event_queue_handler = self.event_queue_handler)
+
+        self.region.is_host_region = True
+
+        self._enable_callbacks()
 
         # start the simulator udp and event queue connections
-        api.spawn(self.region.connect)
-        #self.region.connect()
-        while self.running:
-            api.sleep(0)
+        if self.settings.LOG_COROUTINE_SPAWNS: log(INFO, "Spawning a coroutine for connecting to the agent's host region.")
 
-    def _enable_child_region(self, sim_ip, sim_port, handle):
+        api.spawn(self.region.connect)
+
+    def _enable_child_region(self, region_params):
         """ enables a child region. eligible simulators are sent in EnableSimulator over the event queue, and routed through the packet handler """
 
         # if this is the sim we are already connected to, skip it
-        if self.region.sim_ip == sim_ip and self.region.sim_port == sim_port:
+        if self.region.sim_ip == region_params['IP'] and self.region.sim_port == region_params['Port']:
             #self.region.sendCompleteAgentMovement()
-            log(DEBUG, "Not enabling a region we are already connected to: %s" % (str(sim_ip) + ":" + str(sim_port)))
+            log(DEBUG, "Not enabling a region we are already connected to: %s" % (str(region_params['IP']) + ":" + str(region_params['Port'])))
             return
 
-        child_region = Region(circuit_code = self.circuit_code, sim_ip = sim_ip, sim_port = sim_port, handle = handle, agent = self, settings = self.settings, packet_handler = self.packet_handler, event_queue_handler = self.event_queue_handler)
+        child_region = Region(circuit_code = self.circuit_code, sim_ip = region_params['IP'], sim_port = region_params['Port'], handle = region_params['Handle'], agent = self, settings = self.settings, event_queue_handler = self.event_queue_handler)
 
-        self.regions.append(child_region)
+        self.child_regions.append(child_region)
 
-        log(INFO, "Enabling a child region with ip:port of %s" % (str(sim_ip) + ":" + str(sim_port)))
+        log(INFO, "Enabling a child region with ip:port of %s" % (str(region_params['IP']) + ":" + str(region_params['Port'])))
+
+        if self.settings.LOG_COROUTINE_SPAWNS: log(INFO, "Spawning a coroutine for connecting to a neighboring region.")
 
         api.spawn(child_region.connect_child)
+
+    def _monitor_for_new_regions(self):
+
         while self.running:
+
+            if len(self._pending_child_regions) > 0:
+
+                for region_params in self._pending_child_regions:
+                    
+                    self._enable_child_region(region_params)
+                    self._pending_child_regions.remove(region_params)
+
             api.sleep(0)
+
+    def _start_EQ_on_neighboring_region(self, message):
+        """ enabled the event queue on an agent's neighboring region """
+
+        region = [region for region in self.child_regions if message.sim_ip_and_port == str(region.sim_ip) + ":" + str(region.sim_port)]
+
+        if region != []:
+
+            region[0]._set_seed_capability(message.seed_capability_url)
+
+            region[0]._get_region_capabilities()
+
+            log(DEBUG, 'Spawning neighboring region event queue connection')
+            region[0]._startEventQueue()
+
+    def _enable_callbacks(self):
+        """ enable the glue layer once the region is established """
+
+        if self.settings.ENABLE_GROUP_CHAT:
+            self.group_manager = GroupManager(self, self.settings)
+
+        if self.settings.MULTIPLE_SIM_CONNECTIONS:
+
+            onEnableSimulator_received = self.event_queue_handler._register('EnableSimulator')
+            onEnableSimulator_received.subscribe(onEnableSimulator, self)
+
+            onEstablishAgentCommunication_received = self.event_queue_handler._register('EstablishAgentCommunication')
+            onEstablishAgentCommunication_received.subscribe(onEstablishAgentCommunication, self)
+        # set up callbacks (is this a decent place to do this? it's perhaps premature)
+        if self.settings.HANDLE_PACKETS:
+
+            onAlertMessage_received = self.region.packet_handler._register('AlertMessage')
+            onAlertMessage_received.subscribe(onAlertMessage, self)
+
+            onAgentDataUpdate_received = self.region.packet_handler._register('AgentDataUpdate')
+            onAgentDataUpdate_received.subscribe(onAgentDataUpdate, self)
+
+            onAgentMovementComplete_received = self.region.packet_handler._register('AgentMovementComplete')
+            onAgentMovementComplete_received.subscribe(onAgentMovementComplete, self)
+
+            onHealthMessage_received = self.region.packet_handler._register('HealthMessage')
+            onHealthMessage_received.subscribe(onHealthMessage, self)
+
+            if self.settings.ENABLE_COMMUNICATIONS_TRACKING:
+
+                onChatFromSimulator_received = self.region.packet_handler._register('ChatFromSimulator')
+                onChatFromSimulator_received.subscribe(self.helpers.log_packet, self)
+
+                onImprovedInstantMessage_received = self.region.packet_handler._register('ImprovedInstantMessage')
+                onImprovedInstantMessage_received.subscribe(self.helpers.log_packet, self)
 
     def send_AgentDataUpdateRequest(self):
         """ request an agent data update """
@@ -615,4 +659,41 @@ def onEnableSimulator(packet, agent):
     # not sure what this is, but pass it up
     Handle = [ord(x) for x in packet.message_data.blocks['SimulatorInfo'][0].get_variable('Handle').data]
 
-    agent._enable_child_region(IP, Port, Handle)
+    region_params = {'IP': IP, 'Port': Port, 'Handle': Handle}
+
+    log(INFO, 'Received EnableSimulator for %s' % (str(IP) + ":" + str(Port)))
+
+    # are we already prepping to connect to the sim?
+    if region_params not in agent._pending_child_regions:
+
+        # are we already connected to the sim?
+        known_region = False
+
+        # don't append to the list if we already know about this region
+        for region in agent.child_regions:
+            if region.sim_ip == region_params['IP'] and region.sim_port == region_params['Port']:
+                known_region = True
+
+        #agent._enable_child_region(IP, Port, Handle)
+        if not known_region:
+            agent._pending_child_regions.append(region_params)
+
+def onEstablishAgentCommunication(message, agent):
+    """ handler for the EstablishAgentCommunication sent over the event queue
+    
+    contains the seed cap for a neighboring region
+    """
+
+    log(INFO, 'Received EstablishAgentCommunication for %s' % (message.sim_ip_and_port))
+
+    is_running = False
+
+    # don't enable the event queue when we already have it running
+    for region in agent.child_regions:
+        if (str(region.sim_ip) + ":" + str(region.sim_port) == message.sim_ip_and_port) and region.event_queue != None:
+            if region.event_queue._running:
+                is_running = True
+
+    # start the event queue
+    if is_running == False:
+        agent._start_EQ_on_neighboring_region(message)

@@ -8,6 +8,7 @@ import binascii
 import re
 import traceback
 from pyogp.lib.base.message.udpdeserializer import UDPPacketDeserializer
+from pyogp.lib.base.settings import Settings
 from logging import getLogger, StreamHandler, Formatter, CRITICAL, ERROR, WARNING, INFO, DEBUG
 
 logger = getLogger('parse_packet')
@@ -124,10 +125,13 @@ def process_stream(data, source=None, stats = None):
 
     msg_buff = gen_message_buffer(data)
 
+    settings = Settings()
+    settings.ENABLE_DEFERRED_PACKET_PARSING = False
+
     if msg_buff != None:
         try:
-            deserializer = UDPPacketDeserializer(msg_buff)
-            packet = deserializer.deserialize()
+            deserializer = UDPPacketDeserializer(settings = settings)
+            packet = deserializer.deserialize(msg_buff)
             display_packet(packet, data, source)
             if stats != None:
                 stats.addSuccess(packet.name)

@@ -105,17 +105,32 @@ class EventQueueClient(object):
     def start(self):
 
         try:
+
             if self.cap.name == 'event_queue':
-                api.spawn(self._processADEventQueue)
+
+                if self.settings.LOG_COROUTINE_SPAWNS: log(INFO, "Spawning a coroutine for event queue in the agent domain context.")
+
+                self._processADEventQueue()
+
                 return True
+
             elif self.cap.name == 'EventQueueGet':
-                api.spawn(self._processRegionEventQueue)
+
+                if self.settings.LOG_COROUTINE_SPAWNS: log(INFO, "Spawning a coroutine for event queue in the simulator context for %s." % (str(self.region.sim_ip) + ':' + str(self.region.sim_port)))
+
+                self._processRegionEventQueue()
+
                 return True
+
             else:
+
                 # ToDo handle this as an exception
+
                 log(WARNING, 'Unable to start event queue polling due to %s' % ('unknown queue type'))
                 return False
-        except:
+
+        except Exception, error:
+            log(ERROR, "Problem stating event queue for %s with cap of %s" % (str(self.region.sim_ip) + ':' + str(self.region.sim_port), self.seed_capability_url))
             return False
 
     def stop(self):
@@ -139,7 +154,7 @@ class EventQueueClient(object):
         try:
             # Handle the event queue result if we have subscribers
             if len(self.subscribers) > 0:
-                log(DEBUG, 'Handling event queue results')
+                #log(DEBUG, 'Handling event queue results')
                 handler(data)
 
         except AttributeError:
@@ -163,12 +178,21 @@ class EventQueueClient(object):
                     if self.last_id != -1:
                         self.data = {'ack':self.last_id, 'done':True}
 
-                    if self.settings.ENABLE_EQ_LOGGING: log(DEBUG, 'Posting to the event queue: %s' % (self.data))
+                    if self.settings.ENABLE_EQ_LOGGING: 
+                        if self.settings.ENABLE_HOST_LOGGING:
+                            host_string = ' to (%s)' % (str(self.region.sim_ip) + ':' + str(self.region.sim_port))
+                        else:
+                            host_string = ''
+                        log(DEBUG, 'Posting to the event queue%s: %s' % (host_string, self.data))
 
                     try:
                         self.result = self.cap.POST(self.data)
                     except Exception, error:
-                        log(INFO, "Received an error we ought not care about: %s" % (error))
+                        if self.settings.ENABLE_HOST_LOGGING:
+                            host_string = ' from (%s)' % (str(self.region.sim_ip) + ':' + str(self.region.sim_port))
+                        else:
+                            host_string = ''
+                        log(INFO, "Received an error we ought not care about%s: %s" % (host_string, error))
                         pass
 
                     if self.result != None: 
@@ -215,7 +239,12 @@ class EventQueueClient(object):
 
                 if data != None:
 
-                    if self.settings.ENABLE_EQ_LOGGING: log(DEBUG, 'Event Queue result: %s' % (data))
+                    if self.settings.ENABLE_EQ_LOGGING:
+                        if self.settings.ENABLE_HOST_LOGGING:
+                            host_string = ' from (%s)' % (str(self.region.sim_ip) + ':' + str(self.region.sim_port))
+                        else:
+                            host_string = ''
+                        log(DEBUG, 'Event Queue result%s: %s' % (host_string, data))
 
                     # if we are handling packets, handle the packet so any subscribers can get the data
                     if self.settings.HANDLE_PACKETS:
@@ -227,8 +256,12 @@ class EventQueueClient(object):
                             self.event_queue_handler._handle(packet)
 
             except Exception, error:
-
-                log(WARNING, "Error parsing even queue results. Error: %s. Data was: %s" % (error, data))
+                traceback.print_exc()
+                if self.settings.ENABLE_HOST_LOGGING:
+                    host_string = ' from (%s)' % (str(self.region.sim_ip) + ':' + str(self.region.sim_port))
+                else:
+                    host_string = ''
+                log(WARNING, "Error parsing even queue results%s. Error: %s. Data was: %s" % (host_string, error, data))
 
     def _decode_eq_result(self, data=None):
         """ parse the event queue data, return a list of packets
@@ -282,6 +315,12 @@ class EventQueueClient(object):
 
                                 group_chat_session_data = ChatterBoxSessionStartReply_Message(message['body'])
                                 self.event_queue_handler._handle(group_chat_session_data)
+
+                            elif message['message'] == 'EstablishAgentCommunication':
+
+                                #message['name'] == message['message']
+                                establish_agent_communication_data = EstablishAgentCommunication_Message(message['body'])
+                                self.event_queue_handler._handle(establish_agent_communication_data)
 
                             else:
                                 # this is a UDP packet sent over the event queue 
@@ -371,7 +410,8 @@ class EventQueueHandler(object):
             # Handle the packet if we have subscribers
             # Conveniently, this will also enable verbose packet logging
             if len(handler) > 0:
-                if self.settings.LOG_VERBOSE: log(DEBUG, 'Handling event queue data : %s' % (data.name))
+                if self.settings.LOG_VERBOSE: 
+                    log(DEBUG, 'Handling event queue data : %s' % (data.name))
                 handler(data)
 
         except KeyError:
@@ -404,3 +444,18 @@ class EventQueueReceivedNotifier(object):
 
     __call__ = received
 
+class EstablishAgentCommunication_Message(object):
+    """ incomplete implementation"""
+
+    def __init__(self, message_data):
+
+        self.agent_id = message_data['agent-id']
+        self.sim_ip_and_port = message_data['sim-ip-and-port']
+        self.seed_capability_url = message_data['seed-capability']
+
+        self.sim_ip = self.sim_ip_and_port.split(":")[0]
+        self.sim_port = self.sim_ip_and_port.split(":")[1]
+
+        self.name = 'EstablishAgentCommunication'
+
+        # {'body': {'agent-id': a517168d-1af5-4854-ba6d-672c8a59e439, 'sim-ip-and-port': '8.4.131.212:12035', 'seed-capability': 'https://sim19.aditi.lindenlab.com:12043/cap/b2b94dd2-39df-df40-9679-a7e0617e033d'}, 'message': 'EstablishAgentCommunication'}

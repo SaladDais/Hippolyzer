@@ -44,9 +44,11 @@ log = logger.log
 class UDPDispatcher(object):
     #implements(IUDPDispatcher)
 
-    def __init__(self, udp_client = None, settings = None, packet_handler = None):
+    def __init__(self, udp_client = None, settings = None, packet_handler = None, region = None):
         #holds the details of the message, or how the messages should be sent,
         #built, and read
+
+        self.region = region
 
         self.circuit_manager = CircuitManager()
         self.data_unpacker = DataUnpacker()
@@ -107,6 +109,8 @@ class UDPDispatcher(object):
             circuit = self.find_circuit(host)
             if circuit == None:
                 raise exc.CircuitNotFound(host, 'preparing to check for packets')
+
+            self.region.packets_in += 1
 
             recv_packet = self.udp_deserializer.deserialize(msg_buf)
 
@@ -206,6 +210,8 @@ class UDPDispatcher(object):
             #TODO: remove this when testing a network
             self.udp_client.send_packet(self.socket, send_buffer, host)
 
+            self.region.packets_out += 1
+
             return send_buffer
 
         except Exception, error:
@@ -290,3 +296,7 @@ class UDPDispatcher(object):
                 return True
 
         return False
+
+    def __repr__(self):
+        
+        return 'UDPDispatcher to %s' % (str(self.udp_client.sender))

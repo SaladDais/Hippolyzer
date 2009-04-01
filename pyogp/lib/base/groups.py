@@ -62,8 +62,6 @@ class GroupManager(object):
             self.settings = Settings()
 
         self.agent = agent
-        
-        
 
         # the group store consists of a list
         # of Group() instances
@@ -73,19 +71,19 @@ class GroupManager(object):
         # Callbacks
         # ~~~~~~~~~
         if self.settings.HANDLE_PACKETS:
-            onAgentGroupDataUpdate_received = self.agent.event_queue_handler._register("AgentGroupDataUpdate")
+            onAgentGroupDataUpdate_received = self.agent.region.event_queue_handler._register("AgentGroupDataUpdate")
             onAgentGroupDataUpdate_received.subscribe(onAgentGroupDataUpdate, self)
 
-            onChatterBoxInvitation_received = self.agent.event_queue_handler._register('ChatterBoxInvitation')
+            onChatterBoxInvitation_received = self.agent.region.event_queue_handler._register('ChatterBoxInvitation')
             onChatterBoxInvitation_received.subscribe(onChatterBoxInvitation_Message, self)
 
-            onChatterBoxSessionEventReply_received = self.agent.event_queue_handler._register('ChatterBoxSessionEventReply')
+            onChatterBoxSessionEventReply_received = self.agent.region.event_queue_handler._register('ChatterBoxSessionEventReply')
             onChatterBoxSessionEventReply_received.subscribe(onChatterBoxSessionEventReply, self)
 
-            onChatterBoxSessionAgentListUpdates_received = self.agent.event_queue_handler._register('ChatterBoxSessionAgentListUpdates')
+            onChatterBoxSessionAgentListUpdates_received = self.agent.region.event_queue_handler._register('ChatterBoxSessionAgentListUpdates')
             onChatterBoxSessionAgentListUpdates_received.subscribe(onChatterBoxSessionAgentListUpdates, self)
 
-            onChatterBoxSessionStartReply_received = self.agent.event_queue_handler._register('ChatterBoxSessionStartReply')
+            onChatterBoxSessionStartReply_received = self.agent.region.event_queue_handler._register('ChatterBoxSessionStartReply')
             onChatterBoxSessionStartReply_received.subscribe(onChatterBoxSessionStartReply, self)
 
         if self.settings.LOG_VERBOSE: log(DEBUG, "Initialized the Group Manager")
@@ -189,7 +187,7 @@ class GroupManager(object):
 
             if self.settings.HANDLE_PACKETS:
                 # enable the callback to watch for the CreateGroupReply packet
-                self.onCreateGroupReply_received = self.agent.packet_handler._register('CreateGroupReply')
+                self.onCreateGroupReply_received = self.agent.region.packet_handler._register('CreateGroupReply')
                 self.onCreateGroupReply_received.subscribe(onCreateGroupReply, self)
         else:
 

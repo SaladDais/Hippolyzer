@@ -29,7 +29,7 @@ class Host(object):
 
     def __repr__(self):                                                              
         """return a string representation"""
-        return "Host is '%s:%s'" %(self.ip, self.port)
+        return str("Host is '%s:%s'" %(self.ip, self.port))
 
     def is_ok(self):
         if self.ip == None or self.port == None or \

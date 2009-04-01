@@ -39,12 +39,16 @@ from pyogp.lib.base.settings import Settings
 from pyogp.lib.base.utilities.helpers import Helpers
 from pyogp.lib.base.event_queue import EventQueueClient, EventQueueHandler
 from pyogp.lib.base.objects import Objects
+from pyogp.lib.base.datatypes import *
 
 # messaging
 from pyogp.lib.base.message.udpdispatcher import UDPDispatcher
 from pyogp.lib.base.message.circuit import Host
 from pyogp.lib.base.message.packets import *
 from pyogp.lib.base.message.packethandler import PacketHandler
+
+# utilities
+from pyogp.lib.base.utilities.helpers import Wait
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.region')
@@ -91,11 +95,11 @@ class Region(object):
 
         # allow the event_queue_handler to be passed in
         # otherwise, grab the defaults
-        if seed_capability_url != None:
-            if event_queue_handler != None:
-                self.event_queue_handler = event_queue_handler
-            elif self.settings.HANDLE_EVENT_QUEUE_DATA:
-                self.event_queue_handler = EventQueueHandler(settings = self.settings)
+
+        if event_queue_handler != None:
+            self.event_queue_handler = event_queue_handler
+        elif self.settings.HANDLE_EVENT_QUEUE_DATA:
+            self.event_queue_handler = EventQueueHandler(settings = self.settings)
 
         # initialize the init params
         self.global_x = int(global_x)
@@ -109,10 +113,14 @@ class Region(object):
         self.circuit_code = circuit_code
         self.agent = agent   # an agent object
         self.handle = handle
+        self.is_host_region = False
+
+        self.packets_in = 0
+        self.packets_out = 0
 
         # UDP connection information
         if (self.sim_ip != None) and (self.sim_port != None):
-            self.messenger = UDPDispatcher(settings = self.settings, packet_handler = self.packet_handler)
+            self.messenger = UDPDispatcher(settings = self.settings, packet_handler = self.packet_handler, region = self)
             self.host = Host((self.sim_ip,self.sim_port))
         else:
             self.host = None
@@ -241,7 +249,7 @@ class Region(object):
             self.seed_capability_url = url
         self.seed_cap = RegionSeedCapability('seed_cap', self.seed_capability_url, settings = self.settings)
 
-        if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, 'setting region domain seed cap: %s' % (self.seed_capability_url))
+        if self.settings.LOG_VERBOSE: log(DEBUG, 'setting region domain seed cap: %s' % (self.seed_capability_url))
 
     def _get_region_public_seed(self, custom_headers={'Accept' : 'application/llsd+xml'}):
         """ call this capability, return the parsed result """
@@ -300,6 +308,7 @@ class Region(object):
 
         # spawn an eventlet api instance that runs the UDP connection
         log(DEBUG, 'Spawning region UDP connection')
+        if self.settings.LOG_COROUTINE_SPAWNS: log(INFO, "Spawning a coroutine for udp connection to the agent's host region %s" % (str(self.sim_ip) + ":" + str(self.sim_port)))
         api.spawn(self._processUDP)
 
         log(DEBUG, "Spawned region data connections")
@@ -314,6 +323,9 @@ class Region(object):
 
         # spawn an eventlet api instance that runs the UDP connection
         log(DEBUG, 'Spawning region UDP connection for child region %s' % (str(self.sim_ip) + ":" + str(self.sim_port)))
+
+        if self.settings.LOG_COROUTINE_SPAWNS: log(INFO, "Spawning a coroutine for udp connection to the agent's child region %s" % (str(self.sim_ip) + ":" + str(self.sim_port)))
+
         api.spawn(self._processUDP)
 
     def logout(self):
@@ -324,17 +336,28 @@ class Region(object):
         try:
             # this should move to a handled method
             packet = LogoutRequestPacket()
-            packet.AgentData['AgentID'] = UUID(string = self.agent.agent_id)
-            packet.AgentData['SessionID'] = UUID(string = self.agent.session_id)
+            packet.AgentData['AgentID'] = self.agent.agent_id
+            packet.AgentData['SessionID'] = self.agent.session_id
 
             self.send_message(packet())
+
+            # allow for confirmation of sending the packet
+            Wait(1)
 
             self._isUDPRunning = False
             self._stopEventQueue()
 
             return True
-        except:
+        except Exception, error:
+            log(ERROR, "Error logging out from region.")
+            raise
             return False
+
+    def _kill_coroutines(self):
+        """ end processes spawned by the child regions """
+
+        self._isUDPRunning = False
+        self._stopEventQueue()
 
     def _init_agent_in_region(self):
         """ send a few packets to set things up """
@@ -360,8 +383,8 @@ class Region(object):
         packet = UseCircuitCodePacket()
 
         packet.CircuitCode['Code'] = self.circuit_code
-        packet.CircuitCode['SessionID'] = uuid.UUID(self.agent.session_id)
-        packet.CircuitCode['ID'] = uuid.UUID(self.agent.agent_id)
+        packet.CircuitCode['SessionID'] = self.agent.session_id
+        packet.CircuitCode['ID'] = self.agent.agent_id
 
         self.send_reliable(packet())
 
@@ -370,8 +393,8 @@ class Region(object):
 
         packet = CompleteAgentMovementPacket()
 
-        packet.AgentData['AgentID'] = uuid.UUID(self.agent.agent_id)
-        packet.AgentData['SessionID'] = uuid.UUID(self.agent.session_id)
+        packet.AgentData['AgentID'] = self.agent.agent_id
+        packet.AgentData['SessionID'] = self.agent.session_id
         packet.AgentData['CircuitCode'] = self.circuit_code
 
         self.send_reliable(packet())
@@ -383,7 +406,7 @@ class Region(object):
 
         if agent_ids == []:
             UUIDNameBlock = {}
-            UUIDNameBlock['ID'] = uuid.UUID(self.agent.agent_id)
+            UUIDNameBlock['ID'] = self.agent.agent_id
             packet.UUIDNameBlockBlocks.append(UUIDNameBlock)
         else:
             for agent_id in agent_ids:
@@ -398,8 +421,8 @@ class Region(object):
 
         packet = AgentUpdatePacket()
 
-        packet.AgentData['AgentID'] = uuid.UUID(str(self.agent.agent_id))
-        packet.AgentData['SessionID'] = uuid.UUID(str(self.agent.session_id))
+        packet.AgentData['AgentID'] = self.agent.agent_id
+        packet.AgentData['SessionID'] = self.agent.session_id
 
         # configurable data points
         packet.AgentData['BodyRotation'] = BodyRotation
@@ -419,9 +442,9 @@ class Region(object):
         """ sends a RegionHandshake packet """
 
         packet = RegionHandshakeReplyPacket()
-        packet.AgentData['SessionID'] = uuid.UUID(self.agent.session_id)    # MVT_LLUUID
-        packet.AgentData['AgentID'] = uuid.UUID(self.agent.agent_id) 
-        packet.RegionInfo['Flags'] = 0
+        packet.AgentData['SessionID'] = self.agent.session_id    # MVT_LLUUID
+        packet.AgentData['AgentID'] = self.agent.agent_id 
+        packet.RegionInfo['Flags'] = 00
 
         self.send_reliable(packet())
 
@@ -463,10 +486,13 @@ class Region(object):
 
                 self.messenger.process_acks()
 
+                # if this region is the host region, send agent updates
+                if self.is_host_region:
                 # pull the camera back a bit, 20m
                 # we are currently facing east, so pull back on the x axis
-                CameraCenter = (self.agent.Position.X - 20.0, self.agent.Position.Y, self.agent.Position.Z)
-                self.sendAgentUpdate(CameraCenter = CameraCenter, CameraAtAxis = self.settings.DEFAULT_CAMERA_AT_AXIS, CameraLeftAxis = self.settings.DEFAULT_CAMERA_AT_AXIS, CameraUpAxis = self.settings.DEFAULT_CAMERA_UP_AXIS, Far = self.settings.DEFAULT_CAMERA_DRAW_DISTANCE)
+                    CameraCenter = (self.agent.Position.X - 20.0, self.agent.Position.Y, self.agent.Position.Z)
+
+                    self.sendAgentUpdate(CameraCenter = CameraCenter, CameraAtAxis = self.settings.DEFAULT_CAMERA_AT_AXIS, CameraLeftAxis = self.settings.DEFAULT_CAMERA_AT_AXIS, CameraUpAxis = self.settings.DEFAULT_CAMERA_UP_AXIS, Far = self.settings.DEFAULT_CAMERA_DRAW_DISTANCE)
 
             # send pending messages in the queue
             for (packet, reliable) in self.packet_queue:
@@ -479,7 +505,9 @@ class Region(object):
         """ polls the event queue capability and parses the results  """
 
         self.event_queue = EventQueueClient(self.capabilities['EventQueueGet'], settings = self.settings, packet_handler = self.packet_handler, region = self, event_queue_handler = self.event_queue_handler)
-        self.event_queue.start()
+
+        api.spawn(self.event_queue.start)
+
         self._isEventQueueRunning = True
 
     def _stopEventQueue(self):

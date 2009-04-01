@@ -61,3 +61,7 @@ class NetUDPClient(object):
 
         #will probably be other setup for this
         return sock
+
+    def __repr__(self):
+        
+        return self.sender.__repr__

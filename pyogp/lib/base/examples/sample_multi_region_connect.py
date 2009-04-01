@@ -24,6 +24,9 @@ import re
 import getpass, sys, logging
 from optparse import OptionParser
 
+# related
+from eventlet import api
+
 # pyogp
 from pyogp.lib.base.agent import Agent
 from pyogp.lib.base.settings import Settings
@@ -68,19 +71,23 @@ def login():
     # prep instance settings
     settings = Settings()
 
+    settings.DISABLE_SPAMMERS = True
     settings.ENABLE_INVENTORY_MANAGEMENT = False
     settings.ENABLE_COMMUNICATIONS_TRACKING = False
     settings.ENABLE_OBJECT_TRACKING = False
-    settings.ENABLE_UDP_LOGGING =True
+    settings.ENABLE_UDP_LOGGING = True
     settings.ENABLE_EQ_LOGGING = True
-    settings.ENABLE_CAPS_LOGGING = True
+    settings.ENABLE_CAPS_LOGGING = False
     settings.MULTIPLE_SIM_CONNECTIONS = True
 
     #First, initialize the agent
     client = Agent(settings)
 
     # Now let's log it in
-    client.login(options.loginuri, args[0], args[1], password, start_location = options.region, connect_region = True)
+    api.spawn(client.login, options.loginuri, args[0], args[1], password, start_location = options.region, connect_region = True)
+
+    while client.running:
+        api.sleep(0)
 
     print ''
     print ''
@@ -95,11 +102,15 @@ def login():
         print attr, ':\t\t\t',  client.region.__dict__[attr]
     print ''
     print ''
-    print 'Child Regions:'
-    for region in client.regions:
+    print 'Child Regions (%s):' % len(client.child_regions)
+    for region in client.child_regions:
         print ''
-        for attr in client.region.__dict__:
-            print attr, ':\t\t\t',  client.region.__dict__[attr]
+        print '\tsim_name   : %s' % region.SimName
+        print '\tsim_ip     : %s' % region.sim_ip
+        print '\tsim_port   : %s' % region.sim_port
+        print '\tseed_cap   : %s' % region.seed_capability_url
+        print '\tpackets_in : %s' % region.packets_in
+        print '\tpackets_out: %s' % region.packets_out
 
 def main():
     return login()    
