@@ -33,7 +33,7 @@ from pyogp.lib.base.login import Login, LegacyLoginParams, OGPLoginParams
 from pyogp.lib.base.datatypes import *
 from pyogp.lib.base.exc import LoginError
 from pyogp.lib.base.region import Region
-from pyogp.lib.base.inventory import Inventory
+from pyogp.lib.base.inventory import *
 from pyogp.lib.base.groups import *
 # from pyogp.lib.base.appearance import Appearance
 
@@ -335,6 +335,12 @@ class Agent(object):
 
             onHealthMessage_received = self.region.packet_handler._register('HealthMessage')
             onHealthMessage_received.subscribe(onHealthMessage, self)
+
+            onInventoryDescendents_received = self.region.packet_handler._register('InventoryDescendents')
+            onInventoryDescendents_received.subscribe(onInventoryDescendents, self.inventory)     
+
+            onFetchInventoryReply_received = self.region.packet_handler._register('FetchInventoryReply')
+            onFetchInventoryReply_received.subscribe(onFetchInventoryReply, self.inventory)
 
             if self.settings.ENABLE_COMMUNICATIONS_TRACKING:
 
@@ -697,3 +703,92 @@ def onEstablishAgentCommunication(message, agent):
     # start the event queue
     if is_running == False:
         agent._start_EQ_on_neighboring_region(message)
+        #~~~~~~~~~~
+        # Callbacks
+        #~~~~~~~~~~
+
+def onInventoryDescendents(packet, inventory):
+
+    if packet.message_data.blocks['AgentData'][0].get_variable('Descendents') > 0:
+
+        _agent_id = packet.message_data.blocks['AgentData'][0].get_variable('AgentID')
+        _agent_id = packet.message_data.blocks['AgentData'][0].get_variable('AgentID')
+        _folder_id = packet.message_data.blocks['AgentData'][0].get_variable('FolderID')
+        _owner_id = packet.message_data.blocks['AgentData'][0].get_variable('OwnerID')
+        _version = packet.message_data.blocks['AgentData'][0].get_variable('Version')
+        _descendents = packet.message_data.blocks['AgentData'][0].get_variable('Descendents')
+
+        if packet.message_data.blocks['ItemData'][0].get_variable('ItemID').data != uuid.UUID('00000000-0000-0000-0000-000000000000'):
+
+            for ItemData_block in packet.message_data.blocks['ItemData']:
+
+                _ItemID = ItemData_block.get_variable('ItemID').data
+                _FolderID = ItemData_block.get_variable('FolderID').data
+                _CreatorID = ItemData_block.get_variable('CreatorID').data
+                _OwnerID = ItemData_block.get_variable('OwnerID').data
+                _GroupID = ItemData_block.get_variable('GroupID').data
+                _BaseMask = ItemData_block.get_variable('BaseMask').data
+                _OwnerMask = ItemData_block.get_variable('OwnerMask').data
+                _GroupMask = ItemData_block.get_variable('GroupMask').data
+                _EveryoneMask = ItemData_block.get_variable('EveryoneMask').data
+                _NextOwnerMask = ItemData_block.get_variable('NextOwnerMask').data
+                _GroupOwned = ItemData_block.get_variable('GroupOwned').data
+                _AssetID = ItemData_block.get_variable('AssetID').data
+                _Type = ItemData_block.get_variable('Type').data
+                _InvType = ItemData_block.get_variable('InvType').data
+                _Flags = ItemData_block.get_variable('Flags').data
+                _SaleType = ItemData_block.get_variable('SaleType').data
+                _SalePrice = ItemData_block.get_variable('SalePrice').data
+                _Name = ItemData_block.get_variable('Name').data
+                _Description = ItemData_block.get_variable('Description').data
+                _CreationDate = ItemData_block.get_variable('CreationDate').data
+                _CRC = ItemData_block.get_variable('CRC').data
+
+                inventory_item = InventoryItem(_ItemID, _FolderID, _CreatorID, _OwnerID, _GroupID, _BaseMask, _OwnerMask, _GroupMask, _EveryoneMask, _NextOwnerMask, _GroupOwned, _AssetID, _Type, _InvType, _Flags, _SaleType, _SalePrice, _Name, _Description, _CreationDate, _CRC)
+
+                inventory._add_inventory_item(inventory_item)
+
+        if packet.message_data.blocks['FolderData'][0].get_variable('FolderID').data != uuid.UUID('00000000-0000-0000-0000-000000000000'):
+
+            for FolderData_block in packet.message_data.blocks['FolderData']:
+
+                _FolderID = FolderData_block.get_variable('FolderID').data
+                _ParentID = FolderData_block.get_variable('ParentID').data
+                _Type = FolderData_block.get_variable('Type').data
+                _Name = FolderData_block.get_variable('Name').data
+
+                folder = InventoryFolder( _Name, _FolderID, _ParentID, None, _Type)
+
+                inventory._add_inventory_folder(folder)
+
+def onFetchInventoryReply(packet, inventory):
+
+    _agent_id = packet.message_data.blocks['AgentData'][0].get_variable('AgentID')
+
+    for InventoryData_block in packet.message_data.blocks['InventoryData']:
+
+        _ItemID = InventoryData_block.get_variable('ItemID').data
+        _FolderID = InventoryData_block.get_variable('FolderID').data
+        _CreatorID = InventoryData_block.get_variable('CreatorID').data
+        _OwnerID = InventoryData_block.get_variable('OwnerID').data
+        _GroupID = InventoryData_block.get_variable('GroupID').data
+        _BaseMask = InventoryData_block.get_variable('BaseMask').data
+        _OwnerMask = InventoryData_block.get_variable('OwnerMask').data
+        _GroupMask = InventoryData_block.get_variable('GroupMask').data
+        _EveryoneMask = InventoryData_block.get_variable('EveryoneMask').data
+        _NextOwnerMask = InventoryData_block.get_variable('NextOwnerMask').data
+        _GroupOwned = InventoryData_block.get_variable('GroupOwned').data
+        _AssetID = InventoryData_block.get_variable('AssetID').data
+        _Type = InventoryData_block.get_variable('Type').data
+        _InvType = InventoryData_block.get_variable('InvType').data
+        _Flags = InventoryData_block.get_variable('Flags').data
+        _SaleType = InventoryData_block.get_variable('SaleType').data
+        _SalePrice = InventoryData_block.get_variable('SalePrice').data
+        _Name = InventoryData_block.get_variable('Name').data
+        _Description = InventoryData_block.get_variable('Description').data
+        _CreationDate = InventoryData_block.get_variable('CreationDate').data
+        _CRC = InventoryData_block.get_variable('CRC').data
+
+        inventory_item = InventoryItem(_ItemID, _FolderID, _CreatorID, _OwnerID, _GroupID, _BaseMask, _OwnerMask, _GroupMask, _EveryoneMask, _NextOwnerMask, _GroupOwned, _AssetID, _Type, _InvType, _Flags, _SaleType, _SalePrice, _Name, _Description, _CreationDate, _CRC)
+
+        inventory._add_inventory_item(inventory_item)
