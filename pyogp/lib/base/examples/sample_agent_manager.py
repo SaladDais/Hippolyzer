@@ -86,12 +86,6 @@ def login():
     else:
         print "Attention: This script will print nothing if you use -q. So it might be boring to use it like that ;-)"
 
-    # example from a pure agent perspective
-
-    #grab a password!
-    #password = getpass.getpass()
-    clients = [['EnusBot1', 'LLQABot', '0MGbotsRC00l'], ['EnusBot2', 'LLQABot', '0MGbotsRC00l'], ['EnusBot3', 'LLQABot', '0MGbotsRC00l'], ['EnusBot4', 'LLQABot', '0MGbotsRC00l'], ['EnusBot5', 'LLQABot', '0MGbotsRC00l'], ['EnusBot6', 'LLQABot', '0MGbotsRC00l'], ['EnusBot7', 'LLQABot', '0MGbotsRC00l'], ['EnusBot8', 'LLQABot', '0MGbotsRC00l'], ['EnusBot9', 'LLQABot', '0MGbotsRC00l'], ['EnusBot10', 'LLQABot', '0MGbotsRC00l'], ['EnusBot11', 'LLQABot', '0MGbotsRC00l'], ['EnusBot12', 'LLQABot', '0MGbotsRC00l'], ['EnusBot13', 'LLQABot', '0MGbotsRC00l'], ['EnusBot14', 'LLQABot', '0MGbotsRC00l'], ['EnusBot15', 'LLQABot', '0MGbotsRC00l'], ['EnusBot16', 'LLQABot', '0MGbotsRC00l'], ['EnusBot17', 'LLQABot', '0MGbotsRC00l'], ['EnusBot18', 'LLQABot', '0MGbotsRC00l'], ['EnusBot19', 'LLQABot', '0MGbotsRC00l'], ['EnusBot20', 'LLQABot', '0MGbotsRC00l']]
-
     # prep instance settings
     settings = Settings()
 
