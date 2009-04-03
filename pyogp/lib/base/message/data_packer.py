@@ -84,4 +84,5 @@ class DataPacker(object):
         return uuid.bytes
 
     def __pack_string(self, endian, pack_string):
-        return pack_string
+        return pack_string + "\x00"
+

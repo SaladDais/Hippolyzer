@@ -154,27 +154,3 @@ class UDPPacketSerializer(object):
 
         return block_buffer, bytes
 
-    """this is currently done in the parser
-    def build_message_ids(self):
-        packer = DataPacker()
-        for template in self.template_list.message_templates.values():
-            frequency = template.frequency
-            if frequency == MsgFrequency.FIXED_FREQUENCY_MESSAGE:   
-                #have to do this because Fixed messages are stored as a long in the template
-                template.msg_num_hex = '\xff\xff\xff' + \
-                                       packer.pack_data(template.msg_num, \
-                                                        MsgType.MVT_U8)
-            elif frequency == MsgFrequency.LOW_FREQUENCY_MESSAGE:
-                template.msg_num_hex = '\xff\xff' + \
-                                packer.pack_data(template.msg_num, \
-                                                 MsgType.MVT_U16, \
-                                                 EndianType.BIG)
-            elif frequency == MsgFrequency.MEDIUM_FREQUENCY_MESSAGE:
-                template.msg_num_hex = '\xff' + \
-                                packer.pack_data(template.msg_num, \
-                                                 MsgType.MVT_U8, \
-                                                 EndianType.BIG)
-            elif frequency == MsgFrequency.HIGH_FREQUENCY_MESSAGE:
-                template.msg_num_hex = packer.pack_data(template.msg_num, \
-                                                         MsgType.MVT_U8, \
-                                                         EndianType.BIG)"""

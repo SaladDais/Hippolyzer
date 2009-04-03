@@ -101,6 +101,12 @@ class Objects(object):
             onKillObject_received= self.packet_handler._register('KillObject')
             onKillObject_received.subscribe(onKillObject, self)
 
+            # uncomment these to view packets sent back to simulator
+            # onObjectName_sent = self.packet_handler._register('ObjectName')
+            # onObjectName_sent.subscribe(self.helpers.log_packet, self)
+
+            # onDeRezObject_sent = self.packet_handler._register('DeRezObject')
+            # onDeRezObject_sent.subscribe(self.helpers.log_packet, self)
 
         if self.settings.LOG_VERBOSE: log(INFO, "Initializing object storage")
 
@@ -240,12 +246,12 @@ class Objects(object):
             victim = self.get_avatar_from_store(LocalID = ID)
 
         # this is an avatar
-        if _victim.PCode == 47:
+        if victim.PCode == 47:
 
             self.kill_stored_avatar(ID)
 
         # this is a Primitive
-        elif _victim.PCode == 9:
+        elif victim.PCode == 9:
 
             self.kill_stored_object(ID)
 
@@ -255,7 +261,7 @@ class Objects(object):
 
     def kill_stored_avatar(self, ID):
 
-        index = [self.avatar_store.index(_avatar_) for _avatar_ in self.avatar_store if _avatar_.ID == ID]
+        index = [self.avatar_store.index(_avatar_) for _avatar_ in self.avatar_store if _avatar_.LocalID == ID]
 
         if index != []:
             del self.avatar_store[index[0]]
@@ -263,7 +269,7 @@ class Objects(object):
 
     def kill_stored_object(self, ID):
 
-        index = [self.object_store.index(_avatar_) for _object_ in self.object_store if _object_.ID == ID]
+        index = [self.object_store.index(_object_) for _object_ in self.object_store if _object_.LocalID == ID]
 
         if index != []:
             del self.object_store[index[0]]
@@ -327,8 +333,8 @@ class Objects(object):
         """
 
         packet = RequestMultipleObjectsPacket()
-        packet.AgentData['AgentID'] = uuid.UUID(self.agent.agent_id)
-        packet.AgentData['SessionID'] = uuid.UUID(self.agent.session_id)
+        packet.AgentData['AgentID'] = uuid.UUID(str(self.agent.agent_id))
+        packet.AgentData['SessionID'] = uuid.UUID(str(self.agent.session_id))
 
         if ID != None:
 
@@ -634,6 +640,52 @@ class Object(object):
         packet.ObjectDataBlocks.append(ObjectData)
 
         agent.region.enqueue_message(packet())
+
+    def derez(self, agent, destination, destinationID, transactionID, GroupID):
+        """ derez an object, specifying the destination """
+
+        packet = DeRezObjectPacket()
+
+        # build the AgentData block
+        packet.AgentData['AgentID'] = uuid.UUID(str(agent.agent_id))
+        packet.AgentData['SessionID'] = uuid.UUID(str(agent.session_id))
+
+        packet.AgentBlock['GroupID'] = uuid.UUID(str(GroupID))
+        packet.AgentBlock['Destination'] = destination
+        packet.AgentBlock['DestinationID'] = uuid.UUID(str(destinationID))
+        packet.AgentBlock['TransactionID'] = uuid.UUID(str(transactionID))
+
+        # fix me: faking these values
+        packet.AgentBlock['PacketCount']   = 1
+        packet.AgentBlock['PacketNumber']  = 0
+
+        ObjectData = {}
+        ObjectData['ObjectLocalID'] = self.LocalID
+
+        packet.ObjectDataBlocks.append(ObjectData)
+
+        agent.region.enqueue_message(packet())
+
+    def take(self, agent):
+        """ take object into inventory """
+
+        parent_folder = self.FolderID
+
+        # Check if we have inventory turned on
+        if not(parent_folder and agent.settings.ENABLE_INVENTORY_MANAGEMENT):
+            log(WARNING,"Inventory not available, please enable settings.ENABLE_INVENTORY_MANAGEMENT")
+            return 
+
+        if not(parent_folder):
+            # locate Object folder
+            objects_folder = [ folder for folder in agent.inventory.folders if folder.Name == 'Objects' ]
+            if objects_folder:
+                parent_folder = objects_folder[0].FolderID
+            else:
+                log(ERROR,"Unable to locate top-level Objects folder to take item into inventory.")
+                return
+
+        self.derez(agent, 4, parent_folder, uuid.uuid4(), agent.ActiveGroupID)
 
     def select(self, agent):
         """ select an object

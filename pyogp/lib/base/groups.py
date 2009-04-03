@@ -372,8 +372,8 @@ class MockChatInterface(object):
                 api.sleep()
         except:
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.old_settings)
-        finally:
-            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.old_settings)
+        #finally:
+        #    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.old_settings)
 
         if self.agent.running:
             self.start()

@@ -35,7 +35,7 @@ from pyogp.lib.base.settings import Settings
 # pyogp utilites
 from pyogp.lib.base.utilities.helpers import Wait
 
-object_names = ['A','B','C','D','E','F']
+object_names = ['Alpha','Bravo','Charlie','Delta','Echo','Foxtrot']
 
 def login():
     """ login an to a login endpoint """ 
@@ -75,7 +75,7 @@ def login():
 
     # let's disable inventory handling for this example
     settings = Settings()
-    settings.ENABLE_INVENTORY_MANAGEMENT = False
+    settings.ENABLE_INVENTORY_MANAGEMENT = True 
     settings.ENABLE_EQ_LOGGING = False
     settings.ENABLE_CAPS_LOGGING = False
 
@@ -110,6 +110,9 @@ def login():
 
     waiter = Wait(15)
 
+    for item in objects_nearby:
+        item.deselect(client)
+
     my_objects = client.region.objects.my_objects()
 
     print 'Hey! Will try to set object names'
@@ -120,21 +123,24 @@ def login():
         fixed_name = object_names[i]
         print ' for LocalID %s : %s ' % (item.LocalID, fixed_name)
         item.set_object_name(client,fixed_name)
-        if fixed_name == 'A':
+        if fixed_name == 'Alpha':
             item.set_object_transfer_only_permissions(client)
-        elif fixed_name == 'B':
+        elif fixed_name == 'Bravo':
             item.set_object_copy_transfer_permissions(client)
-        elif fixed_name == 'C':
+        elif fixed_name == 'Charlie':
             item.set_object_mod_transfer_permissions(client)
-        elif fixed_name == 'D':
+        elif fixed_name == 'Delta':
             item.set_object_full_permissions(client)
-        elif fixed_name == 'E':
+        elif fixed_name == 'Echo':
             item.set_object_copy_only_permissions(client)
-        elif fixed_name == 'F':
+        elif fixed_name == 'Foxtrot':
             item.set_object_copy_mod_permissions(client)
         else:
             print "Name Does Not Match!"
         i = i + 1
+        waiter = Wait(2)
+        item.take(client)
+
 
     waiter = Wait(30)
 
