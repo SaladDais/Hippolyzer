@@ -115,9 +115,6 @@ class Region(object):
         self.handle = handle
         self.is_host_region = False
 
-        self.packets_in = 0
-        self.packets_out = 0
-
         # UDP connection information
         if (self.sim_ip != None) and (self.sim_port != None):
             self.messenger = UDPDispatcher(settings = self.settings, packet_handler = self.packet_handler, region = self)
@@ -466,11 +463,11 @@ class Region(object):
 
         # the RegionHandshake packet requires a response
         onRegionHandshake_received = self.packet_handler._register('RegionHandshake')
-        onRegionHandshake_received.subscribe(onRegionHandshake, self)
+        onRegionHandshake_received.subscribe(self.onRegionHandshake)
 
         # the StartPingCheck packet requires a response
         onStartPingCheck_received = self.packet_handler._register('StartPingCheck')
-        onStartPingCheck_received.subscribe(onStartPingCheck, self)
+        onStartPingCheck_received.subscribe(self.onStartPingCheck)
 
         while self._isUDPRunning:
 
@@ -516,46 +513,46 @@ class Region(object):
         if self._isEventQueueRunning == True and self.event_queue._running == True:
             self.event_queue.stop = True
 
-def onRegionHandshake(packet, region):
-    """ handles the response to receiving a RegionHandshake packet """
+    def onRegionHandshake(self, packet):
+        """ handles the response to receiving a RegionHandshake packet """
 
-    # send the reply
-    region.sendRegionHandshakeReply()
+        # send the reply
+        self.sendRegionHandshakeReply()
 
-    # propagate the incoming data
-    region.SimName = packet.message_data.blocks['RegionInfo'][0].get_variable('SimName')
-    region.SimAccess = packet.message_data.blocks['RegionInfo'][0].get_variable('SimAccess')
-    region.SimOwner = packet.message_data.blocks['RegionInfo'][0].get_variable('SimOwner')
-    region.IsEstateManager = packet.message_data.blocks['RegionInfo'][0].get_variable('IsEstateManager')
-    region.WaterHeight = packet.message_data.blocks['RegionInfo'][0].get_variable('WaterHeight')
-    region.BillableFactor = packet.message_data.blocks['RegionInfo'][0].get_variable('BillableFactor')
-    region.TerrainBase0 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainBase0')
-    region.TerrainBase1 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainBase1')
-    region.TerrainBase2 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainBase2')
-    region.TerrainStartHeight00 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight00')
-    region.TerrainStartHeight01 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight01')
-    region.TerrainStartHeight10 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight10')
-    region.TerrainStartHeight11 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight11')
-    region.TerrainHeightRange00 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange00')
-    region.TerrainHeightRange01 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange01')
-    region.TerrainHeightRange10 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange10')
-    region.TerrainHeightRange11 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange11')
-    region.CPUClassID = packet.message_data.blocks['RegionInfo3'][0].get_variable('CPUClassID')
-    region.CPURatio = packet.message_data.blocks['RegionInfo3'][0].get_variable('CPURatio')
-    region.ColoName = packet.message_data.blocks['RegionInfo3'][0].get_variable('ColoName')
-    region.ProductSKU = packet.message_data.blocks['RegionInfo3'][0].get_variable('ProductSKU')
-    region.ProductName = packet.message_data.blocks['RegionInfo3'][0].get_variable('ProductName')
-    region.RegionID = packet.message_data.blocks['RegionInfo2'][0].get_variable('RegionID')
+        # propagate the incoming data
+        self.SimName = packet.message_data.blocks['RegionInfo'][0].get_variable('SimName')
+        self.SimAccess = packet.message_data.blocks['RegionInfo'][0].get_variable('SimAccess')
+        self.SimOwner = packet.message_data.blocks['RegionInfo'][0].get_variable('SimOwner')
+        self.IsEstateManager = packet.message_data.blocks['RegionInfo'][0].get_variable('IsEstateManager')
+        self.WaterHeight = packet.message_data.blocks['RegionInfo'][0].get_variable('WaterHeight')
+        self.BillableFactor = packet.message_data.blocks['RegionInfo'][0].get_variable('BillableFactor')
+        self.TerrainBase0 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainBase0')
+        self.TerrainBase1 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainBase1')
+        self.TerrainBase2 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainBase2')
+        self.TerrainStartHeight00 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight00')
+        self.TerrainStartHeight01 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight01')
+        self.TerrainStartHeight10 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight10')
+        self.TerrainStartHeight11 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight11')
+        self.TerrainHeightRange00 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange00')
+        self.TerrainHeightRange01 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange01')
+        self.TerrainHeightRange10 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange10')
+        self.TerrainHeightRange11 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange11')
+        self.CPUClassID = packet.message_data.blocks['RegionInfo3'][0].get_variable('CPUClassID')
+        self.CPURatio = packet.message_data.blocks['RegionInfo3'][0].get_variable('CPURatio')
+        self.ColoName = packet.message_data.blocks['RegionInfo3'][0].get_variable('ColoName')
+        self.ProductSKU = packet.message_data.blocks['RegionInfo3'][0].get_variable('ProductSKU')
+        self.ProductName = packet.message_data.blocks['RegionInfo3'][0].get_variable('ProductName')
+        self.RegionID = packet.message_data.blocks['RegionInfo2'][0].get_variable('RegionID')
 
-    # we are connected
-    region.connected = True
+        # we are connected
+        self.connected = True
 
-    log(INFO, "Connected agent \'%s %s\' to region %s" % (region.agent.firstname, region.agent.lastname, region.SimName))
+        log(INFO, "Connected agent \'%s %s\' to region %s" % (self.agent.firstname, self.agent.lastname, self.SimName))
 
-def onStartPingCheck(packet, region):
-    """ sends the CompletePingCheck packet """
+    def onStartPingCheck(self, packet):
+        """ sends the CompletePingCheck packet """
 
-    region.sendCompletePingCheck()
+        self.sendCompletePingCheck()
 
 class RegionSeedCapability(Capability):
     """ a seed capability which is able to retrieve other capabilities """

@@ -109,8 +109,8 @@ def login():
         print '\tsim_ip     : %s' % region.sim_ip
         print '\tsim_port   : %s' % region.sim_port
         print '\tseed_cap   : %s' % region.seed_capability_url
-        print '\tpackets_in : %s' % region.packets_in
-        print '\tpackets_out: %s' % region.packets_out
+        print '\tpackets_in : %s' % region.messenger.packets_in
+        print '\tpackets_out: %s' % region.messenger.packets_out
 
 def main():
     return login()    

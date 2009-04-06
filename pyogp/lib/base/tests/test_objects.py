@@ -61,7 +61,7 @@ class TestObjects(unittest.TestCase):
 
         packet = self.deserializer.deserialize(ouc_binary)
 
-        onObjectUpdateCompressed(packet, self.object_store)
+        self.object_store.onObjectUpdateCompressed(packet)
 
         known_objects = []
 
@@ -78,7 +78,7 @@ class TestObjects(unittest.TestCase):
 
         packet = self.deserializer.deserialize(ouc_binary)
 
-        onObjectUpdateCompressed(packet, self.object_store)
+        self.object_store.onObjectUpdateCompressed(packet)
 
         known_objects = []
 

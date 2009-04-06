@@ -72,19 +72,19 @@ class GroupManager(object):
         # ~~~~~~~~~
         if self.settings.HANDLE_PACKETS:
             onAgentGroupDataUpdate_received = self.agent.region.event_queue_handler._register("AgentGroupDataUpdate")
-            onAgentGroupDataUpdate_received.subscribe(onAgentGroupDataUpdate, self)
+            onAgentGroupDataUpdate_received.subscribe(self.onAgentGroupDataUpdate)
 
             onChatterBoxInvitation_received = self.agent.region.event_queue_handler._register('ChatterBoxInvitation')
-            onChatterBoxInvitation_received.subscribe(onChatterBoxInvitation_Message, self)
+            onChatterBoxInvitation_received.subscribe(self.onChatterBoxInvitation_Message)
 
             onChatterBoxSessionEventReply_received = self.agent.region.event_queue_handler._register('ChatterBoxSessionEventReply')
-            onChatterBoxSessionEventReply_received.subscribe(onChatterBoxSessionEventReply, self)
+            onChatterBoxSessionEventReply_received.subscribe(self.onChatterBoxSessionEventReply)
 
             onChatterBoxSessionAgentListUpdates_received = self.agent.region.event_queue_handler._register('ChatterBoxSessionAgentListUpdates')
-            onChatterBoxSessionAgentListUpdates_received.subscribe(onChatterBoxSessionAgentListUpdates, self)
+            onChatterBoxSessionAgentListUpdates_received.subscribe(self.onChatterBoxSessionAgentListUpdates)
 
             onChatterBoxSessionStartReply_received = self.agent.region.event_queue_handler._register('ChatterBoxSessionStartReply')
-            onChatterBoxSessionStartReply_received.subscribe(onChatterBoxSessionStartReply, self)
+            onChatterBoxSessionStartReply_received.subscribe(self.onChatterBoxSessionStartReply)
 
         if self.settings.LOG_VERBOSE: log(DEBUG, "Initialized the Group Manager")
 
@@ -233,6 +233,94 @@ class GroupManager(object):
         packet.AgentData['GroupID'] = group_id
 
         self.agent.region.enqueue_message(packet())
+
+    # ~~~~~~~~~~~~~~~~~~
+    # Callback functions
+    # ~~~~~~~~~~~~~~~~~~
+
+    def onCreateGroupReply(self, packet):
+        """ when we get a CreateGroupReply packet, log Success, and if True, request the group details. remove the callback in any case """
+
+        # remove the monitor
+        self.onCreateGroupReply_received.unsubscribe(onCreateGroupReply, group_manager)
+
+        AgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
+        GroupID = packet.message_data.blocks['ReplyData'][0].get_variable('GroupID').data
+        Success = packet.message_data.blocks['ReplyData'][0].get_variable('Success').data
+        Message = packet.message_data.blocks['ReplyData'][0].get_variable('Message').data
+
+        if Success:
+            log(INFO, "Created group %s. Message data is: %s" % (GroupID, Message))
+            log(WARNING, "We now need to request the group data...")
+        else:
+            log(WARNING, "Failed to create group due to: %s" % (Message))
+
+    def onJoinGroupReply(self, packet):
+        """ the simulator tells us if joining a group was a success. """
+
+        self.onJoinGroupReply_received.unsubscribe(onJoinGroupReply, group_manager)
+
+        AgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
+        GroupID = packet.message_data.blocks['GroupData'][0].get_variable('GroupID').data
+        Success = packet.message_data.blocks['GroupData'][0].get_variable('Success').data
+
+        if Success:
+            log(INFO, "Joined group %s" % (GroupID))
+        else:
+            log(WARNING, "Failed to join group %s" % (GroupID))
+
+    def onAgentGroupDataUpdate(self, packet):
+        """ deal with the data that comes in over the event queue """
+
+        group_data = {}
+
+        AgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
+
+        # GroupData block
+        for GroupData_block in packet.message_data.blocks['GroupData']:
+
+            group_data['GroupID'] = GroupData_block.get_variable('GroupID').data
+            group_data['GroupPowers'] = GroupData_block.get_variable('GroupPowers').data
+            group_data['AcceptNotices'] = GroupData_block.get_variable('AcceptNotices').data
+            group_data['GroupInsigniaID'] = GroupData_block.get_variable('GroupInsigniaID').data
+            group_data['Contribution'] = GroupData_block.get_variable('Contribution').data
+            group_data['GroupName'] = GroupData_block.get_variable('GroupName').data
+
+            # make sense of group powers
+            group_data['GroupPowers'] = [ord(x) for x in group_data['GroupPowers']]
+            group_data['GroupPowers'] = ''.join([str(x) for x in group_data['GroupPowers']])
+
+            self.update_group(group_data)
+
+    def onChatterBoxInvitation_Message(self, message):
+        """ handle a group chat message from the event queue """
+
+        self.handle_group_chat(message)
+
+    def onChatterBoxSessionEventReply(self, message):
+        """ handle a response from the simulator re: a message we sent to a group chat """
+
+        self.agent.helpers.log_event_queue_data(message, self)
+
+    def onChatterBoxSessionAgentListUpdates(self, message):
+        """ parse teh response to a request to join a group chat and propagate data out """
+
+        data = {}
+        data['session_id'] = message.session_id
+        data['agent_updates'] = message.agent_updates
+
+        self.update_group_by_session_id(data)
+
+    def onChatterBoxSessionStartReply(self, message):
+
+        data = {}
+        data['temp_session_id'] = message.temp_session_id
+        data['success'] = message.success
+        data['session_id'] = message.session_id
+        data['session_info'] = message.session_info
+
+        self.update_group_by_name(data, data['session_info']['session_name'])
+
 
 class Group(object):
     """ representation of a group """
@@ -486,92 +574,6 @@ class ChatterBoxSessionStartReply_Message(object):
         self.name = "ChatterBoxSessionStartReply"
         #{'body': {'temp_session_id': 4dd70b7f-8b3a-eef9-fc2f-909151d521f6, 'success': True, 'session_id': 4dd70b7f-8b3a-eef9-fc2f-909151d521f6, 'session_info': {'voice_enabled': True, 'session_name': "Enus' Construction Crew", 'type': 0, 'moderated_mode': {'voice': False}}}, 'message': 'ChatterBoxSessionStartReply'}],
 
-# ~~~~~~~~~~~~~~~~~~
-# Callback functions
-# ~~~~~~~~~~~~~~~~~~
-
-def onCreateGroupReply(packet, group_manager):
-    """ when we get a CreateGroupReply packet, log Success, and if True, request the group details. remove the callback in any case """
-
-    # remove the monitor
-    group_manager.onCreateGroupReply_received.unsubscribe(onCreateGroupReply, group_manager)
-
-    AgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
-    GroupID = packet.message_data.blocks['ReplyData'][0].get_variable('GroupID').data
-    Success = packet.message_data.blocks['ReplyData'][0].get_variable('Success').data
-    Message = packet.message_data.blocks['ReplyData'][0].get_variable('Message').data
-
-    if Success:
-        log(INFO, "Created group %s. Message data is: %s" % (GroupID, Message))
-        log(WARNING, "We now need to request the group data...")
-    else:
-        log(WARNING, "Failed to create group due to: %s" % (Message))
-
-def onJoinGroupReply(packet, group_manager):
-    """ the simulator tells us if joining a group was a success. """
-
-    group_manager.onJoinGroupReply_received.unsubscribe(onJoinGroupReply, group_manager)
-
-    AgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
-    GroupID = packet.message_data.blocks['GroupData'][0].get_variable('GroupID').data
-    Success = packet.message_data.blocks['GroupData'][0].get_variable('Success').data
-
-    if Success:
-        log(INFO, "Joined group %s" % (GroupID))
-    else:
-        log(WARNING, "Failed to join group %s" % (GroupID))
-
-def onAgentGroupDataUpdate(packet, group_manager):
-    """ deal with the data that comes in over the event queue """
-
-    group_data = {}
-
-    AgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
-
-    # GroupData block
-    for GroupData_block in packet.message_data.blocks['GroupData']:
-
-        group_data['GroupID'] = GroupData_block.get_variable('GroupID').data
-        group_data['GroupPowers'] = GroupData_block.get_variable('GroupPowers').data
-        group_data['AcceptNotices'] = GroupData_block.get_variable('AcceptNotices').data
-        group_data['GroupInsigniaID'] = GroupData_block.get_variable('GroupInsigniaID').data
-        group_data['Contribution'] = GroupData_block.get_variable('Contribution').data
-        group_data['GroupName'] = GroupData_block.get_variable('GroupName').data
-
-        # make sense of group powers
-        group_data['GroupPowers'] = [ord(x) for x in group_data['GroupPowers']]
-        group_data['GroupPowers'] = ''.join([str(x) for x in group_data['GroupPowers']])
-
-        group_manager.update_group(group_data)
-
-def onChatterBoxInvitation_Message(message, group_manager):
-    """ handle a group chat message from the event queue """
-
-    group_manager.handle_group_chat(message)
-
-def onChatterBoxSessionEventReply(message, group_manager):
-    """ handle a response from the simulator re: a message we sent to a group chat """
-
-    group_manager.agent.helpers.log_event_queue_data(message, group_manager)
-
-def onChatterBoxSessionAgentListUpdates(message, group_manager):
-    """ parse teh response to a request to join a group chat and propagate data out """
-
-    data = {}
-    data['session_id'] = message.session_id
-    data['agent_updates'] = message.agent_updates
-
-    group_manager.update_group_by_session_id(data)
-
-def onChatterBoxSessionStartReply(message, group_manager):
-
-    data = {}
-    data['temp_session_id'] = message.temp_session_id
-    data['success'] = message.success
-    data['session_id'] = message.session_id
-    data['session_info'] = message.session_info
-
-    group_manager.update_group_by_name(data, data['session_info']['session_name'])
 
 '''
 Groups related messages:

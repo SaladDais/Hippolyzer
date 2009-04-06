@@ -311,36 +311,33 @@ class Agent(object):
     def _enable_callbacks(self):
         """ enable the glue layer once the region is established """
 
+        if self.settings.ENABLE_INVENTORY_MANAGEMENT and self.inventory != None:
+            self.inventory.enable_callbacks()
+
         if self.settings.ENABLE_GROUP_CHAT:
             self.group_manager = GroupManager(self, self.settings)
 
         if self.settings.MULTIPLE_SIM_CONNECTIONS:
 
             onEnableSimulator_received = self.event_queue_handler._register('EnableSimulator')
-            onEnableSimulator_received.subscribe(onEnableSimulator, self)
+            onEnableSimulator_received.subscribe(self.onEnableSimulator)
 
             onEstablishAgentCommunication_received = self.event_queue_handler._register('EstablishAgentCommunication')
-            onEstablishAgentCommunication_received.subscribe(onEstablishAgentCommunication, self)
-        # set up callbacks (is this a decent place to do this? it's perhaps premature)
+            onEstablishAgentCommunication_received.subscribe(self.onEstablishAgentCommunication)
+
         if self.settings.HANDLE_PACKETS:
 
             onAlertMessage_received = self.region.packet_handler._register('AlertMessage')
-            onAlertMessage_received.subscribe(onAlertMessage, self)
+            onAlertMessage_received.subscribe(self.onAlertMessage)
 
             onAgentDataUpdate_received = self.region.packet_handler._register('AgentDataUpdate')
-            onAgentDataUpdate_received.subscribe(onAgentDataUpdate, self)
+            onAgentDataUpdate_received.subscribe(self.onAgentDataUpdate)
 
             onAgentMovementComplete_received = self.region.packet_handler._register('AgentMovementComplete')
-            onAgentMovementComplete_received.subscribe(onAgentMovementComplete, self)
+            onAgentMovementComplete_received.subscribe(self.onAgentMovementComplete)
 
             onHealthMessage_received = self.region.packet_handler._register('HealthMessage')
-            onHealthMessage_received.subscribe(onHealthMessage, self)
-
-            onInventoryDescendents_received = self.region.packet_handler._register('InventoryDescendents')
-            onInventoryDescendents_received.subscribe(onInventoryDescendents, self.inventory)     
-
-            onFetchInventoryReply_received = self.region.packet_handler._register('FetchInventoryReply')
-            onFetchInventoryReply_received.subscribe(onFetchInventoryReply, self.inventory)
+            onHealthMessage_received.subscribe(self.onHealthMessage)
 
             if self.settings.ENABLE_COMMUNICATIONS_TRACKING:
 
@@ -485,150 +482,200 @@ class Agent(object):
         else:
             return '%s %s' % (self.firstname, self.lastname)
 
-def onAgentDataUpdate(packet, agent):
+    def onAgentDataUpdate(self, packet):
 
-    if agent.agent_id == None:
-        agent.agent_id = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
+        if self.agent_id == None:
+            self.agent_id = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
 
-    if agent.firstname == None:
-        agent.firstname = packet.message_data.blocks['AgentData'][0].get_variable('FirstName').data
+        if self.firstname == None:
+            self.firstname = packet.message_data.blocks['AgentData'][0].get_variable('FirstName').data
 
-    if agent.lastname == None:
-        agent.firstname = packet.message_data.blocks['AgentData'][0].get_variable('LastName').data
+        if self.lastname == None:
+            self.firstname = packet.message_data.blocks['AgentData'][0].get_variable('LastName').data
 
-    agent.GroupTitle = packet.message_data.blocks['AgentData'][0].get_variable('GroupTitle').data
+        self.GroupTitle = packet.message_data.blocks['AgentData'][0].get_variable('GroupTitle').data
 
-    agent.ActiveGroupID = packet.message_data.blocks['AgentData'][0].get_variable('ActiveGroupID').data
+        self.ActiveGroupID = packet.message_data.blocks['AgentData'][0].get_variable('ActiveGroupID').data
 
-    agent.GroupPowers = packet.message_data.blocks['AgentData'][0].get_variable('GroupPowers').data
+        self.GroupPowers = packet.message_data.blocks['AgentData'][0].get_variable('GroupPowers').data
 
-    agent.GroupName = packet.message_data.blocks['AgentData'][0].get_variable('GroupName').data
+        self.GroupName = packet.message_data.blocks['AgentData'][0].get_variable('GroupName').data
 
-def onAgentMovementComplete(packet, agent):
+    def onAgentMovementComplete(self, packet):
 
-    agent.Position = packet.message_data.blocks['Data'][0].get_variable('Position').data
+        self.Position = packet.message_data.blocks['Data'][0].get_variable('Position').data
 
-    agent.LookAt = packet.message_data.blocks['Data'][0].get_variable('LookAt').data
+        self.LookAt = packet.message_data.blocks['Data'][0].get_variable('LookAt').data
 
-    agent.region.RegionHandle = packet.message_data.blocks['Data'][0].get_variable('RegionHandle').data
+        self.region.RegionHandle = packet.message_data.blocks['Data'][0].get_variable('RegionHandle').data
 
-    #agent.Timestamp = packet.message_data.blocks['Data'][0].get_variable('Timestamp')
+        #agent.Timestamp = packet.message_data.blocks['Data'][0].get_variable('Timestamp')
 
-    agent.region.ChannelVersion = packet.message_data.blocks['SimData'][0].get_variable('ChannelVersion').data
+        self.region.ChannelVersion = packet.message_data.blocks['SimData'][0].get_variable('ChannelVersion').data
 
-def onHealthMessage(packet, agent):
+    def onHealthMessage(self, packet):
 
-    agent.health = packet.message_data.blocks['HealthData'][0].get_variable('Health').data
+        self.health = packet.message_data.blocks['HealthData'][0].get_variable('Health').data
 
-def onAgentGroupDataUpdate(packet, agent):
+    def onAgentGroupDataUpdate(self, packet):
 
-    # AgentData block
-    AgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
+        # AgentData block
+        AgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
 
-    # GroupData block
-    for GroupData_block in packet.message_data.blocks['GroupData']:
+        # GroupData block
+        for GroupData_block in packet.message_data.blocks['GroupData']:
 
-        AcceptNotices = GroupData_block.get_variable('AcceptNotices').data
-        GroupPowers = GroupData_block.get_variable('GroupPowers').data
-        GroupID = uuid.UUID(str(GroupData_block.get_variable('GroupID').data))
-        GroupName = GroupData_block.get_variable('GroupName').data
-        ListInProfile = GroupData_block.get_variable('ListInProfile').data
-        Contribution = GroupData_block.get_variable('Contribution').data
-        GroupInsigniaID = uuid.UUID(str(GroupData_block.get_variable('GroupInsigniaID').data))
+            AcceptNotices = GroupData_block.get_variable('AcceptNotices').data
+            GroupPowers = GroupData_block.get_variable('GroupPowers').data
+            GroupID = uuid.UUID(str(GroupData_block.get_variable('GroupID').data))
+            GroupName = GroupData_block.get_variable('GroupName').data
+            ListInProfile = GroupData_block.get_variable('ListInProfile').data
+            Contribution = GroupData_block.get_variable('Contribution').data
+            GroupInsigniaID = uuid.UUID(str(GroupData_block.get_variable('GroupInsigniaID').data))
 
-        # make sense of group powers
-        GroupPowers = [ord(x) for x in GroupPowers]
-        GroupPowers = ''.join([str(x) for x in GroupPowers])
+            # make sense of group powers
+            GroupPowers = [ord(x) for x in GroupPowers]
+            GroupPowers = ''.join([str(x) for x in GroupPowers])
 
-        group = Group(AcceptNotices, GroupPowers, GroupID, GroupName, ListInProfile, Contribution,GroupInsigniaID )
+            group = Group(AcceptNotices, GroupPowers, GroupID, GroupName, ListInProfile, Contribution,GroupInsigniaID )
 
-        agent.group_manager.store_group(group)
+            self.group_manager.store_group(group)
 
-    '''
-    Name: AgentGroupDataUpdate
-        Block Name:    GroupData
-            AcceptNotices:    True
-            GroupPowers:    ?
-            GroupID:    69fd708c-3f20-a01b-f9b5-b5c4b310e5ca
-            GroupName:    EnusBot Army
-            ListInProfile:    False
-            Contribution:    0
-            GroupInsigniaID:    00000000-0000-0000-0000-000000000000
-            AcceptNotices:    True
-            GroupPowers:    ?
-            GroupID:    69fd708c-3f20-a01b-f9b5-b5c4b310e5ca
-            GroupName:    EnusBot Army
-            ListInProfile:    False
-            Contribution:    0
-            GroupInsigniaID:    00000000-0000-0000-0000-000000000000
-        Block Name:    AgentData
-            AgentID:    a517168d-1af5-4854-ba6d-672c8a59e439
+        '''
+        Name: AgentGroupDataUpdate
+            Block Name:    GroupData
+                AcceptNotices:    True
+                GroupPowers:    ?
+                GroupID:    69fd708c-3f20-a01b-f9b5-b5c4b310e5ca
+                GroupName:    EnusBot Army
+                ListInProfile:    False
+                Contribution:    0
+                GroupInsigniaID:    00000000-0000-0000-0000-000000000000
+                AcceptNotices:    True
+                GroupPowers:    ?
+                GroupID:    69fd708c-3f20-a01b-f9b5-b5c4b310e5ca
+                GroupName:    EnusBot Army
+                ListInProfile:    False
+                Contribution:    0
+                GroupInsigniaID:    00000000-0000-0000-0000-000000000000
+            Block Name:    AgentData
+                AgentID:    a517168d-1af5-4854-ba6d-672c8a59e439
 
-    '''
+        '''
 
-def onChatFromSimulator(packet, agent):
+    def onChatFromSimulator(self, packet):
 
-    pass
-    '''
-    {
-        ChatFromSimulator Low 139 Trusted Unencoded
+        pass
+        '''
         {
-                ChatData                        Single
-                {       FromName                Variable 1      }
-                {       SourceID                LLUUID          }       // agent id or object id
-                {       OwnerID                 LLUUID          }       // object's owner
-                {       SourceType              U8                      }
-                {       ChatType                U8                      }
-                {       Audible                 U8                      }
-                {       Position                LLVector3       }
-                {       Message                 Variable 2      }       // UTF-8 text
+            ChatFromSimulator Low 139 Trusted Unencoded
+            {
+                    ChatData                        Single
+                    {       FromName                Variable 1      }
+                    {       SourceID                LLUUID          }       // agent id or object id
+                    {       OwnerID                 LLUUID          }       // object's owner
+                    {       SourceType              U8                      }
+                    {       ChatType                U8                      }
+                    {       Audible                 U8                      }
+                    {       Position                LLVector3       }
+                    {       Message                 Variable 2      }       // UTF-8 text
+            }
         }
-    }
-    '''
+        '''
 
-def onImprovedInstantMessage(packet, agent):
+    def onImprovedInstantMessage(self, packet):
 
-    pass
-    '''
-    // ImprovedInstantMessage
-    // This message can potentially route all over the place
-    // ParentEstateID: parent estate id of the source estate
-    // RegionID: region id of the source of the IM.
-    // Position: position of the sender in region local coordinates
-    // Dialog   see llinstantmessage.h for values
-    // ID               May be used by dialog. Interpretation depends on context.
-    // BinaryBucket May be used by some dialog types
-    // reliable
-    {
-        ImprovedInstantMessage Low 254 NotTrusted Zerocoded
+        pass
+        '''
+        // ImprovedInstantMessage
+        // This message can potentially route all over the place
+        // ParentEstateID: parent estate id of the source estate
+        // RegionID: region id of the source of the IM.
+        // Position: position of the sender in region local coordinates
+        // Dialog   see llinstantmessage.h for values
+        // ID               May be used by dialog. Interpretation depends on context.
+        // BinaryBucket May be used by some dialog types
+        // reliable
         {
-                AgentData               Single
-                {   AgentID     LLUUID  }
-                {       SessionID       LLUUID  }
+            ImprovedInstantMessage Low 254 NotTrusted Zerocoded
+            {
+                    AgentData               Single
+                    {   AgentID     LLUUID  }
+                    {       SessionID       LLUUID  }
+            }
+            {
+                    MessageBlock            Single
+                    {       FromGroup               BOOL    }
+                    {       ToAgentID               LLUUID  }
+                    {       ParentEstateID  U32     }
+                    {   RegionID            LLUUID  }
+                    {       Position                LLVector3       }
+                    {       Offline                 U8      }
+                    {       Dialog                  U8      }       // U8 - IM type
+                    {       ID                              LLUUID  }
+                    {       Timestamp               U32     }
+                    {       FromAgentName   Variable        1       }
+                    {       Message                 Variable        2       }
+                    {       BinaryBucket    Variable        2       }
+            }
         }
-        {
-                MessageBlock            Single
-                {       FromGroup               BOOL    }
-                {       ToAgentID               LLUUID  }
-                {       ParentEstateID  U32     }
-                {   RegionID            LLUUID  }
-                {       Position                LLVector3       }
-                {       Offline                 U8      }
-                {       Dialog                  U8      }       // U8 - IM type
-                {       ID                              LLUUID  }
-                {       Timestamp               U32     }
-                {       FromAgentName   Variable        1       }
-                {       Message                 Variable        2       }
-                {       BinaryBucket    Variable        2       }
-        }
-    }
-    '''
+        '''
 
-def onAlertMessage(packet, agent):
+    def onAlertMessage(self, packet):
 
-    AlertMessage = packet.message_data.blocks['AlertData'][0].get_variable('Message').data
+        AlertMessage = packet.message_data.blocks['AlertData'][0].get_variable('Message').data
 
-    log(WARNING, "AlertMessage from simulator: %s" % (AlertMessage))
+        log(WARNING, "AlertMessage from simulator: %s" % (AlertMessage))
+
+    def onEnableSimulator(self, packet):
+        """ handler for the EnableSimulator packet sent over the event queue """
+
+        IP = [ord(x) for x in packet.message_data.blocks['SimulatorInfo'][0].get_variable('IP').data]
+        IP = '.'.join([str(x) for x in IP])
+
+        Port = packet.message_data.blocks['SimulatorInfo'][0].get_variable('Port').data
+
+        # not sure what this is, but pass it up
+        Handle = [ord(x) for x in packet.message_data.blocks['SimulatorInfo'][0].get_variable('Handle').data]
+
+        region_params = {'IP': IP, 'Port': Port, 'Handle': Handle}
+
+        log(INFO, 'Received EnableSimulator for %s' % (str(IP) + ":" + str(Port)))
+
+        # are we already prepping to connect to the sim?
+        if region_params not in self._pending_child_regions:
+
+            # are we already connected to the sim?
+            known_region = False
+
+            # don't append to the list if we already know about this region
+            for region in self.child_regions:
+                if region.sim_ip == region_params['IP'] and region.sim_port == region_params['Port']:
+                    known_region = True
+
+            #agent._enable_child_region(IP, Port, Handle)
+            if not known_region:
+                self._pending_child_regions.append(region_params)
+
+    def onEstablishAgentCommunication(self, message):
+        """ handler for the EstablishAgentCommunication sent over the event queue
+    
+        contains the seed cap for a neighboring region
+        """
+
+        log(INFO, 'Received EstablishAgentCommunication for %s' % (message.sim_ip_and_port))
+
+        is_running = False
+
+        # don't enable the event queue when we already have it running
+        for region in self.child_regions:
+            if (str(region.sim_ip) + ":" + str(region.sim_port) == message.sim_ip_and_port) and region.event_queue != None:
+                if region.event_queue._running:
+                    is_running = True
+
+        # start the event queue
+        if is_running == False:
+            self._start_EQ_on_neighboring_region(message)
 
 class Home(object):
     """ contains the parameters descibing an agent's home location """
@@ -653,142 +700,3 @@ class Home(object):
         self.local_x = self.position[0]
         self.local_y = self.position[1]
         self.local_z = self.position[2]
-
-def onEnableSimulator(packet, agent):
-    """ handler for the EnableSimulator packet sent over the event queue """
-
-    IP = [ord(x) for x in packet.message_data.blocks['SimulatorInfo'][0].get_variable('IP').data]
-    IP = '.'.join([str(x) for x in IP])
-
-    Port = packet.message_data.blocks['SimulatorInfo'][0].get_variable('Port').data
-
-    # not sure what this is, but pass it up
-    Handle = [ord(x) for x in packet.message_data.blocks['SimulatorInfo'][0].get_variable('Handle').data]
-
-    region_params = {'IP': IP, 'Port': Port, 'Handle': Handle}
-
-    log(INFO, 'Received EnableSimulator for %s' % (str(IP) + ":" + str(Port)))
-
-    # are we already prepping to connect to the sim?
-    if region_params not in agent._pending_child_regions:
-
-        # are we already connected to the sim?
-        known_region = False
-
-        # don't append to the list if we already know about this region
-        for region in agent.child_regions:
-            if region.sim_ip == region_params['IP'] and region.sim_port == region_params['Port']:
-                known_region = True
-
-        #agent._enable_child_region(IP, Port, Handle)
-        if not known_region:
-            agent._pending_child_regions.append(region_params)
-
-def onEstablishAgentCommunication(message, agent):
-    """ handler for the EstablishAgentCommunication sent over the event queue
-    
-    contains the seed cap for a neighboring region
-    """
-
-    log(INFO, 'Received EstablishAgentCommunication for %s' % (message.sim_ip_and_port))
-
-    is_running = False
-
-    # don't enable the event queue when we already have it running
-    for region in agent.child_regions:
-        if (str(region.sim_ip) + ":" + str(region.sim_port) == message.sim_ip_and_port) and region.event_queue != None:
-            if region.event_queue._running:
-                is_running = True
-
-    # start the event queue
-    if is_running == False:
-        agent._start_EQ_on_neighboring_region(message)
-        #~~~~~~~~~~
-        # Callbacks
-        #~~~~~~~~~~
-
-def onInventoryDescendents(packet, inventory):
-
-    if packet.message_data.blocks['AgentData'][0].get_variable('Descendents') > 0:
-
-        _agent_id = packet.message_data.blocks['AgentData'][0].get_variable('AgentID')
-        _agent_id = packet.message_data.blocks['AgentData'][0].get_variable('AgentID')
-        _folder_id = packet.message_data.blocks['AgentData'][0].get_variable('FolderID')
-        _owner_id = packet.message_data.blocks['AgentData'][0].get_variable('OwnerID')
-        _version = packet.message_data.blocks['AgentData'][0].get_variable('Version')
-        _descendents = packet.message_data.blocks['AgentData'][0].get_variable('Descendents')
-
-        if packet.message_data.blocks['ItemData'][0].get_variable('ItemID').data != uuid.UUID('00000000-0000-0000-0000-000000000000'):
-
-            for ItemData_block in packet.message_data.blocks['ItemData']:
-
-                _ItemID = ItemData_block.get_variable('ItemID').data
-                _FolderID = ItemData_block.get_variable('FolderID').data
-                _CreatorID = ItemData_block.get_variable('CreatorID').data
-                _OwnerID = ItemData_block.get_variable('OwnerID').data
-                _GroupID = ItemData_block.get_variable('GroupID').data
-                _BaseMask = ItemData_block.get_variable('BaseMask').data
-                _OwnerMask = ItemData_block.get_variable('OwnerMask').data
-                _GroupMask = ItemData_block.get_variable('GroupMask').data
-                _EveryoneMask = ItemData_block.get_variable('EveryoneMask').data
-                _NextOwnerMask = ItemData_block.get_variable('NextOwnerMask').data
-                _GroupOwned = ItemData_block.get_variable('GroupOwned').data
-                _AssetID = ItemData_block.get_variable('AssetID').data
-                _Type = ItemData_block.get_variable('Type').data
-                _InvType = ItemData_block.get_variable('InvType').data
-                _Flags = ItemData_block.get_variable('Flags').data
-                _SaleType = ItemData_block.get_variable('SaleType').data
-                _SalePrice = ItemData_block.get_variable('SalePrice').data
-                _Name = ItemData_block.get_variable('Name').data
-                _Description = ItemData_block.get_variable('Description').data
-                _CreationDate = ItemData_block.get_variable('CreationDate').data
-                _CRC = ItemData_block.get_variable('CRC').data
-
-                inventory_item = InventoryItem(_ItemID, _FolderID, _CreatorID, _OwnerID, _GroupID, _BaseMask, _OwnerMask, _GroupMask, _EveryoneMask, _NextOwnerMask, _GroupOwned, _AssetID, _Type, _InvType, _Flags, _SaleType, _SalePrice, _Name, _Description, _CreationDate, _CRC)
-
-                inventory._add_inventory_item(inventory_item)
-
-        if packet.message_data.blocks['FolderData'][0].get_variable('FolderID').data != uuid.UUID('00000000-0000-0000-0000-000000000000'):
-
-            for FolderData_block in packet.message_data.blocks['FolderData']:
-
-                _FolderID = FolderData_block.get_variable('FolderID').data
-                _ParentID = FolderData_block.get_variable('ParentID').data
-                _Type = FolderData_block.get_variable('Type').data
-                _Name = FolderData_block.get_variable('Name').data
-
-                folder = InventoryFolder( _Name, _FolderID, _ParentID, None, _Type)
-
-                inventory._add_inventory_folder(folder)
-
-def onFetchInventoryReply(packet, inventory):
-
-    _agent_id = packet.message_data.blocks['AgentData'][0].get_variable('AgentID')
-
-    for InventoryData_block in packet.message_data.blocks['InventoryData']:
-
-        _ItemID = InventoryData_block.get_variable('ItemID').data
-        _FolderID = InventoryData_block.get_variable('FolderID').data
-        _CreatorID = InventoryData_block.get_variable('CreatorID').data
-        _OwnerID = InventoryData_block.get_variable('OwnerID').data
-        _GroupID = InventoryData_block.get_variable('GroupID').data
-        _BaseMask = InventoryData_block.get_variable('BaseMask').data
-        _OwnerMask = InventoryData_block.get_variable('OwnerMask').data
-        _GroupMask = InventoryData_block.get_variable('GroupMask').data
-        _EveryoneMask = InventoryData_block.get_variable('EveryoneMask').data
-        _NextOwnerMask = InventoryData_block.get_variable('NextOwnerMask').data
-        _GroupOwned = InventoryData_block.get_variable('GroupOwned').data
-        _AssetID = InventoryData_block.get_variable('AssetID').data
-        _Type = InventoryData_block.get_variable('Type').data
-        _InvType = InventoryData_block.get_variable('InvType').data
-        _Flags = InventoryData_block.get_variable('Flags').data
-        _SaleType = InventoryData_block.get_variable('SaleType').data
-        _SalePrice = InventoryData_block.get_variable('SalePrice').data
-        _Name = InventoryData_block.get_variable('Name').data
-        _Description = InventoryData_block.get_variable('Description').data
-        _CreationDate = InventoryData_block.get_variable('CreationDate').data
-        _CRC = InventoryData_block.get_variable('CRC').data
-
-        inventory_item = InventoryItem(_ItemID, _FolderID, _CreatorID, _OwnerID, _GroupID, _BaseMask, _OwnerMask, _GroupMask, _EveryoneMask, _NextOwnerMask, _GroupOwned, _AssetID, _Type, _InvType, _Flags, _SaleType, _SalePrice, _Name, _Description, _CreationDate, _CRC)
-
-        inventory._add_inventory_item(inventory_item)

@@ -87,19 +87,19 @@ class Objects(object):
                 self.packet_handler = PacketHandler()
 
             onObjectUpdate_received = self.packet_handler._register('ObjectUpdate')
-            onObjectUpdate_received.subscribe(onObjectUpdate, self)
+            onObjectUpdate_received.subscribe(self.onObjectUpdate)
 
             onObjectUpdateCached_received = self.packet_handler._register('ObjectUpdateCached')
-            onObjectUpdateCached_received.subscribe(onObjectUpdateCached, self)
+            onObjectUpdateCached_received.subscribe(self.onObjectUpdateCached)
 
             onObjectUpdateCompressed_received= self.packet_handler._register('ObjectUpdateCompressed')
-            onObjectUpdateCompressed_received.subscribe(onObjectUpdateCompressed, self)
+            onObjectUpdateCompressed_received.subscribe(self.onObjectUpdateCompressed)
 
             onObjectProperties_received = self.packet_handler._register('ObjectProperties')
-            onObjectProperties_received.subscribe(onObjectProperties, self)
+            onObjectProperties_received.subscribe(self.onObjectProperties)
 
             onKillObject_received= self.packet_handler._register('KillObject')
-            onKillObject_received.subscribe(onKillObject, self)
+            onKillObject_received.subscribe(self.onKillObject)
 
             # uncomment these to view packets sent back to simulator
             # onObjectName_sent = self.packet_handler._register('ObjectName')
@@ -244,6 +244,10 @@ class Objects(object):
         victim = self.get_object_from_store(LocalID = ID)
         if victim == None:
             victim = self.get_avatar_from_store(LocalID = ID)
+
+        # if we do not know about this object, pass
+        if victim == None or victim == []:
+            return
 
         # this is an avatar
         if victim.PCode == 47:
@@ -424,6 +428,458 @@ class Objects(object):
         packet.ObjectData['State'] = State
 
         self.region.enqueue_message(packet(), True)
+
+    def onObjectUpdate(self, packet):
+        """ populates an Object instance and adds it to the Objects() store """
+
+        object_list = []
+
+        # ToDo: handle these 2 variables properly
+        _RegionHandle = packet.message_data.blocks['RegionData'][0].get_variable('RegionHandle').data
+        _TimeDilation = packet.message_data.blocks['RegionData'][0].get_variable('TimeDilation').data
+
+        for ObjectData_block in packet.message_data.blocks['ObjectData']:
+
+            object_properties = {}
+
+            object_properties['LocalID'] = ObjectData_block.get_variable('ID').data
+            object_properties['State'] = ObjectData_block.get_variable('State').data
+            object_properties['FullID'] = ObjectData_block.get_variable('FullID').data
+            object_properties['CRC'] = ObjectData_block.get_variable('CRC').data
+            object_properties['PCode'] = ObjectData_block.get_variable('PCode').data
+            object_properties['Material'] = ObjectData_block.get_variable('Material').data
+            object_properties['ClickAction'] = ObjectData_block.get_variable('ClickAction').data
+            object_properties['Scale'] = ObjectData_block.get_variable('Scale').data
+            object_properties['ObjectData'] = ObjectData_block.get_variable('ObjectData').data
+            object_properties['ParentID'] = ObjectData_block.get_variable('ParentID').data
+            object_properties['UpdateFlags'] = ObjectData_block.get_variable('UpdateFlags').data
+            object_properties['PathCurve'] = ObjectData_block.get_variable('PathCurve').data
+            object_properties['ProfileCurve'] = ObjectData_block.get_variable('ProfileCurve').data
+            object_properties['PathBegin'] = ObjectData_block.get_variable('PathBegin').data
+            object_properties['PathEnd'] = ObjectData_block.get_variable('PathEnd').data
+            object_properties['PathScaleX'] = ObjectData_block.get_variable('PathScaleX').data
+            object_properties['PathScaleY'] = ObjectData_block.get_variable('PathScaleY').data
+            object_properties['PathShearX'] = ObjectData_block.get_variable('PathShearX').data
+            object_properties['PathShearY'] = ObjectData_block.get_variable('PathShearY').data
+            object_properties['PathTwist'] = ObjectData_block.get_variable('PathTwist').data
+            object_properties['PathTwistBegin'] = ObjectData_block.get_variable('PathTwistBegin').data
+            object_properties['PathRadiusOffset'] = ObjectData_block.get_variable('PathRadiusOffset').data
+            object_properties['PathTaperX'] = ObjectData_block.get_variable('PathTaperX').data
+            object_properties['PathTaperY'] = ObjectData_block.get_variable('PathTaperY').data
+            object_properties['PathRevolutions'] = ObjectData_block.get_variable('PathRevolutions').data
+            object_properties['PathSkew'] = ObjectData_block.get_variable('PathSkew').data
+            object_properties['ProfileBegin'] = ObjectData_block.get_variable('ProfileBegin').data
+            object_properties['ProfileEnd'] = ObjectData_block.get_variable('ProfileEnd').data
+            object_properties['ProfileHollow'] = ObjectData_block.get_variable('ProfileHollow').data
+            object_properties['TextureEntry'] = ObjectData_block.get_variable('TextureEntry').data
+            object_properties['TextureAnim'] = ObjectData_block.get_variable('TextureAnim').data
+            object_properties['NameValue'] = ObjectData_block.get_variable('NameValue').data
+            object_properties['Data'] = ObjectData_block.get_variable('Data').data
+            object_properties['Text'] = ObjectData_block.get_variable('Text').data
+            object_properties['TextColor'] = ObjectData_block.get_variable('TextColor').data
+            object_properties['MediaURL'] = ObjectData_block.get_variable('MediaURL').data
+            object_properties['PSBlock'] = ObjectData_block.get_variable('PSBlock').data
+            object_properties['ExtraParams'] = ObjectData_block.get_variable('ExtraParams').data
+            object_properties['Sound'] = ObjectData_block.get_variable('Sound').data
+            object_properties['OwnerID'] = ObjectData_block.get_variable('OwnerID').data
+            object_properties['Gain'] = ObjectData_block.get_variable('Gain').data
+            object_properties['Flags'] = ObjectData_block.get_variable('Flags').data
+            object_properties['Radius'] = ObjectData_block.get_variable('Radius').data
+            object_properties['JointType'] = ObjectData_block.get_variable('JointType').data
+            object_properties['JointPivot'] = ObjectData_block.get_variable('JointPivot').data
+            object_properties['JointAxisOrAnchor'] = ObjectData_block.get_variable('JointAxisOrAnchor').data
+
+            # deal with the data stored in _ObjectData
+            # see http://wiki.secondlife.com/wiki/ObjectUpdate#ObjectData_Format for details
+
+            object_properties['FootCollisionPlane'] = None 
+            object_properties['Position'] = None
+            object_properties['Velocity'] = None
+            object_properties['Acceleration'] = None
+            object_properties['Rotation'] = None
+            object_properties['AngularVelocity'] = None
+
+            if len(object_properties['ObjectData']) == 76:
+
+                # Foot collision plane. LLVector4.
+                # Angular velocity is ignored and set to 0. Falls through to 60 bytes parser. 
+
+                object_properties['FootCollisionPlane'] = Quaternion(object_properties['ObjectData'], 0)
+                object_properties['Position'] = Vector3(object_properties['ObjectData'], 16)
+                object_properties['Velocity'] = Vector3(object_properties['ObjectData'], 28)
+                object_properties['Acceleration'] = Vector3(object_properties['ObjectData'], 40)
+                object_properties['Rotation'] = Vector3(object_properties['ObjectData'], 52)
+                object_properties['AngularVelocity'] = Vector3(object_properties['ObjectData'], 60)
+
+            elif len(object_properties['ObjectData']) == 60:
+
+                # 32 bit precision update.
+
+                object_properties['Position'] = Vector3(object_properties['ObjectData'], 0)
+                object_properties['Velocity'] = Vector3(object_properties['ObjectData'], 12)
+                object_properties['Acceleration'] = Vector3(object_properties['ObjectData'], 24)
+                object_properties['Rotation'] = Vector3(object_properties['ObjectData'], 36)
+                object_properties['AngularVelocity'] = Vector3(object_properties['ObjectData'], 48)
+
+            elif len(object_properties['ObjectData']) == 48:
+
+                # Foot collision plane. LLVector4 
+                # Falls through to 32 bytes parser.
+
+                log(WARNING, "48 bit ObjectData precision not implemented")
+
+            elif len(object_properties['ObjectData']) == 32:
+
+                # 32 bit precision update.
+
+                # Position. U16Vec3.
+                # Velocity. U16Vec3.
+                # Acceleration. U16Vec3.
+                # Rotation. U16Rot(4xU16).
+                # Angular velocity. LLVector3.
+                log(WARNING, "32 bit ObjectData precision not implemented")
+
+            elif len(object_properties['ObjectData']) == 16:
+
+                # 8 bit precision update.
+
+                # Position. U8Vec3.
+                # Velocity. U8Vec3.
+                # Acceleration. U8Vec3.
+                # Rotation. U8Rot(4xU8).
+                # Angular velocity. U8Vec3
+                log(WARNING, "16 bit ObjectData precision not implemented")
+
+            object_list.append(object_properties)
+
+        self.update_multiple_objects_properties(object_list)
+
+    def onObjectUpdateCached(self, packet):
+        """ borrowing from libomv, we'll request object data for all data coming in via ObjectUpdateCached"""
+
+        # ToDo: handle these 2 variables properly
+        _RegionHandle = packet.message_data.blocks['RegionData'][0].get_variable('RegionHandle').data
+        _TimeDilation = packet.message_data.blocks['RegionData'][0].get_variable('TimeDilation').data
+
+        _request_list = []
+
+        for ObjectData_block in packet.message_data.blocks['ObjectData']:
+
+            LocalID = ObjectData_block.get_variable('ID').data
+            _CRC = ObjectData_block.get_variable('CRC').data
+            _UpdateFlags = ObjectData_block.get_variable('UpdateFlags').data
+
+            # Objects.request_object_update() expects a tuple of (_ID, CacheMissType)
+
+            # see if we have the object stored already
+            _object = objects.get_object_from_store(LocalID = LocalID)
+
+            if _object == None or _object == []:
+                CacheMissType = 1
+            else:
+                CacheMissType = 0
+
+            _request_list.append((LocalID, CacheMissType))
+
+        # ask the simulator for updates
+        self.request_object_update(ID_list = _request_list)
+
+    def onObjectUpdateCompressed(self, packet):
+
+        object_list = []
+
+        # ToDo: handle these 2 variables properly
+        _RegionHandle = packet.message_data.blocks['RegionData'][0].get_variable('RegionHandle').data
+        _TimeDilation = packet.message_data.blocks['RegionData'][0].get_variable('TimeDilation').data
+
+        for ObjectData_block in packet.message_data.blocks['ObjectData']:
+
+            object_properties = {}
+
+            object_properties['UpdateFlags'] = ObjectData_block.get_variable('UpdateFlags').data
+            object_properties['Data'] = ObjectData_block.get_variable('Data').data
+            _Data = object_properties['Data']
+
+            pos = 0         # position in the binary string
+            object_properties['FullID'] = UUID(bytes = _Data, offset = 0)        # LLUUID
+            pos += 16
+            object_properties['LocalID'] = struct.unpack("<I", _Data[pos:pos+4])[0]
+            pos += 4
+            object_properties['PCode'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+
+            if object_properties['PCode'] != 9:         # if it is not a prim, stop.
+                log(WARNING, 'Fix Me!! Skipping parsing of ObjectUpdateCompressed packet when it is not a prim.')
+                # we ought to parse it and make sense of the data...
+                continue
+
+            object_properties['State'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            object_properties['CRC'] = struct.unpack("<I", _Data[pos:pos+4])[0]
+            pos += 4
+            object_properties['Material'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            object_properties['ClickAction'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            object_properties['Scale'] = Vector3(_Data, pos)
+            pos += 12
+            object_properties['Position'] = Vector3(_Data, pos)
+            pos += 12
+            object_properties['Rotation'] = Vector3(_Data, pos)
+            pos += 12
+            object_properties['Flags'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+            pos += 1
+            object_properties['OwnerID'] = UUID(_Data, pos)
+            pos += 16
+
+            # Placeholder vars, to be populated via flags if present
+            object_properties['AngularVelocity'] = Vector3()
+            object_properties['ParentID'] = UUID()
+            object_properties['Text'] = ''
+            object_properties['TextColor'] = None
+            object_properties['MediaURL'] = ''
+            object_properties['Sound'] = UUID()
+            object_properties['Gain'] = 0
+            object_properties['Flags'] = 0
+            object_properties['Radius'] = 0
+            object_properties['NameValue'] = ''
+            object_properties['ExtraParams'] = None
+
+            if object_properties['Flags'] != 0:
+
+                log(WARNING, "FixMe! Quiting parsing an ObjectUpdateCompressed packet with flags due to incomplete implemention. Storing a partial representation of an object with uuid of %s" % (_FullID))
+
+                # the commented code is not working right, we need to figure out why!
+                # ExtraParams in particular seemed troublesome
+
+                '''
+                print 'Flags: ', Flags
+
+                if (Flags & CompressedUpdateFlags.contains_AngularVelocity) != 0:
+                    _AngularVelocity = Vector3(_Data, pos)
+                    pos += 12
+                    print 'AngularVelocity: ', _AngularVelocity
+                else:
+                    _AngularVelocity = None
+
+                if (Flags & CompressedUpdateFlags.contains_Parent) != 0:
+                    _ParentID = UUID(_Data, pos)
+                    pos += 16
+                    print 'ParentID: ', _ParentID
+                else:
+                    _ParentID = None
+
+                if (Flags & CompressedUpdateFlags.Tree) != 0:
+                    # skip it, only iterate the position
+                    pos += 1
+                    print 'Tree'
+
+                if (Flags & CompressedUpdateFlags.ScratchPad) != 0:
+                    # skip it, only iterate the position
+                    size = struct.unpack(">B", _Data[pos:pos+1])[0]
+                    pos += 1
+                    pos += size
+                    print 'Scratchpad size'
+
+                if (Flags & CompressedUpdateFlags.contains_Text) != 0:
+                    # skip it, only iterate the position
+                    _Text = ''
+                    while struct.unpack(">B", _Data[pos:pos+1])[0] != 0:
+                        pos += 1
+                    pos += 1
+                    _TextColor = struct.unpack("<I", _Data[pos:pos+4])[0]
+                    pos += 4
+                    print '_TextColor: ', _TextColor
+
+                if (Flags & CompressedUpdateFlags.MediaURL) != 0:
+                    # skip it, only iterate the position
+                    _MediaURL = ''
+                    while struct.unpack(">B", _Data[pos:pos+1])[0] != 0:
+                        pos += 1
+                    pos += 1
+                    print '_MediaURL: ', _MediaURL
+
+                if (Flags & CompressedUpdateFlags.contains_Particles) != 0:
+                    # skip it, only iterate the position
+                    ParticleData = _Data[pos:pos+86]
+                    pos += 86
+                    print 'Particles'
+
+                # parse ExtraParams
+                # ToDo: finish this up, for now we are just incrementing the position and not dealing with the data
+
+                _Flexible = None
+                _Light = None
+                _Sculpt = None
+
+                num_extra_params =  struct.unpack(">b", _Data[pos:pos+1])[0]
+                print 'Number of extra params: ', num_extra_params
+                pos += 1
+
+                for i in range(num_extra_params):
+
+                    # ExtraParam type
+                    extraparam_type = struct.unpack("<H", _Data[pos:pos+2])[0]
+                    pos += 2
+
+                    datalength = struct.unpack("<I", _Data[pos:pos+4])[0]
+                    print 'ExtraParams type: %s length: %s' % (extraparam_type, datalength)
+                    pos += 4
+
+                    pos += int(datalength)
+
+                # ToDo: Deal with extra parameters
+                #log(WARNING, "Incomplete implementation in onObjectUpdateCompressed when flags are present. Skipping parsing this object...")
+                #continue
+
+                if (Flags & CompressedUpdateFlags.contains_Sound) != 0:
+                    # skip it, only iterate the position
+                    #_Sound = uuid.UUID(bytes = _Data[pos:pos+16])
+                    pos += 16
+                    print 'Sound'
+
+                    #_Gain = struct.unpack(">f", _Data[pos:pos+4])[0]
+                    pos += 4
+
+                    #_Flags = stuct.unpack(">B", _Data[pos:pos+1])[0]
+                    pos += 1
+
+                    #_Radius = struct.unpack(">f", _Data[pos:pos+4])[0]
+                    pos += 4
+
+                if (Flags & CompressedUpdateFlags.contains_NameValues) != 0:
+                    # skip it, only iterate the position
+                    _NameValue = ''
+
+                    while _Data[pos:pos+1] != 0:
+                        #_NameValue += struct.unpack(">c", _Data[pos:pos+1])[0]
+                        pos += 1
+                    pos += 1
+                '''
+
+                object_properties['PathCurve'] = None
+                object_properties['PathBegin'] = None
+                object_properties['PathEnd'] = None
+                object_properties['PathScaleX'] = None
+                object_properties['PathScaleY'] = None
+                object_properties['PathShearX'] = None
+                object_properties['PathShearY'] = None
+                object_properties['PathTwist'] = None
+                object_properties['PathTwistBegin'] = None
+                object_properties['PathRadiusOffset'] = None
+                object_properties['PathTaperX'] = None
+                object_properties['PathTaperY'] = None
+                object_properties['PathRevolutions'] = None
+                object_properties['PathSkew'] = None
+                object_properties['ProfileCurve'] = None
+                object_properties['ProfileBegin'] = None
+                object_properties['ProfileEnd'] = None
+                object_properties['ProfileHollow'] = None
+                object_properties['TextureEntry'] = None
+                object_properties['TextureAnim'] = None
+                object_properties['TextureAnim'] = None
+
+            else:
+
+                object_properties['PathCurve'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1
+                object_properties['PathBegin'] = struct.unpack("<H", _Data[pos:pos+2])[0]
+                pos += 2
+                object_properties['PathEnd'] = struct.unpack("<H", _Data[pos:pos+2])[0]
+                pos += 2
+                object_properties['PathScaleX'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1
+                object_properties['PathScaleY'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1
+                object_properties['PathShearX'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1
+                object_properties['PathShearY'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1
+                object_properties['PathTwist'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1
+                object_properties['PathTwistBegin'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1
+                object_properties['PathRadiusOffset'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1
+                object_properties['PathTaperX'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1
+                object_properties['PathTaperY'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1
+                object_properties['PathRevolutions'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1
+                object_properties['PathSkew'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1
+                object_properties['ProfileCurve'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1
+                object_properties['ProfileBegin'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1
+                object_properties['ProfileEnd'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1
+                object_properties['ProfileHollow'] = struct.unpack(">B", _Data[pos:pos+1])[0]
+                pos += 1 
+
+                # Texture handling
+                size = struct.unpack("<H", _Data[pos:pos+2])[0]
+                pos += 2
+                object_properties['TextureEntry'] = _Data[pos:pos+size]
+                pos += size
+
+                if (object_properties['Flags'] & CompressedUpdateFlags.TextureAnim) != 0:
+                    object_properties['TextureAnim'] = struct.unpack("<H", _Data[pos:pos+2])[0]
+                    pos += 2
+                else:
+                    object_properties['TextureAnim'] = None
+
+            object_list.append(object_properties)
+
+        self.update_multiple_objects_properties(object_list)
+
+    def onKillObject(self, packet):
+
+        _KillID = packet.message_data.blocks['ObjectData'][0].get_variable('ID').data
+
+        self.remove_object_from_store(_KillID)
+
+    def onObjectProperties(self, packet):
+
+        object_list = []
+
+        for ObjectData_block in packet.message_data.blocks['ObjectData']:
+
+            object_properties = {}
+
+            object_properties['FullID'] = ObjectData_block.get_variable('ObjectID').data
+            object_properties['CreatorID'] = ObjectData_block.get_variable('CreatorID').data
+            object_properties['OwnerID'] = ObjectData_block.get_variable('OwnerID').data
+            object_properties['GroupID'] = ObjectData_block.get_variable('GroupID').data
+            object_properties['CreationDate'] = ObjectData_block.get_variable('CreationDate').data
+            object_properties['BaseMask'] = ObjectData_block.get_variable('BaseMask').data
+            object_properties['OwnerMask'] = ObjectData_block.get_variable('OwnerMask').data
+            object_properties['GroupMask'] = ObjectData_block.get_variable('GroupMask').data
+            object_properties['EveryoneMask'] = ObjectData_block.get_variable('EveryoneMask').data
+            object_properties['NextOwnerMask'] = ObjectData_block.get_variable('NextOwnerMask').data
+            object_properties['OwnershipCost'] = ObjectData_block.get_variable('OwnershipCost').data
+            #object_properties['TaxRate'] = ObjectData_block.get_variable('TaxRate').data
+            object_properties['SaleType'] = ObjectData_block.get_variable('SaleType').data
+            object_properties['SalePrice'] = ObjectData_block.get_variable('SalePrice').data
+            object_properties['AggregatePerms'] = ObjectData_block.get_variable('AggregatePerms').data
+            object_properties['AggregatePermTextures'] = ObjectData_block.get_variable('AggregatePermTextures').data
+            object_properties['AggregatePermTexturesOwner'] = ObjectData_block.get_variable('AggregatePermTexturesOwner').data
+            object_properties['Category'] = ObjectData_block.get_variable('Category').data
+            object_properties['InventorySerial'] = ObjectData_block.get_variable('InventorySerial').data
+            object_properties['ItemID'] = ObjectData_block.get_variable('ItemID').data
+            object_properties['FolderID'] = ObjectData_block.get_variable('FolderID').data
+            object_properties['FromTaskID'] = ObjectData_block.get_variable('FromTaskID').data
+            object_properties['LastOwnerID'] = ObjectData_block.get_variable('LastOwnerID').data
+            object_properties['Name'] = ObjectData_block.get_variable('Name').data
+            object_properties['Description'] = ObjectData_block.get_variable('Description').data
+            object_properties['TouchName'] = ObjectData_block.get_variable('TouchName').data
+            object_properties['SitName'] = ObjectData_block.get_variable('SitName').data
+            object_properties['TextureID'] = ObjectData_block.get_variable('TextureID').data
+
+            object_list.append(object_properties)
+
+        self.update_multiple_objects_properties(object_list)
 
 class Object(object):
     """ represents an Object
@@ -760,458 +1216,6 @@ class ExtraParam(object):
     Flexible = 0x10
     Light = 0x20
     Sculpt = 0x30
-
-def onObjectUpdate(packet, objects):
-    """ populates an Object instance and adds it to the Objects() store """
-
-    object_list = []
-
-    # ToDo: handle these 2 variables properly
-    _RegionHandle = packet.message_data.blocks['RegionData'][0].get_variable('RegionHandle').data
-    _TimeDilation = packet.message_data.blocks['RegionData'][0].get_variable('TimeDilation').data
-
-    for ObjectData_block in packet.message_data.blocks['ObjectData']:
-
-        object_properties = {}
-
-        object_properties['LocalID'] = ObjectData_block.get_variable('ID').data
-        object_properties['State'] = ObjectData_block.get_variable('State').data
-        object_properties['FullID'] = ObjectData_block.get_variable('FullID').data
-        object_properties['CRC'] = ObjectData_block.get_variable('CRC').data
-        object_properties['PCode'] = ObjectData_block.get_variable('PCode').data
-        object_properties['Material'] = ObjectData_block.get_variable('Material').data
-        object_properties['ClickAction'] = ObjectData_block.get_variable('ClickAction').data
-        object_properties['Scale'] = ObjectData_block.get_variable('Scale').data
-        object_properties['ObjectData'] = ObjectData_block.get_variable('ObjectData').data
-        object_properties['ParentID'] = ObjectData_block.get_variable('ParentID').data
-        object_properties['UpdateFlags'] = ObjectData_block.get_variable('UpdateFlags').data
-        object_properties['PathCurve'] = ObjectData_block.get_variable('PathCurve').data
-        object_properties['ProfileCurve'] = ObjectData_block.get_variable('ProfileCurve').data
-        object_properties['PathBegin'] = ObjectData_block.get_variable('PathBegin').data
-        object_properties['PathEnd'] = ObjectData_block.get_variable('PathEnd').data
-        object_properties['PathScaleX'] = ObjectData_block.get_variable('PathScaleX').data
-        object_properties['PathScaleY'] = ObjectData_block.get_variable('PathScaleY').data
-        object_properties['PathShearX'] = ObjectData_block.get_variable('PathShearX').data
-        object_properties['PathShearY'] = ObjectData_block.get_variable('PathShearY').data
-        object_properties['PathTwist'] = ObjectData_block.get_variable('PathTwist').data
-        object_properties['PathTwistBegin'] = ObjectData_block.get_variable('PathTwistBegin').data
-        object_properties['PathRadiusOffset'] = ObjectData_block.get_variable('PathRadiusOffset').data
-        object_properties['PathTaperX'] = ObjectData_block.get_variable('PathTaperX').data
-        object_properties['PathTaperY'] = ObjectData_block.get_variable('PathTaperY').data
-        object_properties['PathRevolutions'] = ObjectData_block.get_variable('PathRevolutions').data
-        object_properties['PathSkew'] = ObjectData_block.get_variable('PathSkew').data
-        object_properties['ProfileBegin'] = ObjectData_block.get_variable('ProfileBegin').data
-        object_properties['ProfileEnd'] = ObjectData_block.get_variable('ProfileEnd').data
-        object_properties['ProfileHollow'] = ObjectData_block.get_variable('ProfileHollow').data
-        object_properties['TextureEntry'] = ObjectData_block.get_variable('TextureEntry').data
-        object_properties['TextureAnim'] = ObjectData_block.get_variable('TextureAnim').data
-        object_properties['NameValue'] = ObjectData_block.get_variable('NameValue').data
-        object_properties['Data'] = ObjectData_block.get_variable('Data').data
-        object_properties['Text'] = ObjectData_block.get_variable('Text').data
-        object_properties['TextColor'] = ObjectData_block.get_variable('TextColor').data
-        object_properties['MediaURL'] = ObjectData_block.get_variable('MediaURL').data
-        object_properties['PSBlock'] = ObjectData_block.get_variable('PSBlock').data
-        object_properties['ExtraParams'] = ObjectData_block.get_variable('ExtraParams').data
-        object_properties['Sound'] = ObjectData_block.get_variable('Sound').data
-        object_properties['OwnerID'] = ObjectData_block.get_variable('OwnerID').data
-        object_properties['Gain'] = ObjectData_block.get_variable('Gain').data
-        object_properties['Flags'] = ObjectData_block.get_variable('Flags').data
-        object_properties['Radius'] = ObjectData_block.get_variable('Radius').data
-        object_properties['JointType'] = ObjectData_block.get_variable('JointType').data
-        object_properties['JointPivot'] = ObjectData_block.get_variable('JointPivot').data
-        object_properties['JointAxisOrAnchor'] = ObjectData_block.get_variable('JointAxisOrAnchor').data
-
-        # deal with the data stored in _ObjectData
-        # see http://wiki.secondlife.com/wiki/ObjectUpdate#ObjectData_Format for details
-
-        object_properties['FootCollisionPlane'] = None 
-        object_properties['Position'] = None
-        object_properties['Velocity'] = None
-        object_properties['Acceleration'] = None
-        object_properties['Rotation'] = None
-        object_properties['AngularVelocity'] = None
-
-        if len(object_properties['ObjectData']) == 76:
-
-            # Foot collision plane. LLVector4.
-            # Angular velocity is ignored and set to 0. Falls through to 60 bytes parser. 
-
-            object_properties['FootCollisionPlane'] = Quaternion(object_properties['ObjectData'], 0)
-            object_properties['Position'] = Vector3(object_properties['ObjectData'], 16)
-            object_properties['Velocity'] = Vector3(object_properties['ObjectData'], 28)
-            object_properties['Acceleration'] = Vector3(object_properties['ObjectData'], 40)
-            object_properties['Rotation'] = Vector3(object_properties['ObjectData'], 52)
-            object_properties['AngularVelocity'] = Vector3(object_properties['ObjectData'], 60)
-
-        elif len(object_properties['ObjectData']) == 60:
-
-            # 32 bit precision update.
-
-            object_properties['Position'] = Vector3(object_properties['ObjectData'], 0)
-            object_properties['Velocity'] = Vector3(object_properties['ObjectData'], 12)
-            object_properties['Acceleration'] = Vector3(object_properties['ObjectData'], 24)
-            object_properties['Rotation'] = Vector3(object_properties['ObjectData'], 36)
-            object_properties['AngularVelocity'] = Vector3(object_properties['ObjectData'], 48)
-
-        elif len(object_properties['ObjectData']) == 48:
-
-            # Foot collision plane. LLVector4 
-            # Falls through to 32 bytes parser.
-
-            log(WARNING, "48 bit ObjectData precision not implemented")
-
-        elif len(object_properties['ObjectData']) == 32:
-
-            # 32 bit precision update.
-
-            # Position. U16Vec3.
-            # Velocity. U16Vec3.
-            # Acceleration. U16Vec3.
-            # Rotation. U16Rot(4xU16).
-            # Angular velocity. LLVector3.
-            log(WARNING, "32 bit ObjectData precision not implemented")
-
-        elif len(object_properties['ObjectData']) == 16:
-
-            # 8 bit precision update.
-
-            # Position. U8Vec3.
-            # Velocity. U8Vec3.
-            # Acceleration. U8Vec3.
-            # Rotation. U8Rot(4xU8).
-            # Angular velocity. U8Vec3
-            log(WARNING, "16 bit ObjectData precision not implemented")
-
-        object_list.append(object_properties)
-
-    objects.update_multiple_objects_properties(object_list)
-
-def onObjectUpdateCached(packet, objects):
-    """ borrowing from libomv, we'll request object data for all data coming in via ObjectUpdateCached"""
-
-    # ToDo: handle these 2 variables properly
-    _RegionHandle = packet.message_data.blocks['RegionData'][0].get_variable('RegionHandle').data
-    _TimeDilation = packet.message_data.blocks['RegionData'][0].get_variable('TimeDilation').data
-
-    _request_list = []
-
-    for ObjectData_block in packet.message_data.blocks['ObjectData']:
-
-        LocalID = ObjectData_block.get_variable('ID').data
-        _CRC = ObjectData_block.get_variable('CRC').data
-        _UpdateFlags = ObjectData_block.get_variable('UpdateFlags').data
-
-        # Objects.request_object_update() expects a tuple of (_ID, CacheMissType)
-
-        # see if we have the object stored already
-        _object = objects.get_object_from_store(LocalID = LocalID)
-
-        if _object == None or _object == []:
-            CacheMissType = 1
-        else:
-            CacheMissType = 0
-
-        _request_list.append((LocalID, CacheMissType))
-
-    # ask the simulator for updates
-    objects.request_object_update(ID_list = _request_list)
-
-def onObjectUpdateCompressed(packet, objects):
-
-    object_list = []
-
-    # ToDo: handle these 2 variables properly
-    _RegionHandle = packet.message_data.blocks['RegionData'][0].get_variable('RegionHandle').data
-    _TimeDilation = packet.message_data.blocks['RegionData'][0].get_variable('TimeDilation').data
-
-    for ObjectData_block in packet.message_data.blocks['ObjectData']:
-
-        object_properties = {}
-
-        object_properties['UpdateFlags'] = ObjectData_block.get_variable('UpdateFlags').data
-        object_properties['Data'] = ObjectData_block.get_variable('Data').data
-        _Data = object_properties['Data']
-
-        pos = 0         # position in the binary string
-        object_properties['FullID'] = UUID(bytes = _Data, offset = 0)        # LLUUID
-        pos += 16
-        object_properties['LocalID'] = struct.unpack("<I", _Data[pos:pos+4])[0]
-        pos += 4
-        object_properties['PCode'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-
-        if object_properties['PCode'] != 9:         # if it is not a prim, stop.
-            log(WARNING, 'Fix Me!! Skipping parsing of ObjectUpdateCompressed packet when it is not a prim.')
-            # we ought to parse it and make sense of the data...
-            continue
-        
-        object_properties['State'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        object_properties['CRC'] = struct.unpack("<I", _Data[pos:pos+4])[0]
-        pos += 4
-        object_properties['Material'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        object_properties['ClickAction'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        object_properties['Scale'] = Vector3(_Data, pos)
-        pos += 12
-        object_properties['Position'] = Vector3(_Data, pos)
-        pos += 12
-        object_properties['Rotation'] = Vector3(_Data, pos)
-        pos += 12
-        object_properties['Flags'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-        pos += 1
-        object_properties['OwnerID'] = UUID(_Data, pos)
-        pos += 16
-
-        # Placeholder vars, to be populated via flags if present
-        object_properties['AngularVelocity'] = Vector3()
-        object_properties['ParentID'] = UUID()
-        object_properties['Text'] = ''
-        object_properties['TextColor'] = None
-        object_properties['MediaURL'] = ''
-        object_properties['Sound'] = UUID()
-        object_properties['Gain'] = 0
-        object_properties['Flags'] = 0
-        object_properties['Radius'] = 0
-        object_properties['NameValue'] = ''
-        object_properties['ExtraParams'] = None
-
-        if object_properties['Flags'] != 0:
-
-            log(WARNING, "FixMe! Quiting parsing an ObjectUpdateCompressed packet with flags due to incomplete implemention. Storing a partial representation of an object with uuid of %s" % (_FullID))
-            
-            # the commented code is not working right, we need to figure out why!
-            # ExtraParams in particular seemed troublesome
-
-            '''
-            print 'Flags: ', Flags
-
-            if (Flags & CompressedUpdateFlags.contains_AngularVelocity) != 0:
-                _AngularVelocity = Vector3(_Data, pos)
-                pos += 12
-                print 'AngularVelocity: ', _AngularVelocity
-            else:
-                _AngularVelocity = None
-
-            if (Flags & CompressedUpdateFlags.contains_Parent) != 0:
-                _ParentID = UUID(_Data, pos)
-                pos += 16
-                print 'ParentID: ', _ParentID
-            else:
-                _ParentID = None
-
-            if (Flags & CompressedUpdateFlags.Tree) != 0:
-                # skip it, only iterate the position
-                pos += 1
-                print 'Tree'
-
-            if (Flags & CompressedUpdateFlags.ScratchPad) != 0:
-                # skip it, only iterate the position
-                size = struct.unpack(">B", _Data[pos:pos+1])[0]
-                pos += 1
-                pos += size
-                print 'Scratchpad size'
-
-            if (Flags & CompressedUpdateFlags.contains_Text) != 0:
-                # skip it, only iterate the position
-                _Text = ''
-                while struct.unpack(">B", _Data[pos:pos+1])[0] != 0:
-                    pos += 1
-                pos += 1
-                _TextColor = struct.unpack("<I", _Data[pos:pos+4])[0]
-                pos += 4
-                print '_TextColor: ', _TextColor
-
-            if (Flags & CompressedUpdateFlags.MediaURL) != 0:
-                # skip it, only iterate the position
-                _MediaURL = ''
-                while struct.unpack(">B", _Data[pos:pos+1])[0] != 0:
-                    pos += 1
-                pos += 1
-                print '_MediaURL: ', _MediaURL
-
-            if (Flags & CompressedUpdateFlags.contains_Particles) != 0:
-                # skip it, only iterate the position
-                ParticleData = _Data[pos:pos+86]
-                pos += 86
-                print 'Particles'
-
-            # parse ExtraParams
-            # ToDo: finish this up, for now we are just incrementing the position and not dealing with the data
-
-            _Flexible = None
-            _Light = None
-            _Sculpt = None
-
-            num_extra_params =  struct.unpack(">b", _Data[pos:pos+1])[0]
-            print 'Number of extra params: ', num_extra_params
-            pos += 1
-
-            for i in range(num_extra_params):
-                
-                # ExtraParam type
-                extraparam_type = struct.unpack("<H", _Data[pos:pos+2])[0]
-                pos += 2
-
-                datalength = struct.unpack("<I", _Data[pos:pos+4])[0]
-                print 'ExtraParams type: %s length: %s' % (extraparam_type, datalength)
-                pos += 4
-
-                pos += int(datalength)
-
-            # ToDo: Deal with extra parameters
-            #log(WARNING, "Incomplete implementation in onObjectUpdateCompressed when flags are present. Skipping parsing this object...")
-            #continue
-
-            if (Flags & CompressedUpdateFlags.contains_Sound) != 0:
-                # skip it, only iterate the position
-                #_Sound = uuid.UUID(bytes = _Data[pos:pos+16])
-                pos += 16
-                print 'Sound'
-
-                #_Gain = struct.unpack(">f", _Data[pos:pos+4])[0]
-                pos += 4
-
-                #_Flags = stuct.unpack(">B", _Data[pos:pos+1])[0]
-                pos += 1
-
-                #_Radius = struct.unpack(">f", _Data[pos:pos+4])[0]
-                pos += 4
-
-            if (Flags & CompressedUpdateFlags.contains_NameValues) != 0:
-                # skip it, only iterate the position
-                _NameValue = ''
-
-                while _Data[pos:pos+1] != 0:
-                    #_NameValue += struct.unpack(">c", _Data[pos:pos+1])[0]
-                    pos += 1
-                pos += 1
-            '''
-
-            object_properties['PathCurve'] = None
-            object_properties['PathBegin'] = None
-            object_properties['PathEnd'] = None
-            object_properties['PathScaleX'] = None
-            object_properties['PathScaleY'] = None
-            object_properties['PathShearX'] = None
-            object_properties['PathShearY'] = None
-            object_properties['PathTwist'] = None
-            object_properties['PathTwistBegin'] = None
-            object_properties['PathRadiusOffset'] = None
-            object_properties['PathTaperX'] = None
-            object_properties['PathTaperY'] = None
-            object_properties['PathRevolutions'] = None
-            object_properties['PathSkew'] = None
-            object_properties['ProfileCurve'] = None
-            object_properties['ProfileBegin'] = None
-            object_properties['ProfileEnd'] = None
-            object_properties['ProfileHollow'] = None
-            object_properties['TextureEntry'] = None
-            object_properties['TextureAnim'] = None
-            object_properties['TextureAnim'] = None
-
-        else:
-
-            object_properties['PathCurve'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-            pos += 1
-            object_properties['PathBegin'] = struct.unpack("<H", _Data[pos:pos+2])[0]
-            pos += 2
-            object_properties['PathEnd'] = struct.unpack("<H", _Data[pos:pos+2])[0]
-            pos += 2
-            object_properties['PathScaleX'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-            pos += 1
-            object_properties['PathScaleY'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-            pos += 1
-            object_properties['PathShearX'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-            pos += 1
-            object_properties['PathShearY'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-            pos += 1
-            object_properties['PathTwist'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-            pos += 1
-            object_properties['PathTwistBegin'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-            pos += 1
-            object_properties['PathRadiusOffset'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-            pos += 1
-            object_properties['PathTaperX'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-            pos += 1
-            object_properties['PathTaperY'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-            pos += 1
-            object_properties['PathRevolutions'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-            pos += 1
-            object_properties['PathSkew'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-            pos += 1
-            object_properties['ProfileCurve'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-            pos += 1
-            object_properties['ProfileBegin'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-            pos += 1
-            object_properties['ProfileEnd'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-            pos += 1
-            object_properties['ProfileHollow'] = struct.unpack(">B", _Data[pos:pos+1])[0]
-            pos += 1 
-
-            # Texture handling
-            size = struct.unpack("<H", _Data[pos:pos+2])[0]
-            pos += 2
-            object_properties['TextureEntry'] = _Data[pos:pos+size]
-            pos += size
-
-            if (object_properties['Flags'] & CompressedUpdateFlags.TextureAnim) != 0:
-                object_properties['TextureAnim'] = struct.unpack("<H", _Data[pos:pos+2])[0]
-                pos += 2
-            else:
-                object_properties['TextureAnim'] = None
-
-        object_list.append(object_properties)
-
-    objects.update_multiple_objects_properties(object_list)
-
-def onKillObject(packet, objects):
-
-    _KillID = packet.message_data.blocks['ObjectData'][0].get_variable('ID').data
-
-    objects.remove_object_from_store(_KillID)
-
-def onObjectProperties(packet, objects):
-
-    object_list = []
-
-    for ObjectData_block in packet.message_data.blocks['ObjectData']:
-
-        object_properties = {}
-
-        object_properties['FullID'] = ObjectData_block.get_variable('ObjectID').data
-        object_properties['CreatorID'] = ObjectData_block.get_variable('CreatorID').data
-        object_properties['OwnerID'] = ObjectData_block.get_variable('OwnerID').data
-        object_properties['GroupID'] = ObjectData_block.get_variable('GroupID').data
-        object_properties['CreationDate'] = ObjectData_block.get_variable('CreationDate').data
-        object_properties['BaseMask'] = ObjectData_block.get_variable('BaseMask').data
-        object_properties['OwnerMask'] = ObjectData_block.get_variable('OwnerMask').data
-        object_properties['GroupMask'] = ObjectData_block.get_variable('GroupMask').data
-        object_properties['EveryoneMask'] = ObjectData_block.get_variable('EveryoneMask').data
-        object_properties['NextOwnerMask'] = ObjectData_block.get_variable('NextOwnerMask').data
-        object_properties['OwnershipCost'] = ObjectData_block.get_variable('OwnershipCost').data
-        #object_properties['TaxRate'] = ObjectData_block.get_variable('TaxRate').data
-        object_properties['SaleType'] = ObjectData_block.get_variable('SaleType').data
-        object_properties['SalePrice'] = ObjectData_block.get_variable('SalePrice').data
-        object_properties['AggregatePerms'] = ObjectData_block.get_variable('AggregatePerms').data
-        object_properties['AggregatePermTextures'] = ObjectData_block.get_variable('AggregatePermTextures').data
-        object_properties['AggregatePermTexturesOwner'] = ObjectData_block.get_variable('AggregatePermTexturesOwner').data
-        object_properties['Category'] = ObjectData_block.get_variable('Category').data
-        object_properties['InventorySerial'] = ObjectData_block.get_variable('InventorySerial').data
-        object_properties['ItemID'] = ObjectData_block.get_variable('ItemID').data
-        object_properties['FolderID'] = ObjectData_block.get_variable('FolderID').data
-        object_properties['FromTaskID'] = ObjectData_block.get_variable('FromTaskID').data
-        object_properties['LastOwnerID'] = ObjectData_block.get_variable('LastOwnerID').data
-        object_properties['Name'] = ObjectData_block.get_variable('Name').data
-        object_properties['Description'] = ObjectData_block.get_variable('Description').data
-        object_properties['TouchName'] = ObjectData_block.get_variable('TouchName').data
-        object_properties['SitName'] = ObjectData_block.get_variable('SitName').data
-        object_properties['TextureID'] = ObjectData_block.get_variable('TextureID').data
-
-        object_list.append(object_properties)
-
-    objects.update_multiple_objects_properties(object_list)
 
         #objects.update_object_properties(object_properties)
     '''

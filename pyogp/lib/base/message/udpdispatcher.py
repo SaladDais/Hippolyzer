@@ -50,6 +50,9 @@ class UDPDispatcher(object):
 
         self.region = region
 
+        self.packets_in = 0
+        self.packets_out = 0
+
         self.circuit_manager = CircuitManager()
         self.data_unpacker = DataUnpacker()
 
@@ -110,7 +113,7 @@ class UDPDispatcher(object):
             if circuit == None:
                 raise exc.CircuitNotFound(host, 'preparing to check for packets')
 
-            self.region.packets_in += 1
+            self.packets_in += 1
 
             recv_packet = self.udp_deserializer.deserialize(msg_buf)
 
@@ -210,7 +213,7 @@ class UDPDispatcher(object):
             #TODO: remove this when testing a network
             self.udp_client.send_packet(self.socket, send_buffer, host)
 
-            self.region.packets_out += 1
+            self.packets_out += 1
 
             return send_buffer
 

@@ -133,7 +133,7 @@ def login():
     print ''
     print ''
     for _avatar in client.region.objects.avatar_store:
-        print 'ID:', _avatar.ID, '\tUUID: ', _avatar.FullID , '\tNameValue: ', _avatar.NameValue, '\tPosition: ', _avatar.Position
+        print 'ID:', _avatar.LocalID, '\tUUID: ', _avatar.FullID , '\tNameValue: ', _avatar.NameValue, '\tPosition: ', _avatar.Position
     print ''
     print ''
     print 'Region attributes:'
