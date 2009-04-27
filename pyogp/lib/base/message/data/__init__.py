@@ -15,7 +15,23 @@ or in
 $/LicenseInfo$
 """
 
-from pkg_resources import resource_stream, resource_string
+try:
+
+    from pkg_resources import resource_stream, resource_string
+
+except ImportError:
+
+    import urllib2
+    import tempfile
+
+    tmpeggs = tempfile.mkdtemp()
+
+    ez = {}
+    exec urllib2.urlopen('http://peak.telecommunity.com/dist/ez_setup.py'
+        ).read() in ez
+    ez['use_setuptools'](to_dir=tmpeggs, download_delay=0)
+
+    from pkg_resources import resource_stream, resource_string
 
 msg_tmpl = resource_stream(__name__, 'message_template.msg')
 msg_details = resource_string(__name__, 'message.xml')
