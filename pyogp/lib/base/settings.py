@@ -1,23 +1,3 @@
-"""
-@file settings.py
-@date 2008-09-22
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2008, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-or in 
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
-
 class Settings(object):
 
     def __init__(self, quiet_logging = False):
@@ -39,8 +19,13 @@ class Settings(object):
         # toggle handling udp packets
         self.HANDLE_PACKETS = True
 
+        # Inventory related
+
         # enable inventory management
         self.ENABLE_INVENTORY_MANAGEMENT = True
+
+        # enable accepting inventory offers
+        self.ACCEPT_INVENTORY_OFFERS = False
 
         # enable library
         self.ENABLE_LIBRARY = True
@@ -71,11 +56,13 @@ class Settings(object):
         # Extended Login Options
         #~~~~~~~~~~~~~~~~~~~~~~~
 
-        # self.HANDLE_INVENTORY is set above, and triggers the use of these options in the login params
-        self.INVENTORY_LOGIN_OPTIONS = ["inventory-root", "inventory-skeleton", "inventory-lib-owner"]
+        # self.ENABLE_INVENTORY_MANAGEMENT is set above, and triggers the use of these options in the login params
+        self.INVENTORY_LOGIN_OPTIONS = ["inventory-root", "inventory-skeleton", "inventory-skel-lib"]
 
-        # self.HANDLE_LIBRARY is set above, and triggers the use of these options in the login params
+        # self.ENABLE_LIBRARY is set above, and triggers the use of these options in the login params
         self.LIBRARY_LOGIN_OPTIONS = ["inventory-lib-root", "inventory-lib-owner"]
+
+        self.ALEXANDRIA_LINDEN = 'ba2a564a-f0f1-4b82-9c61-b7520bfcd09f'
 
         # ToDo: handle this!
         self.ENABLE_EXTENDED_LOGIN_OPTIONS = False
@@ -147,7 +134,7 @@ class Settings(object):
         # Test related settings
         #~~~~~~~~~~~~~~~~~~~~~~
 
-        self.ENABLE_LOGGING_IN_TESTS = False
+        self.ENABLE_LOGGING_IN_TESTS = True
 
     # parameters for xmplrpc login
     def get_default_xmlrpc_login_parameters(self):
@@ -185,3 +172,21 @@ class Settings(object):
         }
 
         return params
+
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
+
+$LicenseInfo:firstyear=2008&license=apachev2$
+
+Copyright 2009, Linden Research, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
+
+$/LicenseInfo$
+"""
+

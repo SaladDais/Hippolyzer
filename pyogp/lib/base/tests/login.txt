@@ -1,29 +1,34 @@
 Login
-=====
+~~~~~
 
 First the 'legacy' login case
-=============================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 First, initialize login and the loginuri
+
     >>> from pyogp.lib.base.login import Login
     >>> login = Login()
     >>> loginuri = 'http://localhost:12345/login.cgi'
 
 Setup test: import of the mock network client handler
+
     >>> from pyogp.lib.base.tests.mock_xmlrpc import MockXMLRPC
     >>> from pyogp.lib.base.tests.base import MockXMLRPCLogin
     >>> loginhandler = MockXMLRPC(MockXMLRPCLogin(), loginuri)
 
 Now, set up the login parameters:
+
     >>> from pyogp.lib.base.login import LegacyLoginParams
     >>> login_params = LegacyLoginParams('first', 'last', 'secret')
 
 Now, login to the legacy login endpoint (using the mock test object as the endpoint).
 The login function returns the response as a dict.
+
     >>> login.login(loginuri, login_params, 'start_location', handler = loginhandler)
     {'region_y': '256', 'region_x': '256', 'first_name': '"first"', 'secure_session_id': '00000000-0000-0000-0000-000000000000', 'sim_ip': '127.0.0.1', 'agent_access': 'M', 'circuit_code': '600000000', 'look_at': '[r0.9963859999999999939,r-0.084939700000000006863,r0]', 'session_id': '00000000-0000-0000-0000-000000000000', 'udp_blacklist': 'EnableSimulator,TeleportFinish,CrossedRegion', 'seed_capability': 'https://somesim:12043/cap/00000000-0000-0000-0000-000000000000', 'agent_id': '00000000-0000-0000-0000-000000000000', 'last_name': 'last', 'inventory_host': 'someinvhost', 'start_location': 'last', 'sim_port': '13001', 'message': 'message', 'login': 'true', 'seconds_since_epoch': '1234567890'}
 
 Evaluate the login response stored in the login class
+
     >>> login.response['login']
     'true'
 
@@ -31,9 +36,10 @@ Evaluate the login response stored in the login class
     'https://somesim:12043/cap/00000000-0000-0000-0000-000000000000'
 
 Next, LegacyLoginParams
-=======================
+~~~~~~~~~~~~~~~~~~~~~~~
 
 This is easy, just test it
+
     >>> from pyogp.lib.base.login import LegacyLoginParams
     >>> login_params = LegacyLoginParams('first', 'last', 'pass')
     >>> login_params = login_params.serialize()
@@ -42,28 +48,33 @@ This is easy, just test it
     {'passwd': 'pass', 'last': 'last', 'first': 'first'}
 
 Now, how about testing the 'ogp' case
-=====================================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 First, initialize login and the loginuri
+
     >>> from pyogp.lib.base.login import Login
     >>> login = Login()
     >>> loginuri = 'http://localhost:12345/auth.cgi'
 
 Setup test: import of the mock network client handler
+
     >>> from pyogp.lib.base.network.tests.mockup_client import MockupClient
     >>> from pyogp.lib.base.tests.base import MockAgentDomainLogin
     >>> loginhandler = MockupClient(MockAgentDomainLogin())
 
 Now, set up the login parameters:
+
     >>> from pyogp.lib.base.login import OGPLoginParams
     >>> login_params = OGPLoginParams('first', 'last', 'secret')
 
 Now, login to the ogp login endpoint aka agent domain (using the mock test object as the endpoint).
 The login function returns the response as a dict.
+
     >>> login.login(loginuri, login_params, 'start_location', handler = loginhandler)
     {'agent_seed_capability': 'http://127.0.0.1:12345/seed_cap', 'authenticated': True}
 
 Evaluate the login response stored in the login class
+
     >>> login.response['authenticated']
     True
 
@@ -71,9 +82,10 @@ Evaluate the login response stored in the login class
     'http://127.0.0.1:12345/seed_cap'
 
 Next, OGPLoginParams
-=======================
+~~~~~~~~~~~~~~~~~~~~
 
 This is easy, just test it
+
     >>> from pyogp.lib.base.login import OGPLoginParams
     >>> login_params = OGPLoginParams('first', 'last', 'pass')
 

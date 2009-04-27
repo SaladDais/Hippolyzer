@@ -1,0 +1,239 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>login &mdash; Pyogp v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Pyogp v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Unit Tests" href="../unittest.html" />
+    <link rel="next" title="mock_xmlrpc" href="mock_xmlrpc.html" />
+    <link rel="prev" title="config" href="config.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="mock_xmlrpc.html" title="mock_xmlrpc"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="config.html" title="config"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../unittest.html" accesskey="U">Unit Tests</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">login</a><ul>
+<li><a class="reference external" href="#id1">Login</a></li>
+<li><a class="reference external" href="#first-the-legacy-login-case">First the &#8216;legacy&#8217; login case</a></li>
+<li><a class="reference external" href="#next-legacyloginparams">Next, LegacyLoginParams</a></li>
+<li><a class="reference external" href="#now-how-about-testing-the-ogp-case">Now, how about testing the &#8216;ogp&#8217; case</a></li>
+<li><a class="reference external" href="#next-ogploginparams">Next, OGPLoginParams</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="config.html"
+                                  title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">config</span></tt></a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="mock_xmlrpc.html"
+                                  title="next chapter"><tt class="docutils literal"><span class="pre">mock_xmlrpc</span></tt></a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/unittest/login.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pyogp.lib.base.tests.login">
+<h1>login<a class="headerlink" href="#module-pyogp.lib.base.tests.login" title="Permalink to this headline">¶</a></h1>
+<p>This is a doctest, the content here is verbatim from the source file at pyogp.lib.base.tests.login.txt.</p>
+<div class="section" id="id1">
+<h2>Login<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="first-the-legacy-login-case">
+<h2>First the &#8216;legacy&#8217; login case<a class="headerlink" href="#first-the-legacy-login-case" title="Permalink to this headline">¶</a></h2>
+<p>First, initialize login and the loginuri</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.login</span> <span class="kn">import</span> <span class="n">Login</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">login</span> <span class="o">=</span> <span class="n">Login</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">loginuri</span> <span class="o">=</span> <span class="s">&#39;http://localhost:12345/login.cgi&#39;</span>
+</pre></div>
+</div>
+<p>Setup test: import of the mock network client handler</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.tests.mock_xmlrpc</span> <span class="kn">import</span> <span class="n">MockXMLRPC</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.tests.base</span> <span class="kn">import</span> <span class="n">MockXMLRPCLogin</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">loginhandler</span> <span class="o">=</span> <span class="n">MockXMLRPC</span><span class="p">(</span><span class="n">MockXMLRPCLogin</span><span class="p">(),</span> <span class="n">loginuri</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now, set up the login parameters:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.login</span> <span class="kn">import</span> <span class="n">LegacyLoginParams</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">login_params</span> <span class="o">=</span> <span class="n">LegacyLoginParams</span><span class="p">(</span><span class="s">&#39;first&#39;</span><span class="p">,</span> <span class="s">&#39;last&#39;</span><span class="p">,</span> <span class="s">&#39;secret&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now, login to the legacy login endpoint (using the mock test object as the endpoint).
+The login function returns the response as a dict.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">login</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">loginuri</span><span class="p">,</span> <span class="n">login_params</span><span class="p">,</span> <span class="s">&#39;start_location&#39;</span><span class="p">,</span> <span class="n">handler</span> <span class="o">=</span> <span class="n">loginhandler</span><span class="p">)</span>
+<span class="go">{&#39;region_y&#39;: &#39;256&#39;, &#39;region_x&#39;: &#39;256&#39;, &#39;first_name&#39;: &#39;&quot;first&quot;&#39;, &#39;secure_session_id&#39;: &#39;00000000-0000-0000-0000-000000000000&#39;, &#39;sim_ip&#39;: &#39;127.0.0.1&#39;, &#39;agent_access&#39;: &#39;M&#39;, &#39;circuit_code&#39;: &#39;600000000&#39;, &#39;look_at&#39;: &#39;[r0.9963859999999999939,r-0.084939700000000006863,r0]&#39;, &#39;session_id&#39;: &#39;00000000-0000-0000-0000-000000000000&#39;, &#39;udp_blacklist&#39;: &#39;EnableSimulator,TeleportFinish,CrossedRegion&#39;, &#39;seed_capability&#39;: &#39;https://somesim:12043/cap/00000000-0000-0000-0000-000000000000&#39;, &#39;agent_id&#39;: &#39;00000000-0000-0000-0000-000000000000&#39;, &#39;last_name&#39;: &#39;last&#39;, &#39;inventory_host&#39;: &#39;someinvhost&#39;, &#39;start_location&#39;: &#39;last&#39;, &#39;sim_port&#39;: &#39;13001&#39;, &#39;message&#39;: &#39;message&#39;, &#39;login&#39;: &#39;true&#39;, &#39;seconds_since_epoch&#39;: &#39;1234567890&#39;}</span>
+</pre></div>
+</div>
+<p>Evaluate the login response stored in the login class</p>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">login</span><span class="o">.</span><span class="n">response</span><span class="p">[</span><span class="s">&#39;login&#39;</span><span class="p">]</span>
+<span class="go">&#39;true&#39;</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">login</span><span class="o">.</span><span class="n">response</span><span class="p">[</span><span class="s">&#39;seed_capability&#39;</span><span class="p">]</span>
+<span class="go">&#39;https://somesim:12043/cap/00000000-0000-0000-0000-000000000000&#39;</span>
+</pre></div>
+</div>
+</blockquote>
+</div>
+<div class="section" id="next-legacyloginparams">
+<h2>Next, LegacyLoginParams<a class="headerlink" href="#next-legacyloginparams" title="Permalink to this headline">¶</a></h2>
+<p>This is easy, just test it</p>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.login</span> <span class="kn">import</span> <span class="n">LegacyLoginParams</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">login_params</span> <span class="o">=</span> <span class="n">LegacyLoginParams</span><span class="p">(</span><span class="s">&#39;first&#39;</span><span class="p">,</span> <span class="s">&#39;last&#39;</span><span class="p">,</span> <span class="s">&#39;pass&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">login_params</span> <span class="o">=</span> <span class="n">login_params</span><span class="o">.</span><span class="n">serialize</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">login_params</span>
+<span class="go">{&#39;passwd&#39;: &#39;pass&#39;, &#39;last&#39;: &#39;last&#39;, &#39;first&#39;: &#39;first&#39;}</span>
+</pre></div>
+</div>
+</blockquote>
+</div>
+<div class="section" id="now-how-about-testing-the-ogp-case">
+<h2>Now, how about testing the &#8216;ogp&#8217; case<a class="headerlink" href="#now-how-about-testing-the-ogp-case" title="Permalink to this headline">¶</a></h2>
+<p>First, initialize login and the loginuri</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.login</span> <span class="kn">import</span> <span class="n">Login</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">login</span> <span class="o">=</span> <span class="n">Login</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">loginuri</span> <span class="o">=</span> <span class="s">&#39;http://localhost:12345/auth.cgi&#39;</span>
+</pre></div>
+</div>
+<p>Setup test: import of the mock network client handler</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.network.tests.mockup_client</span> <span class="kn">import</span> <span class="n">MockupClient</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.tests.base</span> <span class="kn">import</span> <span class="n">MockAgentDomainLogin</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">loginhandler</span> <span class="o">=</span> <span class="n">MockupClient</span><span class="p">(</span><span class="n">MockAgentDomainLogin</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>Now, set up the login parameters:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.login</span> <span class="kn">import</span> <span class="n">OGPLoginParams</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">login_params</span> <span class="o">=</span> <span class="n">OGPLoginParams</span><span class="p">(</span><span class="s">&#39;first&#39;</span><span class="p">,</span> <span class="s">&#39;last&#39;</span><span class="p">,</span> <span class="s">&#39;secret&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now, login to the ogp login endpoint aka agent domain (using the mock test object as the endpoint).
+The login function returns the response as a dict.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">login</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">loginuri</span><span class="p">,</span> <span class="n">login_params</span><span class="p">,</span> <span class="s">&#39;start_location&#39;</span><span class="p">,</span> <span class="n">handler</span> <span class="o">=</span> <span class="n">loginhandler</span><span class="p">)</span>
+<span class="go">{&#39;agent_seed_capability&#39;: &#39;http://127.0.0.1:12345/seed_cap&#39;, &#39;authenticated&#39;: True}</span>
+</pre></div>
+</div>
+<p>Evaluate the login response stored in the login class</p>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">login</span><span class="o">.</span><span class="n">response</span><span class="p">[</span><span class="s">&#39;authenticated&#39;</span><span class="p">]</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">login</span><span class="o">.</span><span class="n">response</span><span class="p">[</span><span class="s">&#39;agent_seed_capability&#39;</span><span class="p">]</span>
+<span class="go">&#39;http://127.0.0.1:12345/seed_cap&#39;</span>
+</pre></div>
+</div>
+</blockquote>
+</div>
+<div class="section" id="next-ogploginparams">
+<h2>Next, OGPLoginParams<a class="headerlink" href="#next-ogploginparams" title="Permalink to this headline">¶</a></h2>
+<p>This is easy, just test it</p>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.login</span> <span class="kn">import</span> <span class="n">OGPLoginParams</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">login_params</span> <span class="o">=</span> <span class="n">OGPLoginParams</span><span class="p">(</span><span class="s">&#39;first&#39;</span><span class="p">,</span> <span class="s">&#39;last&#39;</span><span class="p">,</span> <span class="s">&#39;pass&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">login_params</span><span class="o">.</span><span class="n">content_type</span>
+<span class="go">&#39;application/llsd+xml&#39;</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">login_params</span> <span class="o">=</span> <span class="n">login_params</span><span class="o">.</span><span class="n">serialize</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">login_params</span>
+<span class="go">&#39;&lt;?xml version=&quot;1.0&quot; ?&gt;&lt;llsd&gt;&lt;map&gt;&lt;key&gt;lastname&lt;/key&gt;&lt;string&gt;last&lt;/string&gt;&lt;key&gt;password&lt;/key&gt;&lt;string&gt;pass&lt;/string&gt;&lt;key&gt;firstname&lt;/key&gt;&lt;string&gt;first&lt;/string&gt;&lt;/map&gt;&lt;/llsd&gt;&#39;</span>
+</pre></div>
+</div>
+</blockquote>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mock_xmlrpc.html" title="mock_xmlrpc"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="config.html" title="config"
+             >previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../unittest.html" >Unit Tests</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Pyogp team.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.1.
+    </div>
+  </body>
+</html>

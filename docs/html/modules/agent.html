@@ -1,0 +1,230 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>agent &mdash; Pyogp v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Pyogp v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Modules" href="../modules.html" />
+    <link rel="next" title="agentdomain" href="agentdomain.html" />
+    <link rel="prev" title="Modules" href="../modules.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="agentdomain.html" title="agentdomain"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../modules.html" title="Modules"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" accesskey="U">Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="../modules.html"
+                                  title="previous chapter">Modules</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="agentdomain.html"
+                                  title="next chapter"><tt class="docutils literal"><span class="pre">agentdomain</span></tt></a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/modules/agent.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pyogp.lib.base.agent">
+<h1><tt class="xref docutils literal"><span class="pre">agent</span></tt><a class="headerlink" href="#module-pyogp.lib.base.agent" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pyogp.lib.base.agent.Home">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.agent.</tt><tt class="descname">Home</tt><big>(</big><em>params</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Home" title="Permalink to this definition">¶</a></dt>
+<dd><p>contains the parameters describing an agent&#8217;s home location as returned in login_response[&#8216;home&#8217;]</p>
+<p>initialize the Home object by parsing the data passed in</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.agent.Agent">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.agent.</tt><tt class="descname">Agent</tt><big>(</big><em>settings=None</em>, <em>firstname=''</em>, <em>lastname=''</em>, <em>password=''</em>, <em>agent_id=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Agent class is a container for agent specific data.</p>
+<p>Example, of login via the agent class:
+Initialize the login class</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">client</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="s">&#39;https://login.agni.lindenlab.com/cgi-bin/login.cgi&#39;</span><span class="p">,</span> <span class="s">&#39;firstname&#39;</span><span class="p">,</span> <span class="s">&#39;lastname&#39;</span><span class="p">,</span> <span class="s">&#39;secret&#39;</span><span class="p">,</span> <span class="n">start_location</span> <span class="o">=</span> <span class="s">&#39;last&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Sample implementations: examples/sample_agent_login.py
+Tests: tests/login.txt, tests/test_agent.py</p>
+<p>initialize this agent</p>
+<dl class="method">
+<dt id="pyogp.lib.base.agent.Agent.Name">
+<tt class="descname">Name</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent.Name" title="Permalink to this definition">¶</a></dt>
+<dd>returns a concatenated firstname + &#8216; &#8216; + lastname</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.agent.Agent.instant_message">
+<tt class="descname">instant_message</tt><big>(</big><em>ToAgentID=None</em>, <em>Message=None</em>, <em>_ID=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent.instant_message" title="Permalink to this definition">¶</a></dt>
+<dd>sends an instant message to another avatar, wrapping Agent().send_ImprovedInstantMessage() with some handy defaults</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.agent.Agent.login">
+<tt class="descname">login</tt><big>(</big><em>loginuri</em>, <em>firstname=None</em>, <em>lastname=None</em>, <em>password=None</em>, <em>login_params=None</em>, <em>start_location=None</em>, <em>handler=None</em>, <em>connect_region=True</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent.login" title="Permalink to this definition">¶</a></dt>
+<dd>login to a login endpoint using the Login() class</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.agent.Agent.logout">
+<tt class="descname">logout</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent.logout" title="Permalink to this definition">¶</a></dt>
+<dd>logs an agent out of the current region. calls Region()._kill_coroutines() for all child regions, and Region().logout() for the host region</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.agent.Agent.onAgentDataUpdate">
+<tt class="descname">onAgentDataUpdate</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent.onAgentDataUpdate" title="Permalink to this definition">¶</a></dt>
+<dd>callback handler for received AgentDataUpdate messages which populates various Agent() attributes</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.agent.Agent.onAgentGroupDataUpdate">
+<tt class="descname">onAgentGroupDataUpdate</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent.onAgentGroupDataUpdate" title="Permalink to this definition">¶</a></dt>
+<dd>callback handler for received AgentGroupDataUpdate messages which updates stored group instances in the group_manager</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.agent.Agent.onAgentMovementComplete">
+<tt class="descname">onAgentMovementComplete</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent.onAgentMovementComplete" title="Permalink to this definition">¶</a></dt>
+<dd>callback handler for received AgentMovementComplete messages which populates various Agent() and Region() attributes</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.agent.Agent.onAlertMessage">
+<tt class="descname">onAlertMessage</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent.onAlertMessage" title="Permalink to this definition">¶</a></dt>
+<dd>callback handler for received AlertMessage messages. logs and raises an event</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.agent.Agent.onChatFromSimulator">
+<tt class="descname">onChatFromSimulator</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent.onChatFromSimulator" title="Permalink to this definition">¶</a></dt>
+<dd>callback handler for received ChatFromSimulator messages which parses and fires a ChatReceived event. (not implemented</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.agent.Agent.onEnableSimulator">
+<tt class="descname">onEnableSimulator</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent.onEnableSimulator" title="Permalink to this definition">¶</a></dt>
+<dd>callback handler for received EnableSimulator messages. stores the region data for later connections</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.agent.Agent.onEstablishAgentCommunication">
+<tt class="descname">onEstablishAgentCommunication</tt><big>(</big><em>message</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent.onEstablishAgentCommunication" title="Permalink to this definition">¶</a></dt>
+<dd>callback handler for received EstablishAgentCommunication messages. try to enable the event queue for a neighboring region based on the data received</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.agent.Agent.onHealthMessage">
+<tt class="descname">onHealthMessage</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent.onHealthMessage" title="Permalink to this definition">¶</a></dt>
+<dd>callback handler for received HealthMessage messages which populates Agent().health</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.agent.Agent.onImprovedInstantMessage">
+<tt class="descname">onImprovedInstantMessage</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent.onImprovedInstantMessage" title="Permalink to this definition">¶</a></dt>
+<dd>callback handler for received ImprovedInstantMessage messages. much is passed in this message, and handling the data is only partially implemented</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.agent.Agent.say">
+<tt class="descname">say</tt><big>(</big><em>Message</em>, <em>Type=1</em>, <em>Channel=0</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent.say" title="Permalink to this definition">¶</a></dt>
+<dd><p>queues a packet to send open chat via ChatFromViewer</p>
+<p>Channel: 0 is open chat
+Type: 0 = Whisper</p>
+<blockquote>
+1 = Say
+2 = Shout</blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.agent.Agent.send_AgentDataUpdateRequest">
+<tt class="descname">send_AgentDataUpdateRequest</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent.send_AgentDataUpdateRequest" title="Permalink to this definition">¶</a></dt>
+<dd>queues a packet requesting an agent data update</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.agent.Agent.send_ImprovedInstantMessage">
+<tt class="descname">send_ImprovedInstantMessage</tt><big>(</big><em>AgentID=None</em>, <em>SessionID=None</em>, <em>FromGroup=None</em>, <em>ToAgentID=None</em>, <em>ParentEstateID=None</em>, <em>RegionID=None</em>, <em>Position=None</em>, <em>Offline=None</em>, <em>Dialog=None</em>, <em>_ID=None</em>, <em>Timestamp=None</em>, <em>FromAgentName=None</em>, <em>Message=None</em>, <em>BinaryBucket=None</em>, <em>AgentDataBlock={}</em>, <em>MessageBlockBlock={}</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent.send_ImprovedInstantMessage" title="Permalink to this definition">¶</a></dt>
+<dd>sends an instant message packet to ToAgentID. this is a multi-purpose message for inventory offer handling, im, group chat, and more</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.agent.Agent.sigint_handler">
+<tt class="descname">sigint_handler</tt><big>(</big><em>signal</em>, <em>frame</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.agent.Agent.sigint_handler" title="Permalink to this definition">¶</a></dt>
+<dd>catches terminal signals (Ctrl-C) to kill running client instances</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="agentdomain.html" title="agentdomain"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../modules.html" title="Modules"
+             >previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" >Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Pyogp team.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.1.
+    </div>
+  </body>
+</html>

@@ -1,28 +1,6 @@
 """
-@file exc.py
-@date 2008-09-16
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2008, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-or in 
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
-
-"""
 Exceptions for the pyogp library
-
 """
-
 
 class Error(Exception):
     """base exception for all pyogp related exceptions"""
@@ -350,3 +328,32 @@ class DataParsingError(Error):
 
     def __str__(self):   
         return "Data parsing error: %s'" % (self.error)
+
+class NotImplemented(Error):
+    """ an error raised when method is not implemented """
+
+    def __init__(self, error = None):
+        """ initialize this exception """
+
+        self.error = error
+
+    def __str__(self):
+        return "This method has to be implemented here: %s" % (self.error)
+
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
+
+$LicenseInfo:firstyear=2008&license=apachev2$
+
+Copyright 2009, Linden Research, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
+
+$/LicenseInfo$
+"""
+

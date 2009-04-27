@@ -1,23 +1,3 @@
-"""
-@file test_agent.py
-@date 2009-2-18
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2008, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-or in 
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
-
 # standard python libs
 import unittest
 
@@ -113,7 +93,7 @@ class TestAgent(unittest.TestCase):
         # override the network client with the mock client pointed at the mock login handler
         self.loginhandler = MockXMLRPC(MockXMLRPCLogin(), self.legacy_loginuri)  
 
-        self.assertRaises(SystemExit, self.client.login, self.legacy_loginuri, self.firstname, self.lastname, self.password, start_location = 'start', handler = self.loginhandler)
+        self.assertRaises(LoginError, self.client.login, self.legacy_loginuri, self.firstname, self.lastname, self.password, start_location = 'start', handler = self.loginhandler)
 
     def test_agent_home_class(self):
 
@@ -129,3 +109,21 @@ def test_suite():
     suite = TestSuite()
     suite.addTest(makeSuite(TestAgent))
     return suite
+
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
+
+$LicenseInfo:firstyear=2008&license=apachev2$
+
+Copyright 2009, Linden Research, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
+
+$/LicenseInfo$
+"""
+

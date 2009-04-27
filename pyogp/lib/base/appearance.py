@@ -1,23 +1,3 @@
-"""
-@file appearance.py
-@date 2008-09-16
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2008, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-or in 
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
-
 # standard python libs
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import uuid
@@ -38,16 +18,14 @@ log = logger.log
 
 # ToDo: make this all go!
 class Appearance(object):
-    """ an agent container
-
-    The Appearance class handles appearance of an Agent() instance
+    """The Appearance class handles appearance of an Agent() instance
 
     Sample implementations: 
     Tests: 
     """
 
     def __init__(self, settings = None, agent = None):
-        """ initialize this agent """
+        """ initialize the appearance manager """
 
         # allow the settings to be passed in
         # otherwise, grab the defaults
@@ -77,8 +55,8 @@ class Appearance(object):
 
         packet = AgentWearablesRequestPacket()
 
-        packet.AgentData['AgentID'] = uuid.UUID(str(self.agent.agent_id))
-        packet.AgentData['SessionID'] = uuid.UUID(str(self.agent.session_id))
+        packet.AgentData['AgentID'] = self.agent.agent_id
+        packet.AgentData['SessionID'] = self.agent.session_id
 
         self.agent.region.enqueue_message(packet())
 
@@ -104,4 +82,21 @@ class Appearance(object):
         	}
         }
         '''
+
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
+
+$LicenseInfo:firstyear=2008&license=apachev2$
+
+Copyright 2009, Linden Research, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
+
+$/LicenseInfo$
+"""
 

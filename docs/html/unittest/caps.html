@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>caps &mdash; Pyogp v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Pyogp v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Unit Tests" href="../unittest.html" />
+    <link rel="next" title="config" href="config.html" />
+    <link rel="prev" title="basics" href="basics.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="config.html" title="config"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="basics.html" title="basics"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../unittest.html" accesskey="U">Unit Tests</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">caps</a><ul>
+<li><a class="reference external" href="#the-capabilities-component">The Capabilities component</a></li>
+<li><a class="reference external" href="#internals">Internals</a></li>
+<li><a class="reference external" href="#testing-errors">Testing errors</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="basics.html"
+                                  title="previous chapter">basics</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="config.html"
+                                  title="next chapter"><tt class="docutils literal"><span class="pre">config</span></tt></a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/unittest/caps.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pyogp.lib.base.tests.caps">
+<h1>caps<a class="headerlink" href="#module-pyogp.lib.base.tests.caps" title="Permalink to this headline">¶</a></h1>
+<p>This is a doctest, the content here is verbatim from the source file at pyogp.lib.base.tests.caps.txt.</p>
+<div class="section" id="the-capabilities-component">
+<h2>The Capabilities component<a class="headerlink" href="#the-capabilities-component" title="Permalink to this headline">¶</a></h2>
+<p>The Capabilities component basically gives us two objects: a Capability
+and a SeedCapability.</p>
+<p>We can instantiate a SeedCapability like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.tests.mockup_client</span> <span class="kn">import</span> <span class="n">MockupClient</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.caps</span> <span class="kn">import</span> <span class="n">SeedCapability</span><span class="p">,</span> <span class="n">Capability</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.tests.base</span> <span class="kn">import</span> <span class="n">MockAgentDomain</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">client</span> <span class="o">=</span> <span class="n">MockupClient</span><span class="p">(</span><span class="n">MockAgentDomain</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">seed</span> <span class="o">=</span> <span class="n">SeedCapability</span><span class="p">(</span><span class="s">&#39;seed&#39;</span><span class="p">,</span> <span class="s">&#39;http://127.0.0.1:12345/seed_cap&#39;</span><span class="p">,</span> <span class="n">client</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We assume that we got the seed capability URL itself from login or some other service.</p>
+<p>We can now ask this SeedCapability object for new capabilities:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">caps</span> <span class="o">=</span> <span class="n">seed</span><span class="o">.</span><span class="n">get</span><span class="p">([</span><span class="s">&#39;some_capability&#39;</span><span class="p">,</span> <span class="s">&#39;some_other&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>The result is a dictionary object:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">caps</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<span class="go">2</span>
+</pre></div>
+</div>
+<p>whose contents are:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">caps</span><span class="p">[</span><span class="s">&#39;some_capability&#39;</span><span class="p">]</span>
+<span class="go">&lt;Capability &#39;some_capability&#39; for http://localhost:12345/cap/some_capability&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">caps</span><span class="p">[</span><span class="s">&#39;some_other&#39;</span><span class="p">]</span>
+<span class="go">&lt;Capability &#39;some_other&#39; for http://localhost:12345/cap/some_other&gt;</span>
+</pre></div>
+</div>
+<p>Let&#8217;s store the some_capability cap in a variable:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">some_cap</span> <span class="o">=</span> <span class="n">caps</span><span class="p">[</span><span class="s">&#39;some_capability&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The capability now can be simply called with a payload and returns some data itself.</p>
+<p>First we call it:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">some_cap</span><span class="o">.</span><span class="n">POST</span><span class="p">({</span><span class="s">&#39;a&#39;</span><span class="p">:</span><span class="s">&#39;b&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>And now we can check the data:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">[</span><span class="s">&#39;something&#39;</span><span class="p">]</span>
+<span class="go">&#39;else&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">[</span><span class="s">&#39;some&#39;</span><span class="p">]</span>
+<span class="go">12345</span>
+</pre></div>
+</div>
+<p>This data here is provided by the mockup server for testing.</p>
+</div>
+<div class="section" id="internals">
+<h2>Internals<a class="headerlink" href="#internals" title="Permalink to this headline">¶</a></h2>
+<p>Each capability stores it&#8217;s name and public URL which it is instantiated with.
+We can access these like this:</p>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">some_cap</span><span class="o">.</span><span class="n">name</span>
+<span class="go">&#39;some_capability&#39;</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">some_cap</span><span class="o">.</span><span class="n">public_url</span>
+<span class="go">&#39;http://localhost:12345/cap/some_capability&#39;</span>
+</pre></div>
+</div>
+</blockquote>
+<p>As we can see, it&#8217;s not a secret URL in this mockup case but in production it will be.</p>
+<p>We can of course also just instantiate some capability directly:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">cap</span> <span class="o">=</span> <span class="n">Capability</span><span class="p">(</span><span class="s">&quot;cap&quot;</span><span class="p">,</span> <span class="s">&quot;http://localhost:12345/cap/some_capability&quot;</span><span class="p">,</span> <span class="n">client</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>and retrieve it via GET:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">cap</span><span class="o">.</span><span class="n">GET</span><span class="p">()</span>
+<span class="go">{&#39;some&#39;: 12345, &#39;something&#39;: &#39;else&#39;}</span>
+</pre></div>
+</div>
+<p>or post something to it (the demo will simply update the base dict):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">cap</span><span class="o">.</span><span class="n">POST</span><span class="p">({</span><span class="s">&#39;Tao&#39;</span><span class="p">:</span><span class="s">&#39;Takashi&#39;</span><span class="p">})</span>
+<span class="go">{&#39;Tao&#39;: &#39;Takashi&#39;, &#39;some&#39;: 12345, &#39;something&#39;: &#39;else&#39;}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="testing-errors">
+<h2>Testing errors<a class="headerlink" href="#testing-errors" title="Permalink to this headline">¶</a></h2>
+<p>Now we can test what happens to our code when the server returns a wrong content type.
+In this case it should not find a deserializer and say so:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">seed</span> <span class="o">=</span> <span class="n">SeedCapability</span><span class="p">(</span><span class="s">&#39;seed&#39;</span><span class="p">,</span> <span class="s">&#39;http://127.0.0.1:12345/seed_cap_wrong_content_type&#39;</span><span class="p">,</span> <span class="n">client</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cap</span> <span class="o">=</span> <span class="n">seed</span><span class="o">.</span><span class="n">get</span><span class="p">([</span><span class="s">&#39;some_capability&#39;</span><span class="p">])</span>
+<span class="gp">...</span>
+<span class="go">DeserializerNotFound: deserialization for &#39;text/foobar&#39; not supported</span>
+</pre></div>
+</div>
+<p>Try the same for GET:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">cap</span> <span class="o">=</span> <span class="n">Capability</span><span class="p">(</span><span class="s">&#39;test&#39;</span><span class="p">,</span><span class="s">&#39;http://127.0.0.1:12345/cap_wrong_content_type&#39;</span><span class="p">,</span> <span class="n">client</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cap</span><span class="o">.</span><span class="n">GET</span><span class="p">()</span>
+<span class="gp">...</span>
+<span class="go">DeserializerNotFound: deserialization for &#39;text/foobar&#39; not supported</span>
+</pre></div>
+</div>
+<p>Now we test if network errors are handled correctly:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">cap</span> <span class="o">=</span> <span class="n">Capability</span><span class="p">(</span><span class="s">&#39;test&#39;</span><span class="p">,</span><span class="s">&#39;http://127.0.0.1:12345/cap/error&#39;</span><span class="p">,</span> <span class="n">client</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cap</span><span class="o">.</span><span class="n">POST</span><span class="p">({</span><span class="s">&#39;test&#39;</span><span class="p">:</span><span class="s">&#39;testing&#39;</span><span class="p">})</span>
+<span class="gp">...</span>
+<span class="go">ResourceError: Error using &#39;POST&#39; on resource &#39;http://127.0.0.1:12345/cap/error&#39;: Internal Server Error (500)</span>
+</pre></div>
+</div>
+<p>And some 404:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">cap</span> <span class="o">=</span> <span class="n">Capability</span><span class="p">(</span><span class="s">&#39;test&#39;</span><span class="p">,</span><span class="s">&#39;http://127.0.0.1:12345/cap/unkown&#39;</span><span class="p">,</span> <span class="n">client</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cap</span><span class="o">.</span><span class="n">POST</span><span class="p">({</span><span class="s">&#39;test&#39;</span><span class="p">:</span><span class="s">&#39;testing&#39;</span><span class="p">})</span>
+<span class="gp">...</span>
+<span class="go">ResourceNotFound: http://127.0.0.1:12345/cap/unkown</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="config.html" title="config"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="basics.html" title="basics"
+             >previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../unittest.html" >Unit Tests</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Pyogp team.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.1.
+    </div>
+  </body>
+</html>

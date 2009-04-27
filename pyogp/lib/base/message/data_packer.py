@@ -1,25 +1,10 @@
-"""
-@file data_packer.py
-@date 2008-09-16
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2008, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-or in 
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
-
+# standrad python libraries
 import struct
 
+# pyogp
+from pyogp.lib.base.datatypes import UUID
+
+# pyogp messaging
 from types import MsgType, EndianType
 
 class DataPacker(object):
@@ -81,8 +66,29 @@ class DataPacker(object):
         return self.__pack_vector3(endian, quat)
 
     def __pack_uuid(self, endian, uuid):
-        return uuid.bytes
+
+        if isinstance(uuid, UUID):
+            return uuid.get_bytes()
+        else:
+            return uuid.bytes
 
     def __pack_string(self, endian, pack_string):
-        return pack_string + "\x00"
+        return pack_string #+ "\x00"
+
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
+
+$LicenseInfo:firstyear=2008&license=apachev2$
+
+Copyright 2009, Linden Research, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
+
+$/LicenseInfo$
+"""
 

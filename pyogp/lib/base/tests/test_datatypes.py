@@ -1,23 +1,3 @@
-"""
-@file test_datatypes.py
-@date 2009-03-18
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2008, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-or in 
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
-
 # standard python modules
 import unittest
 from struct import pack
@@ -108,8 +88,8 @@ class TestDatatypes(unittest.TestCase):
         tmp_uuid = uuid.UUID('2b7f7a6e-32c5-dbfd-e2c7-926d1a9f0aca')
         tmp_uuid2 = uuid.UUID('1dd5efe2-faaf-1864-5ac9-bc61c5d8d7ea')
 
-        test_uuid = UUID(tmp_uuid.bytes, 0)
-        test_uuid2 = UUID(tmp_uuid2.bytes, 0)
+        test_uuid = UUID(bytes = tmp_uuid.bytes, offset = 0)
+        test_uuid2 = UUID(bytes = tmp_uuid2.bytes, offset = 0)
 
         self.assertEquals(test_uuid.data(), uuid.UUID('2b7f7a6e-32c5-dbfd-e2c7-926d1a9f0aca'))
         self.assertEquals(test_uuid2.data(), uuid.UUID('1dd5efe2-faaf-1864-5ac9-bc61c5d8d7ea'))
@@ -139,3 +119,21 @@ def test_suite():
     suite = TestSuite()
     suite.addTest(makeSuite(TestDatatypes))
     return suite
+
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
+
+$LicenseInfo:firstyear=2008&license=apachev2$
+
+Copyright 2009, Linden Research, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
+
+$/LicenseInfo$
+"""
+

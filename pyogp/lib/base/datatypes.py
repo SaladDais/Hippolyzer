@@ -1,23 +1,3 @@
-"""
-@file datatypes.py
-@date 2009-03-18
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2009, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-or in 
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
-
 # standard python libs
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import uuid
@@ -146,7 +126,7 @@ class UUID(object):
     already the same 'datatype'
     """
 
-    def __init__(self, bytes = None, offset = 0, string = '00000000-0000-0000-0000-000000000000'):
+    def __init__(self, string = '00000000-0000-0000-0000-000000000000', bytes = None, offset = 0):
 
         if bytes != None:
 
@@ -174,7 +154,7 @@ class UUID(object):
     def get_bytes(self):
         """ get bytes """
 
-        return self.uuid.bytes
+        return str(self.uuid.bytes)
 
     def data(self):
         """ represent a uuid as, well, a uuid """
@@ -190,4 +170,21 @@ class UUID(object):
         """ represent a uuid as, well, a uuid """
 
         return self.uuid
+
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
+
+$LicenseInfo:firstyear=2008&license=apachev2$
+
+Copyright 2009, Linden Research, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
+
+$/LicenseInfo$
+"""
 

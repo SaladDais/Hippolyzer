@@ -1,23 +1,3 @@
-"""
-@file login.py
-@date 2009-02-13
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2009, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-or in 
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
-
 # standard python libs
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import xmlrpclib
@@ -223,11 +203,13 @@ class Login(object):
 
         try:
             self.response = login_handler(self.login_params)
-        except ProtocolError, error:
+        except Exception, error:
             raise LoginError('Failed to login agent due to: %s' % (error))
 
         if self.response['login'] in ('true', 'false'):
+
             self._parse_response()
+
         else:
             # handle transformation
             self._handle_transform(self.response)
@@ -269,15 +251,26 @@ class Login(object):
 
             if self.settings.LOG_VERBOSE: log(DEBUG, 'Login response for \'%s %s\' is: %s' % (self.input_params['firstname'], self.input_params['lastname'], self.response))
 
-            if self.response == None:
-                log(WARNING, 'Failed to login \'%s %s\' due to %s' % (self.input_params['firstname'], self.input_params['lastname'], 'empty response from loginuri'))
-            elif self.response['login'] == 'true':
+            if self.response['login'] == 'true':
+
                 log(INFO, 'Logged in \'%s %s\'' % (self.input_params['firstname'], self.input_params['lastname']))
+
                 if self.response.has_key('message'): log(INFO, 'Login message: %s' % (self.response['message']))
+
+            elif self.response == None:
+
+                log(WARNING, 'Failed to login \'%s %s\' due to %s' % (self.input_params['firstname'], self.input_params['lastname'], 'empty response from loginuri'))
+
+                raise LoginError('Failed login due to empty response from loginuri')
+
             elif self.response['login'] == 'false':
+
                 log(WARNING, 'Failed login for \'%s %s\', Reason: %s' % (self.input_params['firstname'], self.input_params['lastname'], self.response['message']))
-                raise LoginError('Failed login')
+
+                raise LoginError('Failed login due to: %s' % (self.response['message']))
+
             else:
+
                 raise LoginError('Unknown error during login')
 
         elif self.type == 'ogp':
@@ -286,6 +279,7 @@ class Login(object):
 
             if self.response == None:
                 log(WARNING, 'Failed to login \'%s %s\' due to %s' % (self.input_params['firstname'], self.input_params['lastname'], 'empty response from loginuri'))
+                raise LoginError('Failed login due to empty response from loginuri')
             elif self.response._status == '200 OK':
 
                 self.response = llsd.parse(self.response.body)
@@ -294,7 +288,7 @@ class Login(object):
                     log(INFO, 'Logged in \'%s %s\'' % (self.input_params['firstname'], self.input_params['lastname']))
                 elif not self.response['authenticated']:
                     log(WARNING, 'Failed login for \'%s %s\', Reason: %s' % (self.input_params['firstname'], self.input_params['lastname'], self.response['message']))
-
+                    raise LoginError('Failed login due to: %s' % (self.response['message']))
             else:
 
                 raise LoginError('Unknown error during login')
@@ -416,3 +410,21 @@ class OGPLoginParams(object):
         llsd_params = llsd.format_xml(login_params)
 
         return llsd_params
+
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
+
+$LicenseInfo:firstyear=2008&license=apachev2$
+
+Copyright 2009, Linden Research, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
+
+$/LicenseInfo$
+"""
+

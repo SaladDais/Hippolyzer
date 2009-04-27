@@ -1,24 +1,3 @@
-#!/usr/bin/python
-"""
-@file sample_chat_and_instant_messaging.py
-@date 2009-03-05
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2008, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-or in 
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
-
 # standard
 import re
 import getpass, sys, logging
@@ -52,14 +31,9 @@ def login():
 
     if options.verbose:
         console = logging.StreamHandler()
-        console.setLevel(logging.DEBUG) # seems to be a no op, set it for the logger
         formatter = logging.Formatter('%(asctime)-30s%(name)-30s: %(levelname)-8s %(message)s')
         console.setFormatter(formatter)
         logging.getLogger('').addHandler(console)
-
-        # setting the level for the handler above seems to be a no-op
-        # it needs to be set for the logger, here the root logger
-        # otherwise it is NOTSET(=0) which means to log nothing.
         logging.getLogger('').setLevel(logging.DEBUG)
     else:
         print "Attention: This script will print nothing if you use -q. So it might be boring to use it like that ;-)"
@@ -89,6 +63,10 @@ def login():
         api.sleep(0)
 
     # do sample script specific stuff here
+    
+    # set up callbacks if they come in handy
+    im_handler = client.events_handler._register('InstantMessageReceived')
+    im_handler.subscribe(chat_handler)
 
     client.say("Hi, I'm a bot!")
 
@@ -114,5 +92,34 @@ def login():
 def main():
     return login()    
 
+def chat_handler(message_info):
+
+    print ''
+    print 'OMG, I got an instant message!!!!!!!'
+    print ''
+
+    for key in message_info.__dict__:
+        print key + ": " + str(message_info.__dict__[key])
+
+    print ''
+
 if __name__=="__main__":
     main()
+
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
+
+$LicenseInfo:firstyear=2008&license=apachev2$
+
+Copyright 2009, Linden Research, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
+
+$/LicenseInfo$
+"""
+

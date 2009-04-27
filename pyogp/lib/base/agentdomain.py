@@ -1,23 +1,3 @@
-"""
-@file agentdomain.py
-@date 2008-09-16
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2008, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-or in 
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
-
 # std lib
 import urllib2
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
@@ -172,29 +152,20 @@ class AgentDomain(object):
 
                 log(DEBUG, 'AgentDomain EventQueueGet result: %s' % (result))
 
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
 
-class EventQueue(AgentDomain):
-    """ an event queue get capability 
+$LicenseInfo:firstyear=2008&license=apachev2$
 
-    this is a temporary solution. ideally we'd have a generic event queue object
-    that would be integrated into the ad and region separately
-    """
+Copyright 2009, Linden Research, Inc.
 
-    def __init__(self, context):
-        """initialize this adapter"""
-        self.context = context 
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 
-        # let's retrieve the cap we need
-        self.seed_cap = self.context.seed_cap
-        self.cap = self.seed_cap.get(['event_queue'])['event_queue']
-
-        log(DEBUG, 'initializing event_queue for agent domain: %s' % (self.cap.public_url))
-
-
-    def __call__(self, data = {}):
-        """initiate the event queue get request"""
-        result = self.cap.POST(data)
-        return result
-
-
+$/LicenseInfo$
+"""
 

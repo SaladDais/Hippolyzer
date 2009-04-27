@@ -1,23 +1,3 @@
-"""
-@file groups.py
-@date 2009-03-12
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2009, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-or in 
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
-
 # standard python libs
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 from datatypes import *
@@ -39,6 +19,9 @@ from pyogp.lib.base.utilities.helpers import Helpers, Wait
 
 # pyogp messaging
 from pyogp.lib.base.message.packets import *
+
+# pyogp utilities
+from pyogp.lib.base.utilities.enums import ImprovedIMDialogue
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.groups')
@@ -170,14 +153,14 @@ class GroupManager(object):
             packet = CreateGroupRequestPacket()
 
             # populate the AgentData block
-            packet.AgentData['AgentID'] = UUID(string = str(AgentID))       # MVT_LLUUID
-            packet.AgentData['SessionID'] = UUID(string = str(SessionID)) # MVT_LLUUID
+            packet.AgentData['AgentID'] = AgentID       # MVT_LLUUID
+            packet.AgentData['SessionID'] = SessionID # MVT_LLUUID
 
             # populate the GroupData block
             packet.GroupData['Name'] = Name    # MVT_VARIABLE
             packet.GroupData['Charter'] = Charter    # MVT_VARIABLE
             packet.GroupData['ShowInList'] = ShowInList    # MVT_BOOL
-            packet.GroupData['InsigniaID'] = UUID(str(string = InsigniaID))    # MVT_LLUUID
+            packet.GroupData['InsigniaID'] = InsigniaID    # MVT_LLUUID
             packet.GroupData['MembershipFee'] = MembershipFee    # MVT_S32
             packet.GroupData['OpenEnrollment'] = OpenEnrollment    # MVT_BOOL
             packet.GroupData['AllowPublish'] = AllowPublish    # MVT_BOOL
@@ -188,7 +171,7 @@ class GroupManager(object):
             if self.settings.HANDLE_PACKETS:
                 # enable the callback to watch for the CreateGroupReply packet
                 self.onCreateGroupReply_received = self.agent.region.packet_handler._register('CreateGroupReply')
-                self.onCreateGroupReply_received.subscribe(onCreateGroupReply, self)
+                self.onCreateGroupReply_received.subscribe(self.onCreateGroupReply)
         else:
 
             raise DataParsingError('Failed to create a group, please specify a name')
@@ -206,30 +189,28 @@ class GroupManager(object):
     def join_group(self, group_id):
         """ sends a JoinGroupRequest packet for the specified uuid """
 
-        group_id = UUID(string = str(group_id))
+        group_id = group_id
 
         packet = JoinGroupRequestPacket()
 
-        packet.AgentData['AgentID'] = UUID(string = str(self.agent.agent_id))       # MVT_LLUUID
-        packet.AgentData['SessionID'] = UUID(string = str(self.agent.session_id)) # MVT_LLUUID
+        packet.AgentData['AgentID'] = self.agent.agent_id      # MVT_LLUUID
+        packet.AgentData['SessionID'] = self.agent.session_id # MVT_LLUUID
 
         packet.GroupData['GroupID'] = group_id
 
         # set up the callback
         self.onJoinGroupReply_received = self.agent.packet_handler._register('JoinGroupReply')
-        self.onJoinGroupReply_received.subscribe(onJoinGroupReply, self)
+        self.onJoinGroupReply_received.subscribe(self.onJoinGroupReply)
 
         self.agent.region.enqueue_message(packet(), True)
 
     def activate_group(self, group_id):
         """ set a particular group as active """
 
-        group_id = UUID(string = str(group_id))
-
         packet = ActivateGroupPacket()
 
-        packet.AgentData['AgentID'] = UUID(string = str(self.agent.agent_id))       # MVT_LLUUID
-        packet.AgentData['SessionID'] = UUID(string = str(self.agent.session_id)) # MVT_LLUUID
+        packet.AgentData['AgentID'] = self.agent.agent_id      # MVT_LLUUID
+        packet.AgentData['SessionID'] = self.agent.session_id # MVT_LLUUID
         packet.AgentData['GroupID'] = group_id
 
         self.agent.region.enqueue_message(packet())
@@ -242,7 +223,7 @@ class GroupManager(object):
         """ when we get a CreateGroupReply packet, log Success, and if True, request the group details. remove the callback in any case """
 
         # remove the monitor
-        self.onCreateGroupReply_received.unsubscribe(onCreateGroupReply, group_manager)
+        self.onCreateGroupReply_received.unsubscribe(self.onCreateGroupReply)
 
         AgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
         GroupID = packet.message_data.blocks['ReplyData'][0].get_variable('GroupID').data
@@ -258,7 +239,7 @@ class GroupManager(object):
     def onJoinGroupReply(self, packet):
         """ the simulator tells us if joining a group was a success. """
 
-        self.onJoinGroupReply_received.unsubscribe(onJoinGroupReply, group_manager)
+        self.onJoinGroupReply_received.unsubscribe(self.onJoinGroupReply)
 
         AgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
         GroupID = packet.message_data.blocks['GroupData'][0].get_variable('GroupID').data
@@ -329,11 +310,11 @@ class Group(object):
 
         self.AcceptNotices = AcceptNotices
         self.GroupPowers = GroupPowers
-        self.GroupID = UUID(string = str(GroupID))
+        self.GroupID = UUID(str(GroupID))
         self.GroupName = GroupName
         self.ListInProfile = ListInProfile
         self.Contribution = Contribution
-        self.GroupInsigniaID = UUID(string = str(GroupInsigniaID))
+        self.GroupInsigniaID = UUID(str(GroupInsigniaID))
 
         self.agent = agent
 
@@ -346,8 +327,8 @@ class Group(object):
 
         packet = ActivateGroupPacket()
 
-        packet.AgentData['AgentID'] = UUID(string = str(self.agent.agent_id))       # MVT_LLUUID
-        packet.AgentData['SessionID'] = UUID(string = str(self.agent.session_id)) # MVT_LLUUID
+        packet.AgentData['AgentID'] = self.agent.agent_id      # MVT_LLUUID
+        packet.AgentData['SessionID'] = self.agent.session_id # MVT_LLUUID
         packet.AgentData['SessionID'] = self.GroupID
 
         self.agent.region.enqueue_message(packet())
@@ -372,7 +353,7 @@ class Group(object):
         _RegionID = UUID()
         _Position = Vector3()
         _Offline = 0
-        _Dialog = 15                 # Dialog type 1 = instant message
+        _Dialog = ImprovedIMDialogue.SessionGroupStart
         _ID = self.GroupID
         _Timestamp = 0
         _FromAgentName = self.agent.Name()
@@ -406,7 +387,7 @@ class Group(object):
             _RegionID = UUID()
             _Position = Vector3()       # don't send position, send uuid zero
             _Offline = 0
-            _Dialog = 17                 # Dialog type 1 = instant message
+            _Dialog = ImprovedIMDialogue.SessionSend
             _ID = self.GroupID
             _Timestamp = 0
             _FromAgentName = self.agent.Name() + "\x00" #struct.pack(">" + str(len(self.agent.Name)) + "c", *(self.agent.Name()))
@@ -555,7 +536,7 @@ class ChatterBoxSessionAgentListUpdates_Message(object):
 
         self.agent_updates = message_data['agent_updates']
         self.session_id = UUID(string = str(message_data['session_id']))
-        
+
         self.name = 'ChatterBoxSessionAgentListUpdates'
 
         #{'body': {'agent_updates': {'a517168d-1af5-4854-ba6d-672c8a59e439': {'info': {'can_voice_chat': True, 'is_moderator': False}}}, 'session_id': '4dd70b7f-8b3a-eef9-fc2f-909151d521f6', 'updates': {}}, 'message': 'ChatterBoxSessionAgentListUpdates'}]
@@ -572,833 +553,23 @@ class ChatterBoxSessionStartReply_Message(object):
         self.session_info = message_data['session_info']
 
         self.name = "ChatterBoxSessionStartReply"
+
         #{'body': {'temp_session_id': 4dd70b7f-8b3a-eef9-fc2f-909151d521f6, 'success': True, 'session_id': 4dd70b7f-8b3a-eef9-fc2f-909151d521f6, 'session_info': {'voice_enabled': True, 'session_name': "Enus' Construction Crew", 'type': 0, 'moderated_mode': {'voice': False}}}, 'message': 'ChatterBoxSessionStartReply'}],
 
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
 
-'''
-Groups related messages:
+$LicenseInfo:firstyear=2008&license=apachev2$
 
-//-----------------------------------------------------------------------------
-// Group messages
-//-----------------------------------------------------------------------------
+Copyright 2009, Linden Research, Inc.
 
-                        // CreateGroupRequest
-                        // viewer -> simulator
-                        // simulator -> dataserver
-                        // reliable
-                        {
-                        	CreateGroupRequest Low 339 NotTrusted Zerocoded
-                        	{
-                        		AgentData		Single
-                        		{	AgentID			LLUUID	}
-                        		{	SessionID		LLUUID	}
-                        	}
-                        	{
-                        		GroupData		Single
-                        		{	Name			Variable	1	}	// string
-                        		{	Charter			Variable	2	}	// string
-                        		{	ShowInList		BOOL	}
-                        		{	InsigniaID		LLUUID	}
-                        		{	MembershipFee	S32				}	// S32		
-                        		{	OpenEnrollment	BOOL			}   // BOOL (U8)
-                        		{	AllowPublish	BOOL		}	// whether profile is externally visible or not
-                        		{	MaturePublish	BOOL		}	// profile is "mature"
-                        	}
-                        }
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 
-                        // CreateGroupReply
-                        // dataserver -> simulator
-                        // simulator -> viewer
-                        // reliable
-                        {
-                        	CreateGroupReply Low 340 Trusted Unencoded
-                        	{
-                        		AgentData		Single
-                        		{	AgentID			LLUUID	}
-                        	}
-                        	{
-                        		ReplyData		Single
-                        		{	GroupID			LLUUID	}
-                        		{	Success			BOOL	}
-                        		{	Message			Variable	1	}	// string
-                        	}
-                        }
+$/LicenseInfo$
+"""
 
-// UpdateGroupInfo
-// viewer -> simulator
-// simulator -> dataserver
-// reliable
-{
-	UpdateGroupInfo Low 341 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID			LLUUID	}
-		{	SessionID		LLUUID	}
-	}
-	{
-		GroupData		Single
-		{	GroupID			LLUUID	}
-		{	Charter			Variable	2	}	// string
-		{	ShowInList		BOOL			}
-		{	InsigniaID		LLUUID	}
-		{	MembershipFee	S32				}
-		{	OpenEnrollment	BOOL			}
-		{	AllowPublish	BOOL	}
-		{	MaturePublish	BOOL	}
-	}
-}
-
-// GroupRoleChanges
-// viewer -> simulator -> dataserver
-// reliable
-{
-	GroupRoleChanges	Low	342 NotTrusted	Unencoded
-	{
-		AgentData	Single
-		{	AgentID	LLUUID	}
-		{	SessionID	LLUUID	}
-		{	GroupID		LLUUID	}
-	}
-	{
-		RoleChange	Variable
-		{	RoleID		LLUUID	}
-		{	MemberID	LLUUID	}
-		{	Change		U32		}
-	}
-}
-
-// JoinGroupRequest
-// viewer -> simulator -> dataserver
-// reliable
-{
-	JoinGroupRequest Low 343 NotTrusted Zerocoded
-	{
-		AgentData	Single
-		{	AgentID		LLUUID	}
-		{	SessionID		LLUUID	}
-	}
-	{
-		GroupData	Single
-		{	GroupID		LLUUID	}
-	}
-}
-
-// JoinGroupReply
-// dataserver -> simulator -> viewer
-{
-	JoinGroupReply Low 344 Trusted Unencoded
-	{
-		AgentData	Single
-		{	AgentID		LLUUID	}
-	}
-	{
-		GroupData	Single
-		{	GroupID		LLUUID	}
-		{	Success		BOOL	}
-	}
-}
-
-
-// EjectGroupMemberRequest
-// viewer -> simulator -> dataserver
-// reliable
-{
-	EjectGroupMemberRequest Low 345 NotTrusted Unencoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		GroupData		Single
-		{	GroupID		LLUUID	}
-	}
-	{
-		EjectData		Variable
-		{	EjecteeID	LLUUID	}
-	}
-}
-
-// EjectGroupMemberReply
-// dataserver -> simulator -> viewer
-// reliable
-{
-	EjectGroupMemberReply Low 346 Trusted Unencoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-	}
-	{
-		GroupData		Single
-		{	GroupID		LLUUID	}
-	}
-	{
-		EjectData		Single
-		{	Success		BOOL	}
-	}
-}
-
-// LeaveGroupRequest
-// viewer -> simulator -> dataserver
-// reliable
-{
-	LeaveGroupRequest Low 347 NotTrusted Unencoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		GroupData		Single
-		{	GroupID		LLUUID	}
-	}
-}
-
-// LeaveGroupReply
-// dataserver -> simulator -> viewer
-{
-	LeaveGroupReply Low 348 Trusted Unencoded
-	{
-		AgentData	Single
-		{	AgentID		LLUUID	}
-	}
-	{
-		GroupData	Single
-		{	GroupID		LLUUID	}
-		{	Success		BOOL	}
-	}
-}
-
-// InviteGroupRequest
-// viewer -> simulator -> dataserver
-// reliable
-{
-	InviteGroupRequest Low 349 NotTrusted Unencoded
-	{
-		AgentData	Single
-		{	AgentID		LLUUID	}	// UUID of inviting agent
-		{	SessionID	LLUUID	}
-	}
-	{
-		GroupData	Single
-		{	GroupID		LLUUID	}
-	}
-	{
-		InviteData	Variable
-		{	InviteeID	LLUUID	}
-		{	RoleID		LLUUID	}
-	}
-}
-
-// InviteGroupResponse
-// simulator -> dataserver
-// reliable
-{
-	InviteGroupResponse	Low	350 Trusted	Unencoded
-	{
-		InviteData	Single
-		{	AgentID		LLUUID	}
-		{	InviteeID	LLUUID	}
-		{	GroupID			LLUUID	}
-		{	RoleID		LLUUID	}
-		{	MembershipFee S32	}
-	}
-}
-
-// GroupProfileRequest
-// viewer-> simulator -> dataserver
-// reliable
-{
-	GroupProfileRequest Low 351 NotTrusted Unencoded
-	{
-		AgentData	Single
-		{	AgentID			LLUUID			}
-		{	SessionID	LLUUID	}
-	}
-	{
-		GroupData	Single
-		{	GroupID			LLUUID			}
-	}
-}
-
-// GroupProfileReply
-// dataserver -> simulator -> viewer
-// reliable
-{
-	GroupProfileReply Low 352 Trusted Zerocoded
-	{
-		AgentData	Single
-		{	AgentID			LLUUID			}
-	}
-	{
-		GroupData		Single
-		{	GroupID			LLUUID			}
-		{	Name			Variable	1	}	// string
-		{	Charter			Variable	2	}	// string
-		{	ShowInList		BOOL	}
-		{	MemberTitle		Variable	1	}	// string
-		{	PowersMask		U64	}	// U32 mask
-		{	InsigniaID		LLUUID			}
-		{	FounderID		LLUUID			}
-		{	MembershipFee	S32				}
-		{	OpenEnrollment	BOOL			}   // BOOL (U8)
-		{	Money			S32	}
-		{	GroupMembershipCount	S32	}
-		{	GroupRolesCount			S32	}
-		{	AllowPublish	BOOL	}
-		{	MaturePublish	BOOL	}
-		{	OwnerRole		LLUUID	}
-	}
-}
-
-// CurrentInterval = 0  =>  this period (week, day, etc.)
-// CurrentInterval = 1  =>  last period
-// viewer -> simulator -> dataserver
-// reliable
-{
-	GroupAccountSummaryRequest Low 353 NotTrusted Zerocoded
-	{
-		AgentData	Single
-		{	AgentID			LLUUID			}
-		{	SessionID		LLUUID	}
-		{	GroupID			LLUUID	}
-	}
-	{
-		MoneyData			Single
-		{	RequestID		LLUUID	}
-		{	IntervalDays	S32	}
-		{	CurrentInterval	S32	}
-	}
-}
-
-
-// dataserver -> simulator -> viewer
-// Reliable
-{
-	GroupAccountSummaryReply Low 354 Trusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID			LLUUID	}
-		{	GroupID			LLUUID		}
-	}
-	{
-		MoneyData			Single
-		{	RequestID			LLUUID	}
-		{	IntervalDays		S32	}
-		{	CurrentInterval		S32	}
-		{	StartDate			Variable	1	}	// string
-		{	Balance				S32	}
-		{	TotalCredits		S32	}
-		{	TotalDebits			S32	}
-		{	ObjectTaxCurrent	S32	}
-		{	LightTaxCurrent		S32	}
-		{	LandTaxCurrent		S32	}
-		{	GroupTaxCurrent		S32	}
-		{	ParcelDirFeeCurrent	S32	}
-		{	ObjectTaxEstimate	S32	}
-		{	LightTaxEstimate	S32	}
-		{	LandTaxEstimate		S32	}
-		{	GroupTaxEstimate	S32	}
-		{	ParcelDirFeeEstimate	S32	}
-		{	NonExemptMembers	S32	}
-		{	LastTaxDate			Variable	1	}	// string
-		{	TaxDate				Variable	1	}	// string
-	}
-}
-
-
-// Reliable
-{
-	GroupAccountDetailsRequest Low 355 NotTrusted Zerocoded
-	{
-		AgentData	Single
-		{	AgentID			LLUUID	}
-		{	SessionID		LLUUID	}
-		{	GroupID			LLUUID	}
-	}
-	{
-		MoneyData			Single
-		{	RequestID		LLUUID	}
-		{	IntervalDays	S32	}
-		{	CurrentInterval	S32	}
-	}
-}
-
-// Reliable
-{
-	GroupAccountDetailsReply Low 356 Trusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID			LLUUID	}
-		{	GroupID			LLUUID		}
-	}
-	{
-		MoneyData			Single
-		{	RequestID		LLUUID	}
-		{	IntervalDays	S32	}
-		{	CurrentInterval	S32	}
-		{	StartDate		Variable	1	}	// string
-	}
-	{
-		HistoryData			Variable
-		{	Description		Variable	1	}	// string
-		{	Amount			S32	}
-	}
-}
-
-
-// Reliable
-{
-	GroupAccountTransactionsRequest Low 357 NotTrusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID			LLUUID	}
-		{	SessionID		LLUUID	}
-		{	GroupID			LLUUID		}
-	}
-	{
-		MoneyData			Single
-		{	RequestID		LLUUID	}
-		{	IntervalDays	S32	}
-		{	CurrentInterval	S32	}
-	}
-}
-
-// Reliable
-{
-	GroupAccountTransactionsReply Low 358 Trusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID			LLUUID	}
-		{	GroupID			LLUUID		}
-	}
-	{
-		MoneyData			Single
-		{	RequestID		LLUUID	}
-		{	IntervalDays	S32	}
-		{	CurrentInterval	S32	}
-		{	StartDate		Variable	1	}	// string
-	}
-	{
-		HistoryData			Variable
-		{	Time			Variable	1	}	// string
-		{	User			Variable	1	}	// string
-		{	Type			S32	}
-		{	Item			Variable	1	}	// string
-		{	Amount			S32	}
-	}
-}
-
-// GroupActiveProposalsRequest
-// viewer -> simulator -> dataserver
-//reliable
-{
-	GroupActiveProposalsRequest Low 359 NotTrusted Unencoded
-	{
-		AgentData	Single
-		{	AgentID			LLUUID			}
-		{	SessionID		LLUUID			}
-	}
-	{
-		GroupData	Single
-		{	GroupID			LLUUID			}
-	}
-	{
-		TransactionData Single
-		{	TransactionID	LLUUID	}
-	}
-}
-
-// GroupActiveProposalItemReply
-// dataserver -> simulator -> viewer
-// reliable
-{
-	GroupActiveProposalItemReply Low 360 Trusted Zerocoded
-	{
-		AgentData	Single
-		{	AgentID			LLUUID			}
-		{	GroupID			LLUUID			}
-	}
-	{
-		TransactionData Single
-		{	TransactionID	LLUUID	}
-		{	TotalNumItems	U32		}
-	}
-	{
-		ProposalData	Variable
-		{	VoteID			LLUUID			}
-		{	VoteInitiator	LLUUID			}
-		{	TerseDateID		Variable	1	} // string
-		{	StartDateTime	Variable	1	}	// string
-		{	EndDateTime		Variable	1	}	// string
-		{	AlreadyVoted	BOOL			}
-		{	VoteCast		Variable	1	}	// string
-		{	Majority	F32		}
-		{	Quorum		S32		}
-		{	ProposalText	Variable	1	}	// string
-	}
-}
-
-// GroupVoteHistoryRequest
-// viewer -> simulator -> dataserver
-//reliable
-{
-	GroupVoteHistoryRequest Low 361 NotTrusted Unencoded
-	{
-		AgentData	Single
-		{	AgentID			LLUUID			}
-		{	SessionID		LLUUID			}
-	}
-	{
-		GroupData	Single
-		{	GroupID			LLUUID			}
-	}
-	{
-		TransactionData Single
-		{	TransactionID	LLUUID	}
-	}
-}
-
-// GroupVoteHistoryItemReply
-// dataserver -> simulator -> viewer
-// reliable
-{
-	GroupVoteHistoryItemReply Low 362 Trusted Zerocoded
-	{
-		AgentData	Single
-		{	AgentID			LLUUID			}
-		{	GroupID			LLUUID			}
-	}
-	{
-		TransactionData Single
-		{	TransactionID	LLUUID	}
-		{	TotalNumItems	U32		}
-	}
-	{
-		HistoryItemData	Single
-		{	VoteID			LLUUID			}
-		{	TerseDateID		Variable	1	} // string
-		{	StartDateTime	Variable	1	}	// string
-		{	EndDateTime		Variable	1	}	// string
-		{	VoteInitiator	LLUUID			}
-		{	VoteType		Variable	1	}	// string
-		{	VoteResult		Variable	1	}	// string
-		{	Majority	F32		}
-		{	Quorum		S32		}
-		{	ProposalText	Variable	2	}	// string
-	}
-	{
-		VoteItem	Variable
-		{	CandidateID		LLUUID		}
-		{	VoteCast		Variable	1	}	// string
-		{	NumVotes		S32		}
-	}
-}
-
-// StartGroupProposal
-// viewer -> simulator -> dataserver
-// reliable
-{
-	StartGroupProposal Low 363 NotTrusted Zerocoded UDPDeprecated
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ProposalData		Single
-		{	GroupID			LLUUID			}
-		{	Quorum			S32				}
-		{	Majority		F32				}	// F32
-		{	Duration		S32				}	// S32, seconds
-		{	ProposalText	Variable	1	}	// string
-	}
-}
-
-// GroupProposalBallot
-// viewer -> simulator -> dataserver
-// reliable
-{
-	GroupProposalBallot Low 364 NotTrusted Unencoded UDPDeprecated
-	{
-		AgentData		Single
-		{	AgentID		LLUUID			}
-		{	SessionID	LLUUID	}
-	}
-	{
-		ProposalData		Single
-		{	ProposalID		LLUUID			}
-		{	GroupID			LLUUID			}
-		{	VoteCast		Variable	1	}	// string
-	}
-}
-
-// TallyVotes userserver -> dataserver
-// reliable
-{
-	TallyVotes	Low	365 Trusted Unencoded
-}
-
-
-
-// GroupMembersRequest
-// get the group members
-// simulator -> dataserver
-// reliable
-{
-	GroupMembersRequest Low 366 NotTrusted Unencoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		GroupData		Single
-		{	GroupID		LLUUID	}
-		{   RequestID	LLUUID	}
-	}
-}
-
-// GroupMembersReply
-// list of uuids for the group members
-// dataserver -> simulator
-// reliable
-{
-	GroupMembersReply Low 367 Trusted Zerocoded
-	{
-		AgentData		Single
-		{	AgentID		LLUUID	}
-	}
-	{
-		GroupData		Single
-		{	GroupID		LLUUID	}
-		{   RequestID	LLUUID	}
-		{	MemberCount	S32		}
-	}
-	{
-		MemberData		Variable
-		{	AgentID		LLUUID	}
-		{	Contribution	S32	}
-		{	OnlineStatus	Variable	1	}	// string
-		{	AgentPowers		U64	}
-		{	Title			Variable	1	}	// string
-		{	IsOwner			BOOL	}
-	}
-}
-
-// used to switch an agent's currently active group.
-// viewer -> simulator -> dataserver -> AgentDataUpdate...
-{
-	ActivateGroup	Low	368 NotTrusted Zerocoded
-	{
-		AgentData	Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-		{	GroupID		LLUUID	}
-	}
-}
-
-// viewer -> simulator -> dataserver
-{
-	SetGroupContribution Low 369 NotTrusted Unencoded
-	{
-		AgentData	Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		Data	Single
-		{	GroupID		LLUUID	}
-		{	Contribution	S32	}
-	}
-}
-
-// viewer -> simulator -> dataserver
-{
-	SetGroupAcceptNotices Low 370 NotTrusted Unencoded
-	{
-		AgentData	Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		Data	Single
-		{	GroupID		LLUUID	}
-		{	AcceptNotices	BOOL	}
-	}
-	{
-		NewData				Single
-		{	ListInProfile	BOOL	}
-	}
-}
-
-// GroupRoleDataRequest
-// viewer -> simulator -> dataserver
-{
-	GroupRoleDataRequest Low	371 NotTrusted	Unencoded
-	{
-		AgentData	Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-	}
-	{
-		GroupData	Single
-		{	GroupID		LLUUID	}
-		{	RequestID	LLUUID	}
-	}
-}
-
-
-// GroupRoleDataReply
-// All role data for this group
-// dataserver -> simulator -> agent
-{
-	GroupRoleDataReply Low	372 Trusted	Unencoded
-	{
-		AgentData	Single
-		{	AgentID			LLUUID			}
-	}
-	{
-		GroupData		Single
-		{	GroupID			LLUUID	}
-		{	RequestID	LLUUID	}
-		{	RoleCount	S32		}
-	}
-	{
-		RoleData	Variable
-		{	RoleID		LLUUID	}
-		{	Name		Variable	1	}
-		{	Title		Variable	1	}
-		{	Description	Variable	1	}
-		{	Powers		U64		}
-		{	Members		U32		}
-	}
-}
-
-// GroupRoleMembersRequest
-// viewer -> simulator -> dataserver
-{
-	GroupRoleMembersRequest Low	373 NotTrusted	Unencoded
-	{
-		AgentData	Single
-		{	AgentID			LLUUID			}
-		{	SessionID	LLUUID	}
-	}
-	{
-		GroupData		Single
-		{	GroupID		LLUUID	}
-		{	RequestID	LLUUID	}
-	}
-}
-
-// GroupRoleMembersReply
-// All role::member pairs for this group.
-// dataserver -> simulator -> agent
-{
-	GroupRoleMembersReply Low	374 Trusted	Unencoded
-	{
-		AgentData	Single
-		{	AgentID		LLUUID	}
-		{	GroupID		LLUUID	}
-		{	RequestID	LLUUID	}
-		{	TotalPairs	U32		}
-	}
-	{
-		MemberData		Variable
-		{	RoleID		LLUUID	}
-		{	MemberID	LLUUID	}
-	}
-}
-
-// GroupTitlesRequest
-// viewer -> simulator -> dataserver
-{
-	GroupTitlesRequest Low	375 NotTrusted	Unencoded
-	{
-		AgentData	Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-		{	GroupID		LLUUID	}
-		{	RequestID	LLUUID	}
-	}
-}
-
-
-// GroupTitlesReply
-// dataserver -> simulator -> viewer
-{
-	GroupTitlesReply Low 376 Trusted	Zerocoded
-	{
-		AgentData	Single
-		{	AgentID		LLUUID	}
-		{	GroupID		LLUUID	}
-		{	RequestID	LLUUID	}
-	}
-	{
-		GroupData	Variable
-		{	Title		Variable	1	} // string
-		{	RoleID		LLUUID			}
-		{	Selected	BOOL			}
-	}
-}
-
-// GroupTitleUpdate
-// viewer -> simulator -> dataserver
-{
-	GroupTitleUpdate	Low	377 NotTrusted	Unencoded
-	{
-		AgentData	Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-		{	GroupID		LLUUID	}
-		{	TitleRoleID	LLUUID	}
-	}
-}
-
-// GroupRoleUpdate
-// viewer -> simulator -> dataserver
-{
-	GroupRoleUpdate		Low	378 NotTrusted	Unencoded
-	{
-		AgentData	Single
-		{	AgentID		LLUUID	}
-		{	SessionID	LLUUID	}
-		{	GroupID		LLUUID	}
-	}
-	{
-		RoleData	Variable
-		{	RoleID		LLUUID	}
-		{	Name		Variable	1	}
-		{	Description	Variable	1	}
-		{	Title		Variable	1	}
-		{	Powers		U64		}
-		{	UpdateType	U8		}
-	}
-}
-			
-
-
-// Request the members of the live help group needed for requesting agent.
-// userserver -> dataserver
-{
-	LiveHelpGroupRequest Low 379 Trusted Unencoded
-	{
-		RequestData 	Single
-		{	RequestID	LLUUID	}
-		{	AgentID		LLUUID	}
-	}
-}
-
-// Send down the group
-// dataserver -> userserver
-{
-	LiveHelpGroupReply Low 380 Trusted Unencoded
-	{
-		ReplyData	 	Single
-		{	RequestID	LLUUID	}
-		{	GroupID		LLUUID	}
-		{	Selection	Variable 	1	} // selection criteria all or active
-	}
-}
-
-'''

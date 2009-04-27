@@ -1,23 +1,3 @@
-"""
-@file regiondomain.py
-@date 2008-09-16
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2008, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-or in 
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
-
 # std lib
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import re
@@ -63,12 +43,12 @@ class Region(object):
     Example, of initializing a region class:
 
     Initialize the login class
+    
     >>> region = Region(256, 256, 'https://somesim.cap/uuid', 'EnableSimulator,TeleportFinish,CrossedRegion', '127.0.0.1', 13000, 650000000, {'agent_id':'00000000-0000-0000-0000-000000000000', 'session_id':'00000000-0000-0000-0000-000000000000', 'secure_session_id:'00000000-0000-0000-0000-000000000000'})
 
     Start the udp and event queue connections to the region
+    
     >>> region.connect()
-
-    # ToDo: finish this
 
     Sample implementations: examples/sample_region_connect.py
     Tests: tests/region.txt, tests/test_region.py        
@@ -408,7 +388,7 @@ class Region(object):
         else:
             for agent_id in agent_ids:
                 UUIDNameBlock = {}
-                UUIDNameBlock['ID'] = uuid.UUID(uuid)
+                UUIDNameBlock['ID'] = UUID(str(agent_id))
                 packet.UUIDNameBlockBlocks.append(UUIDNameBlock)
 
         self.send_message(packet())
@@ -587,3 +567,21 @@ class RegionSeedCapability(Capability):
 
     def __repr__(self):
         return "<RegionSeedCapability for %s>" % (self.public_url)
+
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
+
+$LicenseInfo:firstyear=2008&license=apachev2$
+
+Copyright 2009, Linden Research, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
+
+$/LicenseInfo$
+"""
+

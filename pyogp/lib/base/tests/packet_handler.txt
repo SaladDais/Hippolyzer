@@ -1,8 +1,8 @@
 PacketHandler
-=============
+~~~~~~~~~~~~~
 
 The basic packet handling event/callbackcase
-============================================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 First, initialize the packet handler
     >>> from pyogp.lib.base.message.packethandler import PacketHandler

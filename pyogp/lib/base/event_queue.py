@@ -1,23 +1,3 @@
-"""
-@file event_queue.py
-@date 2009-02-09
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2008, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-or in 
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
-
 # standard python libs
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import sys, traceback
@@ -444,18 +424,20 @@ class EventQueueReceivedNotifier(object):
 
     __call__ = received
 
-class EstablishAgentCommunication_Message(object):
-    """ incomplete implementation"""
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
 
-    def __init__(self, message_data):
+$LicenseInfo:firstyear=2008&license=apachev2$
 
-        self.agent_id = message_data['agent-id']
-        self.sim_ip_and_port = message_data['sim-ip-and-port']
-        self.seed_capability_url = message_data['seed-capability']
+Copyright 2009, Linden Research, Inc.
 
-        self.sim_ip = self.sim_ip_and_port.split(":")[0]
-        self.sim_port = self.sim_ip_and_port.split(":")[1]
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
 
-        self.name = 'EstablishAgentCommunication'
+$/LicenseInfo$
+"""
 
-        # {'body': {'agent-id': a517168d-1af5-4854-ba6d-672c8a59e439, 'sim-ip-and-port': '8.4.131.212:12035', 'seed-capability': 'https://sim19.aditi.lindenlab.com:12043/cap/b2b94dd2-39df-df40-9679-a7e0617e033d'}, 'message': 'EstablishAgentCommunication'}

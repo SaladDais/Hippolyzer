@@ -1,23 +1,3 @@
-"""
-@file agent_manager.py
-@date 2009-03-26
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2008, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-or in
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
-
 # standard python libraries
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import signal
@@ -134,7 +114,10 @@ class AgentManager(object):
 
         if self.settings.LOG_COROUTINE_SPAWNS: log(INFO, "Spawning a coroutine for agent login for %s." % (self.agents[key].Name()))
 
-        api.spawn(self.agents[key].login, loginuri = loginuri, start_location = start_location)
+        try:
+            api.spawn(self.agents[key].login, loginuri = loginuri, start_location = start_location)
+        except LoginError, error:
+            log(ERROR, "Skipping agent with failed login: %s." % (self.agents[key].Name()))
 
     def has_agents_running(self):
         """ returns true if there is a client who's running value = True """
@@ -167,3 +150,21 @@ class AgentManager(object):
         if self.has_agents_running():
             log(WARNING, "These agents have not yet shut down. Killing the process hard.\n\t\t%s" % (self.get_active_agents()))
             sys.exit(1)
+
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
+
+$LicenseInfo:firstyear=2008&license=apachev2$
+
+Copyright 2009, Linden Research, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
+
+$/LicenseInfo$
+"""
+

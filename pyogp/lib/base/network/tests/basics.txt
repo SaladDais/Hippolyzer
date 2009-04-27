@@ -1,5 +1,5 @@
 Networking Basics
-=================
+~~~~~~~~~~~~~~~~~
 
 The networking layer is basically a replaceable REST client. It is defined as a utility
 providing methods such as GET, POST etc.
@@ -18,18 +18,21 @@ Now we can use it. Let's post something to our test server:
 'Hello, World'
 
 Let's try a 404:
+
 >>> client.GET('http://localhost:12345/foobar')
 Traceback (most recent call last):
-  ...
+...
 HTTPError: 404 Not Found
 
 The error object also has some more information in it:
+
 >>> try:
 ...     client.GET('http://localhost:12345/foobar')
 ... except HTTPError, error:
 ...     pass
 
 Let's check what's available
+
 >>> error.code
 404
 >>> error.msg
@@ -39,7 +42,7 @@ Let's check what's available
 
 
 POSTing something
-=================
+~~~~~~~~~~~~~~~~~
 
 >>> response = client.POST('http://localhost:12345/network/post','test me')
 >>> response.body

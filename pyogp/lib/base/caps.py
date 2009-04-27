@@ -1,23 +1,3 @@
-"""
-@file caps.py
-@date 2008-09-16
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2008, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-or in 
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
-
 # std lib
 import urllib2
 from types import *
@@ -37,35 +17,11 @@ log = logger.log
 
 class Capability(object):
     """ models a capability 
-
     A capability is a web resource which enables functionality for a client
     The seed capability is a special type, through which other capabilities 
-        are procured
+    are procured
 
     A capability in pyogp provides a GET and a POST method
-
-    First let's establish a seed capability
-    >>> from pyogp.lib.base.caps import SeedCapability, Capability
-    >>> 
-    >>> seed = SeedCapability('seed', 'http://127.0.0.1:12345/seed_cap')
-
-    We can now ask this SeedCapability object for new capabilities:
-    >>> caps = seed.get(['some_capability', 'some_other'])
-
-    It's content are now
-    >>> caps['some_capability']
-    <Capability 'some_capability' for http://localhost:12345/cap/some_capability>
-    >>> caps['some_other']
-    <Capability 'some_other' for http://localhost:12345/cap/some_other>
-
-    Now, we can post some data to one of the capabilities
-    >>> data = caps.['some_cap'].POST({'a':'b'})
-
-    Now we can evaluate the data returned from the POST
-    >>> data['something']
-    'else'
-    >>> data['some']
-    12345
 
     Sample implementations: region.py
     Tests: tests/caps.txt, tests/test_caps.py
@@ -121,7 +77,6 @@ class Capability(object):
         if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, 'Get of cap %s response is: %s' % (self.public_url, data))        
 
         return data
-
 
     def POST(self,payload,custom_headers={}):
         """call this capability, return the parsed result"""
@@ -195,3 +150,21 @@ class SeedCapability(Capability):
 
     def __repr__(self):
         return "<SeedCapability for %s>" %self.public_url
+
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
+
+$LicenseInfo:firstyear=2008&license=apachev2$
+
+Copyright 2009, Linden Research, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
+
+$/LicenseInfo$
+"""
+

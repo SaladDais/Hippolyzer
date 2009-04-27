@@ -1,0 +1,155 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>agent &mdash; Pyogp v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Pyogp v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Unit Tests" href="../unittest.html" />
+    <link rel="next" title="base" href="base.html" />
+    <link rel="prev" title="Unit Tests" href="../unittest.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="base.html" title="base"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../unittest.html" title="Unit Tests"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../unittest.html" accesskey="U">Unit Tests</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">agent</a><ul>
+<li><a class="reference external" href="#id1">Agent</a></li>
+<li><a class="reference external" href="#the-agent-login-case">The &#8216;agent&#8217; login case</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="../unittest.html"
+                                  title="previous chapter">Unit Tests</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="base.html"
+                                  title="next chapter"><tt class="docutils literal"><span class="pre">base</span></tt></a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/unittest/agent.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pyogp.lib.base.tests.agent">
+<h1>agent<a class="headerlink" href="#module-pyogp.lib.base.tests.agent" title="Permalink to this headline">¶</a></h1>
+<p>This is a doctest, the content here is verbatim from the source file at pyogp.lib.base.tests.agent.txt.</p>
+<div class="section" id="id1">
+<h2>Agent<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="the-agent-login-case">
+<h2>The &#8216;agent&#8217; login case<a class="headerlink" href="#the-agent-login-case" title="Permalink to this headline">¶</a></h2>
+<p>First, initialize the agent</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.agent</span> <span class="kn">import</span> <span class="n">Agent</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">client</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>For testing, we need to set up the loginhandler and the loginuri</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">loginuri</span> <span class="o">=</span> <span class="s">&#39;http://localhost:12345/login.cgi&#39;</span>
+</pre></div>
+</div>
+<p>Setup test: import of the mock network client handler</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.tests.mock_xmlrpc</span> <span class="kn">import</span> <span class="n">MockXMLRPC</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.tests.base</span> <span class="kn">import</span> <span class="n">MockXMLRPCLogin</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">loginhandler</span> <span class="o">=</span> <span class="n">MockXMLRPC</span><span class="p">(</span><span class="n">MockXMLRPCLogin</span><span class="p">(),</span> <span class="n">loginuri</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now let&#8217;s log it in</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="s">&#39;http://localhost:12345/login.cgi&#39;</span><span class="p">,</span> <span class="s">&#39;firstname&#39;</span><span class="p">,</span> <span class="s">&#39;lastname&#39;</span><span class="p">,</span> <span class="s">&#39;password&#39;</span><span class="p">,</span> <span class="n">start_location</span> <span class="o">=</span> <span class="s">&#39;start_location&#39;</span><span class="p">,</span> <span class="n">handler</span> <span class="o">=</span> <span class="n">loginhandler</span><span class="p">,</span> <span class="n">connect_region</span> <span class="o">=</span> <span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Evaluate the login response</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">client</span><span class="o">.</span><span class="n">login_response</span>
+<span class="go">{&#39;region_y&#39;: &#39;256&#39;, &#39;region_x&#39;: &#39;256&#39;, &#39;first_name&#39;: &#39;&quot;first&quot;&#39;, &#39;secure_session_id&#39;: &#39;00000000-0000-0000-0000-000000000000&#39;, &#39;sim_ip&#39;: &#39;127.0.0.1&#39;, &#39;agent_access&#39;: &#39;M&#39;, &#39;circuit_code&#39;: &#39;600000000&#39;, &#39;look_at&#39;: &#39;[r0.9963859999999999939,r-0.084939700000000006863,r0]&#39;, &#39;session_id&#39;: &#39;00000000-0000-0000-0000-000000000000&#39;, &#39;udp_blacklist&#39;: &#39;EnableSimulator,TeleportFinish,CrossedRegion&#39;, &#39;seed_capability&#39;: &#39;https://somesim:12043/cap/00000000-0000-0000-0000-000000000000&#39;, &#39;agent_id&#39;: &#39;00000000-0000-0000-0000-000000000000&#39;, &#39;last_name&#39;: &#39;last&#39;, &#39;inventory_host&#39;: &#39;someinvhost&#39;, &#39;start_location&#39;: &#39;last&#39;, &#39;sim_port&#39;: &#39;13001&#39;, &#39;message&#39;: &#39;message&#39;, &#39;login&#39;: &#39;true&#39;, &#39;seconds_since_epoch&#39;: &#39;1234567890&#39;}</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="base.html" title="base"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../unittest.html" title="Unit Tests"
+             >previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../unittest.html" >Unit Tests</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Pyogp team.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.1.
+    </div>
+  </body>
+</html>

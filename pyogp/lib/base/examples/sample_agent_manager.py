@@ -1,24 +1,3 @@
-#!/usr/bin/python
-"""
-@file sample_multi_agent_login.py
-@date 2009-02-16
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2008, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-or in 
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
-
 # standard
 import re
 import sys
@@ -48,9 +27,12 @@ def login():
     parser.add_option("-q", "--quiet", dest="verbose", default=True, action="store_false",
                     help="enable verbose mode")
     parser.add_option("-f", "--file", dest="file", default='', help="csv formatted file containing first, last,pass for multi agent login")
+    parser.add_option("-c", "--count", dest="count", default=0, help="number of agents to login")
 
 
     (options, args) = parser.parse_args()
+
+    options.count = int(options.count)
 
     if options.file == '':
         print '-f is a required parameter for logging in multiple agents'
@@ -58,19 +40,37 @@ def login():
 
     try:
         f = open(options.file, 'r')
+        data = f.readlines()
+        f.close()
     except IOError, error:
         print 'File not found. Stopping. Error: %s' % (error)
         return
 
     clients = []
 
-    for line in f:
+    line_count = 0
+
+    for line in data:
+        line_count += 1
+
+    if options.count > 0:
+        if options.count > line_count:
+            print "The count parameter requests more agents (%s) than you have in your data file (%s). Logging in max available."  % (options.count, line_count)
+
+    counter = 0
+
+    for line in data:
+
+        counter += 1
 
         if len(line.strip().split(',')) != 3:
             print 'We expect a line with 3 comma separated parameters, we got %s' % (line.strip().split(','))
             print 'Stopping.'
 
         clients.append(line.strip().split(','))
+
+        if counter >= options.count:
+            break
 
     if options.verbose:
         console = logging.StreamHandler()
@@ -125,3 +125,21 @@ def main():
 
 if __name__=="__main__":
     main()
+
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
+
+$LicenseInfo:firstyear=2008&license=apachev2$
+
+Copyright 2009, Linden Research, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
+
+$/LicenseInfo$
+"""
+

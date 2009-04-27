@@ -1,24 +1,3 @@
-#!/usr/bin/python
-"""
-@file sample_object_tracking.py
-@date 2009-03-05
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2008, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-or in 
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
-
 # standard
 import re
 import getpass, sys, logging
@@ -79,7 +58,10 @@ def login():
     client = Agent(settings = settings)
 
     # Now let's log it in
-    api.spawn(client.login, options.loginuri, args[0], args[1], password, start_location = options.region, connect_region = True)
+    try:
+        api.spawn(client.login, options.loginuri, args[0], args[1], password, start_location = options.region, connect_region = True)
+    except LoginError, error:
+        sys.exit()
 
     # wait for the agent to connect to it's region
     while client.connected == False:
@@ -145,3 +127,21 @@ def main():
 
 if __name__=="__main__":
     main()
+
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
+
+$LicenseInfo:firstyear=2008&license=apachev2$
+
+Copyright 2009, Linden Research, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
+
+$/LicenseInfo$
+"""
+

@@ -1,5 +1,5 @@
 The Capabilities component
-==========================
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Capabilities component basically gives us two objects: a Capability 
 and a SeedCapability.
@@ -24,6 +24,7 @@ The result is a dictionary object:
     2
 
 whose contents are:
+
     >>> caps['some_capability']
     <Capability 'some_capability' for http://localhost:12345/cap/some_capability>
     >>> caps['some_other']
@@ -49,7 +50,7 @@ And now we can check the data:
 This data here is provided by the mockup server for testing.
 
 Internals
-=========
+~~~~~~~~~
 
 Each capability stores it's name and public URL which it is instantiated with. 
 We can access these like this:
@@ -79,7 +80,7 @@ or post something to it (the demo will simply update the base dict):
 
 
 Testing errors
-==============
+~~~~~~~~~~~~~~
 
 Now we can test what happens to our code when the server returns a wrong content type.
 In this case it should not find a deserializer and say so::
@@ -91,6 +92,7 @@ In this case it should not find a deserializer and say so::
     DeserializerNotFound: deserialization for 'text/foobar' not supported
 
 Try the same for GET:
+
     >>> cap = Capability('test','http://127.0.0.1:12345/cap_wrong_content_type', client)
     >>> cap.GET()
     Traceback (most recent call last):
