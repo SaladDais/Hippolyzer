@@ -20,4 +20,3 @@ import os
 msg_tmpl = open(os.path.join(os.path.dirname(__file__),'message_template.msg'))
 msg_details = open(os.path.join(os.path.dirname(__file__),'message.xml')).read()
 
-msg_details = resource_string(__name__, 'message.xml')
