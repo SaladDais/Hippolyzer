@@ -286,7 +286,7 @@ class Objects(object):
                 #if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Creating a new avatar and storing their attributes. LocalID = %s" % (object_properties['LocalID']))
 
                 _object = Object()
-                _object.update_properties(object_properties)
+                _object._update_properties(object_properties)
 
                 self.store_avatar(_object)
 
@@ -305,11 +305,11 @@ class Objects(object):
             if _object == None:
                 #if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Creating a new object and storing it's attributes. LocalID = %s" % (object_properties['LocalID']))
                 _object = Object()
-                _object.update_properties(prim_properties)
+                _object._update_properties(prim_properties)
                 self.store_object(_object)
             else:
                 #if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Updating an object's attributes. LocalID = %s" % (object_properties['LocalID']))
-                _object.update_properties(prim_properties)
+                _object._update_properties(prim_properties)
 
     def request_object_update(self, ID = None, ID_list = None):
         """ requests object updates from the simulator
@@ -1160,7 +1160,7 @@ class Object(object):
 
         agent.region.enqueue_message(packet())
 
-    def update_properties(self, properties):
+    def _update_properties(self, properties):
         """ takes a dictionary of attribute:value and makes it so """
 
         for attribute in properties:
