@@ -86,7 +86,7 @@ class DataUnpacker(object):
         return UUID(bytes=uuid_data, offset = 0)
 
     def __unpack_string(self, endian, pack_string, var_size):
-        return pack_string.rstrip() # strip trailing null 
+        return pack_string.rstrip('\x00') # strip null terminator, if present
 
     def __unpack_fixed(self, endian, data, var_size): #LDE 23oct2008 handler for MVT_FIXED
         return data

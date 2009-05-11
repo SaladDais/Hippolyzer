@@ -73,7 +73,11 @@ class DataPacker(object):
             return uuid.bytes
 
     def __pack_string(self, endian, pack_string):
-        return pack_string #+ "\x00"
+        """Return the string UTF-8 encoded and null terminated."""
+        if isinstance(pack_string,unicode):
+            return pack_string.encode('utf-8') + '\x00'
+        else:
+            return pack_string + '\x00'
 
 """
 Contributors can be viewed at:

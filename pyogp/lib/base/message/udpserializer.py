@@ -107,6 +107,8 @@ class UDPPacketSerializer(object):
                 var_size  = v.size
                 var_data  = variable.data
 
+                data = self.packer.pack_data(var_data, v.type)
+
                 if variable == None:
                     raise exc.MessageSerializationError(variable.name, "variable value is not set")
 
@@ -115,20 +117,19 @@ class UDPPacketSerializer(object):
                 if v.type == MsgType.MVT_VARIABLE:
                     #data_size = template_block.get_variable(variable.name).size
                     if var_size == 1:
-                        block_buffer += self.packer.pack_data(len(var_data), MsgType.MVT_U8)
+                        block_buffer += self.packer.pack_data(len(data), MsgType.MVT_U8)
                         #block_buffer += struct.pack('>B', var_size)
                     elif var_size == 2:
-                        block_buffer += self.packer.pack_data(len(var_data), MsgType.MVT_U16)
+                        block_buffer += self.packer.pack_data(len(data), MsgType.MVT_U16)
                         #block_buffer += struct.pack('>H', var_size)
                     elif var_size == 4:
-                        block_buffer += self.packer.pack_data(len(var_data), MsgType.MVT_U32)
+                        block_buffer += self.packer.pack_data(len(data), MsgType.MVT_U32)
                         #block_buffer += struct.pack('>I', var_size)
                     else:
                         raise exc.MessageSerializationError("variable size", "unrecognized variable size")
 
                     bytes += var_size
 
-                data = self.packer.pack_data(var_data, v.type)
                 block_buffer += data
                 bytes += len(data)
 
