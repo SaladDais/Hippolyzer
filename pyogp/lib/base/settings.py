@@ -85,6 +85,9 @@ class Settings(object):
         # allow connecting to multiple simulators
         self.MULTIPLE_SIM_CONNECTIONS = False
 
+        # enabled the tracking of region parcels
+        self.ENABLE_PARCEL_TRACKING = True
+
         #~~~~~~~~~~~~~~~~~~~~~~
         # Agent Domain specific
         #~~~~~~~~~~~~~~~~~~~~~~

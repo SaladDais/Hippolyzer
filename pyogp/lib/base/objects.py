@@ -35,7 +35,7 @@ class Objects(object):
     Tests: tests/test_objects.py
     """
 
-    def __init__(self, agent = None, region = None, settings = None, packet_handler = None):
+    def __init__(self, agent = None, region = None, settings = None, packet_handler = None, events_handler = None):
         """ set up the inventory manager """
 
         # allow the settings to be passed in
@@ -264,7 +264,6 @@ class Objects(object):
         """ update the attributes of objects """
 
         #if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Processing multiple object properties updates: %s" % (len(object_list)))
-
 
         for object_properties in object_list:
 

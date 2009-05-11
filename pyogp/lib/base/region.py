@@ -20,6 +20,8 @@ from pyogp.lib.base.utilities.helpers import Helpers
 from pyogp.lib.base.event_queue import EventQueueClient, EventQueueHandler
 from pyogp.lib.base.objects import Objects
 from pyogp.lib.base.datatypes import *
+from pyogp.lib.base.event_system import EventsHandler
+from pyogp.lib.base.parcel import ParcelManager
 
 # messaging
 from pyogp.lib.base.message.udpdispatcher import UDPDispatcher
@@ -55,7 +57,7 @@ class Region(object):
 
     """
 
-    def __init__(self, global_x = 0, global_y = 0, seed_capability_url = None, udp_blacklist = None, sim_ip = None, sim_port = None, circuit_code = None, agent = None, settings = None, packet_handler = None, event_queue_handler = None, handle = None):
+    def __init__(self, global_x = 0, global_y = 0, seed_capability_url = None, udp_blacklist = None, sim_ip = None, sim_port = None, circuit_code = None, agent = None, settings = None, packet_handler = None, event_queue_handler = None, handle = None, events_handler = None):
         """ initialize a region """
 
         # allow the settings to be passed in
@@ -80,6 +82,16 @@ class Region(object):
             self.event_queue_handler = event_queue_handler
         elif self.settings.HANDLE_EVENT_QUEUE_DATA:
             self.event_queue_handler = EventQueueHandler(settings = self.settings)
+
+        # allow the eventhandler to be passed in
+        # so that applications running multiple avatars
+        # may use the same eventhandler
+
+        # otherwise, let's just use our own
+        if events_handler != None:
+            self.events_handler = events_handler
+        else:
+            self.events_handler = EventsHandler()
 
         # initialize the init params
         self.global_x = int(global_x)
@@ -118,9 +130,12 @@ class Region(object):
         self.packet_queue = []
 
         if self.settings.ENABLE_OBJECT_TRACKING == True:
-            self.objects = Objects(agent = self.agent, region = self, settings = self.settings, packet_handler = self.packet_handler)
+            self.objects = Objects(agent = self.agent, region = self, settings = self.settings, packet_handler = self.packet_handler, events_handler = self.events_handler)
         else:
             self.objects = None
+
+        if self.settings.ENABLE_PARCEL_TRACKING:
+            self.parcel_manager = ParcelManager(region = self, agent = self.agent, packet_handler = self.packet_handler, events_handler = self.events_handler, settings = None)
 
         # required packet handlers
         onPacketAck_received = self.packet_handler._register('PacketAck')
@@ -500,29 +515,29 @@ class Region(object):
         self.sendRegionHandshakeReply()
 
         # propagate the incoming data
-        self.SimName = packet.message_data.blocks['RegionInfo'][0].get_variable('SimName')
-        self.SimAccess = packet.message_data.blocks['RegionInfo'][0].get_variable('SimAccess')
-        self.SimOwner = packet.message_data.blocks['RegionInfo'][0].get_variable('SimOwner')
-        self.IsEstateManager = packet.message_data.blocks['RegionInfo'][0].get_variable('IsEstateManager')
-        self.WaterHeight = packet.message_data.blocks['RegionInfo'][0].get_variable('WaterHeight')
-        self.BillableFactor = packet.message_data.blocks['RegionInfo'][0].get_variable('BillableFactor')
-        self.TerrainBase0 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainBase0')
-        self.TerrainBase1 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainBase1')
-        self.TerrainBase2 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainBase2')
-        self.TerrainStartHeight00 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight00')
-        self.TerrainStartHeight01 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight01')
-        self.TerrainStartHeight10 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight10')
-        self.TerrainStartHeight11 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight11')
-        self.TerrainHeightRange00 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange00')
-        self.TerrainHeightRange01 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange01')
-        self.TerrainHeightRange10 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange10')
-        self.TerrainHeightRange11 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange11')
-        self.CPUClassID = packet.message_data.blocks['RegionInfo3'][0].get_variable('CPUClassID')
-        self.CPURatio = packet.message_data.blocks['RegionInfo3'][0].get_variable('CPURatio')
-        self.ColoName = packet.message_data.blocks['RegionInfo3'][0].get_variable('ColoName')
-        self.ProductSKU = packet.message_data.blocks['RegionInfo3'][0].get_variable('ProductSKU')
-        self.ProductName = packet.message_data.blocks['RegionInfo3'][0].get_variable('ProductName')
-        self.RegionID = packet.message_data.blocks['RegionInfo2'][0].get_variable('RegionID')
+        self.SimName = packet.message_data.blocks['RegionInfo'][0].get_variable('SimName').data
+        self.SimAccess = packet.message_data.blocks['RegionInfo'][0].get_variable('SimAccess').data
+        self.SimOwner = packet.message_data.blocks['RegionInfo'][0].get_variable('SimOwner').data
+        self.IsEstateManager = packet.message_data.blocks['RegionInfo'][0].get_variable('IsEstateManager').data
+        self.WaterHeight = packet.message_data.blocks['RegionInfo'][0].get_variable('WaterHeight').data
+        self.BillableFactor = packet.message_data.blocks['RegionInfo'][0].get_variable('BillableFactor').data
+        self.TerrainBase0 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainBase0').data
+        self.TerrainBase1 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainBase1').data
+        self.TerrainBase2 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainBase2').data
+        self.TerrainStartHeight00 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight00').data
+        self.TerrainStartHeight01 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight01').data
+        self.TerrainStartHeight10 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight10').data
+        self.TerrainStartHeight11 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight11').data
+        self.TerrainHeightRange00 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange00').data
+        self.TerrainHeightRange01 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange01').data
+        self.TerrainHeightRange10 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange10').data
+        self.TerrainHeightRange11 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange11').data
+        self.CPUClassID = packet.message_data.blocks['RegionInfo3'][0].get_variable('CPUClassID').data
+        self.CPURatio = packet.message_data.blocks['RegionInfo3'][0].get_variable('CPURatio').data
+        self.ColoName = packet.message_data.blocks['RegionInfo3'][0].get_variable('ColoName').data
+        self.ProductSKU = packet.message_data.blocks['RegionInfo3'][0].get_variable('ProductSKU').data
+        self.ProductName = packet.message_data.blocks['RegionInfo3'][0].get_variable('ProductName').data
+        self.RegionID = packet.message_data.blocks['RegionInfo2'][0].get_variable('RegionID').data
 
         # we are connected
         self.connected = True

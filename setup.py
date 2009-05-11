@@ -70,7 +70,8 @@ setup(name='pyogp.lib.base',
            'group_creation = pyogp.lib.base.examples.sample_group_creation:main',
            'group_chat = pyogp.lib.base.examples.sample_group_chat:main',
            'agent_manager = pyogp.lib.base.examples.sample_agent_manager:main',
-           'multi_region_connect = pyogp.lib.base.examples.sample_multi_region_connect:main'
+           'multi_region_connect = pyogp.lib.base.examples.sample_multi_region_connect:main',
+           'parcel_management = pyogp.lib.base.examples.sample_parcel_management:main'
        ],
      },
 

@@ -99,6 +99,42 @@ class ExtraParam(object):
     Light = 0x20
     Sculpt = 0x30
 
+class ParcelFlags(object):
+    """ Parcel Flag constants """
+
+    AllowFly = 1 << 0                   # Can start flying
+    AllowOtherScripts = 1 << 1          # Scripts by others can run.
+    ForSale = 1 << 2                    # Can buy this land
+    ForSaleObjects = 1 << 7             # Can buy all objects on this land
+    AllowLandmarks = 1 << 3
+    AllowTerraform = 1 << 4
+    AllowDamage = 1 << 5
+    CreateObjects = 1 << 6
+    UseAccessGroup = 1 << 8
+    UseAccessList = 1 << 9
+    UseBanList = 1 << 10
+    UsePassList = 1 << 11
+    ShowDirectory = 1 << 12
+    AllowDeedToGroup = 1 << 13
+    ContributeWithDeed = 1 << 14
+    SoundLocal = 1 << 15                # Hear sounds in this parcel only
+    SellParcelObjects = 1 << 16         # Objects on land are included as part of the land when the land is sold
+    AllowPublish = 1 << 17              # Allow publishing of parcel information on the web
+    MaturePublish = 1 << 18             # The information on this parcel is mature
+    URLWebPage = 1 << 19                # The "media URL" is an HTML page
+    URLRawHTML = 1 << 20                # The "media URL" is a raw HTML string like <H1>Foo</H1>
+    ResrictPushObject = 1 << 21         # Restrict push object to either on agent or on scripts owned by parcel owner
+    DenyAnonomous = 1 << 22             # Deny all non identified/transacted accounts
+    # DenyIdentified = 1 << 23          # Deny identified accounts
+    # DenyTransacted = 1 << 24          # Deny identified accounts
+    AllowGroupScripts = 1 << 25         # Allow scripts owned by group
+    CreateGroupObjects = 1 << 26        # Allow object creation by group members or objects
+    AllowAllObjectEntry = 1 << 27       # Allow all objects to enter a parcel
+    AllowGroupObjectEntry = 1 << 28     # Only allow group (and owner) objects to enter the parcel
+    AllowVoiceChat = 1 << 29            # Allow residents to use voice chat on this parcel
+    UseEstateVoiceChannel = 1 << 30
+    DenyAgeUnverified = 1 << 31         # Prevent residents who aren't age-verified 
+
 """
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 

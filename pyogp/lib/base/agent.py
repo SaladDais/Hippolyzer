@@ -232,7 +232,7 @@ class Agent(object):
             self.circuit_code = self.login_response['circuit_code']
 
         # enable the current region, setting connect = True
-        self.region = Region(self.login_response['region_x'], self.login_response['region_y'], self.login_response['seed_capability'], self.login_response['udp_blacklist'], self.login_response['sim_ip'], self.login_response['sim_port'], self.login_response['circuit_code'], self, settings = self.settings, event_queue_handler = self.event_queue_handler)
+        self.region = Region(self.login_response['region_x'], self.login_response['region_y'], self.login_response['seed_capability'], self.login_response['udp_blacklist'], self.login_response['sim_ip'], self.login_response['sim_port'], self.login_response['circuit_code'], self, settings = self.settings, event_queue_handler = self.event_queue_handler, events_handler = self.events_handler)
 
         self.region.is_host_region = True
 
@@ -277,7 +277,7 @@ class Agent(object):
             log(DEBUG, "Not enabling a region we are already connected to: %s" % (str(region_params['IP']) + ":" + str(region_params['Port'])))
             return
 
-        child_region = Region(circuit_code = self.circuit_code, sim_ip = region_params['IP'], sim_port = region_params['Port'], handle = region_params['Handle'], agent = self, settings = self.settings, event_queue_handler = self.event_queue_handler)
+        child_region = Region(circuit_code = self.circuit_code, sim_ip = region_params['IP'], sim_port = region_params['Port'], handle = region_params['Handle'], agent = self, settings = self.settings, event_queue_handler = self.event_queue_handler, events_handler = self.events_handler)
 
         self.child_regions.append(child_region)
 

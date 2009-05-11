@@ -54,7 +54,7 @@ def login():
 
     # let's disable inventory handling for this example
     settings = Settings()
-    settings.ENABLE_INVENTORY_MANAGEMENT = True 
+    settings.ENABLE_INVENTORY_MANAGEMENT = False
     settings.ENABLE_EQ_LOGGING = False
     settings.ENABLE_CAPS_LOGGING = False
 
