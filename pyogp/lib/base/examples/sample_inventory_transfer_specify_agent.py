@@ -17,7 +17,7 @@ from pyogp.lib.base.utilities.helpers import Wait
 def login():
     """ login an to a login endpoint """ 
 
-    parser = OptionParser()
+    parser = OptionParser(usage="usage: %prog [options] firstname lastname")
 
     logger = logging.getLogger("pyogp.lib.base.example")
 
@@ -27,14 +27,16 @@ def login():
                       help="specifies the region (regionname/x/y/z) to connect to")
     parser.add_option("-q", "--quiet", dest="verbose", default=True, action="store_false",
                     help="enable verbose mode")
-    parser.add_option("-t", "--to_agent_id", dest="to_agent_id", default='', help="agent id to offer inventory to")
+    parser.add_option("-t", "--to_agent_id", dest="to_agent_id", default=None, help="agent id to offer inventory to (required)")
     parser.add_option("-s", "--search", dest="search", default=None, help = "name of inventory item to search for and transfer to account number 2")
 
     (options, args) = parser.parse_args()
 
-    if options.to_agent_id == '':
-        print "a target agent id is required. stopping"
-        sys.exit()
+    if len(args) != 2:
+        parser.error("Expected arguments: firstname lastname")
+
+    if options.to_agent_id == None:
+        parser.error("Missing required target agent id")
 
     if options.verbose:
         console = logging.StreamHandler()

@@ -14,7 +14,7 @@ from pyogp.lib.base.settings import Settings
 def login():
     """ login an to a login endpoint """ 
 
-    parser = OptionParser()
+    parser = OptionParser(usage="usage: %prog [options] firstname lastname")
 
     logger = logging.getLogger("pyogp.lib.base.example")
 
@@ -29,6 +29,9 @@ def login():
 
     (options, args) = parser.parse_args()
 
+    if len(args) != 2:
+        parser.error("Expected arguments: firstname lastname")
+        
     if options.verbose:
         console = logging.StreamHandler()
         formatter = logging.Formatter('%(asctime)-30s%(name)-30s: %(levelname)-8s %(message)s')

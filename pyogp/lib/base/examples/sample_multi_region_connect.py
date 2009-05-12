@@ -14,7 +14,7 @@ from pyogp.lib.base.settings import Settings
 def login():
     """ login an to a login endpoint """ 
 
-    parser = OptionParser()
+    parser = OptionParser(usage="usage: %prog [options] firstname lastname")
 
     logger = logging.getLogger("pyogp.lib.base.example")
 
@@ -28,6 +28,9 @@ def login():
 
     (options, args) = parser.parse_args()
 
+    if len(args) != 2:
+        parser.error("Expected arguments: firstname lastname")
+                
     if options.verbose:
         console = logging.StreamHandler()
         console.setLevel(logging.DEBUG) # seems to be a no op, set it for the logger

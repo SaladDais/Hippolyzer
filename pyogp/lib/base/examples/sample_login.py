@@ -9,7 +9,7 @@ from optparse import OptionParser
 def login():
     """ login an to a login endpoint """ 
 
-    parser = OptionParser()
+    parser = OptionParser(usage="usage: %prog [options] firstname lastname")
 
     logger = logging.getLogger("pyogp.lib.base.example")
 
@@ -20,8 +20,10 @@ def login():
     parser.add_option("-q", "--quiet", dest="verbose", default=True, action="store_false",
                     help="enable verbose mode")
 
-
     (options, args) = parser.parse_args()
+
+    if len(args) != 2:
+        parser.error("Expected arguments: firstname lastname")
 
     if options.verbose:
         console = logging.StreamHandler()

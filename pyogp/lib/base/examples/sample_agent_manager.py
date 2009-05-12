@@ -16,7 +16,7 @@ from pyogp.lib.base.settings import Settings
 def login():
     """ login an to a login endpoint """ 
 
-    parser = OptionParser()
+    parser = OptionParser(usage="usage: %prog --file filename [options]")
 
     logger = logging.getLogger("pyogp.lib.base.example")
 
@@ -26,7 +26,7 @@ def login():
                       help="specifies the region (regionname/x/y/z) to connect to")
     parser.add_option("-q", "--quiet", dest="verbose", default=True, action="store_false",
                     help="enable verbose mode")
-    parser.add_option("-f", "--file", dest="file", default='', help="csv formatted file containing first, last,pass for multi agent login")
+    parser.add_option("-f", "--file", dest="file", default=None, help="csv formatted file containing first,last,pass for multi agent login (required)")
     parser.add_option("-c", "--count", dest="count", default=0, help="number of agents to login")
 
 
@@ -34,9 +34,11 @@ def login():
 
     options.count = int(options.count)
 
-    if options.file == '':
-        print '-f is a required parameter for logging in multiple agents'
-        return
+    if len(args) > 0:
+        parser.error("Unsupported arguments specified: " + str(args)) 
+
+    if options.file == None:
+        parser.error("Missing required -f argument for logging in multiple agents")
 
     try:
         f = open(options.file, 'r')
