@@ -74,11 +74,14 @@ def login():
         api.sleep(0)
 
     # sample specific stuff
-    client.region.parcel_manager.request_current_parcel_properties()
+    # client.region.parcel_manager.request_current_parcel_properties()
     
     client.region.parcel_manager.request_all_parcel_properties()
 
-    Wait(5)
+    Wait(15)
+
+    for parcel in client.region.parcel_manager.parcels:
+        client.region.parcel_manager.request_parcel_dwell(parcel.LocalID)
 
     # run until killed
     while client.running:
