@@ -288,6 +288,27 @@ class ParcelManager(object):
         self.parcel_map_full = full
 
 
+    def get_parcel_by_id(self, local_id): 
+        """Returns a parcel if info has been received, None otherwise."""
+        for parcel in self.parcels:
+            if parcel.LocalID == local_id:
+                return parcel
+        return None
+
+    def get_parcel_id_by_location(self, local_x, local_y):
+        """Returns a parcel's local id if info has been received, 0 otherwise."""
+        return self.parcel_map[ int(local_x)/4 ][ int(local_y)/4 ]
+
+    def get_parcel_by_location(self, local_x, local_y):
+        print "x",local_x,"y",local_y
+        """Returns a parcel if info has been received, None otherwise."""
+        return self.get_parcel_by_id( self.get_parcel_id_by_location(local_x, local_y) )
+
+    def get_current_parcel(self):
+        """Returns the agent's current parcel if info has been received, None otherwise."""
+        return self.get_parcel_by_location( self.agent.Position.X, self.agent.Position.Y )
+
+
     def request_estate_covenant(self, ):
         """ request the estate covenant (for the current estate)"""
         self.onEstateCovenantReply_received = self.packet_handler._register('EstateCovenantReply')
@@ -415,16 +436,15 @@ class ParcelManager(object):
 
         self._update_parcel_properties(parcel_info)
 
-    def request_current_parcel_properties(self):
+    def request_current_parcel_properties(self, refresh = False):
         """ request the properties of the parcel the agent currently inhabits """
 
-        self.sendParcelPropertiesRequest(-50000,
-                                         self.agent.Position.X,
-                                         self.agent.Position.Y,
-                                         self.agent.Position.X,
-                                         self.agent.Position.Y,
-                                         False)
+        x = self.agent.Position.X
+        y = self.agent.Position.Y
 
+        if refresh or self.get_parcel_id_by_location(x, y) == 0:
+            self.sendParcelPropertiesRequest(-50000, x, y, x, y, False)
+            
     def request_all_parcel_properties(self, delay = 0.5, refresh = False):
         """ request the properties of all of the parcels on the current region. The delay parameter is a sleep between the send of each packet request; if refresh, current data will be discarded before requesting. If refresh is not True, data will not be re-requested for region locations already queried. """
 

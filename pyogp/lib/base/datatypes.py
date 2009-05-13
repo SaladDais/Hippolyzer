@@ -53,6 +53,9 @@ class Vector3(object):
 
         return ((self.X, self.Y, self.Z))
 
+    def copy(self):
+        return Vector3( X = self.X, Y = self.Y, Z = self.Z )
+
     def __repr__(self):
         """ represent a vector as a string """
 
@@ -109,6 +112,9 @@ class Quaternion(object):
 
         return ((self.X, self.Y, self.Z, self.W))
 
+    def copy(self):
+        return Quaternion(X=self.X, Y=self.Y, Z=self.Z, W=self.W)
+
     def __repr__(self):
         """ represent a quaternion as a string """
 
@@ -160,6 +166,9 @@ class UUID(object):
         """ represent a uuid as, well, a uuid """
 
         return self.uuid
+
+    def copy(self):
+        return UUID(string=str(self.uuid))
 
     def __repr__(self):
         """ represent a uuid as a string """
