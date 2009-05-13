@@ -81,7 +81,9 @@ def login():
     
     client.region.parcel_manager.request_all_parcel_properties()
 
-    Wait(15)
+    # Wait for all parcel info to be received...
+    while not client.region.parcel_manager.parcel_map_full:
+        api.sleep(1)
 
     for parcel in client.region.parcel_manager.parcels:
         client.region.parcel_manager.request_parcel_dwell(parcel.LocalID)

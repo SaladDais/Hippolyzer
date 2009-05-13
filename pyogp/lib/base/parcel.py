@@ -81,6 +81,10 @@ class ParcelManager(object):
         # initialize the parcel overlay storage container
         self.parcel_overlay = {}
 
+        # initialize map (x, y) with 0; filled in as parcel properties are received
+        self.parcel_map = [[0 for _ in range(64)] for _ in range(64)]
+        self.parcel_map_full = False
+
         # set up callbacks for parcel related packets
         self.onParcelOverlay_received = self.packet_handler._register('ParcelOverlay')
         self.onParcelOverlay_received.subscribe(self.onParcelOverlay)
@@ -214,6 +218,7 @@ class ParcelManager(object):
             new_parcel = Parcel(self.region, self.agent, RequestResult = parcel_info['RequestResult'], SequenceID = parcel_info['SequenceID'], SnapSelection = parcel_info['SnapSelection'], SelfCount = parcel_info['SelfCount'], OtherCount = parcel_info['OtherCount'], PublicCount = parcel_info['PublicCount'], LocalID = parcel_info['LocalID'], OwnerID = parcel_info['OwnerID'], IsGroupOwned = parcel_info['IsGroupOwned'], AuctionID = parcel_info['AuctionID'], ClaimDate = parcel_info['ClaimDate'], ClaimPrice = parcel_info['ClaimPrice'], RentPrice = parcel_info['RentPrice'], AABBMin = parcel_info['AABBMin'], AABBMax = parcel_info['AABBMax'], Bitmap = parcel_info['Bitmap'], Area = parcel_info['Area'], Status = parcel_info['Status'], SimWideMaxPrims = parcel_info['SimWideMaxPrims'], SimWideTotalPrims = parcel_info['SimWideTotalPrims'], MaxPrims = parcel_info['MaxPrims'], TotalPrims = parcel_info['TotalPrims'], OwnerPrims = parcel_info['OwnerPrims'], GroupPrims = parcel_info['GroupPrims'], OtherPrims = parcel_info['OtherPrims'], SelectedPrims = parcel_info['SelectedPrims'], ParcelPrimBonus = parcel_info['ParcelPrimBonus'], OtherCleanTime = parcel_info['OtherCleanTime'], ParcelFlags = parcel_info['ParcelFlags'], SalePrice = parcel_info['SalePrice'], Name = parcel_info['Name'], Desc = parcel_info['Desc'], MusicURL = parcel_info['MusicURL'], MediaURL = parcel_info['MediaURL'], MediaID = parcel_info['MediaID'], MediaAutoScale = parcel_info['MediaAutoScale'], GroupID = parcel_info['GroupID'], PassPrice = parcel_info['PassPrice'], PassHours = parcel_info['PassHours'], Category = parcel_info['Category'], AuthBuyerID = parcel_info['AuthBuyerID'], SnapshotID = parcel_info['SnapshotID'], UserLocation = parcel_info['UserLocation'], UserLookAt = parcel_info['UserLookAt'], LandingType = parcel_info['LandingType'], RegionPushOverride = parcel_info['RegionPushOverride'], RegionDenyAnonymous = parcel_info['RegionDenyAnonymous'], RegionDenyIdentified = parcel_info['RegionDenyIdentified'], RegionDenyTransacted = parcel_info['RegionDenyTransacted'], RegionDenyAgeUnverified = parcel_info['RegionDenyAgeUnverified'], settings = self.settings)
 
             self.parcels.append(new_parcel)
+            self._update_parcel_map(new_parcel)
 
             if self.settings.LOG_VERBOSE: log(DEBUG, 'Stored a new parcel: %s in region \'%s\'' % (new_parcel.LocalID, self.region.SimName))
 
@@ -262,9 +267,29 @@ class ParcelManager(object):
 
                 parcel._update_properties(parcel_properties)
 
+    def _update_parcel_map(self, parcel):
+        """Use the parcel's bitmap to update the manager's (x,y) to LocalID mapping"""
+
+        full = True
+        
+        for x in range(64):
+            for y in range(64):
+
+                index = x + (64 * y)
+                byte = index >> 3
+                mask = 1 << (index % 8)
+
+                # *TODO: Bitmap should be stored as a byte array, not a string
+                if ord(parcel.Bitmap[byte]) & mask:
+                    self.parcel_map[x][y] = parcel.LocalID
+
+                full = full and (self.parcel_map[x][y] != 0)
+
+        self.parcel_map_full = full
+
+
     def request_estate_covenant(self, ):
         """ request the estate covenant (for the current estate)"""
-
         self.onEstateCovenantReply_received = self.packet_handler._register('EstateCovenantReply')
         self.onEstateCovenantReply_received.subscribe(self.onEstateCovenantReply)
 
@@ -393,28 +418,38 @@ class ParcelManager(object):
     def request_current_parcel_properties(self):
         """ request the properties of the parcel the agent currently inhabits """
 
-        self.SouthWest = float(self.agent.Position.X)
-        self.NorthEast = float(self.agent.Position.Y)
+        self.sendParcelPropertiesRequest(-50000,
+                                         self.agent.Position.X,
+                                         self.agent.Position.Y,
+                                         self.agent.Position.X,
+                                         self.agent.Position.Y,
+                                         False)
 
-        self.sendParcelPropertiesRequest(-50000, self.SouthWest, self.SouthWest, self.NorthEast, self.NorthEast, False)
-
-    def request_all_parcel_properties(self, delay = 0.5):
-        """ request the properties of all of the parcels on the current region. The delay parameter is a sleep between the send of each packet request """
+    def request_all_parcel_properties(self, delay = 0.5, refresh = False):
+        """ request the properties of all of the parcels on the current region. The delay parameter is a sleep between the send of each packet request; if refresh, current data will be discarded before requesting. If refresh is not True, data will not be re-requested for region locations already queried. """
 
         # spawn a coroutine so this is non blocking
-        api.spawn(self.__request_all_parcel_properties, delay)
+        api.spawn(self.__request_all_parcel_properties, delay, refresh)
 
-    def __request_all_parcel_properties(self, delay = 1):
+    def __request_all_parcel_properties(self, delay = 1, refresh = False):
         """ request the properties of all of the parcels on the current region """
+
+        if refresh:
+            self.parcel_map = [[0 for _ in range(64)] for _ in range(64)]
+            self.parcel_map_full = False
 
         # minimum parcel size is 4x4m (16sq)
         # ugh this is a wretched way to request parcel info, but it is what it is
-        for x in range(1,65):
-            for y in range(1,65):
+        for y in range(64):
+            for x in range(64):
 
-                self.sendParcelPropertiesRequest(-50000, float(x * 4), float(x * 4), float(y * 4), float(y * 4), False)
+                if self.parcel_map[x][y] == 0:
+                    # Target: center of 4m by 4m parcel
+                    tx = x * 4 + 2
+                    ty = y * 4 + 2
+                    self.sendParcelPropertiesRequest(-50000, tx, ty, tx, ty, False)
 
-                api.sleep(delay)
+                    api.sleep(delay)
 
     def return_parcel_objects(self, ):
         """ return the specified objects for the specified parcel """
