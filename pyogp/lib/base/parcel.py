@@ -300,7 +300,6 @@ class ParcelManager(object):
         return self.parcel_map[ int(local_x)/4 ][ int(local_y)/4 ]
 
     def get_parcel_by_location(self, local_x, local_y):
-        print "x",local_x,"y",local_y
         """Returns a parcel if info has been received, None otherwise."""
         return self.get_parcel_by_id( self.get_parcel_id_by_location(local_x, local_y) )
 

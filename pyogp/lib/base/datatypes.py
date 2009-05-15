@@ -66,6 +66,14 @@ class Vector3(object):
 
         return ((self.X, self.Y, self.Z))
 
+    def dist_squared(a, b):
+        x = a.X - b.X
+        y = a.Y - b.Y
+        z = a.Z - b.Z
+        return x*x + y*y + z*z
+    dist_squared = staticmethod(dist_squared)
+    
+
 class Quaternion(object):
     """ represents a quaternion as a tuple"""
 
