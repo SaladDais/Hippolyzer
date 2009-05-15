@@ -149,6 +149,22 @@ class InstantMessageReceived(object):
         self.FromAgentName = FromAgentName
         self.Message = Message
 
+class ChatReceived(object):
+    """ event data conduit for received spatial chat """
+
+    def __init__(self, FromName, SourceID, OwnerID, SourceType, ChatType, Audible, Position, Message):
+        self.name = 'ChatReceived'
+
+        self.FromName   = FromName   
+        self.SourceID   = SourceID   
+        self.OwnerID    = OwnerID    
+        self.SourceType = SourceType 
+        self.ChatType   = ChatType   
+        self.Audible    = Audible    
+        self.Position   = Position   
+        self.Message    = Message    
+
+
 """
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 

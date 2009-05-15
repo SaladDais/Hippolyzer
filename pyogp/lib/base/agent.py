@@ -350,9 +350,8 @@ class Agent(object):
             onImprovedInstantMessage_received.subscribe(self.onImprovedInstantMessage)
 
             if self.settings.ENABLE_COMMUNICATIONS_TRACKING:
-
                 onChatFromSimulator_received = self.region.packet_handler._register('ChatFromSimulator')
-                onChatFromSimulator_received.subscribe(self.helpers.log_packet, self)
+                onChatFromSimulator_received.subscribe(self.onChatFromSimulator)
 
     def send_AgentDataUpdateRequest(self):
         """ queues a packet requesting an agent data update """
@@ -542,27 +541,22 @@ class Agent(object):
             self.group_manager.store_group(group)
 
     def onChatFromSimulator(self, packet):
-        """ callback handler for received ChatFromSimulator messages which parses and fires a ChatReceived event. (not implemented """
+        """ callback handler for received ChatFromSimulator messages which parses and fires a ChatReceived event. """
 
-        # ToDo: implement firing an event when this is called
+        log(INFO, "Working on parsing chat messages....")
 
-        pass
-        '''
-        {
-            ChatFromSimulator Low 139 Trusted Unencoded
-            {
-                    ChatData                        Single
-                    {       FromName                Variable 1      }
-                    {       SourceID                LLUUID          }       // agent id or object id
-                    {       OwnerID                 LLUUID          }       // object's owner
-                    {       SourceType              U8                      }
-                    {       ChatType                U8                      }
-                    {       Audible                 U8                      }
-                    {       Position                LLVector3       }
-                    {       Message                 Variable 2      }       // UTF-8 text
-            }
-        }
-        '''
+        message = ChatReceived(
+            packet.message_data.blocks['ChatData'][0].get_variable('FromName').data,
+            packet.message_data.blocks['ChatData'][0].get_variable('SourceID').data,
+            packet.message_data.blocks['ChatData'][0].get_variable('OwnerID').data,
+            packet.message_data.blocks['ChatData'][0].get_variable('SourceType').data,
+            packet.message_data.blocks['ChatData'][0].get_variable('ChatType').data,
+            packet.message_data.blocks['ChatData'][0].get_variable('Audible').data,
+            packet.message_data.blocks['ChatData'][0].get_variable('Position').data,
+            packet.message_data.blocks['ChatData'][0].get_variable('Message').data )
+
+        log(INFO, "Received chat from %s: %s" % (message.FromName, message.Message))
+        self.events_handler._handle(message)
 
     def onImprovedInstantMessage(self, packet):
         """ callback handler for received ImprovedInstantMessage messages. much is passed in this message, and handling the data is only partially implemented """
