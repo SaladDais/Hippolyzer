@@ -51,28 +51,5 @@ setup(name='pyogp.lib.base',
          'wsgiref',
          'eventlet'
 
-     ],
-     entry_points={
-       'console_scripts': [
-           'login = pyogp.lib.base.examples.sample_login:main',
-           'agent_login = pyogp.lib.base.examples.sample_agent_login:main',
-           'region_connect = pyogp.lib.base.examples.sample_region_connect:main',
-           'inventory_handling = pyogp.lib.base.examples.sample_inventory_handling:main',
-           'AIS_inventory_handling = pyogp.lib.base.examples.sample_AIS_inventory_handling:main',
-           'inventory_transfer = pyogp.lib.base.examples.sample_inventory_transfer:main',
-           'inventory_transfer_specify_agent = pyogp.lib.base.examples.sample_inventory_transfer_specify_agent:main',
-           'object_tracking = pyogp.lib.base.examples.sample_object_tracking:main',
-           'object_creation = pyogp.lib.base.examples.sample_object_creation:main',
-           'object_create_edit = pyogp.lib.base.examples.sample_object_create_edit:main',
-           'object_create_permissions = pyogp.lib.base.examples.sample_object_create_permissions:main',
-           'object_properties = pyogp.lib.base.examples.sample_object_properties:main',
-           'chat_and_instant_messaging = pyogp.lib.base.examples.sample_chat_and_instant_messaging:main',
-           'group_creation = pyogp.lib.base.examples.sample_group_creation:main',
-           'group_chat = pyogp.lib.base.examples.sample_group_chat:main',
-           'agent_manager = pyogp.lib.base.examples.sample_agent_manager:main',
-           'multi_region_connect = pyogp.lib.base.examples.sample_multi_region_connect:main',
-           'parcel_management = pyogp.lib.base.examples.sample_parcel_management:main'
-       ],
-     },
-
+     ]
      )
