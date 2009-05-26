@@ -46,7 +46,7 @@ class Agent(object):
 
     """
 
-    def __init__(self, settings = None, firstname = '', lastname = '', password = '', agent_id = None, events_handler = None):
+    def __init__(self, settings = None, firstname = '', lastname = '', password = '', agent_id = None, events_handler = None, handle_signals=True):
         """ initialize this agent """
 
         # allow the settings to be passed in
@@ -68,7 +68,8 @@ class Agent(object):
             self.events_handler = EventsHandler()
 
         # signal handler to capture erm signals
-        self.signal_handler = signal.signal(signal.SIGINT, self.sigint_handler)
+        if handle_signals:
+            self.signal_handler = signal.signal(signal.SIGINT, self.sigint_handler)
 
         # storage containers for agent attributes
         # we overwrite with what the grid tells us, rather than what
