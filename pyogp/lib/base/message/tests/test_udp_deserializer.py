@@ -6,9 +6,8 @@ from uuid import UUID
 from pyogp.lib.base.settings import Settings
 from pyogp.lib.base.message.types import MsgType
 from pyogp.lib.base.message.message import Message, Block
-from pyogp.lib.base.message.packet import UDPPacket
-from pyogp.lib.base.message.udpdeserializer import UDPPacketDeserializer
-from pyogp.lib.base.message.udpserializer import UDPPacketSerializer
+from pyogp.lib.base.message.udpdeserializer import UDPMessageDeserializer
+from pyogp.lib.base.message.udpserializer import UDPMessageSerializer
 
 #from indra.base.lluuid import UUID
 
@@ -25,9 +24,9 @@ class TestDeserializer(unittest.TestCase):
         message = '\xff\xff\xff\xfb' + '\x03' + \
                   '\x01\x00\x00\x00' + '\x02\x00\x00\x00' + '\x03\x00\x00\x00'
         message = '\x00' + '\x00\x00\x00\x01' +'\x00' + message
-        deserializer = UDPPacketDeserializer(settings = self.settings)
+        deserializer = UDPMessageDeserializer(settings = self.settings)
         packet = deserializer.deserialize(message)
-        data = packet.message_data
+
         assert packet.name == 'PacketAck', 'Incorrect deserialization'
 
 
@@ -36,14 +35,13 @@ class TestDeserializer(unittest.TestCase):
                       Block('AgentData', AgentID=UUID('550e8400-e29b-41d4-a716-446655440000'),
                             SessionID=UUID('550e8400-e29b-41d4-a716-446655440000')),
                        Block('ChatData', Message='Hi Locklainn Tester', Type=1, Channel=0))
-        packet = UDPPacket(msg)
-        serializer = UDPPacketSerializer()
-        packed_data = serializer.serialize(packet)
+        serializer = UDPMessageSerializer()
+        packed_data = serializer.serialize(msg)
 
-        deserializer = UDPPacketDeserializer(settings = self.settings)
+        deserializer = UDPMessageDeserializer(settings = self.settings)
         packet = deserializer.deserialize(packed_data)
-        data = packet.message_data
-        assert data.blocks['ChatData'][0].vars['Message'].data == 'Hi Locklainn Tester',\
+        data = packet.blocks
+        assert data['ChatData'][0].vars['Message'].data == 'Hi Locklainn Tester',\
                'Message for chat is incorrect'
 
 

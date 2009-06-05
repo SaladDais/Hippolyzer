@@ -2,7 +2,7 @@
 import unittest
 
 # pyogp
-from pyogp.lib.base.event_system import EventsHandler
+from pyogp.lib.base.event_system import AppEventsHandler, AppEvent
 from pyogp.lib.base.utilities.helpers import Wait
 from pyogp.lib.base.exc import DataParsingError
 
@@ -23,7 +23,7 @@ class TestEvents(unittest.TestCase):
 
         mock = MockEvent(1)
 
-        eventshandler = EventsHandler()
+        eventshandler = AppEventsHandler()
 
         handler = eventshandler._register('MockEvent')
         handler.subscribe(self.onEvent, mock)
@@ -34,7 +34,7 @@ class TestEvents(unittest.TestCase):
 
         mock = MockEvent(1)
 
-        eventshandler = EventsHandler()
+        eventshandler = AppEventsHandler()
 
         handler = eventshandler._register('MockEvent', 2)
         handler.subscribe(self.onEvent, None)
@@ -45,9 +45,27 @@ class TestEvents(unittest.TestCase):
 
         mock = MockEvent(1)
 
-        eventshandler = EventsHandler()
+        eventshandler = AppEventsHandler()
 
         self.assertRaises(DataParsingError, eventshandler._register, 'MockEvent', 'two')
+
+    def test_AppEvent_payload(self):
+
+        event_content = AppEvent('test', {1:'one', 2:'two'})
+
+        self.assertEquals(event_content.name, 'test')
+        self.assertEquals(event_content.payload, {1:'one', 2:'two'})
+
+    def test_AppEvent_kwdargs(self):
+
+        kwdargs = {'thingone':'one', 'thingtwo':'two'}
+
+        event_content = AppEvent('test', thingone = 'one', thingtwo = 'two')
+
+        self.assertEquals(event_content.name, 'test')
+
+        for key in kwdargs:
+            self.assertEquals(event_content.payload[key], kwdargs[key])
 
     def onEvent(self, event, expected):
 

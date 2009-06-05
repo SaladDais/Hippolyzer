@@ -17,17 +17,17 @@ from pyogp.lib.base.network.stdlib_client import StdLibClient, HTTPError
 import pyogp.lib.base.exc
 from pyogp.lib.base.settings import Settings
 from pyogp.lib.base.utilities.helpers import Helpers
-from pyogp.lib.base.event_queue import EventQueueClient, EventQueueHandler
+from pyogp.lib.base.event_queue import EventQueueClient
 from pyogp.lib.base.objects import Objects
 from pyogp.lib.base.datatypes import *
-from pyogp.lib.base.event_system import EventsHandler
+from pyogp.lib.base.event_system import AppEventsHandler
 from pyogp.lib.base.parcel import ParcelManager
 
 # messaging
 from pyogp.lib.base.message.udpdispatcher import UDPDispatcher
 from pyogp.lib.base.message.circuit import Host
 from pyogp.lib.base.message.packets import *
-from pyogp.lib.base.message.packethandler import PacketHandler
+from pyogp.lib.base.message.message_handler import MessageHandler
 
 # utilities
 from pyogp.lib.base.utilities.helpers import Wait
@@ -57,7 +57,7 @@ class Region(object):
 
     """
 
-    def __init__(self, global_x = 0, global_y = 0, seed_capability_url = None, udp_blacklist = None, sim_ip = None, sim_port = None, circuit_code = None, agent = None, settings = None, packet_handler = None, event_queue_handler = None, handle = None, events_handler = None):
+    def __init__(self, global_x = 0, global_y = 0, seed_capability_url = None, udp_blacklist = None, sim_ip = None, sim_port = None, circuit_code = None, agent = None, settings = None, message_handler = None, handle = None, events_handler = None):
         """ initialize a region """
 
         # allow the settings to be passed in
@@ -70,18 +70,10 @@ class Region(object):
 
         # allow the packet_handler to be passed in
         # otherwise, grab the defaults
-        if packet_handler != None:
-            self.packet_handler = packet_handler
+        if message_handler != None:
+            self.message_handler = message_handler
         elif self.settings.HANDLE_PACKETS:
-            self.packet_handler = PacketHandler()
-
-        # allow the event_queue_handler to be passed in
-        # otherwise, grab the defaults
-
-        if event_queue_handler != None:
-            self.event_queue_handler = event_queue_handler
-        elif self.settings.HANDLE_EVENT_QUEUE_DATA:
-            self.event_queue_handler = EventQueueHandler(settings = self.settings)
+            self.message_handler = MessageHandler()
 
         # allow the eventhandler to be passed in
         # so that applications running multiple avatars
@@ -91,7 +83,7 @@ class Region(object):
         if events_handler != None:
             self.events_handler = events_handler
         else:
-            self.events_handler = EventsHandler()
+            self.events_handler = AppEventsHandler()
 
         # initialize the init params
         self.global_x = int(global_x)
@@ -109,7 +101,7 @@ class Region(object):
 
         # UDP connection information
         if (self.sim_ip != None) and (self.sim_port != None):
-            self.messenger = UDPDispatcher(settings = self.settings, packet_handler = self.packet_handler, region = self)
+            self.messenger = UDPDispatcher(settings = self.settings, message_handler = self.message_handler, region = self)
             self.host = Host((self.sim_ip,self.sim_port))
         else:
             self.host = None
@@ -130,15 +122,15 @@ class Region(object):
         self.packet_queue = []
 
         if self.settings.ENABLE_OBJECT_TRACKING == True:
-            self.objects = Objects(agent = self.agent, region = self, settings = self.settings, packet_handler = self.packet_handler, events_handler = self.events_handler)
+            self.objects = Objects(agent = self.agent, region = self, settings = self.settings, message_handler = self.message_handler, events_handler = self.events_handler)
         else:
             self.objects = None
 
         if self.settings.ENABLE_PARCEL_TRACKING:
-            self.parcel_manager = ParcelManager(region = self, agent = self.agent, packet_handler = self.packet_handler, events_handler = self.events_handler, settings = None)
+            self.parcel_manager = ParcelManager(region = self, agent = self.agent, message_handler = self.message_handler, events_handler = self.events_handler, settings = None)
 
         # required packet handlers
-        onPacketAck_received = self.packet_handler._register('PacketAck')
+        onPacketAck_received = self.message_handler._register('PacketAck')
         onPacketAck_received.subscribe(self.helpers.null_packet_handler, self)
 
         # data we need
@@ -193,27 +185,24 @@ class Region(object):
     def send_message_next(self, packet, reliable = False):
         """ inserts this packet at the fron of the queue """
 
-        # if the packet data type != UDPPacket, serialize it
-        if str(type(packet)) != '<class \'pyogp.lib.base.message.packet.UDPPacket\'>':
-            packet = packet()
+        #if str(type(packet)) != '<class \'pyogp.lib.base.message.message.Message\'>':
+            #packet = packet()
 
         self.packet_queue.insert(0, (packet, reliable))
 
     def enqueue_message(self, packet, reliable = False):
         """ queues packets for the messaging system to send """
 
-        # if the packet data type != UDPPacket, serialize it
-        if str(type(packet)) != '<class \'pyogp.lib.base.message.message.Message\'>':
-            packet = packet()
+        #if str(type(packet)) != '<class \'pyogp.lib.base.message.message.Message\'>':
+            #packet = packet()
 
         self.packet_queue.append((packet, reliable))
 
     def send_message(self, packet, reliable = False):
         """ send a packet to the host """
 
-        # if the packet data type != UDPPacket, serialize it
-        if str(type(packet)) != '<class \'pyogp.lib.base.message.message.Message\'>':
-            packet = packet()
+        #if str(type(packet)) != '<class \'pyogp.lib.base.message.message.Message\'>':
+            #packet = packet()
 
         if self.host == None or self.messenger == None:
             raise RegionMessageError(self)
@@ -226,9 +215,8 @@ class Region(object):
     def send_reliable(self, packet):
         """ send a reliable packet to the host """
 
-        # if the packet data type != UDPPacket, serialize it
-        if str(type(packet)) != '<class \'pyogp.lib.base.message.message.Message\'>':
-            packet = packet()
+        #if str(type(packet)) != '<class \'pyogp.lib.base.message.message.Message\'>':
+            #packet = packet()
 
         if self.host == None or self.messenger == None:
             raise RegionMessageError(self)
@@ -457,11 +445,11 @@ class Region(object):
         self._isUDPRunning = True
 
         # the RegionHandshake packet requires a response
-        onRegionHandshake_received = self.packet_handler._register('RegionHandshake')
+        onRegionHandshake_received = self.message_handler._register('RegionHandshake')
         onRegionHandshake_received.subscribe(self.onRegionHandshake)
 
         # the StartPingCheck packet requires a response
-        onStartPingCheck_received = self.packet_handler._register('StartPingCheck')
+        onStartPingCheck_received = self.message_handler._register('StartPingCheck')
         onStartPingCheck_received.subscribe(self.onStartPingCheck)
 
         while self._isUDPRunning:
@@ -496,7 +484,7 @@ class Region(object):
     def _startEventQueue(self):
         """ polls the event queue capability and parses the results  """
 
-        self.event_queue = EventQueueClient(self.capabilities['EventQueueGet'], settings = self.settings, packet_handler = self.packet_handler, region = self, event_queue_handler = self.event_queue_handler)
+        self.event_queue = EventQueueClient(self.capabilities['EventQueueGet'], settings = self.settings, message_handler = self.message_handler, region = self)
 
         api.spawn(self.event_queue.start)
 
@@ -515,29 +503,29 @@ class Region(object):
         self.sendRegionHandshakeReply()
 
         # propagate the incoming data
-        self.SimName = packet.message_data.blocks['RegionInfo'][0].get_variable('SimName').data
-        self.SimAccess = packet.message_data.blocks['RegionInfo'][0].get_variable('SimAccess').data
-        self.SimOwner = packet.message_data.blocks['RegionInfo'][0].get_variable('SimOwner').data
-        self.IsEstateManager = packet.message_data.blocks['RegionInfo'][0].get_variable('IsEstateManager').data
-        self.WaterHeight = packet.message_data.blocks['RegionInfo'][0].get_variable('WaterHeight').data
-        self.BillableFactor = packet.message_data.blocks['RegionInfo'][0].get_variable('BillableFactor').data
-        self.TerrainBase0 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainBase0').data
-        self.TerrainBase1 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainBase1').data
-        self.TerrainBase2 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainBase2').data
-        self.TerrainStartHeight00 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight00').data
-        self.TerrainStartHeight01 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight01').data
-        self.TerrainStartHeight10 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight10').data
-        self.TerrainStartHeight11 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainStartHeight11').data
-        self.TerrainHeightRange00 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange00').data
-        self.TerrainHeightRange01 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange01').data
-        self.TerrainHeightRange10 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange10').data
-        self.TerrainHeightRange11 = packet.message_data.blocks['RegionInfo'][0].get_variable('TerrainHeightRange11').data
-        self.CPUClassID = packet.message_data.blocks['RegionInfo3'][0].get_variable('CPUClassID').data
-        self.CPURatio = packet.message_data.blocks['RegionInfo3'][0].get_variable('CPURatio').data
-        self.ColoName = packet.message_data.blocks['RegionInfo3'][0].get_variable('ColoName').data
-        self.ProductSKU = packet.message_data.blocks['RegionInfo3'][0].get_variable('ProductSKU').data
-        self.ProductName = packet.message_data.blocks['RegionInfo3'][0].get_variable('ProductName').data
-        self.RegionID = packet.message_data.blocks['RegionInfo2'][0].get_variable('RegionID').data
+        self.SimName = packet.blocks['RegionInfo'][0].get_variable('SimName').data
+        self.SimAccess = packet.blocks['RegionInfo'][0].get_variable('SimAccess').data
+        self.SimOwner = packet.blocks['RegionInfo'][0].get_variable('SimOwner').data
+        self.IsEstateManager = packet.blocks['RegionInfo'][0].get_variable('IsEstateManager').data
+        self.WaterHeight = packet.blocks['RegionInfo'][0].get_variable('WaterHeight').data
+        self.BillableFactor = packet.blocks['RegionInfo'][0].get_variable('BillableFactor').data
+        self.TerrainBase0 = packet.blocks['RegionInfo'][0].get_variable('TerrainBase0').data
+        self.TerrainBase1 = packet.blocks['RegionInfo'][0].get_variable('TerrainBase1').data
+        self.TerrainBase2 = packet.blocks['RegionInfo'][0].get_variable('TerrainBase2').data
+        self.TerrainStartHeight00 = packet.blocks['RegionInfo'][0].get_variable('TerrainStartHeight00').data
+        self.TerrainStartHeight01 = packet.blocks['RegionInfo'][0].get_variable('TerrainStartHeight01').data
+        self.TerrainStartHeight10 = packet.blocks['RegionInfo'][0].get_variable('TerrainStartHeight10').data
+        self.TerrainStartHeight11 = packet.blocks['RegionInfo'][0].get_variable('TerrainStartHeight11').data
+        self.TerrainHeightRange00 = packet.blocks['RegionInfo'][0].get_variable('TerrainHeightRange00').data
+        self.TerrainHeightRange01 = packet.blocks['RegionInfo'][0].get_variable('TerrainHeightRange01').data
+        self.TerrainHeightRange10 = packet.blocks['RegionInfo'][0].get_variable('TerrainHeightRange10').data
+        self.TerrainHeightRange11 = packet.blocks['RegionInfo'][0].get_variable('TerrainHeightRange11').data
+        self.CPUClassID = packet.blocks['RegionInfo3'][0].get_variable('CPUClassID').data
+        self.CPURatio = packet.blocks['RegionInfo3'][0].get_variable('CPURatio').data
+        self.ColoName = packet.blocks['RegionInfo3'][0].get_variable('ColoName').data
+        self.ProductSKU = packet.blocks['RegionInfo3'][0].get_variable('ProductSKU').data
+        self.ProductName = packet.blocks['RegionInfo3'][0].get_variable('ProductName').data
+        self.RegionID = packet.blocks['RegionInfo2'][0].get_variable('RegionID').data
 
         # we are connected
         self.connected = True

@@ -104,7 +104,7 @@ class TestUDPConnection(unittest.TestCase):
         packet = self.udp_connection.receive_check(self.udp_connection.udp_client.sender,
                                           data, data_size)
         assert packet.name == 'PacketAck'
-        data = packet.message_data.blocks['Packets'][0].vars['ID'].data
+        data = packet.blocks['Packets'][0].vars['ID'].data
         assert data == 1, "ID Data incorrect: " + str(data)
 
     def test_receive_zero(self):
@@ -117,7 +117,7 @@ class TestUDPConnection(unittest.TestCase):
         packet = self.udp_connection.receive_check(self.udp_connection.udp_client.sender,
                                           data, data_size)
         assert packet.name == 'PacketAck'
-        data = packet.message_data.blocks['Packets'][0].vars['ID'].data
+        data = packet.blocks['Packets'][0].vars['ID'].data
         assert data == 1, "ID Data incorrect: " + str(data)
 
     def test_receive_reliable(self):

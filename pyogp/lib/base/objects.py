@@ -13,7 +13,7 @@ from pyogp.lib.base import *
 from pyogp.lib.base.permissions import *
 
 # pyogp message
-from pyogp.lib.base.message.packethandler import PacketHandler
+from pyogp.lib.base.message.message_handler import MessageHandler
 from pyogp.lib.base.message.packets import *
 from pyogp.lib.base.datatypes import *
 
@@ -35,7 +35,7 @@ class Objects(object):
     Tests: tests/test_objects.py
     """
 
-    def __init__(self, agent = None, region = None, settings = None, packet_handler = None, events_handler = None):
+    def __init__(self, agent = None, region = None, settings = None, message_handler = None, events_handler = None):
         """ set up the inventory manager """
 
         # allow the settings to be passed in
@@ -62,31 +62,33 @@ class Objects(object):
 
         # set up callbacks
         if self.settings.HANDLE_PACKETS:
-            if packet_handler != None:
-                self.packet_handler = packet_handler
-            else:
-                self.packet_handler = PacketHandler()
 
-            onObjectUpdate_received = self.packet_handler._register('ObjectUpdate')
+            # otherwise, let's just use our own
+            if message_handler != None:
+                self.message_handler = message_handler
+            else:
+                self.message_handler = MessageHandler()
+
+            onObjectUpdate_received = self.message_handler._register('ObjectUpdate')
             onObjectUpdate_received.subscribe(self.onObjectUpdate)
 
-            onObjectUpdateCached_received = self.packet_handler._register('ObjectUpdateCached')
+            onObjectUpdateCached_received = self.message_handler._register('ObjectUpdateCached')
             onObjectUpdateCached_received.subscribe(self.onObjectUpdateCached)
 
-            onObjectUpdateCompressed_received= self.packet_handler._register('ObjectUpdateCompressed')
+            onObjectUpdateCompressed_received= self.message_handler._register('ObjectUpdateCompressed')
             onObjectUpdateCompressed_received.subscribe(self.onObjectUpdateCompressed)
 
-            onObjectProperties_received = self.packet_handler._register('ObjectProperties')
+            onObjectProperties_received = self.message_handler._register('ObjectProperties')
             onObjectProperties_received.subscribe(self.onObjectProperties)
 
-            onKillObject_received= self.packet_handler._register('KillObject')
+            onKillObject_received= self.message_handler._register('KillObject')
             onKillObject_received.subscribe(self.onKillObject)
 
             # uncomment these to view packets sent back to simulator
-            # onObjectName_sent = self.packet_handler._register('ObjectName')
+            # onObjectName_sent = self.message_handler._register('ObjectName')
             # onObjectName_sent.subscribe(self.helpers.log_packet, self)
 
-            # onDeRezObject_sent = self.packet_handler._register('DeRezObject')
+            # onDeRezObject_sent = self.message_handler._register('DeRezObject')
             # onDeRezObject_sent.subscribe(self.helpers.log_packet, self)
 
         if self.settings.LOG_VERBOSE: log(INFO, "Initializing object storage")
@@ -415,10 +417,10 @@ class Objects(object):
         object_list = []
 
         # ToDo: handle these 2 variables properly
-        _RegionHandle = packet.message_data.blocks['RegionData'][0].get_variable('RegionHandle').data
-        _TimeDilation = packet.message_data.blocks['RegionData'][0].get_variable('TimeDilation').data
+        _RegionHandle = packet.blocks['RegionData'][0].get_variable('RegionHandle').data
+        _TimeDilation = packet.blocks['RegionData'][0].get_variable('TimeDilation').data
 
-        for ObjectData_block in packet.message_data.blocks['ObjectData']:
+        for ObjectData_block in packet.blocks['ObjectData']:
 
             object_properties = {}
 
@@ -538,12 +540,12 @@ class Objects(object):
         """ borrowing from libomv, we'll request object data for all data coming in via ObjectUpdateCached"""
 
         # ToDo: handle these 2 variables properly
-        _RegionHandle = packet.message_data.blocks['RegionData'][0].get_variable('RegionHandle').data
-        _TimeDilation = packet.message_data.blocks['RegionData'][0].get_variable('TimeDilation').data
+        _RegionHandle = packet.blocks['RegionData'][0].get_variable('RegionHandle').data
+        _TimeDilation = packet.blocks['RegionData'][0].get_variable('TimeDilation').data
 
         _request_list = []
 
-        for ObjectData_block in packet.message_data.blocks['ObjectData']:
+        for ObjectData_block in packet.blocks['ObjectData']:
 
             LocalID = ObjectData_block.get_variable('ID').data
             _CRC = ObjectData_block.get_variable('CRC').data
@@ -569,10 +571,10 @@ class Objects(object):
         object_list = []
 
         # ToDo: handle these 2 variables properly
-        _RegionHandle = packet.message_data.blocks['RegionData'][0].get_variable('RegionHandle').data
-        _TimeDilation = packet.message_data.blocks['RegionData'][0].get_variable('TimeDilation').data
+        _RegionHandle = packet.blocks['RegionData'][0].get_variable('RegionHandle').data
+        _TimeDilation = packet.blocks['RegionData'][0].get_variable('TimeDilation').data
 
-        for ObjectData_block in packet.message_data.blocks['ObjectData']:
+        for ObjectData_block in packet.blocks['ObjectData']:
 
             object_properties = {}
 
@@ -816,7 +818,7 @@ class Objects(object):
 
     def onKillObject(self, packet):
 
-        _KillID = packet.message_data.blocks['ObjectData'][0].get_variable('ID').data
+        _KillID = packet.blocks['ObjectData'][0].get_variable('ID').data
 
         self.remove_object_from_store(_KillID)
 
@@ -824,7 +826,7 @@ class Objects(object):
 
         object_list = []
 
-        for ObjectData_block in packet.message_data.blocks['ObjectData']:
+        for ObjectData_block in packet.blocks['ObjectData']:
 
             object_properties = {}
 

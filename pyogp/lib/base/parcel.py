@@ -10,7 +10,8 @@ from pyogp.lib.base.datatypes import UUID
 from pyogp.lib.base.exc import *
 
 # pyogp messaging
-from pyogp.lib.base.message.packets import *
+#from pyogp.lib.base.message.packets import *
+from pyogp.lib.base.message.message_handler import MessageHandler
 
 # utilities
 from pyogp.lib.base.utilities.helpers import Helpers
@@ -52,7 +53,7 @@ log = logger.log
 class ParcelManager(object):
     """ a parcel manager, generally used as an attribute of a region """
 
-    def __init__(self, region = None, agent = None, packet_handler = None, events_handler = None, settings = None):
+    def __init__(self, region = None, agent = None, message_handler = None, events_handler = None, settings = None):
         """ initialize the parcel manager """
 
         # allow the settings to be passed in
@@ -66,13 +67,18 @@ class ParcelManager(object):
         # store the incoming parameters
         self.region = region
         self.agent = agent
-        self.packet_handler = packet_handler
+
+        # otherwise, let's just use our own
+        if message_handler != None:
+            self.message_handler = message_handler
+        else:
+            self.message_handler = MessageHandler()
 
         # otherwise, let's just use our own
         if events_handler != None:
             self.events_handler = events_handler
         else:
-            self.events_handler = EventsHandler()
+            self.events_handler = AppEventsHandler()
 
         self.helpers = Helpers()
 
@@ -86,19 +92,19 @@ class ParcelManager(object):
         self.parcel_map_full = False
 
         # set up callbacks for parcel related packets
-        self.onParcelOverlay_received = self.packet_handler._register('ParcelOverlay')
+        self.onParcelOverlay_received = self.message_handler._register('ParcelOverlay')
         self.onParcelOverlay_received.subscribe(self.onParcelOverlay)
 
-        self.onParcelProperties_received = self.agent.event_queue_handler._register('ParcelProperties')
+        self.onParcelProperties_received = self.message_handler._register('ParcelProperties')
         self.onParcelProperties_received.subscribe(self.onParcelProperties)
 
-        self.onParcelPropertiesUpdate_received = self.packet_handler._register('ParcelPropertiesUpdate')
+        self.onParcelPropertiesUpdate_received = self.message_handler._register('ParcelPropertiesUpdate')
         self.onParcelPropertiesUpdate_received.subscribe(self.onParcelPropertiesUpdate)
 
-        self.onParcelInfoReply_received = self.packet_handler._register('ParcelInfoReply')
+        self.onParcelInfoReply_received = self.message_handler._register('ParcelInfoReply')
         self.onParcelInfoReply_received.subscribe(self.onParcelInfoReply)
 
-        if self.settings.LOG_VERBOSE: log(DEBUG, "Initializing the parcel manager for %s in region %s." % (self.agent.Name(), self.region.SimName))
+        if self.settings.LOG_VERBOSE: log(DEBUG, "Initializing the parcel manager in region %s." % (self.region.SimName))
 
     def onParcelOverlay(self, packet):
         """ parse and handle an incoming ParcelOverlay packet
@@ -108,8 +114,8 @@ class ParcelManager(object):
         """
 
         # unpack the data
-        sequence_id = packet.message_data.blocks['ParcelData'][0].get_variable('SequenceID').data
-        data = packet.message_data.blocks['ParcelData'][0].get_variable('Data').data
+        sequence_id = packet.blocks['ParcelData'][0].get_variable('SequenceID').data
+        data = packet.blocks['ParcelData'][0].get_variable('Data').data
 
         # store the data
         # ToDo: make sense of the binary blob in data
@@ -120,56 +126,56 @@ class ParcelManager(object):
 
         parcel_info = {}
 
-        parcel_info['RequestResult'] =  packet.message_data.blocks['ParcelData'][0].get_variable('RequestResult').data
-        parcel_info['SequenceID'] =  packet.message_data.blocks['ParcelData'][0].get_variable('SequenceID').data
-        parcel_info['SnapSelection'] =  packet.message_data.blocks['ParcelData'][0].get_variable('SnapSelection').data
-        parcel_info['SelfCount'] =  packet.message_data.blocks['ParcelData'][0].get_variable('SelfCount').data
-        parcel_info['OtherCount'] =  packet.message_data.blocks['ParcelData'][0].get_variable('OtherCount').data
-        parcel_info['PublicCount'] =  packet.message_data.blocks['ParcelData'][0].get_variable('PublicCount').data
-        parcel_info['LocalID'] =  packet.message_data.blocks['ParcelData'][0].get_variable('LocalID').data
-        parcel_info['OwnerID'] =  packet.message_data.blocks['ParcelData'][0].get_variable('OwnerID').data
-        parcel_info['IsGroupOwned'] =  packet.message_data.blocks['ParcelData'][0].get_variable('IsGroupOwned').data
-        parcel_info['AuctionID'] =  packet.message_data.blocks['ParcelData'][0].get_variable('AuctionID').data
-        parcel_info['ClaimDate'] =  packet.message_data.blocks['ParcelData'][0].get_variable('ClaimDate').data
-        parcel_info['ClaimPrice'] =  packet.message_data.blocks['ParcelData'][0].get_variable('ClaimPrice').data
-        parcel_info['RentPrice'] =  packet.message_data.blocks['ParcelData'][0].get_variable('RentPrice').data
-        parcel_info['AABBMin'] =  packet.message_data.blocks['ParcelData'][0].get_variable('AABBMin').data
-        parcel_info['AABBMax'] =  packet.message_data.blocks['ParcelData'][0].get_variable('AABBMax').data
-        parcel_info['Bitmap'] =  packet.message_data.blocks['ParcelData'][0].get_variable('Bitmap').data
-        parcel_info['Area'] =  packet.message_data.blocks['ParcelData'][0].get_variable('Area').data
-        parcel_info['Status'] =  packet.message_data.blocks['ParcelData'][0].get_variable('Status').data
-        parcel_info['SimWideMaxPrims'] =  packet.message_data.blocks['ParcelData'][0].get_variable('SimWideMaxPrims').data
-        parcel_info['SimWideTotalPrims'] =  packet.message_data.blocks['ParcelData'][0].get_variable('SimWideTotalPrims').data
-        parcel_info['MaxPrims'] =  packet.message_data.blocks['ParcelData'][0].get_variable('MaxPrims').data
-        parcel_info['TotalPrims'] =  packet.message_data.blocks['ParcelData'][0].get_variable('TotalPrims').data
-        parcel_info['OwnerPrims'] =  packet.message_data.blocks['ParcelData'][0].get_variable('OwnerPrims').data
-        parcel_info['GroupPrims'] =  packet.message_data.blocks['ParcelData'][0].get_variable('GroupPrims').data
-        parcel_info['OtherPrims'] =  packet.message_data.blocks['ParcelData'][0].get_variable('OtherPrims').data
-        parcel_info['SelectedPrims'] =  packet.message_data.blocks['ParcelData'][0].get_variable('SelectedPrims').data
-        parcel_info['ParcelPrimBonus'] =  packet.message_data.blocks['ParcelData'][0].get_variable('ParcelPrimBonus').data
-        parcel_info['OtherCleanTime'] =  packet.message_data.blocks['ParcelData'][0].get_variable('OtherCleanTime').data
-        parcel_info['ParcelFlags'] =  packet.message_data.blocks['ParcelData'][0].get_variable('ParcelFlags').data
-        parcel_info['SalePrice'] =  packet.message_data.blocks['ParcelData'][0].get_variable('SalePrice').data
-        parcel_info['Name'] =  packet.message_data.blocks['ParcelData'][0].get_variable('Name').data
-        parcel_info['Desc'] =  packet.message_data.blocks['ParcelData'][0].get_variable('Desc').data
-        parcel_info['MusicURL'] =  packet.message_data.blocks['ParcelData'][0].get_variable('MusicURL').data
-        parcel_info['MediaURL'] =  packet.message_data.blocks['ParcelData'][0].get_variable('MediaURL').data
-        parcel_info['MediaID'] =  packet.message_data.blocks['ParcelData'][0].get_variable('MediaID').data
-        parcel_info['MediaAutoScale'] =  packet.message_data.blocks['ParcelData'][0].get_variable('MediaAutoScale').data
-        parcel_info['GroupID'] =  packet.message_data.blocks['ParcelData'][0].get_variable('GroupID').data
-        parcel_info['PassPrice'] =  packet.message_data.blocks['ParcelData'][0].get_variable('PassPrice').data
-        parcel_info['PassHours'] =  packet.message_data.blocks['ParcelData'][0].get_variable('PassHours').data
-        parcel_info['Category'] =  packet.message_data.blocks['ParcelData'][0].get_variable('Category').data
-        parcel_info['AuthBuyerID'] =  packet.message_data.blocks['ParcelData'][0].get_variable('AuthBuyerID').data
-        parcel_info['SnapshotID'] =  packet.message_data.blocks['ParcelData'][0].get_variable('SnapshotID').data
-        parcel_info['UserLocation'] =  packet.message_data.blocks['ParcelData'][0].get_variable('UserLocation').data
-        parcel_info['UserLookAt'] =  packet.message_data.blocks['ParcelData'][0].get_variable('UserLookAt').data
-        parcel_info['LandingType'] =  packet.message_data.blocks['ParcelData'][0].get_variable('LandingType').data
-        parcel_info['RegionPushOverride'] =  packet.message_data.blocks['ParcelData'][0].get_variable('RegionPushOverride').data
-        parcel_info['RegionDenyAnonymous'] =  packet.message_data.blocks['ParcelData'][0].get_variable('RegionDenyAnonymous').data
-        parcel_info['RegionDenyIdentified'] =  packet.message_data.blocks['ParcelData'][0].get_variable('RegionDenyIdentified').data
-        parcel_info['RegionDenyTransacted'] =  packet.message_data.blocks['ParcelData'][0].get_variable('RegionDenyTransacted').data
-        parcel_info['RegionDenyAgeUnverified'] =  packet.message_data.blocks['AgeVerificationBlock'][0].get_variable('RegionDenyAgeUnverified').data
+        parcel_info['RequestResult'] =  packet.blocks['ParcelData'][0].get_variable('RequestResult').data
+        parcel_info['SequenceID'] =  packet.blocks['ParcelData'][0].get_variable('SequenceID').data
+        parcel_info['SnapSelection'] =  packet.blocks['ParcelData'][0].get_variable('SnapSelection').data
+        parcel_info['SelfCount'] =  packet.blocks['ParcelData'][0].get_variable('SelfCount').data
+        parcel_info['OtherCount'] =  packet.blocks['ParcelData'][0].get_variable('OtherCount').data
+        parcel_info['PublicCount'] =  packet.blocks['ParcelData'][0].get_variable('PublicCount').data
+        parcel_info['LocalID'] =  packet.blocks['ParcelData'][0].get_variable('LocalID').data
+        parcel_info['OwnerID'] =  packet.blocks['ParcelData'][0].get_variable('OwnerID').data
+        parcel_info['IsGroupOwned'] =  packet.blocks['ParcelData'][0].get_variable('IsGroupOwned').data
+        parcel_info['AuctionID'] =  packet.blocks['ParcelData'][0].get_variable('AuctionID').data
+        parcel_info['ClaimDate'] =  packet.blocks['ParcelData'][0].get_variable('ClaimDate').data
+        parcel_info['ClaimPrice'] =  packet.blocks['ParcelData'][0].get_variable('ClaimPrice').data
+        parcel_info['RentPrice'] =  packet.blocks['ParcelData'][0].get_variable('RentPrice').data
+        parcel_info['AABBMin'] =  packet.blocks['ParcelData'][0].get_variable('AABBMin').data
+        parcel_info['AABBMax'] =  packet.blocks['ParcelData'][0].get_variable('AABBMax').data
+        parcel_info['Bitmap'] =  packet.blocks['ParcelData'][0].get_variable('Bitmap').data
+        parcel_info['Area'] =  packet.blocks['ParcelData'][0].get_variable('Area').data
+        parcel_info['Status'] =  packet.blocks['ParcelData'][0].get_variable('Status').data
+        parcel_info['SimWideMaxPrims'] =  packet.blocks['ParcelData'][0].get_variable('SimWideMaxPrims').data
+        parcel_info['SimWideTotalPrims'] =  packet.blocks['ParcelData'][0].get_variable('SimWideTotalPrims').data
+        parcel_info['MaxPrims'] =  packet.blocks['ParcelData'][0].get_variable('MaxPrims').data
+        parcel_info['TotalPrims'] =  packet.blocks['ParcelData'][0].get_variable('TotalPrims').data
+        parcel_info['OwnerPrims'] =  packet.blocks['ParcelData'][0].get_variable('OwnerPrims').data
+        parcel_info['GroupPrims'] =  packet.blocks['ParcelData'][0].get_variable('GroupPrims').data
+        parcel_info['OtherPrims'] =  packet.blocks['ParcelData'][0].get_variable('OtherPrims').data
+        parcel_info['SelectedPrims'] =  packet.blocks['ParcelData'][0].get_variable('SelectedPrims').data
+        parcel_info['ParcelPrimBonus'] =  packet.blocks['ParcelData'][0].get_variable('ParcelPrimBonus').data
+        parcel_info['OtherCleanTime'] =  packet.blocks['ParcelData'][0].get_variable('OtherCleanTime').data
+        parcel_info['ParcelFlags'] =  packet.blocks['ParcelData'][0].get_variable('ParcelFlags').data
+        parcel_info['SalePrice'] =  packet.blocks['ParcelData'][0].get_variable('SalePrice').data
+        parcel_info['Name'] =  packet.blocks['ParcelData'][0].get_variable('Name').data
+        parcel_info['Desc'] =  packet.blocks['ParcelData'][0].get_variable('Desc').data
+        parcel_info['MusicURL'] =  packet.blocks['ParcelData'][0].get_variable('MusicURL').data
+        parcel_info['MediaURL'] =  packet.blocks['ParcelData'][0].get_variable('MediaURL').data
+        parcel_info['MediaID'] =  packet.blocks['ParcelData'][0].get_variable('MediaID').data
+        parcel_info['MediaAutoScale'] =  packet.blocks['ParcelData'][0].get_variable('MediaAutoScale').data
+        parcel_info['GroupID'] =  packet.blocks['ParcelData'][0].get_variable('GroupID').data
+        parcel_info['PassPrice'] =  packet.blocks['ParcelData'][0].get_variable('PassPrice').data
+        parcel_info['PassHours'] =  packet.blocks['ParcelData'][0].get_variable('PassHours').data
+        parcel_info['Category'] =  packet.blocks['ParcelData'][0].get_variable('Category').data
+        parcel_info['AuthBuyerID'] =  packet.blocks['ParcelData'][0].get_variable('AuthBuyerID').data
+        parcel_info['SnapshotID'] =  packet.blocks['ParcelData'][0].get_variable('SnapshotID').data
+        parcel_info['UserLocation'] =  packet.blocks['ParcelData'][0].get_variable('UserLocation').data
+        parcel_info['UserLookAt'] =  packet.blocks['ParcelData'][0].get_variable('UserLookAt').data
+        parcel_info['LandingType'] =  packet.blocks['ParcelData'][0].get_variable('LandingType').data
+        parcel_info['RegionPushOverride'] =  packet.blocks['ParcelData'][0].get_variable('RegionPushOverride').data
+        parcel_info['RegionDenyAnonymous'] =  packet.blocks['ParcelData'][0].get_variable('RegionDenyAnonymous').data
+        parcel_info['RegionDenyIdentified'] =  packet.blocks['ParcelData'][0].get_variable('RegionDenyIdentified').data
+        parcel_info['RegionDenyTransacted'] =  packet.blocks['ParcelData'][0].get_variable('RegionDenyTransacted').data
+        parcel_info['RegionDenyAgeUnverified'] =  packet.blocks['AgeVerificationBlock'][0].get_variable('RegionDenyAgeUnverified').data
 
         self._store_parcel_properties(parcel_info)
 
@@ -178,25 +184,25 @@ class ParcelManager(object):
 
         parcel_update = {}
 
-        parcel_update['LocalID'] = packet.message_data.blocks['ParcelData'][0].get_variable('LocalID').data
-        parcel_update['Flags'] = packet.message_data.blocks['ParcelData'][0].get_variable('Flags').data
-        parcel_update['ParcelFlags'] = packet.message_data.blocks['ParcelData'][0].get_variable('ParcelFlags').data
-        parcel_update['SalePrice'] = packet.message_data.blocks['ParcelData'][0].get_variable('SalePrice').data
-        parcel_update['Name'] = packet.message_data.blocks['ParcelData'][0].get_variable('Name').data
-        parcel_update['Desc'] = packet.message_data.blocks['ParcelData'][0].get_variable('Desc').data
-        parcel_update['MusicURL'] = packet.message_data.blocks['ParcelData'][0].get_variable('MusicURL').data
-        parcel_update['MediaURL'] = packet.message_data.blocks['ParcelData'][0].get_variable('MediaURL').data
-        parcel_update['MediaID'] = packet.message_data.blocks['ParcelData'][0].get_variable('MediaID').data
-        parcel_update['MediaAutoScale'] = packet.message_data.blocks['ParcelData'][0].get_variable('MediaAutoScale').data
-        parcel_update['GroupID'] = packet.message_data.blocks['ParcelData'][0].get_variable('GroupID').data
-        parcel_update['PassPrice'] = packet.message_data.blocks['ParcelData'][0].get_variable('PassPrice').data
-        parcel_update['PassHours'] = packet.message_data.blocks['ParcelData'][0].get_variable('PassHours').data
-        parcel_update['Category'] = packet.message_data.blocks['ParcelData'][0].get_variable('Category').data
-        parcel_update['AuthBuyerID'] = packet.message_data.blocks['ParcelData'][0].get_variable('AuthBuyerID').data
-        parcel_update['SnapshotID'] = packet.message_data.blocks['ParcelData'][0].get_variable('SnapshotID').data
-        parcel_update['UserLocation'] = packet.message_data.blocks['ParcelData'][0].get_variable('UserLocation').data
-        parcel_update['UserLookAt'] = packet.message_data.blocks['ParcelData'][0].get_variable('UserLookAt').data
-        parcel_update['LandingType'] = packet.message_data.blocks['ParcelData'][0].get_variable('LandingType').data
+        parcel_update['LocalID'] = packet.blocks['ParcelData'][0].get_variable('LocalID').data
+        parcel_update['Flags'] = packet.blocks['ParcelData'][0].get_variable('Flags').data
+        parcel_update['ParcelFlags'] = packet.blocks['ParcelData'][0].get_variable('ParcelFlags').data
+        parcel_update['SalePrice'] = packet.blocks['ParcelData'][0].get_variable('SalePrice').data
+        parcel_update['Name'] = packet.blocks['ParcelData'][0].get_variable('Name').data
+        parcel_update['Desc'] = packet.blocks['ParcelData'][0].get_variable('Desc').data
+        parcel_update['MusicURL'] = packet.blocks['ParcelData'][0].get_variable('MusicURL').data
+        parcel_update['MediaURL'] = packet.blocks['ParcelData'][0].get_variable('MediaURL').data
+        parcel_update['MediaID'] = packet.blocks['ParcelData'][0].get_variable('MediaID').data
+        parcel_update['MediaAutoScale'] = packet.blocks['ParcelData'][0].get_variable('MediaAutoScale').data
+        parcel_update['GroupID'] = packet.blocks['ParcelData'][0].get_variable('GroupID').data
+        parcel_update['PassPrice'] = packet.blocks['ParcelData'][0].get_variable('PassPrice').data
+        parcel_update['PassHours'] = packet.blocks['ParcelData'][0].get_variable('PassHours').data
+        parcel_update['Category'] = packet.blocks['ParcelData'][0].get_variable('Category').data
+        parcel_update['AuthBuyerID'] = packet.blocks['ParcelData'][0].get_variable('AuthBuyerID').data
+        parcel_update['SnapshotID'] = packet.blocks['ParcelData'][0].get_variable('SnapshotID').data
+        parcel_update['UserLocation'] = packet.blocks['ParcelData'][0].get_variable('UserLocation').data
+        parcel_update['UserLookAt'] = packet.blocks['ParcelData'][0].get_variable('UserLookAt').data
+        parcel_update['LandingType'] = packet.blocks['ParcelData'][0].get_variable('LandingType').data
 
         self._update_parcel_properties(parcel_update)
 
@@ -310,7 +316,8 @@ class ParcelManager(object):
 
     def request_estate_covenant(self, ):
         """ request the estate covenant (for the current estate)"""
-        self.onEstateCovenantReply_received = self.packet_handler._register('EstateCovenantReply')
+
+        self.onEstateCovenantReply_received = self.message_handler._register('EstateCovenantReply')
         self.onEstateCovenantReply_received.subscribe(self.onEstateCovenantReply)
 
         self.sendEstateCovenantRequest()
@@ -336,10 +343,10 @@ class ParcelManager(object):
 
             pass
 
-        CovenantID =  packet.message_data.blocks['Data'][0].get_variable('CovenantID').data
-        CovenantTimestamp =  packet.message_data.blocks['Data'][0].get_variable('CovenantTimestamp').data
-        EstateName =  packet.message_data.blocks['Data'][0].get_variable('EstateName').data
-        EstateOwnerID =  packet.message_data.blocks['Data'][0].get_variable('EstateOwnerID').data
+        CovenantID =  packet.blocks['Data'][0].get_variable('CovenantID').data
+        CovenantTimestamp =  packet.blocks['Data'][0].get_variable('CovenantTimestamp').data
+        EstateName =  packet.blocks['Data'][0].get_variable('EstateName').data
+        EstateOwnerID =  packet.blocks['Data'][0].get_variable('EstateOwnerID').data
 
         log(INFO, "Received EstateCovenantReply for estate name %s with a CovenantID of %s." % (EstateName, CovenantID))
 
@@ -417,21 +424,21 @@ class ParcelManager(object):
 
         parcel_info = {}
 
-        parcel_info['ParcelID'] = packet.message_data.blocks['Data'][0].get_variable('ParcelID').data
-        parcel_info['OwnerID'] = packet.message_data.blocks['Data'][0].get_variable('OwnerID').data
-        parcel_info['Name'] = packet.message_data.blocks['Data'][0].get_variable('Name').data
-        parcel_info['Desc'] = packet.message_data.blocks['Data'][0].get_variable('Desc').data
-        parcel_info['ActualArea'] = packet.message_data.blocks['Data'][0].get_variable('ActualArea').data
-        parcel_info['BillableArea'] = packet.message_data.blocks['Data'][0].get_variable('BillableArea').data
-        parcel_info['Flags'] = packet.message_data.blocks['Data'][0].get_variable('Flags').data
-        parcel_info['GlobalX'] = packet.message_data.blocks['Data'][0].get_variable('GlobalX').data
-        parcel_info['GlobalY'] = packet.message_data.blocks['Data'][0].get_variable('GlobalY').data
-        parcel_info['GlobalZ'] = packet.message_data.blocks['Data'][0].get_variable('GlobalZ').data
-        parcel_info['SimName'] = packet.message_data.blocks['Data'][0].get_variable('SimName').data
-        parcel_info['SnapshotID'] = packet.message_data.blocks['Data'][0].get_variable('SnapshotID').data
-        parcel_info['Dwell'] = packet.message_data.blocks['Data'][0].get_variable('Dwell').data
-        parcel_info['SalePrice'] = packet.message_data.blocks['Data'][0].get_variable('SalePrice').data
-        parcel_info['AuctionID'] = packet.message_data.blocks['Data'][0].get_variable('AuctionID').data
+        parcel_info['ParcelID'] = packet.blocks['Data'][0].get_variable('ParcelID').data
+        parcel_info['OwnerID'] = packet.blocks['Data'][0].get_variable('OwnerID').data
+        parcel_info['Name'] = packet.blocks['Data'][0].get_variable('Name').data
+        parcel_info['Desc'] = packet.blocks['Data'][0].get_variable('Desc').data
+        parcel_info['ActualArea'] = packet.blocks['Data'][0].get_variable('ActualArea').data
+        parcel_info['BillableArea'] = packet.blocks['Data'][0].get_variable('BillableArea').data
+        parcel_info['Flags'] = packet.blocks['Data'][0].get_variable('Flags').data
+        parcel_info['GlobalX'] = packet.blocks['Data'][0].get_variable('GlobalX').data
+        parcel_info['GlobalY'] = packet.blocks['Data'][0].get_variable('GlobalY').data
+        parcel_info['GlobalZ'] = packet.blocks['Data'][0].get_variable('GlobalZ').data
+        parcel_info['SimName'] = packet.blocks['Data'][0].get_variable('SimName').data
+        parcel_info['SnapshotID'] = packet.blocks['Data'][0].get_variable('SnapshotID').data
+        parcel_info['Dwell'] = packet.blocks['Data'][0].get_variable('Dwell').data
+        parcel_info['SalePrice'] = packet.blocks['Data'][0].get_variable('SalePrice').data
+        parcel_info['AuctionID'] = packet.blocks['Data'][0].get_variable('AuctionID').data
 
         self._update_parcel_properties(parcel_info)
 
@@ -682,7 +689,7 @@ class ParcelManager(object):
     def request_parcel_access_list(self, LocalID, Flags):
         """ request an access list for the specified parcel, while enabling a callback handler for the response """
 
-        self.onParcelAccessListReply_received = self.packet_handler._register('ParcelAccessListReply')
+        self.onParcelAccessListReply_received = self.message_handler._register('ParcelAccessListReply')
         self.onParcelAccessListReply_received.subscribe(self.onParcelAccessListReply, LocalID = LocalID)
 
         self.sendParcelAccessListRequest(LocalID, Flags)
@@ -735,7 +742,7 @@ class ParcelManager(object):
     def request_parcel_dwell(self, LocalID):
         """ request dwell for the specified parcel, while enabling a callback handler for the response """
 
-        self.onParcelDwellReply_received = self.packet_handler._register('ParcelDwellReply')
+        self.onParcelDwellReply_received = self.message_handler._register('ParcelDwellReply')
         self.onParcelDwellReply_received.subscribe(self.onParcelDwellReply, LocalID = LocalID)
 
         self.sendParcelDwellRequest(LocalID)
@@ -758,7 +765,7 @@ class ParcelManager(object):
     def onParcelDwellReply(self, packet, LocalID = None):
         """ parse and handle a ParcelDwellReply packet"""
 
-        AgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
+        AgentID = packet.blocks['AgentData'][0].get_variable('AgentID').data
 
         # log receipt of a packet that was intended to be sent to another agent
         # ToDo: should we raise an event in this case? yes.... later
@@ -769,16 +776,15 @@ class ParcelManager(object):
         # get the body of the message
         parcel_info = {}
 
-        parcel_info['LocalID'] = packet.message_data.blocks['Data'][0].get_variable('LocalID').data
-        parcel_info['ParcelID'] = packet.message_data.blocks['Data'][0].get_variable('ParcelID').data
-        parcel_info['Dwell'] = packet.message_data.blocks['Data'][0].get_variable('Dwell').data
+        parcel_info['LocalID'] = packet.blocks['Data'][0].get_variable('LocalID').data
+        parcel_info['ParcelID'] = packet.blocks['Data'][0].get_variable('ParcelID').data
+        parcel_info['Dwell'] = packet.blocks['Data'][0].get_variable('Dwell').data
 
         if LocalID == parcel_info['LocalID']:
 
             self.onParcelDwellReply_received.unsubscribe(self.onParcelDwellReply, LocalID = LocalID)
 
         self._update_parcel_properties(parcel_info)
-
 
 class Parcel(object):
     """ a representation of a parcel """

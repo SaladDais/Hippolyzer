@@ -6,10 +6,10 @@ import traceback
 # pyogp
 from circuit import CircuitManager
 from types import MsgType, MsgBlockType, MsgFrequency, PacketLayout, EndianType, PackFlags, sizeof
-from udpserializer import UDPPacketSerializer
-from udpdeserializer import UDPPacketDeserializer
+from udpserializer import UDPMessageSerializer
+from udpdeserializer import UDPMessageDeserializer
 from data_unpacker import DataUnpacker
-from packet import UDPPacket
+#from packet import UDPMessage
 from message import Message, Block
 from pyogp.lib.base.network.net import NetUDPClient
 from pyogp.lib.base import exc
@@ -24,7 +24,7 @@ log = logger.log
 class UDPDispatcher(object):
     #implements(IUDPDispatcher)
 
-    def __init__(self, udp_client = None, settings = None, packet_handler = None, region = None):
+    def __init__(self, udp_client = None, settings = None, message_handler = None, region = None):
         #holds the details of the message, or how the messages should be sent,
         #built, and read
 
@@ -59,15 +59,15 @@ class UDPDispatcher(object):
 
         # allow the packet_handler to be passed in
         # otherwise, grab the defaults
-        if packet_handler != None:
-            self.packet_handler = packet_handler
+        if message_handler != None:
+            self.message_handler = message_handler
         elif self.settings.HANDLE_PACKETS:
-            from pyogp.lib.base.message.packethandler import PacketHandler
-            self.packet_handler = PacketHandler()
+            from pyogp.lib.base.message.message_handler import MessageHandler
+            self.message_handler = MessageHandler()
 
         # set up our parsers
-        self.udp_deserializer = UDPPacketDeserializer(self.packet_handler, self.settings)
-        self.udp_serializer = UDPPacketSerializer()
+        self.udp_deserializer = UDPMessageDeserializer(self.message_handler, self.settings)
+        self.udp_serializer = UDPMessageSerializer()
 
     def find_circuit(self, host):
         circuit = self.circuit_manager.get_circuit(host)
@@ -131,7 +131,7 @@ class UDPDispatcher(object):
                 log(DEBUG, 'Received packet%s : %s (%s)%s' % (host_string, recv_packet.name, recv_packet.packet_id, hex_string))
 
             if self.settings.HANDLE_PACKETS:
-                self.packet_handler._handle(recv_packet)
+                self.message_handler._handle(recv_packet)
 
         return recv_packet
 
@@ -155,11 +155,12 @@ class UDPDispatcher(object):
         if host.is_ok() == False:
             return
 
-        packet = UDPPacket(message)
+        packet = Message(message.name)
+        packet.blocks = message.blocks
 
         # enable monitoring of outgoing packets
         if self.settings.HANDLE_PACKETS:
-            self.packet_handler._handle(packet)
+            self.message_handler._handle(packet)
 
         #use circuit manager to get the circuit to send on
         circuit = self.find_circuit(host)

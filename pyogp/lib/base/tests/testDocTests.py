@@ -18,7 +18,7 @@ def test_suite():
                 "agent.txt",
                 "login.txt",
                 "caps.txt",
-                "packet_handler.txt",
+                "message_handler.txt",
                 package="pyogp.lib.base.tests",
                 setUp = setUp,
                 tearDown = tearDown,

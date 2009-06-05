@@ -48,6 +48,10 @@ class MsgBlockData(object):
         self.vars[var.name] = var
         self.var_list.append(var.name)   #LDE 25oct2008 wanted to keep in entry order for nice display later on
 
+    def __call__(self):
+
+        return self.vars
+
 class MsgVariableData(object):
     """ Used as a Message Block variable that is being created that will be
         serialized and sent """
@@ -77,6 +81,10 @@ class MsgVariableData(object):
 
     def __repr__(self):
         return self.get_data_as_string()
+
+    def __call__(self):
+
+        return self.data
 
 class MessageTemplateVariable(object):
     """TODO: Add docstring"""

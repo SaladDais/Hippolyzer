@@ -4,21 +4,21 @@ from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 
 #pyogp libs
 from pyogp.lib.base.settings import Settings
-from pyogp.lib.base.message.packethandler import PacketHandler
+from pyogp.lib.base.message.message_handler import MessageHandler
 from template_dict import TemplateDictionary
 from template import MsgData, MsgBlockData, MsgVariableData
 from types import MsgType, MsgBlockType, MsgFrequency, PacketLayout, EndianType, PackFlags, sizeof
 from data_unpacker import DataUnpacker
-from packet import UDPPacket
+from message import Message
 
 from pyogp.lib.base import exc
 
 logger = getLogger('message.udpdeserializer') 
 log = logger.log 
 
-class UDPPacketDeserializer(object):
+class UDPMessageDeserializer(object):
 
-    def __init__(self, packet_handler = None, settings = None):
+    def __init__(self, message_handler = None, settings = None):
 
         self.context = None
         self.unpacker = DataUnpacker()
@@ -37,10 +37,10 @@ class UDPPacketDeserializer(object):
         # we can skip parsing all the data in a packet if we know it's not being handled
         # allow the packet_handler to be passed in
         # otherwise, grab the defaults
-        if packet_handler != None:
-            self.packet_handler = packet_handler
+        if message_handler != None:
+            self.message_handler = message_handler
         elif self.settings.HANDLE_PACKETS:
-            self.packet_handler = PacketHandler()
+            self.message_handler = MessageHandler()
 
     def deserialize(self, context):
 
@@ -92,7 +92,7 @@ class UDPPacketDeserializer(object):
             msg_buff = msg_buff + ''.join(temp_acks)
 
             # if the packet is being handled, or if have have disabled deferred packet parsing, handle it!
-            if self.packet_handler.is_packet_handled(self.current_template.name) or not self.settings.ENABLE_DEFERRED_PACKET_PARSING:
+            if self.message_handler.is_message_handled(self.current_template.name) or not self.settings.ENABLE_DEFERRED_PACKET_PARSING:
 
                 try:
                     return self.__decode_data(msg_buff)
@@ -181,7 +181,7 @@ class UDPPacketDeserializer(object):
 
         msg_data = MsgData(self.current_template.name)
 
-        packet = UDPPacket(msg_data)
+        packet = Message(msg_data)
         msg_size = len(data)
 
         packet.name = self.current_template.name
@@ -316,7 +316,7 @@ class UDPPacketDeserializer(object):
         if len(msg_data.blocks) <= 0 and len(self.current_template.blocks) > 0:
             raise exc.MessageDeserializationError("message", "message is empty")
 
-        packet.message_data = msg_data
+        packet.blocks = msg_data.blocks
         return packet
 
     def zero_code_expand(self, msg_buf, msg_size):

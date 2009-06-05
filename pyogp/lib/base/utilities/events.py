@@ -29,7 +29,7 @@ class Event(object):
 
         except:
 
-            raise ValueError("Handler is not subscribed to this event.")
+            raise ValueError("Handler '%s' is not subscribed to this event." %s (handler))
 
         return self
 

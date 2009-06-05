@@ -61,13 +61,13 @@ class Inventory(object):
     def enable_callbacks(self):
         """ enable monitors for certain inventory related packet events """
 
-        onInventoryDescendents_received = self.agent.region.packet_handler._register('InventoryDescendents')
+        onInventoryDescendents_received = self.agent.region.message_handler._register('InventoryDescendents')
         onInventoryDescendents_received.subscribe(self.onInventoryDescendents)
 
-        onFetchInventoryReply_received = self.agent.region.packet_handler._register('FetchInventoryReply')
+        onFetchInventoryReply_received = self.agent.region.message_handler._register('FetchInventoryReply')
         onFetchInventoryReply_received.subscribe(self.onFetchInventoryReply)
 
-        onBulkUpdateInventory_received = self.agent.region.packet_handler._register('BulkUpdateInventory')
+        onBulkUpdateInventory_received = self.agent.region.message_handler._register('BulkUpdateInventory')
         onBulkUpdateInventory_received.subscribe(self.onBulkUpdateInventory)
 
     def onInventoryDescendents(self, packet):
@@ -81,7 +81,7 @@ class Inventory(object):
     def onBulkUpdateInventory(self, packet):
         """ handle the inventory data being delivered in the BullkUpdateInventory packet """
 
-        for FolderData_block in packet.message_data.blocks['FolderData']:
+        for FolderData_block in packet.blocks['FolderData']:
 
             _FolderID = FolderData_block.get_variable('FolderID').data
             _ParentID = FolderData_block.get_variable('ParentID').data
@@ -92,7 +92,7 @@ class Inventory(object):
 
             self._store_inventory_folder(folder)
 
-        for ItemData_block in packet.message_data.blocks['ItemData']:
+        for ItemData_block in packet.blocks['ItemData']:
 
             # what is CallbackID??? not doing anything with it.
 
@@ -405,14 +405,14 @@ class Inventory(object):
     def handle_inventory_offer(self, packet):
         """ parses and handles an incoming inventory offer """
 
-        FromAgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
-        FromAgentName = packet.message_data.blocks['MessageBlock'][0].get_variable('FromAgentName').data
-        InventoryName = packet.message_data.blocks['MessageBlock'][0].get_variable('Message').data
-        ID = packet.message_data.blocks['MessageBlock'][0].get_variable('ID').data
-        Message = packet.message_data.blocks['MessageBlock'][0].get_variable('Message').data
-        ToAgentID = packet.message_data.blocks['MessageBlock'][0].get_variable('ToAgentID').data
+        FromAgentID = packet.blocks['AgentData'][0].get_variable('AgentID').data
+        FromAgentName = packet.blocks['MessageBlock'][0].get_variable('FromAgentName').data
+        InventoryName = packet.blocks['MessageBlock'][0].get_variable('Message').data
+        ID = packet.blocks['MessageBlock'][0].get_variable('ID').data
+        Message = packet.blocks['MessageBlock'][0].get_variable('Message').data
+        ToAgentID = packet.blocks['MessageBlock'][0].get_variable('ToAgentID').data
 
-        BinaryBucket = packet.message_data.blocks['MessageBlock'][0].get_variable('BinaryBucket').data
+        BinaryBucket = packet.blocks['MessageBlock'][0].get_variable('BinaryBucket').data
 
         # parse the binary bucket
         AssetType = struct.unpack(">b", BinaryBucket[0:1])[0]
@@ -663,9 +663,9 @@ class UDP_Inventory(Inventory):
 
     def onFetchInventoryReply(self, packet):
 
-        _agent_id = packet.message_data.blocks['AgentData'][0].get_variable('AgentID')
+        _agent_id = packet.blocks['AgentData'][0].get_variable('AgentID')
 
-        for InventoryData_block in packet.message_data.blocks['InventoryData']:
+        for InventoryData_block in packet.blocks['InventoryData']:
 
             _ItemID = InventoryData_block.get_variable('ItemID').data
             _FolderID = InventoryData_block.get_variable('FolderID').data
@@ -695,19 +695,19 @@ class UDP_Inventory(Inventory):
 
     def onInventoryDescendents(self, packet):
         
-        if packet.message_data.blocks['AgentData'][0].get_variable('Descendents') > 0:
+        if packet.blocks['AgentData'][0].get_variable('Descendents') > 0:
 
-            _agent_id = packet.message_data.blocks['AgentData'][0].get_variable('AgentID')
-            _folder_id = packet.message_data.blocks['AgentData'][0].get_variable('FolderID')
-            _owner_id = packet.message_data.blocks['AgentData'][0].get_variable('OwnerID')
-            _version = packet.message_data.blocks['AgentData'][0].get_variable('Version')
-            _descendents = packet.message_data.blocks['AgentData'][0].get_variable('Descendents')
+            _agent_id = packet.blocks['AgentData'][0].get_variable('AgentID')
+            _folder_id = packet.blocks['AgentData'][0].get_variable('FolderID')
+            _owner_id = packet.blocks['AgentData'][0].get_variable('OwnerID')
+            _version = packet.blocks['AgentData'][0].get_variable('Version')
+            _descendents = packet.blocks['AgentData'][0].get_variable('Descendents')
             # _descendents is not dealt with in any way here
 
 
-            if str(packet.message_data.blocks['ItemData'][0].get_variable('ItemID').data) != str(UUID()):
+            if str(packet.blocks['ItemData'][0].get_variable('ItemID').data) != str(UUID()):
 
-                for ItemData_block in packet.message_data.blocks['ItemData']:
+                for ItemData_block in packet.blocks['ItemData']:
 
                     _ItemID = ItemData_block.get_variable('ItemID').data
                     _FolderID = ItemData_block.get_variable('FolderID').data
@@ -735,9 +735,9 @@ class UDP_Inventory(Inventory):
 
                     self._store_inventory_item(inventory_item)
 
-            if str(packet.message_data.blocks['FolderData'][0].get_variable('FolderID').data) != str(UUID()):
+            if str(packet.blocks['FolderData'][0].get_variable('FolderID').data) != str(UUID()):
 
-                for FolderData_block in packet.message_data.blocks['FolderData']:
+                for FolderData_block in packet.blocks['FolderData']:
 
                     _FolderID = FolderData_block.get_variable('FolderID').data
                     _ParentID = FolderData_block.get_variable('ParentID').data

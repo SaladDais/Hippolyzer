@@ -54,19 +54,19 @@ class GroupManager(object):
         # Callbacks
         # ~~~~~~~~~
         if self.settings.HANDLE_PACKETS:
-            onAgentGroupDataUpdate_received = self.agent.region.event_queue_handler._register("AgentGroupDataUpdate")
+            onAgentGroupDataUpdate_received = self.agent.region.message_handler._register("AgentGroupDataUpdate")
             onAgentGroupDataUpdate_received.subscribe(self.onAgentGroupDataUpdate)
 
-            onChatterBoxInvitation_received = self.agent.region.event_queue_handler._register('ChatterBoxInvitation')
+            onChatterBoxInvitation_received = self.agent.region.message_handler._register('ChatterBoxInvitation')
             onChatterBoxInvitation_received.subscribe(self.onChatterBoxInvitation_Message)
 
-            onChatterBoxSessionEventReply_received = self.agent.region.event_queue_handler._register('ChatterBoxSessionEventReply')
+            onChatterBoxSessionEventReply_received = self.agent.region.message_handler._register('ChatterBoxSessionEventReply')
             onChatterBoxSessionEventReply_received.subscribe(self.onChatterBoxSessionEventReply)
 
-            onChatterBoxSessionAgentListUpdates_received = self.agent.region.event_queue_handler._register('ChatterBoxSessionAgentListUpdates')
+            onChatterBoxSessionAgentListUpdates_received = self.agent.region.message_handler._register('ChatterBoxSessionAgentListUpdates')
             onChatterBoxSessionAgentListUpdates_received.subscribe(self.onChatterBoxSessionAgentListUpdates)
 
-            onChatterBoxSessionStartReply_received = self.agent.region.event_queue_handler._register('ChatterBoxSessionStartReply')
+            onChatterBoxSessionStartReply_received = self.agent.region.message_handler._register('ChatterBoxSessionStartReply')
             onChatterBoxSessionStartReply_received.subscribe(self.onChatterBoxSessionStartReply)
 
         if self.settings.LOG_VERBOSE: log(DEBUG, "Initialized the Group Manager")
@@ -74,12 +74,12 @@ class GroupManager(object):
     def handle_group_chat(self, message):
         """ process a ChatterBoxInvitation_Message instance"""
 
-        group = [group for group in self.group_store if str(message._id) == str(group.GroupID)]
+        group = [group for group in self.group_store if str(message.blocks['Message_Data'][0].get_variable('instantmessage').data['message_params']['id']) == str(group.GroupID)]
 
         if group != []:
             group[0].handle_inbound_chat(message)
         else:
-            log(WARNING, "Received group chat message from unknown group. Group: %s. Agent: %s. Message: %s" % (message.session_name, message.from_name, message.message))
+            log(WARNING, "Received group chat message from unknown group. Group: %s. Agent: %s. Message: %s" % (message.blocks['Message_Data'][0].get_variable('session_name').data, message.blocks['Message_Data'][0].get_variable('from_name').data, message.blocks['Message_Data'][0].get_variable('message').data))
 
     def store_group(self, _group):
         """ append to or replace a group in self.group_store """
@@ -170,7 +170,7 @@ class GroupManager(object):
 
             if self.settings.HANDLE_PACKETS:
                 # enable the callback to watch for the CreateGroupReply packet
-                self.onCreateGroupReply_received = self.agent.region.packet_handler._register('CreateGroupReply')
+                self.onCreateGroupReply_received = self.agent.region.message_handler._register('CreateGroupReply')
                 self.onCreateGroupReply_received.subscribe(self.onCreateGroupReply)
         else:
 
@@ -199,7 +199,7 @@ class GroupManager(object):
         packet.GroupData['GroupID'] = group_id
 
         # set up the callback
-        self.onJoinGroupReply_received = self.agent.packet_handler._register('JoinGroupReply')
+        self.onJoinGroupReply_received = self.agent.message_handler._register('JoinGroupReply')
         self.onJoinGroupReply_received.subscribe(self.onJoinGroupReply)
 
         self.agent.region.enqueue_message(packet(), True)
@@ -225,10 +225,10 @@ class GroupManager(object):
         # remove the monitor
         self.onCreateGroupReply_received.unsubscribe(self.onCreateGroupReply)
 
-        AgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
-        GroupID = packet.message_data.blocks['ReplyData'][0].get_variable('GroupID').data
-        Success = packet.message_data.blocks['ReplyData'][0].get_variable('Success').data
-        Message = packet.message_data.blocks['ReplyData'][0].get_variable('Message').data
+        AgentID = packet.blocks['AgentData'][0].get_variable('AgentID').data
+        GroupID = packet.blocks['ReplyData'][0].get_variable('GroupID').data
+        Success = packet.blocks['ReplyData'][0].get_variable('Success').data
+        Message = packet.blocks['ReplyData'][0].get_variable('Message').data
 
         if Success:
             log(INFO, "Created group %s. Message data is: %s" % (GroupID, Message))
@@ -241,9 +241,9 @@ class GroupManager(object):
 
         self.onJoinGroupReply_received.unsubscribe(self.onJoinGroupReply)
 
-        AgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
-        GroupID = packet.message_data.blocks['GroupData'][0].get_variable('GroupID').data
-        Success = packet.message_data.blocks['GroupData'][0].get_variable('Success').data
+        AgentID = packet.blocks['AgentData'][0].get_variable('AgentID').data
+        GroupID = packet.blocks['GroupData'][0].get_variable('GroupID').data
+        Success = packet.blocks['GroupData'][0].get_variable('Success').data
 
         if Success:
             log(INFO, "Joined group %s" % (GroupID))
@@ -255,10 +255,10 @@ class GroupManager(object):
 
         group_data = {}
 
-        AgentID = packet.message_data.blocks['AgentData'][0].get_variable('AgentID').data
+        AgentID = packet.blocks['AgentData'][0].get_variable('AgentID').data
 
         # GroupData block
-        for GroupData_block in packet.message_data.blocks['GroupData']:
+        for GroupData_block in packet.blocks['GroupData']:
 
             group_data['GroupID'] = GroupData_block.get_variable('GroupID').data
             group_data['GroupPowers'] = GroupData_block.get_variable('GroupPowers').data
@@ -287,18 +287,18 @@ class GroupManager(object):
         """ parse teh response to a request to join a group chat and propagate data out """
 
         data = {}
-        data['session_id'] = message.session_id
-        data['agent_updates'] = message.agent_updates
+        data['session_id'] = message.blocks['Message_Data'][0].get_variable('session_id').data
+        data['agent_updates'] = message.blocks['Message_Data'][0].get_variable('agent_updates').data
 
         self.update_group_by_session_id(data)
 
     def onChatterBoxSessionStartReply(self, message):
 
         data = {}
-        data['temp_session_id'] = message.temp_session_id
-        data['success'] = message.success
-        data['session_id'] = message.session_id
-        data['session_info'] = message.session_info
+        data['temp_session_id'] = message.blocks['Message_Data'][0].get_variable('temp_session_id').data
+        data['success'] = message.blocks['Message_Data'][0].get_variable('success').data
+        data['session_id'] = message.blocks['Message_Data'][0].get_variable('session_id').data
+        data['session_info'] = message.blocks['Message_Data'][0].get_variable('session_info').data
 
         self.update_group_by_name(data, data['session_info']['session_name'])
 
@@ -398,11 +398,14 @@ class Group(object):
 
     def handle_inbound_chat(self, message):
 
-        session_id = message._id
+        session_id = message.blocks['Message_Data'][0].get_variable('session_id').data
+        session_name = message.blocks['Message_Data'][0].get_variable('session_name').data
+        from_name = message.blocks['Message_Data'][0].get_variable('from_name').data
+        _message = message.blocks['Message_Data'][0].get_variable('instantmessage').data['message_params']['message']
 
         self.chat_history.append(message)
 
-        log(INFO, "Group chat received.\n    Group: %s\n    From: %s\n    Message: %s" % (message.session_name, message.from_name, message.message))
+        log(INFO, "Group chat received. Group: %s From: %s Message: %s" % (session_name, from_name, _message))
 
 class MockChatInterface(object):
     """ a super simple chat interface for testing"""

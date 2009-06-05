@@ -7,8 +7,8 @@ from data_packer import DataPacker
 from template_dict import TemplateDictionary
 from pyogp.lib.base import exc
 
-class UDPPacketSerializer(object):
-    """ an adpater for serializing a IUDPPacket into the UDP message format
+class UDPMessageSerializer(object):
+    """ an adpater for serializing a IUDPMessage into the UDP message format
 
         This class builds messages at its high level, that is, keeping
         that data in data structure form. A serializer should be used on
@@ -16,7 +16,7 @@ class UDPPacketSerializer(object):
 
     def __init__(self):
         """initialize the adapter"""
-        self.context = None	# the UDPPacket
+        self.context = None	# the UDPMessage
 
         self.template_dict = TemplateDictionary()
         self.current_template = None
@@ -59,10 +59,10 @@ class UDPPacketSerializer(object):
         msg_buffer += pack_freq_num
         bytes += len(pack_freq_num)
 
-        message_data = self.context.message_data
+        #message_data = self.context.message_data
 
         for block in self.current_template.get_blocks():
-            packed_block, block_size = self.build_block(block, message_data)
+            packed_block, block_size = self.build_block(block, context)
             msg_buffer += packed_block
             bytes += block_size
 

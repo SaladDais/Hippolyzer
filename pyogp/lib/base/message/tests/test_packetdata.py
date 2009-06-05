@@ -8,7 +8,7 @@ import re, datetime
 from pyogp.lib.base.settings import Settings
 from pyogp.lib.base.message.data import msg_tmpl
 from pyogp.lib.base.message.udpdispatcher import UDPDispatcher
-from pyogp.lib.base.message.udpdeserializer import UDPPacketDeserializer
+from pyogp.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from pyogp.lib.base.message.template_parser import MessageTemplateParser
 from pyogp.lib.base.message.template_dict import TemplateDictionary
 
@@ -39,20 +39,20 @@ class TestPacketDecode(unittest.TestCase):
         """test if the agent data update packet can be decoded"""
         message = AGENT_DATA_UPDATE
         size = len(message)
-        deserializer = UDPPacketDeserializer(settings = self.settings)
+        deserializer = UDPMessageDeserializer(settings = self.settings)
         packet = deserializer.deserialize(message)
         assert packet != None, "Wrong data"
-        assert packet.message_data.name == 'AgentDataUpdate', "Wrong packet"
-        assert packet.message_data.blocks['AgentData'][0].vars['LastName'].data == 'Kraft\x00', \
+        assert packet.name == 'AgentDataUpdate', "Wrong packet"
+        assert packet.blocks['AgentData'][0].vars['LastName'].data == 'Kraft', \
                "Wrong last name for agent update"
-        assert packet.message_data.blocks['AgentData'][0].vars['FirstName'].data == 'JB\x00', \
+        assert packet.blocks['AgentData'][0].vars['FirstName'].data == 'JB', \
                "Wrong first name for agent update"
 
     def test_agent_animation(self):
         """test if the agent data update packet can be decoded"""
         message = AGENT_ANIMATION
         size = len(message)
-        deserializer = UDPPacketDeserializer(settings = self.settings)
+        deserializer = UDPMessageDeserializer(settings = self.settings)
         packet = deserializer.deserialize(message)
         assert packet != None, "Wrong data 2"
 
@@ -61,14 +61,14 @@ class TestPacketDecode(unittest.TestCase):
 
         message = OBJECT_UPDATE
 
-        deserializer = UDPPacketDeserializer(settings = self.settings)
+        deserializer = UDPMessageDeserializer(settings = self.settings)
         packet = deserializer.deserialize(message)
         assert packet != None, "Wrong data"
-        assert packet.message_data.name == 'ObjectUpdate', "Wrong packet"
+        assert packet.name == 'ObjectUpdate', "Wrong packet"
 
         blocks = {}
 
-        for block in packet.message_data.blocks:
+        for block in packet.blocks:
             blocks[block] = 1
 
         self.assert_("RegionData" in blocks)

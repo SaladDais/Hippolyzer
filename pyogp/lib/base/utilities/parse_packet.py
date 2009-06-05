@@ -7,7 +7,7 @@ from optparse import OptionParser
 import binascii
 import re
 import traceback
-from pyogp.lib.base.message.udpdeserializer import UDPPacketDeserializer
+from pyogp.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from pyogp.lib.base.settings import Settings
 from logging import getLogger, StreamHandler, Formatter, CRITICAL, ERROR, WARNING, INFO, DEBUG
 
@@ -130,7 +130,7 @@ def process_stream(data, source=None, stats = None):
 
     if msg_buff != None:
         try:
-            deserializer = UDPPacketDeserializer(settings = settings)
+            deserializer = UDPMessageDeserializer(settings = settings)
             packet = deserializer.deserialize(msg_buff)
             display_packet(packet, data, source)
             if stats != None:
@@ -196,9 +196,9 @@ def display_packet(packet, data, source=None):
         if k == 'name': pass
         if k == 'message_data':
             print k
-            for ablock in packet.message_data.blocks:
+            for ablock in packet.blocks:
                 print "%sBlock Name:%s%s" % (delim, delim, ablock)
-                for somevars in packet.message_data.blocks[ablock]:
+                for somevars in packet.blocks[ablock]:
 
                     for avar in somevars.var_list:
                         zvar = somevars.get_variable(avar)

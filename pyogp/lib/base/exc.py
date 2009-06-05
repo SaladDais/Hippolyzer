@@ -340,6 +340,16 @@ class NotImplemented(Error):
     def __str__(self):
         return "This method has to be implemented here: %s" % (self.error)
 
+class Deprecated(Error):
+    """ an error raised when method is not implemented """
+
+    def __init__(self, thing = None):
+        """ initialize this exception """
+
+        self.thing = thing
+
+    def __str__(self):
+        return "This thing is deprecated: %s" % (self.thing)
 """
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 

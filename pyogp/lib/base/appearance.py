@@ -8,7 +8,7 @@ from eventlet import api
 # pyogp
 
 # pyogp messaging
-from pyogp.lib.base.message.packethandler import PacketHandler
+from pyogp.lib.base.message.message_handler import MessageHandler
 from pyogp.lib.base.message.packets import *
 from pyogp.lib.base.utilities.helpers import Helpers
 
@@ -42,11 +42,11 @@ class Appearance(object):
         # Callbacks
         # ~~~~~~~~~
 
-        onAgentWearablesUpdate_received = self.agent.packet_handler._register('AgentWearablesUpdate')
+        onAgentWearablesUpdate_received = self.agent.message_handler._register('AgentWearablesUpdate')
         onAgentWearablesUpdate_received.subscribe(self.helpers.log_packet, self)
 
         '''
-        onAgentDataUpdate_received = self.agent.packet_handler._register('AgentDataUpdate')
+        onAgentDataUpdate_received = self.agent.message_handler._register('AgentDataUpdate')
         onAgentDataUpdate_received.subscribe(self.helpers.log_packet, self)
         '''
 

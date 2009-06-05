@@ -14,11 +14,11 @@ from pyogp.lib.base.exc import DataParsingError
 logger = getLogger('event_system')
 log = logger.log
 
-class EventsHandler(object):
+class AppEventsHandler(object):
     """ general class handling individual events """
 
     def __init__(self, settings = None):
-        """ initialize the EventsHandler """
+        """ initialize the AppEventsHandler """
 
         # allow the settings to be passed in
         # otherwise, grab the defaults
@@ -35,7 +35,7 @@ class EventsHandler(object):
 
         if self.settings.LOG_VERBOSE: log(DEBUG, 'Creating a monitor for %s' % (event_name))
 
-        return self.handlers.setdefault(event_name, EventNotifier(event_name, self.settings, timeout))
+        return self.handlers.setdefault(event_name, AppEventNotifier(event_name, self.settings, timeout))
 
     def is_event_handled(self, event_name):
         """ if the event is being monitored, return True, otherwise, return False """
@@ -66,7 +66,7 @@ class EventsHandler(object):
             #log(INFO, "Received an unhandled packet: %s" % (packet.name))
             pass
 
-class EventNotifier(object):
+class AppEventNotifier(object):
     """ access points for subscribing to application wide events. timeout = 0 for no timeout """
 
     def __init__(self, event_name, settings, timeout = 0):
@@ -135,35 +135,68 @@ class EventNotifier(object):
 # Application Level Events
 ##########################
 
-class InstantMessageReceived(object):
-    """ event data conduit for received instant messages """
+class AppEvent(object):
+    """ container for an event payload. 
+    
+    name = name of the event, to which applications will subscribe. 
+    payload = dict of the contents of the event (key:value)
+    **kwdargs = key:value pairs
+    
+    either payload or **kwdargs should be used, not both
+    """
 
-    def __init__(self, FromAgentID, RegionID, Position, ID, FromAgentName, Message):
+    def __init__(self, name, payload = None, llsd = None, **kwargs):
+        """ initialize the AppEvent contents """
 
-        self.name = 'InstantMessageReceived'
+        self.name = name
+        self.payload = {}
 
-        self.FromAgentID = FromAgentID
-        self.RegionID = RegionID
-        self.Position = Position
-        self.ID = ID
-        self.FromAgentName = FromAgentName
-        self.Message = Message
+        if payload != None and len(kwargs) > 0 and llsd != None:
+            
+            raise DataParsingError("AppEvent cannot parse both an explicit payload and a kwdargs representation of a payload")
+            return
 
-class ChatReceived(object):
-    """ event data conduit for received spatial chat """
+        if payload != None:
+            
+            if type(payload) == dict:
+                
+                self.payload = payload
+                
+            else:
+                
+                raise DataParsingError("AppEvent payload must be a dict. A %s was passed in." % (type(payload)))
+                return
+                
+        elif len(kwargs) > 0:
 
-    def __init__(self, FromName, SourceID, OwnerID, SourceType, ChatType, Audible, Position, Message):
-        self.name = 'ChatReceived'
+            for key in kwargs.keys():
 
-        self.FromName   = FromName   
-        self.SourceID   = SourceID   
-        self.OwnerID    = OwnerID    
-        self.SourceType = SourceType 
-        self.ChatType   = ChatType   
-        self.Audible    = Audible    
-        self.Position   = Position   
-        self.Message    = Message    
+                self.payload[key] = kwargs[key]
 
+        elif llsd != None:
+
+            self.from_llsd(llsd)
+
+        else:
+
+            raise DataParsingError("AppEvent needs a payload or kwdargs, none were provided for %s." % (self.name))
+            return
+
+    def to_llsd(self):
+        """ transform the event payload into llsd """
+
+        raise NotImplemented("AppEvent().to_llsd() has not yet been written")
+
+    def from_llsd(self):
+        """ transform llsd into an event payload """
+
+        raise NotImplemented("AppEvent().from_llsd() has not yet been written")
+
+class AppEventEnum(object):
+    """ enumeration of application level events and their keys"""
+
+    InstantMessageReceived = ['FromAgentID', 'RegionID', 'Position', 'ID', 'FromAgentName', 'Message']
+    ChatReceived  = ['FromName', 'SourceID', 'OwnerID', 'SourceType', 'ChatType', 'Audible', 'Position', 'Message']
 
 """
 Contributors can be viewed at:

@@ -5,7 +5,7 @@ import pprint
 #local libraries
 from pyogp.lib.base.message.circuit import CircuitManager, Circuit, Host
 from pyogp.lib.base.message.message import Message, Block
-from pyogp.lib.base.message.packet import UDPPacket
+from pyogp.lib.base.message.message import Message
 
 class TestHost(unittest.TestCase):
 
@@ -44,8 +44,7 @@ class TestCircuit(unittest.TestCase):
         msg = Message('PacketAck',
                       Block('Packets', ID=0x00000003)
                       )
-        packet = UDPPacket(msg)
-        circuit.add_reliable_packet(packet)
+        circuit.add_reliable_packet(msg)
         assert circuit.unack_packet_count == 1, "Has incorrect unack count"
         assert len(circuit.unacked_packets) == 1, "Has incorrect unack, " + \
                str(len(circuit.unacked_packets))

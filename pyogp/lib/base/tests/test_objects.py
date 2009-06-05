@@ -10,7 +10,7 @@ from pyogp.lib.base.settings import Settings
 from pyogp.lib.base.region import Region
 
 # pyogp messaging
-from pyogp.lib.base.message.udpdeserializer import UDPPacketDeserializer
+from pyogp.lib.base.message.udpdeserializer import UDPMessageDeserializer
 
 # pyogp tests
 import pyogp.lib.base.tests.config 
@@ -22,7 +22,7 @@ class TestObjects(unittest.TestCase):
         self.settings = Settings()
         self.settings.ENABLE_DEFERRED_PACKET_PARSING = False
 
-        self.deserializer = UDPPacketDeserializer(settings = self.settings)
+        self.deserializer = UDPMessageDeserializer(settings = self.settings)
 
         self.region = Region()
         self.region.SimName = 'TestMe'

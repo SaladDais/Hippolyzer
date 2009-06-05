@@ -6,11 +6,11 @@ from pyogp.lib.base.utilities.events import Event
 from pyogp.lib.base.settings import Settings
 
 # initialize logging
-logger = getLogger('...message.packethandler')
+logger = getLogger('...message.message_handler')
 log = logger.log
 
-class PacketHandler(object):
-    """ general class handling individual packets """
+class MessageHandler(object):
+    """ general class handling individual messages """
 
     def __init__(self, settings = None):
         """ i do nothing """
@@ -25,59 +25,59 @@ class PacketHandler(object):
 
         self.handlers = {}
 
-    def _register(self, packet_name):
+    def _register(self, message_name):
 
-        if self.settings.LOG_VERBOSE: log(DEBUG, 'Creating a monitor for %s' % (packet_name))
+        if self.settings.LOG_VERBOSE: log(DEBUG, 'Creating a monitor for %s' % (message_name))
 
-        return self.handlers.setdefault(packet_name, PacketReceivedNotifier(packet_name, self.settings))
+        return self.handlers.setdefault(message_name, MessageHandledNotifier(message_name, self.settings))
 
-    def is_packet_handled(self, packet_name):
-        """ if the packet is being monitored, return True, otherwise, return False 
+    def is_message_handled(self, message_name):
+        """ if the message is being monitored, return True, otherwise, return False 
 
-        this can allow us to skip parsing inbound packets if no one is watching a particular one
+        this can allow us to skip parsing inbound messages if no one is watching a particular one
         """
 
         try:
 
-            handler = self.handlers[packet_name]
+            handler = self.handlers[message_name]
             return True
 
         except KeyError:
 
             return False
 
-    def _handle(self, packet):
-        """ essentially a case statement to pass packets to event notifiers in the form of self attributes """
+    def _handle(self, message):
+        """ essentially a case statement to pass messages to event notifiers in the form of self attributes """
 
         try:
 
-            handler = self.handlers[packet.name]
+            handler = self.handlers[message.name]
 
-            # Handle the packet if we have subscribers
-            # Conveniently, this will also enable verbose packet logging
+            # Handle the message if we have subscribers
+            # Conveniently, this will also enable verbose message logging
             if len(handler) > 0:
-                if self.settings.LOG_VERBOSE and not (self.settings.UDP_SPAMMERS and self.settings.DISABLE_SPAMMERS): log(DEBUG, 'Handling packet : %s' % (packet.name))
+                if self.settings.LOG_VERBOSE and not (self.settings.UDP_SPAMMERS and self.settings.DISABLE_SPAMMERS): log(DEBUG, 'Handling message : %s' % (message.name))
 
-                handler(packet)
+                handler(message)
 
         except KeyError:
-            #log(INFO, "Received an unhandled packet: %s" % (packet.name))
+            #log(INFO, "Received an unhandled message: %s" % (message.name))
             pass
 
-class PacketReceivedNotifier(object):
-    """ received TestMessage packet """
+class MessageHandledNotifier(object):
+    """ pseudo subclassing the Event class to treat the message like an event """
 
-    def __init__(self, packet_name, settings):
+    def __init__(self, message_name, settings):
         self.event = Event()
-        self.packet_name = packet_name
+        self.message_name = message_name
         self.settings = settings
 
     def subscribe(self, *args, **kwdargs):
         self.event.subscribe(*args, **kwdargs)
 
-    def received(self, packet):
+    def received(self, message):
 
-        self.event(packet)
+        self.event(message)
 
     def unsubscribe(self, *args, **kwdargs):
         self.event.unsubscribe(*args, **kwdargs)

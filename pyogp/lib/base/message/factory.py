@@ -1,3 +1,6 @@
+# Note: This is currently not in use. Message() is used instead, though, this may be a better 
+# implementation in that it references the template
+
 from pyogp.lib.base import exc
 
 class MessageFactory(object):

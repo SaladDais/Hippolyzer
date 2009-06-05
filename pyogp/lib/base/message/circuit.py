@@ -1,5 +1,4 @@
 from types import PackFlags
-#from packet_handler import PacketHandler
 
 class Host(object):
 

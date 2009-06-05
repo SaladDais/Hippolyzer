@@ -5,6 +5,7 @@ import unittest
 from indra.base import llsd
 
 # pyogp
+from pyogp.lib.base.region import Region
 from pyogp.lib.base.event_queue import EventQueueClient
 from pyogp.lib.base.exc import *
 
@@ -15,7 +16,7 @@ class TestEventQueue(unittest.TestCase):
 
     def setUp(self):
 
-        self.eq = EventQueueClient()
+        self.eq = EventQueueClient(region = Region())
 
     def tearDown(self):
 
@@ -28,7 +29,7 @@ class TestEventQueue(unittest.TestCase):
         packets = self.eq._decode_eq_result(data)
 
         for packet in packets:
-            self.assertEquals(str(type(packet)), '<class \'pyogp.lib.base.message.packet.UDPPacket\'>')
+            self.assertEquals(str(type(packet)), '<class \'pyogp.lib.base.message.message.Message\'>')
 
     def test__decode_eq_result2(self):
 
@@ -41,10 +42,24 @@ class TestEventQueue(unittest.TestCase):
         packet_names = []
 
         for packet in packets:
-            self.assertEquals(str(type(packet)), '<class \'pyogp.lib.base.message.packet.UDPPacket\'>')
+            self.assertEquals(str(type(packet)), '<class \'pyogp.lib.base.message.message.Message\'>')
             packet_names.append(packet.name)
 
         self.assertEquals(packet_names, ['AgentGroupDataUpdate', 'ParcelProperties', 'EnableSimulator'])
+
+    def test__decode_eq_results3(self):
+
+        llsd_data = '<llsd><map><key>events</key><array><map><key>body</key><map><key>session_id</key><uuid>6e20d408-2702-ea83-04b4-12cef089a327</uuid><key>session_info</key><map><key>moderated_mode</key><map><key>voice</key><boolean>0</boolean></map><key>session_name</key><string>Pyogp</string><key>type</key><integer>0</integer><key>voice_enabled</key><boolean>1</boolean></map><key>success</key><boolean>1</boolean><key>temp_session_id</key><uuid>6e20d408-2702-ea83-04b4-12cef089a327</uuid></map><key>message</key><string>ChatterBoxSessionStartReply</string></map><map><key>body</key><map><key>agent_updates</key><map><key>43b8b2d7-99b0-4b60-a935-45896c74be62</key><map><key>info</key><map><key>can_voice_chat</key><boolean>1</boolean><key>is_moderator</key><boolean>0</boolean></map><key>transition</key><string>ENTER</string></map><key>4ca88f33-f34a-4ae4-a8f1-7357f883789e</key><map><key>info</key><map><key>can_voice_chat</key><boolean>1</boolean><key>is_moderator</key><boolean>0</boolean></map><key>transition</key><string>ENTER</string></map><key>77e48a07-06f1-4ae4-9d33-6eab4d445e2d</key><map><key>info</key><map><key>can_voice_chat</key><boolean>1</boolean><key>is_moderator</key><boolean>0</boolean></map><key>transition</key><string>ENTER</string></map><key>79e7c4ad-3361-4736-bced-1f72e6c3dbd4</key><map><key>info</key><map><key>can_voice_chat</key><boolean>1</boolean><key>is_moderator</key><boolean>0</boolean></map><key>transition</key><string>ENTER</string></map><key>7a59bbd8-5175-4cff-8328-f92b3acde98a</key><map><key>info</key><map><key>can_voice_chat</key><boolean>1</boolean><key>is_moderator</key><boolean>0</boolean></map><key>transition</key><string>ENTER</string></map><key>94e1350b-64d6-444b-8d3c-d1da460b259c</key><map><key>info</key><map><key>can_voice_chat</key><boolean>1</boolean><key>is_moderator</key><boolean>0</boolean></map><key>transition</key><string>ENTER</string></map><key>97980bee-d865-4100-80e7-9763e53e8a6a</key><map><key>info</key><map><key>can_voice_chat</key><boolean>1</boolean><key>is_moderator</key><boolean>0</boolean></map><key>transition</key><string>ENTER</string></map><key>a1f21e11-7db3-4eb4-89f3-5a65eea34495</key><map><key>info</key><map><key>can_voice_chat</key><boolean>1</boolean><key>is_moderator</key><boolean>0</boolean></map><key>transition</key><string>ENTER</string></map><key>a517168d-1af5-4854-ba6d-672c8a59e439</key><map><key>info</key><map><key>can_voice_chat</key><boolean>1</boolean><key>is_moderator</key><boolean>0</boolean></map><key>transition</key><string>ENTER</string></map><key>b2161990-f5c4-4dcb-a73c-e7365a18adfd</key><map><key>info</key><map><key>can_voice_chat</key><boolean>1</boolean><key>is_moderator</key><boolean>0</boolean></map><key>transition</key><string>ENTER</string></map><key>c12cce9d-3308-4517-9a5e-1f3460187e56</key><map><key>info</key><map><key>can_voice_chat</key><boolean>1</boolean><key>is_moderator</key><boolean>0</boolean></map><key>transition</key><string>ENTER</string></map><key>eeaedeb6-c702-472a-b725-e4492095c69a</key><map><key>info</key><map><key>can_voice_chat</key><boolean>1</boolean><key>is_moderator</key><boolean>0</boolean></map><key>transition</key><string>ENTER</string></map></map><key>session_id</key><string>6e20d408-2702-ea83-04b4-12cef089a327</string><key>updates</key><map><key>43b8b2d7-99b0-4b60-a935-45896c74be62</key><string>ENTER</string><key>4ca88f33-f34a-4ae4-a8f1-7357f883789e</key><string>ENTER</string><key>77e48a07-06f1-4ae4-9d33-6eab4d445e2d</key><string>ENTER</string><key>79e7c4ad-3361-4736-bced-1f72e6c3dbd4</key><string>ENTER</string><key>7a59bbd8-5175-4cff-8328-f92b3acde98a</key><string>ENTER</string><key>94e1350b-64d6-444b-8d3c-d1da460b259c</key><string>ENTER</string><key>97980bee-d865-4100-80e7-9763e53e8a6a</key><string>ENTER</string><key>a1f21e11-7db3-4eb4-89f3-5a65eea34495</key><string>ENTER</string><key>a517168d-1af5-4854-ba6d-672c8a59e439</key><string>ENTER</string><key>b2161990-f5c4-4dcb-a73c-e7365a18adfd</key><string>ENTER</string><key>c12cce9d-3308-4517-9a5e-1f3460187e56</key><string>ENTER</string><key>eeaedeb6-c702-472a-b725-e4492095c69a</key><string>ENTER</string></map></map><key>message</key><string>ChatterBoxSessionAgentListUpdates</string></map><map><key>body</key><map><key>agent_updates</key><map><key>a517168d-1af5-4854-ba6d-672c8a59e439</key><map><key>info</key><map><key>can_voice_chat</key><boolean>1</boolean><key>is_moderator</key><boolean>0</boolean></map></map></map><key>session_id</key><string>6e20d408-2702-ea83-04b4-12cef089a327</string><key>updates</key><map /></map><key>message</key><string>ChatterBoxSessionAgentListUpdates</string></map><map><key>body</key><map><key>SimulatorInfo</key><array><map><key>Handle</key><binary encoding="base64">AAP8AAADxAA=</binary><key>IP</key><binary encoding="base64">2FIT1A==</binary><key>Port</key><integer>12035</integer></map></array></map><key>message</key><string>EnableSimulator</string></map></array><key>id</key><integer>17</integer></map></llsd>'
+
+        data = llsd.parse(llsd_data)
+
+        packets = self.eq._decode_eq_result(data)
+
+        packet_names = []
+
+        for packet in packets:
+            self.assertEquals(str(type(packet)), '<class \'pyogp.lib.base.message.message.Message\'>')
+            packet_names.append(packet.name)    
 
 def test_suite():
     from unittest import TestSuite, makeSuite
