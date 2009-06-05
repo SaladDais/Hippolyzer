@@ -303,11 +303,11 @@ class Agent(object):
     def _start_EQ_on_neighboring_region(self, message):
         """ enables the event queue on an agent's neighboring region """
 
-        region = [region for region in self.child_regions if message.sim_ip_and_port == str(region.sim_ip) + ":" + str(region.sim_port)]
+        region = [region for region in self.child_regions if message.blocks['Message_Data'][0].get_variable('sim-ip-and-port').data == str(region.sim_ip) + ":" + str(region.sim_port)]
 
         if region != []:
 
-            region[0]._set_seed_capability(message.seed_capability_url)
+            region[0]._set_seed_capability(message.blocks['Message_Data'][0].get_variable('seed-capability').data)
 
             region[0]._get_region_capabilities()
 
@@ -325,32 +325,32 @@ class Agent(object):
 
         if self.settings.MULTIPLE_SIM_CONNECTIONS:
 
-            onEnableSimulator_received = self.message_handler._register('EnableSimulator')
+            onEnableSimulator_received = self.region.message_handler.register('EnableSimulator')
             onEnableSimulator_received.subscribe(self.onEnableSimulator)
 
-            onEstablishAgentCommunication_received = self.message_handler._register('EstablishAgentCommunication')
+            onEstablishAgentCommunication_received = self.region.message_handler.register('EstablishAgentCommunication')
             onEstablishAgentCommunication_received.subscribe(self.onEstablishAgentCommunication)
 
         if self.settings.HANDLE_PACKETS:
 
-            onAlertMessage_received = self.region.message_handler._register('AlertMessage')
+            onAlertMessage_received = self.region.message_handler.register('AlertMessage')
             onAlertMessage_received.subscribe(self.onAlertMessage)
 
-            onAgentDataUpdate_received = self.region.message_handler._register('AgentDataUpdate')
+            onAgentDataUpdate_received = self.region.message_handler.register('AgentDataUpdate')
             onAgentDataUpdate_received.subscribe(self.onAgentDataUpdate)
 
-            onAgentMovementComplete_received = self.region.message_handler._register('AgentMovementComplete')
+            onAgentMovementComplete_received = self.region.message_handler.register('AgentMovementComplete')
             onAgentMovementComplete_received.subscribe(self.onAgentMovementComplete)
 
-            onHealthMessage_received = self.region.message_handler._register('HealthMessage')
+            onHealthMessage_received = self.region.message_handler.register('HealthMessage')
             onHealthMessage_received.subscribe(self.onHealthMessage)
 
-            onImprovedInstantMessage_received = self.region.message_handler._register('ImprovedInstantMessage')
+            onImprovedInstantMessage_received = self.region.message_handler.register('ImprovedInstantMessage')
             onImprovedInstantMessage_received.subscribe(self.onImprovedInstantMessage)
 
             if self.settings.ENABLE_COMMUNICATIONS_TRACKING:
 
-                onChatFromSimulator_received = self.region.message_handler._register('ChatFromSimulator')
+                onChatFromSimulator_received = self.region.message_handler.register('ChatFromSimulator')
                 onChatFromSimulator_received.subscribe(self.onChatFromSimulator)
 
     def send_AgentDataUpdateRequest(self):
@@ -650,13 +650,13 @@ class Agent(object):
     def onEstablishAgentCommunication(self, message):
         """ callback handler for received EstablishAgentCommunication messages. try to enable the event queue for a neighboring region based on the data received """
 
-        log(INFO, 'Received EstablishAgentCommunication for %s' % (message.sim_ip_and_port))
+        log(INFO, 'Received EstablishAgentCommunication for %s' % (message.blocks['Message_Data'][0].get_variable('sim-ip-and-port').data))
 
         is_running = False
 
         # don't enable the event queue when we already have it running
         for region in self.child_regions:
-            if (str(region.sim_ip) + ":" + str(region.sim_port) == message.sim_ip_and_port) and region.event_queue != None:
+            if (str(region.sim_ip) + ":" + str(region.sim_port) == message.blocks['Message_Data'][0].get_variable('sim-ip-and-port').data) and region.event_queue != None:
                 if region.event_queue._running:
                     is_running = True
 

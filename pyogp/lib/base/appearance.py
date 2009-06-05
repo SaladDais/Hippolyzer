@@ -42,11 +42,11 @@ class Appearance(object):
         # Callbacks
         # ~~~~~~~~~
 
-        onAgentWearablesUpdate_received = self.agent.message_handler._register('AgentWearablesUpdate')
+        onAgentWearablesUpdate_received = self.agent.message_handler.register('AgentWearablesUpdate')
         onAgentWearablesUpdate_received.subscribe(self.helpers.log_packet, self)
 
         '''
-        onAgentDataUpdate_received = self.agent.message_handler._register('AgentDataUpdate')
+        onAgentDataUpdate_received = self.agent.message_handler.register('AgentDataUpdate')
         onAgentDataUpdate_received.subscribe(self.helpers.log_packet, self)
         '''
 

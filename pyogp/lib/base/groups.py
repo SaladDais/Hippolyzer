@@ -54,19 +54,19 @@ class GroupManager(object):
         # Callbacks
         # ~~~~~~~~~
         if self.settings.HANDLE_PACKETS:
-            onAgentGroupDataUpdate_received = self.agent.region.message_handler._register("AgentGroupDataUpdate")
+            onAgentGroupDataUpdate_received = self.agent.region.message_handler.register("AgentGroupDataUpdate")
             onAgentGroupDataUpdate_received.subscribe(self.onAgentGroupDataUpdate)
 
-            onChatterBoxInvitation_received = self.agent.region.message_handler._register('ChatterBoxInvitation')
+            onChatterBoxInvitation_received = self.agent.region.message_handler.register('ChatterBoxInvitation')
             onChatterBoxInvitation_received.subscribe(self.onChatterBoxInvitation_Message)
 
-            onChatterBoxSessionEventReply_received = self.agent.region.message_handler._register('ChatterBoxSessionEventReply')
+            onChatterBoxSessionEventReply_received = self.agent.region.message_handler.register('ChatterBoxSessionEventReply')
             onChatterBoxSessionEventReply_received.subscribe(self.onChatterBoxSessionEventReply)
 
-            onChatterBoxSessionAgentListUpdates_received = self.agent.region.message_handler._register('ChatterBoxSessionAgentListUpdates')
+            onChatterBoxSessionAgentListUpdates_received = self.agent.region.message_handler.register('ChatterBoxSessionAgentListUpdates')
             onChatterBoxSessionAgentListUpdates_received.subscribe(self.onChatterBoxSessionAgentListUpdates)
 
-            onChatterBoxSessionStartReply_received = self.agent.region.message_handler._register('ChatterBoxSessionStartReply')
+            onChatterBoxSessionStartReply_received = self.agent.region.message_handler.register('ChatterBoxSessionStartReply')
             onChatterBoxSessionStartReply_received.subscribe(self.onChatterBoxSessionStartReply)
 
         if self.settings.LOG_VERBOSE: log(DEBUG, "Initialized the Group Manager")
@@ -170,7 +170,7 @@ class GroupManager(object):
 
             if self.settings.HANDLE_PACKETS:
                 # enable the callback to watch for the CreateGroupReply packet
-                self.onCreateGroupReply_received = self.agent.region.message_handler._register('CreateGroupReply')
+                self.onCreateGroupReply_received = self.agent.region.message_handler.register('CreateGroupReply')
                 self.onCreateGroupReply_received.subscribe(self.onCreateGroupReply)
         else:
 
@@ -199,7 +199,7 @@ class GroupManager(object):
         packet.GroupData['GroupID'] = group_id
 
         # set up the callback
-        self.onJoinGroupReply_received = self.agent.message_handler._register('JoinGroupReply')
+        self.onJoinGroupReply_received = self.agent.message_handler.register('JoinGroupReply')
         self.onJoinGroupReply_received.subscribe(self.onJoinGroupReply)
 
         self.agent.region.enqueue_message(packet(), True)

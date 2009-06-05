@@ -25,7 +25,7 @@ class TestEvents(unittest.TestCase):
 
         eventshandler = AppEventsHandler()
 
-        handler = eventshandler._register('MockEvent')
+        handler = eventshandler.register('MockEvent')
         handler.subscribe(self.onEvent, mock)
 
         eventshandler._handle(mock)
@@ -36,7 +36,7 @@ class TestEvents(unittest.TestCase):
 
         eventshandler = AppEventsHandler()
 
-        handler = eventshandler._register('MockEvent', 2)
+        handler = eventshandler.register('MockEvent', 2)
         handler.subscribe(self.onEvent, None)
 
         Wait(3)
@@ -47,7 +47,7 @@ class TestEvents(unittest.TestCase):
 
         eventshandler = AppEventsHandler()
 
-        self.assertRaises(DataParsingError, eventshandler._register, 'MockEvent', 'two')
+        self.assertRaises(DataParsingError, eventshandler.register, 'MockEvent', 'two')
 
     def test_AppEvent_payload(self):
 

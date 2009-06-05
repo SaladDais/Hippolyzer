@@ -92,16 +92,16 @@ class ParcelManager(object):
         self.parcel_map_full = False
 
         # set up callbacks for parcel related packets
-        self.onParcelOverlay_received = self.message_handler._register('ParcelOverlay')
+        self.onParcelOverlay_received = self.message_handler.register('ParcelOverlay')
         self.onParcelOverlay_received.subscribe(self.onParcelOverlay)
 
-        self.onParcelProperties_received = self.message_handler._register('ParcelProperties')
+        self.onParcelProperties_received = self.message_handler.register('ParcelProperties')
         self.onParcelProperties_received.subscribe(self.onParcelProperties)
 
-        self.onParcelPropertiesUpdate_received = self.message_handler._register('ParcelPropertiesUpdate')
+        self.onParcelPropertiesUpdate_received = self.message_handler.register('ParcelPropertiesUpdate')
         self.onParcelPropertiesUpdate_received.subscribe(self.onParcelPropertiesUpdate)
 
-        self.onParcelInfoReply_received = self.message_handler._register('ParcelInfoReply')
+        self.onParcelInfoReply_received = self.message_handler.register('ParcelInfoReply')
         self.onParcelInfoReply_received.subscribe(self.onParcelInfoReply)
 
         if self.settings.LOG_VERBOSE: log(DEBUG, "Initializing the parcel manager in region %s." % (self.region.SimName))
@@ -317,7 +317,7 @@ class ParcelManager(object):
     def request_estate_covenant(self, ):
         """ request the estate covenant (for the current estate)"""
 
-        self.onEstateCovenantReply_received = self.message_handler._register('EstateCovenantReply')
+        self.onEstateCovenantReply_received = self.message_handler.register('EstateCovenantReply')
         self.onEstateCovenantReply_received.subscribe(self.onEstateCovenantReply)
 
         self.sendEstateCovenantRequest()
@@ -689,7 +689,7 @@ class ParcelManager(object):
     def request_parcel_access_list(self, LocalID, Flags):
         """ request an access list for the specified parcel, while enabling a callback handler for the response """
 
-        self.onParcelAccessListReply_received = self.message_handler._register('ParcelAccessListReply')
+        self.onParcelAccessListReply_received = self.message_handler.register('ParcelAccessListReply')
         self.onParcelAccessListReply_received.subscribe(self.onParcelAccessListReply, LocalID = LocalID)
 
         self.sendParcelAccessListRequest(LocalID, Flags)
@@ -742,7 +742,7 @@ class ParcelManager(object):
     def request_parcel_dwell(self, LocalID):
         """ request dwell for the specified parcel, while enabling a callback handler for the response """
 
-        self.onParcelDwellReply_received = self.message_handler._register('ParcelDwellReply')
+        self.onParcelDwellReply_received = self.message_handler.register('ParcelDwellReply')
         self.onParcelDwellReply_received.subscribe(self.onParcelDwellReply, LocalID = LocalID)
 
         self.sendParcelDwellRequest(LocalID)

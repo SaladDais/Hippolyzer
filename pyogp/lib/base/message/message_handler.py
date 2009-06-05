@@ -25,7 +25,7 @@ class MessageHandler(object):
 
         self.handlers = {}
 
-    def _register(self, message_name):
+    def register(self, message_name):
 
         if self.settings.LOG_VERBOSE: log(DEBUG, 'Creating a monitor for %s' % (message_name))
 

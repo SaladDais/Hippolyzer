@@ -69,26 +69,26 @@ class Objects(object):
             else:
                 self.message_handler = MessageHandler()
 
-            onObjectUpdate_received = self.message_handler._register('ObjectUpdate')
+            onObjectUpdate_received = self.message_handler.register('ObjectUpdate')
             onObjectUpdate_received.subscribe(self.onObjectUpdate)
 
-            onObjectUpdateCached_received = self.message_handler._register('ObjectUpdateCached')
+            onObjectUpdateCached_received = self.message_handler.register('ObjectUpdateCached')
             onObjectUpdateCached_received.subscribe(self.onObjectUpdateCached)
 
-            onObjectUpdateCompressed_received= self.message_handler._register('ObjectUpdateCompressed')
+            onObjectUpdateCompressed_received= self.message_handler.register('ObjectUpdateCompressed')
             onObjectUpdateCompressed_received.subscribe(self.onObjectUpdateCompressed)
 
-            onObjectProperties_received = self.message_handler._register('ObjectProperties')
+            onObjectProperties_received = self.message_handler.register('ObjectProperties')
             onObjectProperties_received.subscribe(self.onObjectProperties)
 
-            onKillObject_received= self.message_handler._register('KillObject')
+            onKillObject_received= self.message_handler.register('KillObject')
             onKillObject_received.subscribe(self.onKillObject)
 
             # uncomment these to view packets sent back to simulator
-            # onObjectName_sent = self.message_handler._register('ObjectName')
+            # onObjectName_sent = self.message_handler.register('ObjectName')
             # onObjectName_sent.subscribe(self.helpers.log_packet, self)
 
-            # onDeRezObject_sent = self.message_handler._register('DeRezObject')
+            # onDeRezObject_sent = self.message_handler.register('DeRezObject')
             # onDeRezObject_sent.subscribe(self.helpers.log_packet, self)
 
         if self.settings.LOG_VERBOSE: log(INFO, "Initializing object storage")

@@ -11,7 +11,7 @@ First, initialize the packet handler
 How about a mock callback handler
     >>> def callback(packet): print packet
 
-    >>> onStartPingCheck_received = message_handler._register("StartPingCheck")
+    >>> onStartPingCheck_received = message_handler.register("StartPingCheck")
     >>> onStartPingCheck_received.subscribe(callback)
 
 Stage a packet

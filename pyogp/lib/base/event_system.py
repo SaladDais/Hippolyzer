@@ -30,7 +30,7 @@ class AppEventsHandler(object):
 
         self.handlers = {}
 
-    def _register(self, event_name, timeout = 0):
+    def register(self, event_name, timeout = 0):
         """ create a watcher for a specific event in this event system. the timeout is optional, and defaults to no timeout """
 
         if self.settings.LOG_VERBOSE: log(DEBUG, 'Creating a monitor for %s' % (event_name))

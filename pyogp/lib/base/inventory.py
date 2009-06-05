@@ -61,13 +61,13 @@ class Inventory(object):
     def enable_callbacks(self):
         """ enable monitors for certain inventory related packet events """
 
-        onInventoryDescendents_received = self.agent.region.message_handler._register('InventoryDescendents')
+        onInventoryDescendents_received = self.agent.region.message_handler.register('InventoryDescendents')
         onInventoryDescendents_received.subscribe(self.onInventoryDescendents)
 
-        onFetchInventoryReply_received = self.agent.region.message_handler._register('FetchInventoryReply')
+        onFetchInventoryReply_received = self.agent.region.message_handler.register('FetchInventoryReply')
         onFetchInventoryReply_received.subscribe(self.onFetchInventoryReply)
 
-        onBulkUpdateInventory_received = self.agent.region.message_handler._register('BulkUpdateInventory')
+        onBulkUpdateInventory_received = self.agent.region.message_handler.register('BulkUpdateInventory')
         onBulkUpdateInventory_received.subscribe(self.onBulkUpdateInventory)
 
     def onInventoryDescendents(self, packet):

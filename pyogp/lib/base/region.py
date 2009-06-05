@@ -130,7 +130,7 @@ class Region(object):
             self.parcel_manager = ParcelManager(region = self, agent = self.agent, message_handler = self.message_handler, events_handler = self.events_handler, settings = None)
 
         # required packet handlers
-        onPacketAck_received = self.message_handler._register('PacketAck')
+        onPacketAck_received = self.message_handler.register('PacketAck')
         onPacketAck_received.subscribe(self.helpers.null_packet_handler, self)
 
         # data we need
@@ -445,11 +445,11 @@ class Region(object):
         self._isUDPRunning = True
 
         # the RegionHandshake packet requires a response
-        onRegionHandshake_received = self.message_handler._register('RegionHandshake')
+        onRegionHandshake_received = self.message_handler.register('RegionHandshake')
         onRegionHandshake_received.subscribe(self.onRegionHandshake)
 
         # the StartPingCheck packet requires a response
-        onStartPingCheck_received = self.message_handler._register('StartPingCheck')
+        onStartPingCheck_received = self.message_handler.register('StartPingCheck')
         onStartPingCheck_received.subscribe(self.onStartPingCheck)
 
         while self._isUDPRunning:
