@@ -350,7 +350,7 @@ class Agent(object):
 
             if self.settings.ENABLE_COMMUNICATIONS_TRACKING:
 
-                onChatFromSimulator_received = self.region.packet_handler._register('ChatFromSimulator')
+                onChatFromSimulator_received = self.region.message_handler._register('ChatFromSimulator')
                 onChatFromSimulator_received.subscribe(self.onChatFromSimulator)
 
     def send_AgentDataUpdateRequest(self):
