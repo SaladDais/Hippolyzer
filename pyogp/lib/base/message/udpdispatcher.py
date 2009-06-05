@@ -155,8 +155,10 @@ class UDPDispatcher(object):
         if host.is_ok() == False:
             return
 
-        packet = Message(message.name)
-        packet.blocks = message.blocks
+        if isinstance(message,Message):
+            packet = message
+        else:
+            packet = message()
 
         # enable monitoring of outgoing packets
         if self.settings.HANDLE_PACKETS:

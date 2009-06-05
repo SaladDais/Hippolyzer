@@ -10,7 +10,7 @@ from pyogp.lib.base.datatypes import UUID
 from pyogp.lib.base.exc import *
 
 # pyogp messaging
-#from pyogp.lib.base.message.packets import *
+from pyogp.lib.base.message.packets import *
 from pyogp.lib.base.message.message_handler import MessageHandler
 
 # utilities
