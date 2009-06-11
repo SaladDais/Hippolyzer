@@ -88,6 +88,7 @@ class Agent(object):
         self.udp_blacklist = None
         self.home = None
         self.inventory = None
+        self.start_location = None
 
         # additional attributes
         self.login_response = None
@@ -217,6 +218,7 @@ class Agent(object):
             self.inventory_host = self.login_response['inventory_host']
             self.agent_access = self.login_response['agent_access']
             self.udp_blacklist = self.login_response['udp_blacklist']
+            self.start_location = self.login_response['start_location']
 
             if self.login_response.has_key('home'): self.home = Home(self.login_response['home'])
 
