@@ -224,7 +224,7 @@ class Login(object):
 
         log(INFO, 'Following a login redirect to %s with method: %s. Message: %s' % (transform['next_url'], transform['next_method'], transform['message']))
 
-        self.response = self._post_to_legacy_loginuri(loginuri = transform['next_url'], login_method = transform['next_method'])
+        self._post_to_legacy_loginuri(loginuri = transform['next_url'], login_method = transform['next_method'])
 
     def _get_extended_legacy_params(self):
         """ get the extra bits needed for login """
