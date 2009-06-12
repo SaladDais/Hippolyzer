@@ -537,6 +537,23 @@ class Region(object):
 
         self.sendCompletePingCheck()
 
+    @staticmethod
+    def xy_to_handle(x, y):
+        """Convert an x, y region location into a 64-bit handle"""
+        return (int(x)*256 << 32) + int(y)*256
+
+    @staticmethod
+    def handle_to_xy(handle):
+        """Convert a handle into an x,y region location. Handle can be an int or binary string."""
+        import struct
+        if isinstance(handle, str):
+            handle =  struct.unpack('Q', handle)[0]
+            
+        x = int((handle >> 32)/256)
+        y = int((handle & 0xffffffff)/256)
+        return x, y
+
+
 class RegionSeedCapability(Capability):
     """ a seed capability which is able to retrieve other capabilities """
 

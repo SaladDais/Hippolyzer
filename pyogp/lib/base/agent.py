@@ -232,8 +232,16 @@ class Agent(object):
         if self.login_response.has_key('circuit_code'):
             self.circuit_code = self.login_response['circuit_code']
 
+        region_x = region_x or self.login_response['region_x']
+        region_y = region_y or self.login_response['region_y']
+        seed_capability = seed_capability or self.login_response['seed_capability']
+        udp_blacklist = udp_blacklist or self.login_response['udp_blacklist']
+        sim_ip = sim_ip or self.login_response['sim_ip']
+        sim_port = sim_port or self.login_response['sim_port']
+        circuit_code = circuit_code or self.login_response['circuit_code']
+
         # enable the current region, setting connect = True
-        self.region = Region(self.login_response['region_x'], self.login_response['region_y'], self.login_response['seed_capability'], self.login_response['udp_blacklist'], self.login_response['sim_ip'], self.login_response['sim_port'], self.login_response['circuit_code'], self, settings = self.settings, events_handler = self.events_handler)
+        self.region = Region(region_x, region_y, seed_capability, udp_blacklist, sim_ip, sim_port, circuit_code, self, settings = self.settings, events_handler = self.events_handler)
 
         self.region.is_host_region = True
 
@@ -350,10 +358,31 @@ class Agent(object):
             onImprovedInstantMessage_received = self.region.message_handler.register('ImprovedInstantMessage')
             onImprovedInstantMessage_received.subscribe(self.onImprovedInstantMessage)
 
+            self.region.message_handler.register('TeleportStart').subscribe(self.simple_callback('Info'))
+            self.region.message_handler.register('TeleportProgress').subscribe(self.simple_callback('Info'))
+            self.region.message_handler.register('TeleportFailed').subscribe(self.simple_callback('Info'))
+            self.region.message_handler.register('TeleportFinish').subscribe(self.onTeleportFinish)
+
             if self.settings.ENABLE_COMMUNICATIONS_TRACKING:
 
                 onChatFromSimulator_received = self.region.message_handler.register('ChatFromSimulator')
                 onChatFromSimulator_received.subscribe(self.onChatFromSimulator)
+
+
+    def simple_callback(self, blockname):
+        """Generic callback creator for single-block packets."""
+
+        def repack(packet, blockname):
+            """Repack a single block packet into an AppEvent"""
+            payload = {}
+            block = packet.blocks[blockname][0]
+            for var in block.var_list:
+                payload[var] = block.get_variable(var).data
+
+            return AppEvent(packet.name, payload=payload)
+
+        return lambda p: self.events_handler._handle(repack(p, blockname))
+
 
     def send_AgentDataUpdateRequest(self):
         """ queues a packet requesting an agent data update """
@@ -385,7 +414,7 @@ class Agent(object):
         packet.AgentData['AgentID'] = self.agent_id
         packet.AgentData['SessionID'] = self.session_id
 
-        packet.ChatData['Message'] = Message + '\x00' # Message needs a terminator. Arnold was busy as gov...
+        packet.ChatData['Message'] = Message
         packet.ChatData['Type'] = Type
         packet.ChatData['Channel'] = Channel
 
@@ -511,6 +540,9 @@ class Agent(object):
         #agent.Timestamp = packet.blocks['Data'][0].get_variable('Timestamp')
 
         self.region.ChannelVersion = packet.blocks['SimData'][0].get_variable('ChannelVersion').data
+
+        # Raise a plain-vanilla AppEvent
+        self.simple_callback('Data')(packet)
 
     def onHealthMessage(self, packet):
         """ callback handler for received HealthMessage messages which populates Agent().health """
@@ -665,6 +697,117 @@ class Agent(object):
         # start the event queue
         if is_running == False:
             self._start_EQ_on_neighboring_region(message)
+
+
+    def teleport(self,
+                 region_name=None,
+                 region_handle=None,
+                 region_id=None,
+                 position=Vector3(X=128, Y=128, Z=128),
+                 look_at=Vector3(X=128, Y=128, Z=128)):
+        """Initiate a teleport to the specified location. When passing a region name
+        it may be necessary to request the destination region handle from the current sim
+        before the teleport can start."""
+        
+        log(INFO, 'teleport name=%s handle=%s id=%s', str(region_name), str(region_handle), str(region_id))
+        
+        # Handle intra-region teleports even by name
+        if not region_id and region_name and region_name.lower() == self.region.SimName.lower():
+            region_id = self.region.RegionID
+
+        if region_id:
+            log(INFO, 'sending TP request packet')
+            packet = TeleportRequestPacket()
+
+            packet.AgentData['AgentID'] = self.agent_id
+            packet.AgentData['SessionID'] = self.session_id
+            
+            packet.Info['RegionID'] = region_id
+            packet.Info['Position'] = position
+            packet.Info['LookAt'] = look_at
+            
+            self.region.enqueue_message(packet())
+
+        elif region_handle:
+            log(INFO, 'sending TP location request packet')
+            packet = TeleportLocationRequestPacket()
+
+            packet.AgentData['AgentID'] = self.agent_id
+            packet.AgentData['SessionID'] = self.session_id
+            
+            packet.Info['RegionHandle'] = region_handle
+            packet.Info['Position'] = position
+            packet.Info['LookAt'] = look_at
+            
+            self.region.enqueue_message(packet())
+
+        else:
+            log(INFO, "Target region's handle not known, sending map name request")
+            # do a region_name to region_id lookup and then request the teleport
+            self.send_MapNameRequest(
+                region_name,
+                lambda handle: self.teleport(region_handle=handle, position=position, look_at=look_at))
+                
+    
+    def send_MapNameRequest(self, region_name, callback):
+
+        # *TODO: add a name-to-id cache
+
+        handler = self.region.message_handler.register('MapBlockReply')
+        
+        def onMapBlockReplyPacket(packet):
+            log(INFO, 'MapBlockReplyPacket received')
+            for block in packet.blocks['Data']:
+                if block.get_variable('Name').data.lower() == region_name.lower():
+                    handler.unsubscribe(onMapBlockReplyPacket)
+
+                    x = block.get_variable('X').data
+                    y = block.get_variable('Y').data
+                    region_handle = Region.xy_to_handle(x,y)
+                    callback(region_handle)                    
+                    return
+            # Leave it registered, as the event may come later
+            
+        # Register a handler for the response        
+        handler.subscribe(onMapBlockReplyPacket)
+
+        # ...and make the request
+        log(INFO, 'sending MapNameRequestPacket')
+        packet = MapNameRequestPacket()
+        packet.AgentData['AgentID'] = self.agent_id
+        packet.AgentData['SessionID'] = self.session_id
+        packet.AgentData['Flags'] = 0 
+        packet.AgentData['EstateID'] = 0
+        packet.AgentData['Godlike'] = False
+        packet.NameData['Name'] = region_name.lower()
+        self.region.enqueue_message(packet()) 
+
+
+    def onTeleportFinish(self, packet):
+        """Handle the end of a successful teleport"""
+
+        log(INFO, "Teleport finished, taking care of details...")
+
+        # Raise a plain-vanilla AppEvent for the Info block
+        self.simple_callback('Info')(packet)
+
+        # packed binary U64 to integral x, y
+        region_handle = packet.blocks['Info'][0].get_variable('RegionHandle').data        
+        region_x, region_y = Region.handle_to_xy(region_handle) 
+
+        # packed binary to dotted-octet
+        sim_ip = packet.blocks['Info'][0].get_variable('SimIP').data
+        sim_ip = '.'.join(map(str,struct.unpack('BBBB', sim_ip))) 
+
+        log(INFO, "Enabling new region")
+        self._enable_current_region(
+            region_x = region_x,
+            region_y = region_y,
+            seed_capability = packet.blocks['Info'][0].get_variable('SeedCapability').data,
+            sim_ip = sim_ip,
+            sim_port = packet.blocks['Info'][0].get_variable('SimPort').data
+            )
+
 
 class Home(object):
     """ contains the parameters describing an agent's home location as returned in login_response['home'] """

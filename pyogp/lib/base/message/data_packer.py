@@ -2,7 +2,7 @@
 import struct
 
 # pyogp
-from pyogp.lib.base.datatypes import UUID
+from pyogp.lib.base.datatypes import UUID, Vector3, Quaternion
 
 # pyogp messaging
 from types import MsgType, EndianType
@@ -51,7 +51,9 @@ class DataPacker(object):
         size = len(tup)
         return struct.pack(endian + str(size) + tp, *tup)
 
-    def __pack_vector3(self, endian, vec):
+    def __pack_vector3(self, endian, vec):        
+        if isinstance(vec, Vector3):
+            vec = vec() # convert to tuple
         return self.__pack_tuple(endian, vec, 'f')
 
     def __pack_vector3d(self, endian, vec):
