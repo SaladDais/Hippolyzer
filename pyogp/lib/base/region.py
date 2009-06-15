@@ -494,7 +494,7 @@ class Region(object):
         """ shuts down the running event queue """
 
         if self._isEventQueueRunning == True and self.event_queue._running == True:
-            self.event_queue.stop = True
+            self.event_queue.stop()
 
     def onRegionHandshake(self, packet):
         """ handles the response to receiving a RegionHandshake packet """

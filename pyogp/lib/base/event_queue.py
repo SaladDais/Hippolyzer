@@ -64,7 +64,7 @@ class EventQueueClient(object):
         #self.type = eq_type    # specify 'agentdomain' or 'region'
 
         self._running = False     # this class controls this value
-        self.stop = False     # client can pause the event queue
+        self.stopped = False     # client can pause the event queue
         self.last_id = -1
 
         # if applicable, initialize data to post to the event queue
@@ -105,23 +105,29 @@ class EventQueueClient(object):
                 return False
 
         except Exception, error:
-            log(ERROR, "Problem stating event queue for %s with cap of %s" % (str(self.region.sim_ip) + ':' + str(self.region.sim_port), self.seed_capability_url))
+            log(ERROR, "Problem starting event queue for %s with cap of %s" % (str(self.region.sim_ip) + ':' + str(self.region.sim_port), str(self.cap)))
             return False
 
     def stop(self):
 
-        log(INFO, "Stopping %s event queue." % (self.type))
+        log(INFO, "Stopping event queue.")
 
-        self.stop = True
+        self.stopped = True
 
-        # ToDo: turn this into a timeout
-        for i in range(1,10):
-            if self._running == False: return True
-
-        # well, we failed to stop. let's log it and get outta here
-        log(WARNING, "Failed to stop %s event queue." % (self.type))
-        self.stop = False
-        return False
+        def stop_monitor(self, interval, times):
+            for i in range(0,times):
+                api.sleep(interval)
+                if self._running == False:
+                    log(INFO,
+                        "Stopped event queue processing for %s",
+                        self.region.SimName)
+                    return
+            log(WARNING,
+                "Failed to stop event queue for %s after %s seconds",
+                self.region.SimName,
+                str(interval * times))
+            
+        api.spawn(stop_monitor, self, self.settings.REGION_EVENT_QUEUE_POLL_INTERVAL, 10)
 
     def _handle(self, data):
         """ essentially a case statement to pass packets to event notifiers in the form of self attributes """
@@ -145,13 +151,14 @@ class EventQueueClient(object):
 
             self._running = True
 
-            while self.stop != True:
+            while not self.stopped:
 
                 try:
                     api.sleep(self.settings.REGION_EVENT_QUEUE_POLL_INTERVAL)
 
+                    self.data = {}
                     if self.last_id != -1:
-                        self.data = {'ack':self.last_id, 'done':True}
+                        self.data = {'ack':self.last_id}
 
                     if self.settings.ENABLE_EQ_LOGGING: 
                         if self.settings.ENABLE_HOST_LOGGING:
@@ -182,6 +189,12 @@ class EventQueueClient(object):
                 #finally:
                     #log(CRITICAL, "Why am i here?")
 
+            if self.last_id != -1:
+                # Need to ack the last message received, otherwise it will be
+                # resent if we re-connect to the same queue
+                self.data = {'ack':self.last_id, 'done':True}
+                self.cap.POST(self.data)
+
             self._running = False
 
             log(DEBUG, "Stopped event queue processing for %s" % (self.region.SimName))
@@ -193,7 +206,7 @@ class EventQueueClient(object):
             # change the exception here (add a new one)
         else:
             self._running = True
-            while not self.stop:
+            while not self.stopped:
 
                 api.sleep(self.settings.agentdomain_event_queue_interval)
 

@@ -799,6 +799,15 @@ class Agent(object):
         sim_ip = packet.blocks['Info'][0].get_variable('SimIP').data
         sim_ip = '.'.join(map(str,struct.unpack('BBBB', sim_ip))) 
 
+        # *TODO: Make this more graceful
+        log(INFO, "Disconnecting from old region")
+        [region._kill_coroutines() for region in self.child_regions]
+        self.region._kill_coroutines()
+
+        self.region = None
+        self.child_regions = []
+        self._pending_child_regions = []
+
         log(INFO, "Enabling new region")
         self._enable_current_region(
             region_x = region_x,
