@@ -110,6 +110,9 @@ class Agent(object):
         # init Appearance()
         # self.appearance = Appearance(self.settings, self)
 
+        # Cache of region name->handle; per-agent to prevent information leaks
+        self.region_name_map = {}
+
         if self.settings.LOG_VERBOSE: log(DEBUG, 'Initializing agent: %s' % (self))
 
     def Name(self):
@@ -715,6 +718,9 @@ class Agent(object):
         if not region_id and region_name and region_name.lower() == self.region.SimName.lower():
             region_id = self.region.RegionID
 
+        if not region_id and not region_handle and region_name.lower() in self.region_name_map:
+            region_handle = self.region_name_map[region_name.lower()]
+
         if region_id:
             log(INFO, 'sending TP request packet')
             packet = TeleportRequestPacket()
@@ -751,8 +757,6 @@ class Agent(object):
     
     def send_MapNameRequest(self, region_name, callback):
 
-        # *TODO: add a name-to-id cache
-
         handler = self.region.message_handler.register('MapBlockReply')
         
         def onMapBlockReplyPacket(packet):
@@ -764,6 +768,9 @@ class Agent(object):
                     x = block.get_variable('X').data
                     y = block.get_variable('Y').data
                     region_handle = Region.xy_to_handle(x,y)
+
+                    self.region_name_map[region_name.lower()] = region_handle
+                    
                     callback(region_handle)                    
                     return
             # Leave it registered, as the event may come later
