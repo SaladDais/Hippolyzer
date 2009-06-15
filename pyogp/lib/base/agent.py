@@ -488,7 +488,7 @@ class Agent(object):
         def send_RetrieveInstantMessages(self):
             """ asks simulator for instant messages stored while agent was offline """
 
-            packet = RetrieveInstantMessagesPackets()
+            packet = RetrieveInstantMessagesPacket()
 
             packet.AgentDataBlock['AgentID'] = self.agent_id
             packet.AgentDataBlock['SessionID'] = self.session_id
@@ -698,7 +698,7 @@ class Agent(object):
                     is_running = True
 
         # start the event queue
-        if is_running == False:
+        if not is_running:
             self._start_EQ_on_neighboring_region(message)
 
 
