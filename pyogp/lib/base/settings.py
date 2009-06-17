@@ -66,7 +66,7 @@ class Settings(object):
 
         # ToDo: handle this!
         self.ENABLE_EXTENDED_LOGIN_OPTIONS = False
-        self.EXTENDED_LOGIN_OPTIONS = ["gestures", "event_categories", "event_notifications", "classified_categories", "buddy_list", "ui-config", "login-flags", "global-textures" ]
+        self.EXTENDED_LOGIN_OPTIONS = ["gestures", "event_categories", "event_notifications", "classified_categories", "buddy-list", "ui-config", "login-flags", "global-textures" ]
 
         #~~~~~~~~~~~~~~~~~~~
         # Simulator specific
