@@ -113,6 +113,9 @@ class Agent(object):
         # Cache of region name->handle; per-agent to prevent information leaks
         self.region_name_map = {}
 
+        # Cache of agent_id->(first_name, last_name); per agent to prevent info leaks
+        self.agent_id_map = {}
+
         if self.settings.LOG_VERBOSE: log(DEBUG, 'Initializing agent: %s' % (self))
 
     def Name(self):
@@ -365,6 +368,9 @@ class Agent(object):
             self.region.message_handler.register('TeleportProgress').subscribe(self.simple_callback('Info'))
             self.region.message_handler.register('TeleportFailed').subscribe(self.simple_callback('Info'))
             self.region.message_handler.register('TeleportFinish').subscribe(self.onTeleportFinish)
+
+            self.region.message_handler.register('OfflineNotification').subscribe(self.simple_callback('AgentBlock'))
+            self.region.message_handler.register('OnlineNotification').subscribe(self.simple_callback('AgentBlock'))
 
             if self.settings.ENABLE_COMMUNICATIONS_TRACKING:
 
@@ -789,7 +795,6 @@ class Agent(object):
         packet.NameData['Name'] = region_name.lower()
         self.region.enqueue_message(packet()) 
 
-
     def onTeleportFinish(self, packet):
         """Handle the end of a successful teleport"""
 
@@ -823,6 +828,50 @@ class Agent(object):
             sim_ip = sim_ip,
             sim_port = packet.blocks['Info'][0].get_variable('SimPort').data
             )
+
+
+    def request_agent_names(self, agent_ids, callback):
+        """Request agent names. When all names are known, callback
+        will be called with a list of tuples (agent_id, first_name,
+        last_name). If all names are known, callback will be called
+        immediately."""
+        
+        def _fire_callback(_):
+            cbdata = [(agent_id,
+                       self.agent_id_map[agent_id][0],
+                       self.agent_id_map[agent_id][1])
+                      for agent_id in agent_ids]
+            callback(cbdata)
+        
+        names_to_request = [ agent_id
+                             for agent_id in agent_ids
+                             if agent_id not in self.agent_id_map ]
+        if names_to_request:
+            self.send_UUIDNameRequest(names_to_request, _fire_callback)
+        else:
+            _fire_callback([])            
+
+
+    def send_UUIDNameRequest(self, agent_ids, callback):
+        handler = self.region.message_handler.register('UUIDNameReply')
+
+        def onUUIDNameReply(packet):
+            log(INFO, 'UUIDNameReplyPacket received')
+            handler.unsubscribe(onUUIDNameReply) # One-shot handler
+            cbdata = []
+            for block in packet.blocks['UUIDNameBlock']:
+                agent_id = str(block.get_variable('ID').data)
+                first_name = block.get_variable('FirstName').data
+                last_name = block.get_variable('LastName').data
+                self.agent_id_map[agent_id] = (first_name, last_name)
+                cbdata.append((agent_id, first_name, last_name))
+            callback(cbdata)
+            
+        handler.subscribe(onUUIDNameReply)
+        log(INFO, 'sending UUIDNameRequest')
+        packet = UUIDNameRequestPacket()
+        packet.UUIDNameBlockBlocks = [ {'ID':UUID(agent_id) } for agent_id in agent_ids ]
+        self.region.enqueue_message(packet())
 
 
 class Home(object):
