@@ -188,6 +188,13 @@ class UUID(object):
 
         return self.uuid
 
+    def __eq__(self, other):
+        if hasattr(other,'uuid'):
+            return self.uuid == other.uuid
+        else:
+            return False
+    
+
 """
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 

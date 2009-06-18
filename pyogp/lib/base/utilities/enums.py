@@ -135,6 +135,86 @@ class ParcelFlags(object):
     UseEstateVoiceChannel = 1 << 30
     DenyAgeUnverified = 1 << 31         # Prevent residents who aren't age-verified 
 
+
+class MoneyTransactionType:
+    """ Money transaction type constants """
+
+    Null                   = 0
+
+# Codes 1000-1999 reserved for one-time charges
+    ObjectClaim            = 1000
+    LandClaim              = 1001
+    GroupCreate            = 1002
+    ObjectPublicClaim      = 1003
+    GroupJoin              = 1004 # May be moved to group transactions eventually
+    TeleportCharge         = 1100 # FF not sure why this jumps to 1100... 
+    UploadCharge           = 1101
+    LandAuction            = 1102
+    ClassifiedCharge       = 1103
+
+# Codes 2000-2999 reserved for recurrent charges
+    ObjectTax              = 2000
+    LandTax                = 2001
+    LightTax               = 2002
+    ParcelDirFee           = 2003
+    GroupTax               = 2004 # Taxes incurred as part of group membership
+    ClassifiedRenew        = 2005
+
+# Codes 3000-3999 reserved for inventory transactions
+    GiveInventory          = 3000
+
+# Codes 5000-5999 reserved for transfers between users
+    ObjectSale             = 5000
+    Gift                   = 5001
+    LandSale               = 5002
+    ReferBonus             = 5003
+    InventorySale          = 5004
+    RefundPurchase         = 5005
+    LandPassSale           = 5006
+    DwellBonus             = 5007
+    PayObject              = 5008
+    ObjectPays             = 5009
+
+# Codes 6000-6999 reserved for group transactions
+#   GroupJoin              = 6000  # reserved for future use
+    GroupLandDeed          = 6001
+    GroupObjectDeed        = 6002
+    GroupLiability         = 6003
+    GroupDividend          = 6004
+    MembershipDues         = 6005
+
+# Codes 8000-8999 reserved for one-type credits
+    ObjectRelease          = 8000
+    LandRelease            = 8001
+    ObjectDelete           = 8002
+    ObjectPublicDecay      = 8003
+    ObjectPublicDelete     = 8004
+
+# Code 9000-9099 reserved for usertool transactions
+    LindenAdjustment       = 9000
+    LindenGrant            = 9001
+    LindenPenalty          = 9002
+    EventFee               = 9003
+    EventPrize             = 9004
+
+# Codes 10000-10999 reserved for stipend credits
+    StipendBasic           = 10000
+    StipendDeveloper       = 10001
+    StipendAlways          = 10002
+    StipendDaily           = 10003
+    StipendRating          = 10004
+    StipendDelta           = 10005
+
+class TransactionFlags:
+    Null = 0
+    SourceGroup = 1
+    DestGroup = 2
+    OwnerGroup = 4
+    SimultaneousContribution = 8
+    SimultaneousContributionRemoval = 16
+    
+
+    
 """
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 

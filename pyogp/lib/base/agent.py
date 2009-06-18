@@ -26,7 +26,7 @@ from pyogp.lib.base.message.packets import *
 
 # pyogp utilities
 from pyogp.lib.base.utilities.helpers import Helpers
-from pyogp.lib.base.utilities.enums import ImprovedIMDialogue
+from pyogp.lib.base.utilities.enums import ImprovedIMDialogue, MoneyTransactionType, TransactionFlags
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.agent')
@@ -371,6 +371,9 @@ class Agent(object):
 
             self.region.message_handler.register('OfflineNotification').subscribe(self.simple_callback('AgentBlock'))
             self.region.message_handler.register('OnlineNotification').subscribe(self.simple_callback('AgentBlock'))
+
+            self.region.message_handler.register('MoneyBalanceReply').subscribe(self.simple_callback('MoneyData'))
+            self.region.message_handler.register('RoutedMoneyBalanceReply').subscribe(self.simple_callback('MoneyData'))
 
             if self.settings.ENABLE_COMMUNICATIONS_TRACKING:
 
@@ -873,6 +876,44 @@ class Agent(object):
         packet.UUIDNameBlockBlocks = [ {'ID':UUID(agent_id) } for agent_id in agent_ids ]
         self.region.enqueue_message(packet())
 
+
+    def request_balance(self, callback):
+        """Request the current agent balance."""
+        handler = self.region.message_handler.register('MoneyBalanceReply')
+
+        def onMoneyBalanceReply(packet):
+            log(INFO, 'MoneyBalanceReply received')
+            handler.unsubscribe(onMoneyBalanceReply) # One-shot handler
+            balance = packet.blocks['MoneyData'][0].get_variable('MoneyBalance').data
+            callback(balance)
+
+        handler.subscribe(onMoneyBalanceReply)
+        log(INFO, 'sending MoneyBalanceRequest')
+        packet = MoneyBalanceRequestPacket()
+        packet.AgentData['AgentID'] = self.agent_id
+        packet.AgentData['SessionID'] = self.session_id
+        packet.MoneyData['TransactionID'] = UUID()
+        self.region.enqueue_message(packet())
+        
+
+    def give_money(self, target_id, amount,
+                   description='',
+                   transaction_type=MoneyTransactionType.Gift,
+                   flags=TransactionFlags.Null):
+        """Give money to another agent"""
+        log(INFO, 'sending MoneyTransferRequest')
+        packet = MoneyTransferRequestPacket()
+        packet.AgentData['AgentID'] = self.agent_id
+        packet.AgentData['SessionID'] = self.session_id
+        packet.MoneyData['SourceID'] = self.agent_id
+        packet.MoneyData['DestID'] = UUID(target_id)
+        packet.MoneyData['Flags'] = flags
+        packet.MoneyData['Amount'] = amount
+        packet.MoneyData['AggregatePermNextOwner'] = 0
+        packet.MoneyData['AggregatePermInventory'] = 0
+        packet.MoneyData['TransactionType'] = transaction_type
+        packet.MoneyData['Description'] = description
+        self.region.enqueue_message(packet()) 
 
 class Home(object):
     """ contains the parameters describing an agent's home location as returned in login_response['home'] """
