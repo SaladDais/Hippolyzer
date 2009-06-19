@@ -860,7 +860,7 @@ class Agent(object):
 
         def onUUIDNameReply(packet):
             log(INFO, 'UUIDNameReplyPacket received')
-            handler.unsubscribe(onUUIDNameReply) # One-shot handler
+            
             cbdata = []
             for block in packet.blocks['UUIDNameBlock']:
                 agent_id = str(block.get_variable('ID').data)
@@ -868,7 +868,16 @@ class Agent(object):
                 last_name = block.get_variable('LastName').data
                 self.agent_id_map[agent_id] = (first_name, last_name)
                 cbdata.append((agent_id, first_name, last_name))
-            callback(cbdata)
+
+            # Fire the callback only when all names are received
+            missing = [ agent_id
+                        for agent_id in agent_ids
+                        if agent_id not in self.agent_id_map ]
+            if len(missing) == 0:
+                handler.unsubscribe(onUUIDNameReply)
+                callback(cbdata)
+            else:
+                log(INFO, 'Still waiting on %d names', len(missing))
             
         handler.subscribe(onUUIDNameReply)
         log(INFO, 'sending UUIDNameRequest')
