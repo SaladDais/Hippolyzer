@@ -27,8 +27,8 @@ class TestObjects(unittest.TestCase):
         self.region = Region()
         self.region.SimName = 'TestMe'
 
-        self.object_store = ObjectManager(region = self.region, settings = self.settings)
-        self.object_store.enable_callbacks()
+        self.object_store = Objects(region = self.region, settings = self.settings)
+
     def tearDown(self):
 
         pass

@@ -18,7 +18,7 @@ import pyogp.lib.base.exc
 from pyogp.lib.base.settings import Settings
 from pyogp.lib.base.utilities.helpers import Helpers
 from pyogp.lib.base.event_queue import EventQueueClient
-from pyogp.lib.base.objects import ObjectManager
+from pyogp.lib.base.objects import Objects
 from pyogp.lib.base.datatypes import *
 from pyogp.lib.base.event_system import AppEventsHandler
 from pyogp.lib.base.parcel import ParcelManager
@@ -72,10 +72,9 @@ class Region(object):
         # otherwise, grab the defaults
         if message_handler != None:
             self.message_handler = message_handler
-        #elif self.settings.HANDLE_PACKETS:
-        else:
+        elif self.settings.HANDLE_PACKETS:
             self.message_handler = MessageHandler()
-        
+
         # allow the eventhandler to be passed in
         # so that applications running multiple avatars
         # may use the same eventhandler
@@ -122,10 +121,13 @@ class Region(object):
         # data storage containers
         self.packet_queue = []
 
-        self.objects = ObjectManager(agent = self.agent, region = self, settings = self.settings, message_handler = self.message_handler, events_handler = self.events_handler)
-        
-        self.parcel_manager = ParcelManager(region = self, agent = self.agent, message_handler = self.message_handler, events_handler = self.events_handler, settings = None)
-        
+        if self.settings.ENABLE_OBJECT_TRACKING == True:
+            self.objects = Objects(agent = self.agent, region = self, settings = self.settings, message_handler = self.message_handler, events_handler = self.events_handler)
+        else:
+            self.objects = None
+
+        if self.settings.ENABLE_PARCEL_TRACKING:
+            self.parcel_manager = ParcelManager(region = self, agent = self.agent, message_handler = self.message_handler, events_handler = self.events_handler, settings = None)
 
         # required packet handlers
         onPacketAck_received = self.message_handler.register('PacketAck')
@@ -169,19 +171,13 @@ class Region(object):
                             'UntrustedSimulatorMessage',
                             'ViewerStats'
         ]
-        if self.settings.LOG_VERBOSE: log(DEBUG, 'initializing region domain: %s' %self)
 
-    def enable_callbacks(self):
-        '''enables the callback handles for this Region'''
-        if self.settings.ENABLE_OBJECT_TRACKING:
-            self.objects.enable_callbacks()
-        if self.settings.ENABLE_PARCEL_TRACKING:
-            self.parcel_manager.enable_callbacks()
-            
+        #set up some callbacks
         if self.settings.HANDLE_PACKETS:
             pass
 
-            
+        if self.settings.LOG_VERBOSE: log(DEBUG, 'initializing region domain: %s' %self)
+
     def enable_child_simulator(self, IP, Port, Handle):
 
         log(INFO, "Would enable a simulator at %s:%s with a handle of %s" % (IP, Port, Handle))
@@ -270,7 +266,7 @@ class Region(object):
 
     def connect(self):
         """ connect to the udp circuit code and event queue"""
-        self.enable_callbacks()
+
         # if this is the agent's host region, spawn the event queue
         # spawn an eventlet api instance that runs the event queue connection
         if self.seed_capability_url != None:

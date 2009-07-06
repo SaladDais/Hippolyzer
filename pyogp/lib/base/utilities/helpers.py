@@ -1,7 +1,6 @@
 # standard python libs
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import time
-import struct
 
 # related
 from indra.base import llsd
@@ -54,16 +53,6 @@ class Helpers(object):
         base64_string = b2a_base64(data)
 
         return base64_string
-
-    def int_to_bytes(self, data):
-        """
-        converts an int to a string of bytes
-        """
-        return struct.pack('BBBB',
-                           data % 256,
-                           (data >> 8) % 256,
-                           (data >> 16) % 256,
-                           (data >> 24) % 256)
 
     # ~~~~~~~~~
     # Callbacks
