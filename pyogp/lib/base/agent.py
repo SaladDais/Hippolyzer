@@ -17,7 +17,7 @@ from pyogp.lib.base.region import Region
 from pyogp.lib.base.inventory import *
 from pyogp.lib.base.groups import *
 from pyogp.lib.base.event_system import *
-# from pyogp.lib.base.appearance import Appearance
+from pyogp.lib.base.appearance import *
 
 # pyogp messaging
 from pyogp.lib.base.message.message_handler import MessageHandler
@@ -26,7 +26,7 @@ from pyogp.lib.base.message.packets import *
 
 # pyogp utilities
 from pyogp.lib.base.utilities.helpers import Helpers
-from pyogp.lib.base.utilities.enums import ImprovedIMDialogue, MoneyTransactionType, TransactionFlags
+from pyogp.lib.base.utilities.enums import ImprovedIMDialogue
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.agent')
@@ -88,6 +88,7 @@ class Agent(object):
         self.udp_blacklist = None
         self.home = None
         self.inventory = None
+        self.group_manager = GroupManager(self, self.settings)
         self.start_location = None
 
         # additional attributes
@@ -107,14 +108,11 @@ class Agent(object):
         self._pending_child_regions = []    # neighbor regions an agent may connect to
         self.region = None          # the host simulation for the agent
 
-        # init Appearance()
-        # self.appearance = Appearance(self.settings, self)
+        # init AppearanceManager()
+        self.appearance = AppearanceManager(self.settings, self)
 
         # Cache of region name->handle; per-agent to prevent information leaks
         self.region_name_map = {}
-
-        # Cache of agent_id->(first_name, last_name); per agent to prevent info leaks
-        self.agent_id_map = {}
 
         if self.settings.LOG_VERBOSE: log(DEBUG, 'Initializing agent: %s' % (self))
 
@@ -173,6 +171,7 @@ class Agent(object):
 
         if connect_region:
             self._enable_current_region()
+                             
 
     def logout(self):
         """ logs an agent out of the current region. calls Region()._kill_coroutines() for all child regions, and Region().logout() for the host region """
@@ -210,7 +209,7 @@ class Agent(object):
         return login_params
 
     def _parse_login_response(self):
-        """ evaluates the login response and propagates data to the Agent() attributes. enables Inventory() if settings dictate """
+        """ evaluates the login response and propagates data to the Agent() attributes. enables InventoryManager() if settings dictate """
 
         if self.grid_type == 'Legacy':
 
@@ -249,39 +248,16 @@ class Agent(object):
         # enable the current region, setting connect = True
         self.region = Region(region_x, region_y, seed_capability, udp_blacklist, sim_ip, sim_port, circuit_code, self, settings = self.settings, events_handler = self.events_handler)
 
-        self.region.is_host_region = True
-
-        self._enable_callbacks()
+        self.region.is_host_region = True        
 
         # start the simulator udp and event queue connections
         if self.settings.LOG_COROUTINE_SPAWNS: log(INFO, "Spawning a coroutine for connecting to the agent's host region.")
 
         api.spawn(self.region.connect)
+        
+        self.enable_callbacks()
 
-        while self.region.capabilities == {}:
-
-            api.sleep(0)
-
-        if self.settings.ENABLE_INVENTORY_MANAGEMENT:
-
-            inventory_caps = ['FetchInventory', 'WebFetchInventoryDescendents', 'FetchLib', 'FetchLibDescendents']
-
-            if sets.Set(self.region.capabilities.keys()).intersection(inventory_caps):
-
-                caps = dict([(capname, self.region.capabilities[capname]) for capname in inventory_caps])
-
-                log(INFO, "Using the capability based inventory management mechanism")
-
-                self.inventory = AIS(self, caps)
-
-            else:
-
-                log(INFO, "Using the UDP based inventory management mechanism")
-
-                self.inventory = UDP_Inventory(self)
-
-            self.inventory._parse_folders_from_login_response()            
-            self.inventory.enable_callbacks()
+        
 
     def _enable_child_region(self, region_params):
         """ enables a child region. eligible simulators are sent in EnableSimulator over the event queue, and routed through the packet handler """
@@ -330,15 +306,38 @@ class Agent(object):
             log(DEBUG, 'Spawning neighboring region event queue connection')
             region[0]._startEventQueue()
 
-    def _enable_callbacks(self):
+    def enable_callbacks(self):
         """ enable the Agents() callback handlers for packet received events """
+        # TODO oopify
+        
+        if self.settings.ENABLE_INVENTORY_MANAGEMENT:
+            while self.region.capabilities == {}:
 
-        if self.settings.ENABLE_INVENTORY_MANAGEMENT and self.inventory != None:
+                api.sleep(0)
+            
+            inventory_caps = ['FetchInventory', 'WebFetchInventoryDescendents', 'FetchLib', 'FetchLibDescendents']
+    
+            if sets.Set(self.region.capabilities.keys()).intersection(inventory_caps):
+    
+                caps = dict([(capname, self.region.capabilities[capname]) for capname in inventory_caps])
+    
+                log(INFO, "Using the capability based inventory management mechanism")
+    
+                self.inventory = AIS(self, caps)
+    
+            else:
+    
+                log(INFO, "Using the UDP based inventory management mechanism")
+    
+                self.inventory = UDP_Inventory(self)
+    
+            self.inventory._parse_folders_from_login_response()   
             self.inventory.enable_callbacks()
 
+        if self.settings.ENABLE_APPEARANCE_MANAGEMENT:
+            self.appearance.enable_callbacks()
         if self.settings.ENABLE_GROUP_CHAT:
-            self.group_manager = GroupManager(self, self.settings)
-
+            self.group_manager.enable_callbacks()
         if self.settings.MULTIPLE_SIM_CONNECTIONS:
 
             onEnableSimulator_received = self.region.message_handler.register('EnableSimulator')
@@ -369,16 +368,11 @@ class Agent(object):
             self.region.message_handler.register('TeleportFailed').subscribe(self.simple_callback('Info'))
             self.region.message_handler.register('TeleportFinish').subscribe(self.onTeleportFinish)
 
-            self.region.message_handler.register('OfflineNotification').subscribe(self.simple_callback('AgentBlock'))
-            self.region.message_handler.register('OnlineNotification').subscribe(self.simple_callback('AgentBlock'))
-
-            self.region.message_handler.register('MoneyBalanceReply').subscribe(self.simple_callback('MoneyData'))
-            self.region.message_handler.register('RoutedMoneyBalanceReply').subscribe(self.simple_callback('MoneyData'))
-
             if self.settings.ENABLE_COMMUNICATIONS_TRACKING:
 
                 onChatFromSimulator_received = self.region.message_handler.register('ChatFromSimulator')
                 onChatFromSimulator_received.subscribe(self.onChatFromSimulator)
+    
 
 
     def simple_callback(self, blockname):
@@ -493,16 +487,17 @@ class Agent(object):
             packet.MessageBlock['BinaryBucket'] = BinaryBucket             # Variable 2
 
         self.region.enqueue_message(packet(), True)
+ 
+    def send_RetrieveInstantMessages(self):
+        """ asks simulator for instant messages stored while agent was offline """
+        
+        packet = RetrieveInstantMessagesPackets()
+        
+        packet.AgentDataBlock['AgentID'] = self.agent_id
+        packet.AgentDataBlock['SessionID'] = self.session_id
+        
+        self.region.enqueue_message(packet())
 
-        def send_RetrieveInstantMessages(self):
-            """ asks simulator for instant messages stored while agent was offline """
-
-            packet = RetrieveInstantMessagesPacket()
-
-            packet.AgentDataBlock['AgentID'] = self.agent_id
-            packet.AgentDataBlock['SessionID'] = self.session_id
-
-            self.region.enqueue_message(packet())
 
     def sigint_handler(self, signal, frame):
         """ catches terminal signals (Ctrl-C) to kill running client instances """
@@ -544,7 +539,8 @@ class Agent(object):
         """ callback handler for received AgentMovementComplete messages which populates various Agent() and Region() attributes """
 
         self.Position = packet.blocks['Data'][0].get_variable('Position').data
-
+        if self.Position == None:
+            log(WARNING, "agent.position is None agent.py")
         self.LookAt = packet.blocks['Data'][0].get_variable('LookAt').data
 
         self.region.RegionHandle = packet.blocks['Data'][0].get_variable('RegionHandle').data
@@ -798,6 +794,7 @@ class Agent(object):
         packet.NameData['Name'] = region_name.lower()
         self.region.enqueue_message(packet()) 
 
+
     def onTeleportFinish(self, packet):
         """Handle the end of a successful teleport"""
 
@@ -832,97 +829,6 @@ class Agent(object):
             sim_port = packet.blocks['Info'][0].get_variable('SimPort').data
             )
 
-
-    def request_agent_names(self, agent_ids, callback):
-        """Request agent names. When all names are known, callback
-        will be called with a list of tuples (agent_id, first_name,
-        last_name). If all names are known, callback will be called
-        immediately."""
-        
-        def _fire_callback(_):
-            cbdata = [(agent_id,
-                       self.agent_id_map[agent_id][0],
-                       self.agent_id_map[agent_id][1])
-                      for agent_id in agent_ids]
-            callback(cbdata)
-        
-        names_to_request = [ agent_id
-                             for agent_id in agent_ids
-                             if agent_id not in self.agent_id_map ]
-        if names_to_request:
-            self.send_UUIDNameRequest(names_to_request, _fire_callback)
-        else:
-            _fire_callback([])            
-
-
-    def send_UUIDNameRequest(self, agent_ids, callback):
-        handler = self.region.message_handler.register('UUIDNameReply')
-
-        def onUUIDNameReply(packet):
-            log(INFO, 'UUIDNameReplyPacket received')
-            
-            cbdata = []
-            for block in packet.blocks['UUIDNameBlock']:
-                agent_id = str(block.get_variable('ID').data)
-                first_name = block.get_variable('FirstName').data
-                last_name = block.get_variable('LastName').data
-                self.agent_id_map[agent_id] = (first_name, last_name)
-                cbdata.append((agent_id, first_name, last_name))
-
-            # Fire the callback only when all names are received
-            missing = [ agent_id
-                        for agent_id in agent_ids
-                        if agent_id not in self.agent_id_map ]
-            if len(missing) == 0:
-                handler.unsubscribe(onUUIDNameReply)
-                callback(cbdata)
-            else:
-                log(INFO, 'Still waiting on %d names', len(missing))
-            
-        handler.subscribe(onUUIDNameReply)
-        log(INFO, 'sending UUIDNameRequest')
-        packet = UUIDNameRequestPacket()
-        packet.UUIDNameBlockBlocks = [ {'ID':UUID(agent_id) } for agent_id in agent_ids ]
-        self.region.enqueue_message(packet())
-
-
-    def request_balance(self, callback):
-        """Request the current agent balance."""
-        handler = self.region.message_handler.register('MoneyBalanceReply')
-
-        def onMoneyBalanceReply(packet):
-            log(INFO, 'MoneyBalanceReply received')
-            handler.unsubscribe(onMoneyBalanceReply) # One-shot handler
-            balance = packet.blocks['MoneyData'][0].get_variable('MoneyBalance').data
-            callback(balance)
-
-        handler.subscribe(onMoneyBalanceReply)
-        log(INFO, 'sending MoneyBalanceRequest')
-        packet = MoneyBalanceRequestPacket()
-        packet.AgentData['AgentID'] = self.agent_id
-        packet.AgentData['SessionID'] = self.session_id
-        packet.MoneyData['TransactionID'] = UUID()
-        self.region.enqueue_message(packet())
-        
-
-    def give_money(self, target_id, amount,
-                   description='',
-                   transaction_type=MoneyTransactionType.Gift,
-                   flags=TransactionFlags.Null):
-        """Give money to another agent"""
-        log(INFO, 'sending MoneyTransferRequest')
-        packet = MoneyTransferRequestPacket()
-        packet.AgentData['AgentID'] = self.agent_id
-        packet.AgentData['SessionID'] = self.session_id
-        packet.MoneyData['SourceID'] = self.agent_id
-        packet.MoneyData['DestID'] = UUID(target_id)
-        packet.MoneyData['Flags'] = flags
-        packet.MoneyData['Amount'] = amount
-        packet.MoneyData['AggregatePermNextOwner'] = 0
-        packet.MoneyData['AggregatePermInventory'] = 0
-        packet.MoneyData['TransactionType'] = transaction_type
-        packet.MoneyData['Description'] = description
-        self.region.enqueue_message(packet()) 
 
 class Home(object):
     """ contains the parameters describing an agent's home location as returned in login_response['home'] """

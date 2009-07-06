@@ -3,11 +3,13 @@ import unittest
 
 # related
 from indra.base import llsd
+from eventlet import api, coros
 
 # pyogp
 from pyogp.lib.base.region import Region
 from pyogp.lib.base.event_queue import EventQueueClient
 from pyogp.lib.base.exc import *
+from pyogp.lib.base.caps import Capability
 
 # pyogp tests
 import pyogp.lib.base.tests.config 
@@ -61,6 +63,32 @@ class TestEventQueue(unittest.TestCase):
             self.assertEquals(str(type(packet)), '<class \'pyogp.lib.base.message.message.Message\'>')
             packet_names.append(packet.name)    
 
+    def test_start_exception(self):
+        # self.eq.cap is None so it throws an exception, logging should print error
+        self.assertEquals(None, self.eq.cap)
+
+        self.eq.start()
+
+        self.assertTrue(True)
+
+    def test_processRegionEventQueue_exception(self):
+        
+        self.eq.cap = Capability('foo', 'http://127.0.0.1')
+    
+        self.assertRaises(RegionCapNotAvailable, self.eq._processRegionEventQueue) 
+
+    def test_start_and_stop(self):
+
+        self.eq.cap = Capability('EventQueueGet', 'http://127.0.0.1')
+        self.assertFalse(self.eq.stopped)
+        api.spawn(self.eq.start)
+        api.sleep(1)
+        #self.eq.stop() #stop is broken atm
+        self.eq.stopped = True
+        api.sleep(.1)
+        self.assertTrue(self.eq.stopped)
+        self.assertFalse(self.eq._running)
+        
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()

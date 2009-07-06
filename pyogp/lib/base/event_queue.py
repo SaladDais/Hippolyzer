@@ -10,7 +10,7 @@ util.wrap_socket_with_coroutine_socket()
 # pyogp
 from pyogp.lib.base.utilities.events import Event
 from pyogp.lib.base.groups import *
-from pyogp.lib.base.exc import Deprecated
+from pyogp.lib.base.exc import Deprecated, RegionCapNotAvailable
 
 # messaging
 from pyogp.lib.base.message.message_handler import MessageHandler
@@ -62,7 +62,8 @@ class EventQueueClient(object):
 
         self.cap = capability
         #self.type = eq_type    # specify 'agentdomain' or 'region'
-
+        self.type = 'typeNotSpecified'
+        
         self._running = False     # this class controls this value
         self.stopped = False     # client can pause the event queue
         self.last_id = -1
@@ -105,7 +106,9 @@ class EventQueueClient(object):
                 return False
 
         except Exception, error:
+
             log(ERROR, "Problem starting event queue for %s with cap of %s" % (str(self.region.sim_ip) + ':' + str(self.region.sim_port), str(self.cap)))
+
             return False
 
     def stop(self):
@@ -145,7 +148,7 @@ class EventQueueClient(object):
     def _processRegionEventQueue(self):
 
         if self.cap.name != 'EventQueueGet':
-            raise exc.RegionCapNotAvailable('EventQueueGet')
+            raise RegionCapNotAvailable('EventQueueGet')
             # well then get it...?
         else:
 
@@ -188,7 +191,7 @@ class EventQueueClient(object):
                     log(WARNING, "Error in a post to the event queue. Error was: %s" % (error))
                 #finally:
                     #log(CRITICAL, "Why am i here?")
-
+                    
             if self.last_id != -1:
                 # Need to ack the last message received, otherwise it will be
                 # resent if we re-connect to the same queue

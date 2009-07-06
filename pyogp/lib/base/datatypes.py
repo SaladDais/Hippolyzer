@@ -188,13 +188,12 @@ class UUID(object):
 
         return self.uuid
 
-    def __eq__(self, other):
-        if hasattr(other,'uuid'):
-            return self.uuid == other.uuid
-        else:
-            return False
-    
-
+    def __xor__(self, arg):
+        """ the xor of two UUIDs """
+        temp = self.uuid.int ^ arg.uuid.int
+        result = uuid.UUID(int = temp)
+        return UUID(result.__str__())
+        
 """
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 

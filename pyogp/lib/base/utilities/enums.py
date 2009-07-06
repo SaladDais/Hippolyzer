@@ -135,86 +135,83 @@ class ParcelFlags(object):
     UseEstateVoiceChannel = 1 << 30
     DenyAgeUnverified = 1 << 31         # Prevent residents who aren't age-verified 
 
+class TextureIndex(object):
+    TEX_HEAD_BODYPAINT   = 0
+    TEX_UPPER_SHIRT      = 1
+    TEX_LOWER_PANTS      = 2
+    TEX_EYES_IRIS        = 3
+    TEX_HAIR             = 4
+    TEX_UPPER_BODYPAINT  = 5
+    TEX_LOWER_BODYPAINT  = 6
+    TEX_LOWER_SHOES      = 7
+    TEX_HEAD_BAKED       = 8           # Pre-composited
+    TEX_UPPER_BAKED      = 9 # Pre-composited
+    TEX_LOWER_BAKED      = 10       # Pre-composited
+    TEX_EYES_BAKED       = 11       # Pre-composited
+    TEX_LOWER_SOCKS      = 12
+    TEX_UPPER_JACKET     = 13
+    TEX_LOWER_JACKET     = 14
+    TEX_UPPER_GLOVES     = 15
+    TEX_UPPER_UNDERSHIRT = 16
+    TEX_LOWER_UNDERPANTS = 17
+    TEX_SKIRT            = 18
+    TEX_SKIRT_BAKED      = 19        # Pre-composited
+    TEX_HAIR_BAKED       = 20   # Pre-composited
+    TEX_COUNT            = 21
 
-class MoneyTransactionType:
-    """ Money transaction type constants """
+class BakedIndex(object):
+    BAKED_HEAD = 0
+    BAKED_UPPER = 1
+    BAKED_LOWER = 2
+    BAKED_EYES = 3
+    BAKED_SKIRT = 4
+    BAKED_HAIR = 5
+    BAKED_COUNT = 6
 
-    Null                   = 0
+    def BakedToTextureIndex(self, bakedIndex):
+        if bakedIndex is self.BAKED_HEAD:
+            return TextureIndex.TEX_HEAD_BAKED
+        elif bakedIndex is self.BAKED_UPPER:
+            return TextureIndex.TEX_UPPER_BAKED
+        elif bakedIndex is self.BAKED_LOWER:
+            return TextureIndex.TEX_LOWER_BAKED
+        elif bakedIndex is self.BAKED_EYES:
+            return TextureIndex.TEX_EYES_BAKED
+        elif bakedIndex is self.BAKED_SKIRT:
+            return TextureIndex.TEX_SKIRT_BAKED
+        elif bakedIndex is self.BAKED_HAIR:
+            return TextureIndex.TEX_HAIR_BAKED
+        else:
+            return -1
+        
 
-# Codes 1000-1999 reserved for one-time charges
-    ObjectClaim            = 1000
-    LandClaim              = 1001
-    GroupCreate            = 1002
-    ObjectPublicClaim      = 1003
-    GroupJoin              = 1004 # May be moved to group transactions eventually
-    TeleportCharge         = 1100 # FF not sure why this jumps to 1100... 
-    UploadCharge           = 1101
-    LandAuction            = 1102
-    ClassifiedCharge       = 1103
-
-# Codes 2000-2999 reserved for recurrent charges
-    ObjectTax              = 2000
-    LandTax                = 2001
-    LightTax               = 2002
-    ParcelDirFee           = 2003
-    GroupTax               = 2004 # Taxes incurred as part of group membership
-    ClassifiedRenew        = 2005
-
-# Codes 3000-3999 reserved for inventory transactions
-    GiveInventory          = 3000
-
-# Codes 5000-5999 reserved for transfers between users
-    ObjectSale             = 5000
-    Gift                   = 5001
-    LandSale               = 5002
-    ReferBonus             = 5003
-    InventorySale          = 5004
-    RefundPurchase         = 5005
-    LandPassSale           = 5006
-    DwellBonus             = 5007
-    PayObject              = 5008
-    ObjectPays             = 5009
-
-# Codes 6000-6999 reserved for group transactions
-#   GroupJoin              = 6000  # reserved for future use
-    GroupLandDeed          = 6001
-    GroupObjectDeed        = 6002
-    GroupLiability         = 6003
-    GroupDividend          = 6004
-    MembershipDues         = 6005
-
-# Codes 8000-8999 reserved for one-type credits
-    ObjectRelease          = 8000
-    LandRelease            = 8001
-    ObjectDelete           = 8002
-    ObjectPublicDecay      = 8003
-    ObjectPublicDelete     = 8004
-
-# Code 9000-9099 reserved for usertool transactions
-    LindenAdjustment       = 9000
-    LindenGrant            = 9001
-    LindenPenalty          = 9002
-    EventFee               = 9003
-    EventPrize             = 9004
-
-# Codes 10000-10999 reserved for stipend credits
-    StipendBasic           = 10000
-    StipendDeveloper       = 10001
-    StipendAlways          = 10002
-    StipendDaily           = 10003
-    StipendRating          = 10004
-    StipendDelta           = 10005
-
-class TransactionFlags:
-    Null = 0
-    SourceGroup = 1
-    DestGroup = 2
-    OwnerGroup = 4
-    SimultaneousContribution = 8
-    SimultaneousContributionRemoval = 16
+class WearablesIndex(object):
+    WT_SHAPE      = 0
+    WT_SKIN       = 1
+    WT_HAIR       = 2
+    WT_EYES       = 3
+    WT_SHIRT      = 4
+    WT_PANTS      = 5
+    WT_SHOES      = 6
+    WT_SOCKS      = 7
+    WT_JACKET     = 8
+    WT_GLOVES     = 9
+    WT_UNDERSHIRT = 10
+    WT_UNDERPANTS = 11
+    WT_SKIRT      = 12
     
+class WearableMap(object):
+    def __init__(self):
+        self.map = {}
+       
+        self.map[BakedIndex.BAKED_HEAD] = [WearablesIndex.WT_SHAPE, WearablesIndex.WT_SKIN, WearablesIndex.WT_HAIR]
+        self.map[BakedIndex.BAKED_UPPER] = [WearablesIndex.WT_SHAPE, WearablesIndex.WT_SKIN, WearablesIndex.WT_SHIRT, WearablesIndex.WT_JACKET, WearablesIndex.WT_GLOVES, WearablesIndex.WT_UNDERSHIRT]
+        self.map[BakedIndex.BAKED_LOWER] = [WearablesIndex.WT_SHAPE, WearablesIndex.WT_SKIN, WearablesIndex.WT_PANTS, WearablesIndex.WT_SHOES, WearablesIndex.WT_SOCKS,  WearablesIndex.WT_JACKET, WearablesIndex.WT_UNDERPANTS]
+        self.map[BakedIndex.BAKED_EYES] = [WearablesIndex.WT_EYES]
+        self.map[BakedIndex.BAKED_SKIRT] = [WearablesIndex.WT_SKIRT]
+        self.map[BakedIndex.BAKED_HAIR] = [WearablesIndex.WT_HAIR]
 
-    
+        
 """
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 

@@ -16,6 +16,7 @@ import termios
 from pyogp.lib.base.datatypes import *
 from pyogp.lib.base.exc import DataParsingError
 from pyogp.lib.base.utilities.helpers import Helpers, Wait
+from pyogp.lib.base.datamanager import DataManager
 
 # pyogp messaging
 from pyogp.lib.base.message.packets import *
@@ -27,7 +28,7 @@ from pyogp.lib.base.utilities.enums import ImprovedIMDialogue
 logger = getLogger('pyogp.lib.base.groups')
 log = logger.log
 
-class GroupManager(object):
+class GroupManager(DataManager):
     """ a storage bin for groups
 
     also, a functional area for group creation operations
@@ -35,24 +36,15 @@ class GroupManager(object):
 
     def __init__(self, agent, settings = None):
         """ initialize the group manager """
-
-        # allow the settings to be passed in
-        # otherwise, grab the defaults
-        if settings != None:
-            self.settings = settings
-        else:
-            from pyogp.lib.base.settings import Settings
-            self.settings = Settings()
-
-        self.agent = agent
-
+        super(GroupManager, self).__init__(settings, agent)
         # the group store consists of a list
         # of Group() instances
         self.group_store = []
+        
+        if self.settings.LOG_VERBOSE: log(DEBUG, "Initialized the Group Manager")
 
-        # ~~~~~~~~~
-        # Callbacks
-        # ~~~~~~~~~
+    def enable_callbacks(self):
+        """enables the callback handlers for this GroupManager"""
         if self.settings.HANDLE_PACKETS:
             onAgentGroupDataUpdate_received = self.agent.region.message_handler.register("AgentGroupDataUpdate")
             onAgentGroupDataUpdate_received.subscribe(self.onAgentGroupDataUpdate)
@@ -69,8 +61,7 @@ class GroupManager(object):
             onChatterBoxSessionStartReply_received = self.agent.region.message_handler.register('ChatterBoxSessionStartReply')
             onChatterBoxSessionStartReply_received.subscribe(self.onChatterBoxSessionStartReply)
 
-        if self.settings.LOG_VERBOSE: log(DEBUG, "Initialized the Group Manager")
-
+    
     def handle_group_chat(self, message):
         """ process a ChatterBoxInvitation_Message instance"""
 
