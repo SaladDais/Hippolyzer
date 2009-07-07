@@ -36,7 +36,7 @@ class GroupManager(DataManager):
 
     def __init__(self, agent, settings = None):
         """ initialize the group manager """
-        super(GroupManager, self).__init__(settings, agent)
+        super(GroupManager, self).__init__(agent, settings)
         # the group store consists of a list
         # of Group() instances
         self.group_store = []

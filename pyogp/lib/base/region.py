@@ -124,7 +124,7 @@ class Region(object):
 
         self.objects = ObjectManager(agent = self.agent, region = self, settings = self.settings, message_handler = self.message_handler, events_handler = self.events_handler)
         
-        self.parcel_manager = ParcelManager(region = self, agent = self.agent, message_handler = self.message_handler, events_handler = self.events_handler, settings = None)
+        self.parcel_manager = ParcelManager(agent = self.agent, region = self, settings = self.settings, message_handler = self.message_handler, events_handler = self.events_handler)
         
 
         # required packet handlers

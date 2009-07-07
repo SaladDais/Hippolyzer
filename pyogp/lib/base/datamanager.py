@@ -10,7 +10,7 @@ from pyogp.lib.base.message.message_handler import MessageHandler
 from pyogp.lib.base.exc import NotImplemented
 
 class DataManager(object):
-    def __init__(self, settings, agent):
+    def __init__(self, agent, settings):
         # allow the settings to be passed in
         # otherwise, grab the defaults
         if settings != None:

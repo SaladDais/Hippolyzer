@@ -35,7 +35,7 @@ class InventoryManager(DataManager):
 
     def __init__(self, agent = None, settings = None):
         """ set up the inventory manager """
-        super(InventoryManager, self).__init__(settings, agent)
+        super(InventoryManager, self).__init__(agent, settings)
         # For now, store the inventory contents in a list
         #     of folders with it's contents list containing it's inventory items
         # Ditto the library

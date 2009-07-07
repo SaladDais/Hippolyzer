@@ -28,12 +28,12 @@ class AppearanceManager(DataManager):
     Tests: 
     """
 
-    def __init__(self, settings = None, agent = None):
+    def __init__(self, agent, settings = None):
         """
         initialize the appearance manager
         TODO Fix the Z by generating actual height
         """
-        super(AppearanceManager, self).__init__(settings, agent)
+        super(AppearanceManager, self).__init__(agent, settings)
         self.AgentSetSerialNum = 1
         self.AgentCachedSerialNum = 1
         self.wearables = [] #indexed by WearableType

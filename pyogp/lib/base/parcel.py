@@ -54,9 +54,9 @@ log = logger.log
 class ParcelManager(DataManager):
     """ a parcel manager, generally used as an attribute of a region """
 
-    def __init__(self, region = None, agent = None, message_handler = None, events_handler = None, settings = None):
+    def __init__(self, agent = None, region = None, settings = None, message_handler = None, events_handler = None):
         """ initialize the parcel manager """
-        super(ParcelManager, self).__init__(settings, agent)
+        super(ParcelManager, self).__init__(agent, settings)
         
         self.region = region
 

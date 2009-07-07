@@ -18,6 +18,7 @@ from pyogp.lib.base.inventory import *
 from pyogp.lib.base.groups import *
 from pyogp.lib.base.event_system import *
 from pyogp.lib.base.appearance import *
+from pyogp.lib.base.assets import *
 
 # pyogp messaging
 from pyogp.lib.base.message.message_handler import MessageHandler
@@ -91,7 +92,7 @@ class Agent(object):
         self.inventory = None
         self.start_location = None
         self.group_manager = GroupManager(self, self.settings)
-
+        self.assets = AssetManager(self, self.settings)
 
         # additional attributes
         self.login_response = None
@@ -125,7 +126,7 @@ class Agent(object):
         self.region = None          # the host simulation for the agent
 
         # init AppearanceManager()
-        self.appearance = AppearanceManager(self.settings, self)
+        self.appearance = AppearanceManager(self, self.settings)
 
         # Cache of region name->handle; per-agent to prevent information leaks
         self.region_name_map = {}

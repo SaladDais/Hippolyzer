@@ -28,8 +28,8 @@ class AssetManager(DataManager):
     Tests: 
     """
 
-    def __init__(self, settings = None, agent = None):
-        super(AssetManager, self).__init__(settings, agent)
+    def __init__(self, agent, settings = None):
+        super(AssetManager, self).__init__(agent, settings)
         self.requests = [] # queue of requests?
         self.assets = {} # indexed by assetID?
 

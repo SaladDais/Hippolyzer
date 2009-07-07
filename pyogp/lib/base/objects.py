@@ -38,7 +38,7 @@ class ObjectManager(DataManager):
 
     def __init__(self, agent = None, region = None, settings = None, message_handler = None, events_handler = None):
         """ set up the object manager """
-        super(ObjectManager, self).__init__(settings, agent)
+        super(ObjectManager, self).__init__(agent, settings)
         self.region = region
 
         # the object store consists of a list
