@@ -2,6 +2,7 @@
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import uuid
 import struct
+import math
 
 # pyogp
 from pyogp.lib.base.exc import DataParsingError
@@ -77,11 +78,11 @@ class Vector3(object):
 class Quaternion(object):
     """ represents a quaternion as a tuple"""
 
-    def __init__(self, bytes = None, offset = 0, X = 0.0, Y = 0.0, Z = 0.0, W = 0.0):
+    def __init__(self, bytes = None, offset = 0, length = 4, X = 0.0, Y = 0.0, Z = 0.0, W = 0.0):
 
         if bytes != None:
 
-            self.unpack_from_bytes(bytes, offset)
+            self.unpack_from_bytes(bytes, offset, length)
 
         else:
 
@@ -102,14 +103,25 @@ class Quaternion(object):
             else:
                 self.W = W
 
-    def unpack_from_bytes(self, bytes, offset):
+    def unpack_from_bytes(self, bytes, offset, length=4):
         """ unpack floats from binary """
 
         # unpack from binary as Little Endian
         self.X = struct.unpack("<f", bytes[offset:offset+4])[0]
         self.Y = struct.unpack("<f", bytes[offset+4:offset+8])[0]
         self.Z = struct.unpack("<f", bytes[offset+8:offset+12])[0]
-        self.W = struct.unpack("<f", bytes[offset+12:offset+16])[0]
+
+        if length == 4:
+            self.W = struct.unpack("<f", bytes[offset+12:offset+16])[0]
+
+        else:
+            # Unpack from vector3 
+            t = 1.0 - (self.X*self.X + self.Y*self.Y + self.Z*self.Z)
+            if t > 0:
+                self.W = math.sqrt(t)
+            else:
+                # Avoid sqrt(-episilon)
+                self.W = 0           
 
     def get_bytes(self):
         """ get bytes """

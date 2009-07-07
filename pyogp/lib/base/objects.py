@@ -95,12 +95,12 @@ class ObjectManager(DataManager):
         """ append to or replace an object in self.objects """
 
         # this is an avatar
-        if _object.PCode == 47:
+        if _object.PCode == PCode.Avatar:
 
             self.store_avatar(_object)
 
         # this is a Primitive
-        elif _object.PCode == 9:
+        elif _object.PCode == PCode.Primitive:
 
             self.store_object(_object)
 
@@ -127,21 +127,28 @@ class ObjectManager(DataManager):
             #if self.settings.LOG_VERBOSE: log(DEBUG, 'Stored a new object: %s in region \'%s\'' % (_object.LocalID, self.region.SimName))
 
     def store_avatar(self, _objectdata):
-
         # if the object data pertains to us, update our data!
         if str(_objectdata.FullID) == str(self.agent.agent_id):
-            #self.agent.Position = _objectdata.Position  # currently sets to None
-            if self.agent.Position == None:
-                log(WARNING, "agent.position is None objects.py")
-            self.agent.FootCollisionPlane = _objectdata.FootCollisionPlane
-            self.agent.Velocity = _objectdata.Velocity
-            self.agent.Acceleration = _objectdata.Acceleration
-            self.agent.Rotation = _objectdata.Rotation
-            self.agent.AngularVelocity = _objectdata.AngularVelocity
+
+            if _objectdata.Position:
+                self.agent.Position = _objectdata.Position
+            if _objectdata.FootCollisionPlane: 
+                self.agent.FootCollisionPlane = _objectdata.FootCollisionPlane
+            if _objectdata.Velocity:
+                self.agent.Velocity = _objectdata.Velocity
+            if _objectdata.Acceleration:
+                self.agent.Acceleration = _objectdata.Acceleration
+            if _objectdata.Rotation:
+                self.agent.Rotation = _objectdata.Rotation
+            if _objectdata.AngularVelocity:
+                self.agent.AngularVelocity = _objectdata.AngularVelocity
+
             if self.settings.ENABLE_APPEARANCE_MANAGEMENT:
                 self.agent.appearance.TextureEntry = _objectdata.TextureEntry
                 self.agent.appearance.send_AgentSetAppearance()
                 
+            self.agent.sendDynamicsUpdate()
+            
         index = [self.avatar_store.index(_avatar_) for _avatar_ in self.avatar_store if _avatar_.LocalID == _objectdata.LocalID]
 
         if index != []:
@@ -231,12 +238,12 @@ class ObjectManager(DataManager):
             return
 
         # this is an avatar
-        if victim.PCode == 47:
+        if victim.PCode == PCode.Avatar:
 
             self.kill_stored_avatar(ID)
 
         # this is a Primitive
-        elif victim.PCode == 9:
+        elif victim.PCode == PCode.Primitive:
 
             self.kill_stored_object(ID)
 
@@ -280,7 +287,7 @@ class ObjectManager(DataManager):
 
         if object_properties.has_key('PCode'):
             # this is an avatar
-            if object_properties['PCode'] == 47:
+            if object_properties['PCode'] == PCode.Avatar:
 
                 #if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Creating a new avatar and storing their attributes. LocalID = %s" % (object_properties['LocalID']))
 
@@ -354,7 +361,7 @@ class ObjectManager(DataManager):
         # not sure what RayTargetID is, send as uuid of zeros
         RayTargetID = UUID()
 
-        self.object_add(GroupID = GroupID, PCode = 9, Material = 3, AddFlags = 2, PathCurve = 16, ProfileCurve = 1, PathBegin = 0, PathEnd = 0, PathScaleX = 100, PathScaleY = 100, PathShearX = 0, PathShearY = 0, PathTwist = 0, PathTwistBegin = 0, PathRadiusOffset = 0, PathTaperX = 0, PathTaperY = 0, PathRevolutions = 0, PathSkew = 0, ProfileBegin = 0, ProfileEnd = 0, ProfileHollow = 0, BypassRaycast = 1, RayStart = location_to_rez, RayEnd = location_to_rez, RayTargetID = RayTargetID, RayEndIsIntersection = 0, Scale = (0.5, 0.5, 0.5), Rotation = (0, 0, 0, 1), State = 0)
+        self.object_add(GroupID = GroupID, PCode = PCode.Primitive, Material = 3, AddFlags = 2, PathCurve = 16, ProfileCurve = 1, PathBegin = 0, PathEnd = 0, PathScaleX = 100, PathScaleY = 100, PathShearX = 0, PathShearY = 0, PathTwist = 0, PathTwistBegin = 0, PathRadiusOffset = 0, PathTaperX = 0, PathTaperY = 0, PathRevolutions = 0, PathSkew = 0, ProfileBegin = 0, ProfileEnd = 0, ProfileHollow = 0, BypassRaycast = 1, RayStart = location_to_rez, RayEnd = location_to_rez, RayTargetID = RayTargetID, RayEndIsIntersection = 0, Scale = (0.5, 0.5, 0.5), Rotation = (0, 0, 0, 1), State = 0)
 
     def object_add(self, PCode, Material, AddFlags, PathCurve, ProfileCurve, PathBegin, PathEnd, PathScaleX, PathScaleY, PathShearX, PathShearY, PathTwist, PathTwistBegin, PathRadiusOffset, PathTaperX, PathTaperY, PathRevolutions, PathSkew, ProfileBegin, ProfileEnd, ProfileHollow, BypassRaycast, RayStart, RayEnd, RayTargetID, RayEndIsIntersection, Scale, Rotation, State, GroupID = UUID()):
         '''
@@ -411,6 +418,10 @@ class ObjectManager(DataManager):
 
     def onObjectUpdate(self, packet):
         """ populates an Object instance and adds it to the ObjectManager() store """
+
+        REGION_SIZE = 256.0
+        MIN_HEIGHT = -REGION_SIZE
+        MAX_HEIGHT = 4096.0
 
         object_list = []
 
@@ -479,36 +490,37 @@ class ObjectManager(DataManager):
             object_properties['Rotation'] = None
             object_properties['AngularVelocity'] = None
 
-            if len(object_properties['ObjectData']) == 76:
+            objdata = object_properties['ObjectData'] 
+            if len(objdata) == 76 or len(objdata) == 60:
 
-                # Foot collision plane. LLVector4.
-                # Angular velocity is ignored and set to 0. Falls through to 60 bytes parser. 
+                pos = 0
 
-                object_properties['FootCollisionPlane'] = Quaternion(object_properties['ObjectData'], 0)
-                object_properties['Position'] = Vector3(object_properties['ObjectData'], 16)
-                object_properties['Velocity'] = Vector3(object_properties['ObjectData'], 28)
-                object_properties['Acceleration'] = Vector3(object_properties['ObjectData'], 40)
-                object_properties['Rotation'] = Vector3(object_properties['ObjectData'], 52)
-                object_properties['AngularVelocity'] = Vector3(object_properties['ObjectData'], 60)
-
-            elif len(object_properties['ObjectData']) == 60:
+                if len(objdata) == 76:
+                    # Foot collision plane. LLVector4.
+                    # Angular velocity is ignored and set to 0. Falls through to 60 bytes parser. 
+                    object_properties['FootCollisionPlane'] = Quaternion(objdata, pos)
+                    pos += 16
 
                 # 32 bit precision update.
+                
+                object_properties['Position'] = Vector3(objdata, pos+0)
+                object_properties['Velocity'] = Vector3(objdata, pos+12)
+                object_properties['Acceleration'] = Vector3(objdata, pos+24)
+                object_properties['Rotation'] = Quaternion(objdata, pos+36, 3) # unpack from vector3
+                object_properties['AngularVelocity'] = Vector3(objdata, pos+48)
 
-                object_properties['Position'] = Vector3(object_properties['ObjectData'], 0)
-                object_properties['Velocity'] = Vector3(object_properties['ObjectData'], 12)
-                object_properties['Acceleration'] = Vector3(object_properties['ObjectData'], 24)
-                object_properties['Rotation'] = Vector3(object_properties['ObjectData'], 36)
-                object_properties['AngularVelocity'] = Vector3(object_properties['ObjectData'], 48)
+                # *TODO: This is... weird
+                #if len(objdata) == 76:
+                #    object_properties['AngularVelocity'] = Vector3()
 
-            elif len(object_properties['ObjectData']) == 48:
 
-                # Foot collision plane. LLVector4 
-                # Falls through to 32 bytes parser.
+            elif len(objdata) == 48 or len(objdata) == 32:
 
-                log(WARNING, "48 bit ObjectData precision not implemented")
-
-            elif len(object_properties['ObjectData']) == 32:
+                pos = 0
+                if len(objdata) == 48:
+                    # Foot collision plane. LLVector4 
+                    object_properties['FootCollisionPlane'] = Quaternion(objdata, pos)
+                    pos += 16
 
                 # 32 bit precision update.
 
@@ -517,9 +529,30 @@ class ObjectManager(DataManager):
                 # Acceleration. U16Vec3.
                 # Rotation. U16Rot(4xU16).
                 # Angular velocity. LLVector3.
-                log(WARNING, "32 bit ObjectData precision not implemented")
 
-            elif len(object_properties['ObjectData']) == 16:
+                object_properties['Position'] = Vector3(
+                    X=Helpers.packed_u16_to_float(objdata, pos+ 0, -0.5*REGION_SIZE, 1.5*REGION_SIZE),
+                    Y=Helpers.packed_u16_to_float(objdata, pos+ 2, -0.5*REGION_SIZE, 1.5*REGION_SIZE),
+                    Z=Helpers.packed_u16_to_float(objdata, pos+ 4, MIN_HEIGHT, MAX_HEIGHT))
+                object_properties['Velocity'] = Vector3(
+                    X=Helpers.packed_u16_to_float(objdata, pos+ 6, -REGION_SIZE, REGION_SIZE),
+                    Y=Helpers.packed_u16_to_float(objdata, pos+ 8, -REGION_SIZE, REGION_SIZE),
+                    Z=Helpers.packed_u16_to_float(objdata, pos+10, -REGION_SIZE, REGION_SIZE))
+                object_properties['Acceleration'] = Vector3(
+                    X=Helpers.packed_u16_to_float(objdata, pos+12, -REGION_SIZE, REGION_SIZE),
+                    Y=Helpers.packed_u16_to_float(objdata, pos+14, -REGION_SIZE, REGION_SIZE),
+                    Z=Helpers.packed_u16_to_float(objdata, pos+16, -REGION_SIZE, REGION_SIZE))
+                object_properties['Rotation'] = Quaternion(
+                    X=Helpers.packed_u16_to_float(objdata, pos+18, -1.0, 1.0),
+                    Y=Helpers.packed_u16_to_float(objdata, pos+20, -1.0, 1.0),
+                    Z=Helpers.packed_u16_to_float(objdata, pos+22, -1.0, 1.0),
+                    W=Helpers.packed_u16_to_float(objdata, pos+24, -1.0, 1.0))
+                object_properties['AngularVelocity'] = Vector3(
+                    X=Helpers.packed_u16_to_float(objdata, pos+26, -REGION_SIZE, REGION_SIZE),
+                    Y=Helpers.packed_u16_to_float(objdata, pos+28, -REGION_SIZE, REGION_SIZE),
+                    Z=Helpers.packed_u16_to_float(objdata, pos+30, -REGION_SIZE, REGION_SIZE))
+
+            elif len(objdata) == 16:
 
                 # 8 bit precision update.
 
@@ -528,7 +561,28 @@ class ObjectManager(DataManager):
                 # Acceleration. U8Vec3.
                 # Rotation. U8Rot(4xU8).
                 # Angular velocity. U8Vec3
-                log(WARNING, "16 bit ObjectData precision not implemented")
+
+                object_properties['Position'] = Vector3(
+                    X=Helpers.packed_u8_to_float(objdata,  0, -0.5*REGION_SIZE, 1.5*REGION_SIZE),
+                    Y=Helpers.packed_u8_to_float(objdata,  1, -0.5*REGION_SIZE, 1.5*REGION_SIZE),
+                    Z=Helpers.packed_u8_to_float(objdata,  2, MIN_HEIGHT, MAX_HEIGHT))
+                object_properties['Velocity'] = Vector3(
+                    X=Helpers.packed_u8_to_float(objdata,  3, -REGION_SIZE, REGION_SIZE),
+                    Y=Helpers.packed_u8_to_float(objdata,  4, -REGION_SIZE, REGION_SIZE),
+                    Z=Helpers.packed_u8_to_float(objdata,  5, -REGION_SIZE, REGION_SIZE))
+                object_properties['Acceleration'] = Vector3(
+                    X=Helpers.packed_u8_to_float(objdata,  6, -REGION_SIZE, REGION_SIZE),
+                    Y=Helpers.packed_u8_to_float(objdata,  7, -REGION_SIZE, REGION_SIZE),
+                    Z=Helpers.packed_u8_to_float(objdata,  8, -REGION_SIZE, REGION_SIZE))
+                object_properties['Rotation'] = Quaternion(
+                    X=Helpers.packed_u8_to_float(objdata,  9, -1.0, 1.0),
+                    Y=Helpers.packed_u8_to_float(objdata, 10, -1.0, 1.0),
+                    Z=Helpers.packed_u8_to_float(objdata, 11, -1.0, 1.0),
+                    W=Helpers.packed_u8_to_float(objdata, 12, -1.0, 1.0)) 
+                object_properties['AngularVelocity'] = Vector3(
+                    X=Helpers.packed_u8_to_float(objdata, 13, -REGION_SIZE, REGION_SIZE),
+                    Y=Helpers.packed_u8_to_float(objdata, 14, -REGION_SIZE, REGION_SIZE),
+                    Z=Helpers.packed_u8_to_float(objdata, 15, -REGION_SIZE, REGION_SIZE))
 
             object_list.append(object_properties)
 

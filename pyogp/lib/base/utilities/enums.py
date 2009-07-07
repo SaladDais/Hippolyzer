@@ -136,11 +136,11 @@ class ParcelFlags(object):
     DenyAgeUnverified = 1 << 31         # Prevent residents who aren't age-verified 
 
 
-class MoneyTransactionType:
+class MoneyTransactionType(object):
     """ Money transaction type constants """
 
     Null                   = 0
-
+    
 # Codes 1000-1999 reserved for one-time charges
     ObjectClaim            = 1000
     LandClaim              = 1001
@@ -205,16 +205,109 @@ class MoneyTransactionType:
     StipendRating          = 10004
     StipendDelta           = 10005
 
-class TransactionFlags:
+class TransactionFlags(object):
     Null = 0
     SourceGroup = 1
     DestGroup = 2
     OwnerGroup = 4
     SimultaneousContribution = 8
     SimultaneousContributionRemoval = 16
-    
 
+
+class AgentState(object):
+    Null      = 0x00 # None
+    Typing    = 0x04 # Typing indication
+    Editing   = 0x10 # Set when agent has objects selected
+
+
+class AgentUpdateFlags(object):
+    Null      = 0x00  # None
+    HideTitle = 0x01
+
+
+class AgentControlFlags(object):
+    """ Used for the ControlFlags member of AgentUpdate packets """
+    _ControlAtPosIndex               =  0
+    _ControlAtNegIndex               =  1
+    _ControlLeftPosIndex             =  2
+    _ControlLeftNegIndex             =  3
+    _ControlUpPosIndex               =  4
+    _ControlUpNegIndex               =  5
+    _ControlPitchPosIndex            =  6
+    _ControlPitchNegIndex            =  7
+    _ControlYawPosIndex              =  8
+    _ControlYawNegIndex              =  9
+    _ControlFastAtIndex              = 10
+    _ControlFastLeftIndex            = 11
+    _ControlFastUpIndex              = 12
+    _ControlFlyIndex                 = 13
+    _ControlStopIndex                = 14
+    _ControlFinishAnimIndex          = 15
+    _ControlStandUpIndex             = 16
+    _ControlSitOnGroundIndex         = 17
+    _ControlMouselookIndex           = 18
+    _ControlNudgeAtPosIndex          = 19
+    _ControlNudgeAtNegIndex          = 20
+    _ControlNudgeLeftPosIndex        = 21
+    _ControlNudgeLeftNegIndex        = 22
+    _ControlNudgeUpPosIndex          = 23
+    _ControlNudgeUpNegIndex          = 24
+    _ControlTurnLeftIndex            = 25
+    _ControlTurnRightIndex           = 26
+    _ControlAwayIndex                = 27
+    _ControlLbuttonDownIndex         = 28
+    _ControlLbuttonUpIndex           = 29
+    _ControlMlLbuttonDownIndex       = 30
+    _ControlMlLbuttonUpIndex         = 31
+    _TotalControls                   = 32
     
+    AtPos                 = 0x1 << _ControlAtPosIndex            # 0x00000001
+    AtNeg                 = 0x1 << _ControlAtNegIndex            # 0x00000002
+    LeftPos               = 0x1 << _ControlLeftPosIndex          # 0x00000004
+    LeftNeg               = 0x1 << _ControlLeftNegIndex          # 0x00000008
+    UpPos                 = 0x1 << _ControlUpPosIndex            # 0x00000010
+    UpNeg                 = 0x1 << _ControlUpNegIndex            # 0x00000020
+    PitchPos              = 0x1 << _ControlPitchPosIndex         # 0x00000040
+    PitchNeg              = 0x1 << _ControlPitchNegIndex         # 0x00000080
+    YawPos                = 0x1 << _ControlYawPosIndex           # 0x00000100
+    YawNeg                = 0x1 << _ControlYawNegIndex           # 0x00000200
+    
+    FastAt                = 0x1 << _ControlFastAtIndex           # 0x00000400
+    FastLeft              = 0x1 << _ControlFastLeftIndex         # 0x00000800
+    FastUp                = 0x1 << _ControlFastUpIndex           # 0x00001000
+    
+    Fly                   = 0x1 << _ControlFlyIndex              # 0x00002000
+    Stop                  = 0x1 << _ControlStopIndex             # 0x00004000
+    FinishAnim            = 0x1 << _ControlFinishAnimIndex       # 0x00008000
+    StandUp               = 0x1 << _ControlStandUpIndex          # 0x00010000
+    SitOnGround           = 0x1 << _ControlSitOnGroundIndex      # 0x00020000
+    Mouselook             = 0x1 << _ControlMouselookIndex        # 0x00040000
+    
+    NudgeAtPos            = 0x1 << _ControlNudgeAtPosIndex       # 0x00080000
+    NudgeAtNeg            = 0x1 << _ControlNudgeAtNegIndex       # 0x00100000
+    NudgeLeftPos          = 0x1 << _ControlNudgeLeftPosIndex     # 0x00200000
+    NudgeLeftNeg          = 0x1 << _ControlNudgeLeftNegIndex     # 0x00400000
+    NudgeUpPos            = 0x1 << _ControlNudgeUpPosIndex       # 0x00800000
+    NudgeUpNeg            = 0x1 << _ControlNudgeUpNegIndex       # 0x01000000
+    TurnLeft              = 0x1 << _ControlTurnLeftIndex         # 0x02000000
+    TurnRight             = 0x1 << _ControlTurnRightIndex        # 0x04000000
+    
+    Away                  = 0x1 << _ControlAwayIndex             # 0x08000000
+    
+    LbuttonDown           = 0x1 << _ControlLbuttonDownIndex      # 0x10000000
+    LbuttonUp             = 0x1 << _ControlLbuttonUpIndex        # 0x20000000
+    MlLbuttonDown         = 0x1 << _ControlMlLbuttonDownIndex    # 0x40000000
+    MlLbuttonUp           = 0x1 << _ControlMlLbuttonUpIndex      # 0x80000000
+    
+    At                    = AtPos | AtNeg | NudgeAtPos | NudgeAtNeg    
+    Left                  = LeftPos | LeftNeg | NudgeLeftPos | NudgeLeftNeg    
+    Up                    = UpPos | UpNeg | NudgeUpPos | NudgeUpNeg    
+    Horizontal            = At | Left  
+    NotUsedByLsl          = Fly | Stop | FinishAnim | StandUp | SitOnGround | Mouselook | Away  
+    Movement              = At | Left | Up  
+    Rotation              = PitchPos | PitchNeg | YawPos | YawNeg   
+    Nudge                 = NudgeAtPos | NudgeAtNeg | NudgeLeftPos | NudgeLeftNeg    
+
 class TextureIndex(object):
     TEX_HEAD_BODYPAINT   = 0
     TEX_UPPER_SHIRT      = 1

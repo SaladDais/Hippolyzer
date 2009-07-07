@@ -6,6 +6,7 @@ from pyogp.lib.base.datatypes import UUID, Vector3, Quaternion
 
 # pyogp messaging
 from types import MsgType, EndianType
+from pyogp.lib.base.utilities.helpers import Helpers
 
 class DataPacker(object):
     def __init__(self):
@@ -62,9 +63,10 @@ class DataPacker(object):
         return self.__pack_tuple(endian, vec, 'f')
 
     def __pack_quat(self, endian, quat):
-        #first, pack to vector3
-        #vec = quat_to_vec3(quat)
-        return self.__pack_vector3(endian, quat)
+        if isinstance(quat, Quaternion):
+            quat = quat() # convert to tuple
+        vec = Helpers.pack_quaternion_to_vector3(quat)
+        return self.__pack_tuple(endian, vec, 'f')
 
     def __pack_uuid(self, endian, uuid):
 

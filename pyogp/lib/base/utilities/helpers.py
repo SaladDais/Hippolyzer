@@ -2,6 +2,7 @@
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import time
 import struct
+import math
 
 # related
 from indra.base import llsd
@@ -14,10 +15,14 @@ from pyogp.lib.base.exc import DataParsingError, DeserializationFailed
 logger = getLogger('...utilities.helpers')
 log = logger.log
 
+
+
+
 class Helpers(object):
     """ contains useful helper functions """
 
-    def bytes_to_hex(self, data):
+    @staticmethod
+    def bytes_to_hex(data):
         """ converts bytes to hex format """
 
         #from binascii import hexlify
@@ -25,7 +30,8 @@ class Helpers(object):
         #hex_string = hexlify(data)
         return ''.join(["%02X " % ord(x) for x in data]).strip()
 
-    def bytes_to_ascii(self, data):
+    @staticmethod
+    def bytes_to_ascii(data):
         " converts bytes to ascii format "
 
         from binascii import b2a_uu
@@ -34,7 +40,8 @@ class Helpers(object):
 
         return ascii_string
 
-    def hex_to_ascii(self, data):
+    @staticmethod
+    def hex_to_ascii(data):
         " converts bytes to ascii format "
 
         from binascii import unhexlify
@@ -46,7 +53,8 @@ class Helpers(object):
 
         return ascii_string
 
-    def bytes_to_base64(self, data):
+    @staticmethod
+    def bytes_to_base64(data):
         " converts bytes to ascii format "
 
         from binascii import b2a_base64
@@ -55,7 +63,56 @@ class Helpers(object):
 
         return base64_string
 
-    def int_to_bytes(self, data):
+    @staticmethod
+    def packed_u16_to_float(bytes, offset, lower, upper):
+        """ Extract float packed as u16 in a byte buffer """
+
+        U16MAX = 65535
+        OOU16MAX = 1.0/U16MAX
+
+        u16 = struct.unpack('<H', bytes[offset:offset+2])[0]
+        val = u16 * OOU16MAX
+        delta = upper - lower
+        val *= delta
+        val += lower
+
+        max_error = delta * OOU16MAX
+        if math.fabs(val) < max_error:
+            val = 0.0
+
+        return val
+
+    @staticmethod
+    def packed_u8_to_float(bytes, offset, lower, upper):
+        """ Extract float packed as u8 in a byte buffer """
+
+        U8MAX = 255
+        OOU8MAX = 1.0/U8MAX
+
+        u8 = struct.unpack('<B', bytes[offset:offset+1])[0]
+        val = u8 * OOU8MAX
+        delta = upper - lower
+        val *= delta
+        val += lower
+
+        max_error = delta * OOU8MAX
+        if math.fabs(val) < max_error:
+            val = 0.0
+
+        return val
+   
+
+    @staticmethod
+    def pack_quaternion_to_vector3(quaternion):
+        """ pack a normalized quaternion (tuple) into a vector3 (tuple) """
+        if quaternion[3] >= 0:
+            return (quaternion[0], quaternion[1], quaternion[2])
+        else:
+            return (-quaternion[0], -quaternion[1], -quaternion[2])        
+
+
+    @staticmethod
+    def int_to_bytes(data):
         """
         converts an int to a string of bytes
         """
@@ -69,17 +126,20 @@ class Helpers(object):
     # Callbacks
     # ~~~~~~~~~
 
-    def log_packet(self, packet, _object):
+    @staticmethod
+    def log_packet(packet, _object):
         """ default logging function for packets  """
 
         log(INFO, "Object %s is monitoring packet type %s: \n%s" % (type(_object), packet.name, packet.data()))
 
-    def log_event_queue_data(self, data, _object):
+    @staticmethod
+    def log_event_queue_data(data, _object):
         """ default logging function for event queue data events  """
 
         log(INFO, "Object %s is monitoring event queue data event %s: \n%s" % (type(_object), data.name, data.__dict__))
 
-    def null_packet_handler(self, packet, _object):
+    @staticmethod
+    def null_packet_handler(packet, _object):
         """ just a null event handler for watching aka fully parsing specific packets """
 
         pass

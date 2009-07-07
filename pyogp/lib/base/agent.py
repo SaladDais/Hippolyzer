@@ -26,7 +26,8 @@ from pyogp.lib.base.message.packets import *
 
 # pyogp utilities
 from pyogp.lib.base.utilities.helpers import Helpers
-from pyogp.lib.base.utilities.enums import ImprovedIMDialogue, MoneyTransactionType, TransactionFlags
+from pyogp.lib.base.utilities.enums import *
+
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.agent')
@@ -101,7 +102,21 @@ class Agent(object):
 
         # data we store as it comes in from the grid
         self.Position = Vector3()     # this will get updated later, but seed it with 000
+        self.LookAt = Vector3()
         self.ActiveGroupID = UUID()
+
+        # populated via ObjectUpdates
+        self.FootCollisionPlane = Quaternion() 
+        self.Velocity = Vector3()
+        self.Acceleration = Vector3()
+        self.Rotation = Vector3()
+        self.AngularVelocity = Vector3()
+       
+        # movement
+        self.state = AgentState.Null # typing, editing
+        self.control_flags = 0
+        self.agent_update_flags = AgentUpdateFlags.Null
+
 
         # should we include these here?
         self.agentdomain = None     # the agent domain the agent is connected to if an OGP context
@@ -560,6 +575,18 @@ class Agent(object):
         # Raise a plain-vanilla AppEvent
         self.simple_callback('Data')(packet)
 
+    def sendDynamicsUpdate(self):
+        """Called when an ObjectUpdate is received for the agent; raises
+        an app event."""
+        payload = {}
+        payload['Position'] = self.Position
+        payload['FootCollisionPlane'] = self.FootCollisionPlane
+        payload['Velocity'] = self.Velocity
+        payload['Acceleration'] = self.Acceleration
+        payload['Rotation'] = self.Rotation
+        payload['AngularVelocity'] = self.AngularVelocity
+        self.events_handler._handle(AppEvent("AgentDynamicsUpdate", payload=payload))
+
     def onHealthMessage(self, packet):
         """ callback handler for received HealthMessage messages which populates Agent().health """
 
@@ -731,7 +758,8 @@ class Agent(object):
         if not region_id and region_name and region_name.lower() == self.region.SimName.lower():
             region_id = self.region.RegionID
 
-        if not region_id and not region_handle and region_name.lower() in self.region_name_map:
+        if not region_id and not region_handle and region_name and \
+               region_name.lower() in self.region_name_map:
             region_handle = self.region_name_map[region_name.lower()]
 
         if region_id:
@@ -782,10 +810,15 @@ class Agent(object):
                     y = block.get_variable('Y').data
                     region_handle = Region.xy_to_handle(x,y)
 
-                    self.region_name_map[region_name.lower()] = region_handle
-                    
-                    callback(region_handle)                    
+                    if region_handle:
+                        self.region_name_map[region_name.lower()] = region_handle
+                        callback(region_handle)
+                    else:
+                        # *TODO: May get a region_handle of 0 if region
+                        # is offline/unknown. Should callback handle it?
+                        log(WARNING, 'Got null region_handle for %s', region_name)
                     return
+
             # Leave it registered, as the event may come later
             
         # Register a handler for the response        
@@ -877,7 +910,7 @@ class Agent(object):
             missing = [ agent_id
                         for agent_id in agent_ids
                         if agent_id not in self.agent_id_map ]
-            if len(missing) == 0:
+            if not missing:
                 handler.unsubscribe(onUUIDNameReply)
                 callback(cbdata)
             else:
@@ -889,6 +922,8 @@ class Agent(object):
         packet.UUIDNameBlockBlocks = [ {'ID':UUID(agent_id) } for agent_id in agent_ids ]
         self.region.enqueue_message(packet())
 
+        # *TODO: Should use this instead, but somehow it fails ?!?
+        #self.region.sendUUIDNameRequest(agent_ids=agent_ids)
 
     def request_balance(self, callback):
         """Request the current agent balance."""
@@ -929,6 +964,38 @@ class Agent(object):
         self.region.enqueue_message(packet()) 
 
 
+    def sit_on_ground(self):
+        """Sit on the ground at the agent's current location"""
+        self.control_flags |= AgentControlFlags.SitOnGround
+        self._send_update()
+
+    def stand(self):
+        """Stand up from sitting"""
+        # Start standing...
+        self.control_flags &= ~AgentControlFlags.SitOnGround
+        self.control_flags |= AgentControlFlags.StandUp
+        self._send_update()
+        # And finish standing
+        self.control_flags &= ~AgentControlFlags.StandUp
+        self._send_update()
+
+
+    def fly(self, flying=True):
+        """Start or stop flying"""
+        if flying:
+            self.control_flags |= AgentControlFlags.StandUp
+        else:            
+            self.control_flags &= ~AgentControlFlags.StandUp
+        self._send_update()
+
+    def _send_update(self):
+        log(INFO, 'sending AgentUpdate')
+        self.region.sendAgentUpdate(
+            State=self.state,
+            ControlFlags=self.control_flags,
+            Flags=self.agent_update_flags
+            )
+            
 class Home(object):
     """ contains the parameters describing an agent's home location as returned in login_response['home'] """
 
