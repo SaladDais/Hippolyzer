@@ -10,6 +10,7 @@ import math
 
 # pyogp
 from pyogp.lib.base import *
+from pyogp.lib.base.datamanager import DataManager
 from pyogp.lib.base.permissions import *
 
 # pyogp message
@@ -25,28 +26,19 @@ from pyogp.lib.base.utilities.enums import *
 logger = getLogger('pyogp.lib.base.objects')
 log = logger.log
 
-class Objects(object):
+class ObjectManager(DataManager):
     """ is an Object Manager
 
     Initialize the event queue client class
-    >>> objects = Objects()
+    >>> objects = ObjectManager()
 
     Sample implementations: region.py
     Tests: tests/test_objects.py
     """
 
     def __init__(self, agent = None, region = None, settings = None, message_handler = None, events_handler = None):
-        """ set up the inventory manager """
-
-        # allow the settings to be passed in
-        # otherwise, grab the defaults
-        if settings != None:
-            self.settings = settings
-        else:
-            from pyogp.lib.base.settings import Settings
-            self.settings = Settings()
-
-        self.agent = agent
+        """ set up the object manager """
+        super(ObjectManager, self).__init__(settings, agent)
         self.region = region
 
         # the object store consists of a list
@@ -59,14 +51,16 @@ class Objects(object):
 
         # other useful things
         self.helpers = Helpers()
+       
+        self.message_handler = message_handler
+        
+        if self.settings.LOG_VERBOSE: log(INFO, "Initializing object storage")
 
-        # set up callbacks
+    def enable_callbacks(self):
+        """enables the callback handlers for this ObjectManager"""
         if self.settings.HANDLE_PACKETS:
-
-            # otherwise, let's just use our own
-            if message_handler != None:
-                self.message_handler = message_handler
-            else:
+            # supply a MessageHandler if not given one
+            if self.message_handler == None:
                 self.message_handler = MessageHandler()
 
             onObjectUpdate_received = self.message_handler.register('ObjectUpdate')
@@ -91,7 +85,6 @@ class Objects(object):
             # onDeRezObject_sent = self.message_handler.register('DeRezObject')
             # onDeRezObject_sent.subscribe(self.helpers.log_packet, self)
 
-        if self.settings.LOG_VERBOSE: log(INFO, "Initializing object storage")
 
     def process_multiple_object_updates(self, objects):
         """ process a list of object updates """
@@ -137,13 +130,18 @@ class Objects(object):
 
         # if the object data pertains to us, update our data!
         if str(_objectdata.FullID) == str(self.agent.agent_id):
-            self.agent.Position = _objectdata.Position
+            #self.agent.Position = _objectdata.Position  # currently sets to None
+            if self.agent.Position == None:
+                log(WARNING, "agent.position is None objects.py")
             self.agent.FootCollisionPlane = _objectdata.FootCollisionPlane
             self.agent.Velocity = _objectdata.Velocity
             self.agent.Acceleration = _objectdata.Acceleration
             self.agent.Rotation = _objectdata.Rotation
             self.agent.AngularVelocity = _objectdata.AngularVelocity
-
+            if self.settings.ENABLE_APPEARANCE_MANAGEMENT:
+                self.agent.appearance.TextureEntry = _objectdata.TextureEntry
+                self.agent.appearance.send_AgentSetAppearance()
+                
         index = [self.avatar_store.index(_avatar_) for _avatar_ in self.avatar_store if _avatar_.LocalID == _objectdata.LocalID]
 
         if index != []:
@@ -412,7 +410,7 @@ class Objects(object):
         self.region.enqueue_message(packet(), True)
 
     def onObjectUpdate(self, packet):
-        """ populates an Object instance and adds it to the Objects() store """
+        """ populates an Object instance and adds it to the ObjectManager() store """
 
         object_list = []
 

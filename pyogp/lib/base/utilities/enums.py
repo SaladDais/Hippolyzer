@@ -215,6 +215,83 @@ class TransactionFlags:
     
 
     
+class TextureIndex(object):
+    TEX_HEAD_BODYPAINT   = 0
+    TEX_UPPER_SHIRT      = 1
+    TEX_LOWER_PANTS      = 2
+    TEX_EYES_IRIS        = 3
+    TEX_HAIR             = 4
+    TEX_UPPER_BODYPAINT  = 5
+    TEX_LOWER_BODYPAINT  = 6
+    TEX_LOWER_SHOES      = 7
+    TEX_HEAD_BAKED       = 8           # Pre-composited
+    TEX_UPPER_BAKED      = 9 # Pre-composited
+    TEX_LOWER_BAKED      = 10       # Pre-composited
+    TEX_EYES_BAKED       = 11       # Pre-composited
+    TEX_LOWER_SOCKS      = 12
+    TEX_UPPER_JACKET     = 13
+    TEX_LOWER_JACKET     = 14
+    TEX_UPPER_GLOVES     = 15
+    TEX_UPPER_UNDERSHIRT = 16
+    TEX_LOWER_UNDERPANTS = 17
+    TEX_SKIRT            = 18
+    TEX_SKIRT_BAKED      = 19        # Pre-composited
+    TEX_HAIR_BAKED       = 20   # Pre-composited
+    TEX_COUNT            = 21
+
+class BakedIndex(object):
+    BAKED_HEAD = 0
+    BAKED_UPPER = 1
+    BAKED_LOWER = 2
+    BAKED_EYES = 3
+    BAKED_SKIRT = 4
+    BAKED_HAIR = 5
+    BAKED_COUNT = 6
+
+    def BakedToTextureIndex(self, bakedIndex):
+        if bakedIndex is self.BAKED_HEAD:
+            return TextureIndex.TEX_HEAD_BAKED
+        elif bakedIndex is self.BAKED_UPPER:
+            return TextureIndex.TEX_UPPER_BAKED
+        elif bakedIndex is self.BAKED_LOWER:
+            return TextureIndex.TEX_LOWER_BAKED
+        elif bakedIndex is self.BAKED_EYES:
+            return TextureIndex.TEX_EYES_BAKED
+        elif bakedIndex is self.BAKED_SKIRT:
+            return TextureIndex.TEX_SKIRT_BAKED
+        elif bakedIndex is self.BAKED_HAIR:
+            return TextureIndex.TEX_HAIR_BAKED
+        else:
+            return -1
+        
+
+class WearablesIndex(object):
+    WT_SHAPE      = 0
+    WT_SKIN       = 1
+    WT_HAIR       = 2
+    WT_EYES       = 3
+    WT_SHIRT      = 4
+    WT_PANTS      = 5
+    WT_SHOES      = 6
+    WT_SOCKS      = 7
+    WT_JACKET     = 8
+    WT_GLOVES     = 9
+    WT_UNDERSHIRT = 10
+    WT_UNDERPANTS = 11
+    WT_SKIRT      = 12
+    
+class WearableMap(object):
+    def __init__(self):
+        self.map = {}
+       
+        self.map[BakedIndex.BAKED_HEAD] = [WearablesIndex.WT_SHAPE, WearablesIndex.WT_SKIN, WearablesIndex.WT_HAIR]
+        self.map[BakedIndex.BAKED_UPPER] = [WearablesIndex.WT_SHAPE, WearablesIndex.WT_SKIN, WearablesIndex.WT_SHIRT, WearablesIndex.WT_JACKET, WearablesIndex.WT_GLOVES, WearablesIndex.WT_UNDERSHIRT]
+        self.map[BakedIndex.BAKED_LOWER] = [WearablesIndex.WT_SHAPE, WearablesIndex.WT_SKIN, WearablesIndex.WT_PANTS, WearablesIndex.WT_SHOES, WearablesIndex.WT_SOCKS,  WearablesIndex.WT_JACKET, WearablesIndex.WT_UNDERPANTS]
+        self.map[BakedIndex.BAKED_EYES] = [WearablesIndex.WT_EYES]
+        self.map[BakedIndex.BAKED_SKIRT] = [WearablesIndex.WT_SKIRT]
+        self.map[BakedIndex.BAKED_HAIR] = [WearablesIndex.WT_HAIR]
+
+        
 """
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 

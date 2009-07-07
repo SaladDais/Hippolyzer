@@ -8,6 +8,7 @@ from eventlet import api
 from pyogp.lib.base.settings import Settings
 from pyogp.lib.base.datatypes import UUID
 from pyogp.lib.base.exc import *
+from pyogp.lib.base.datamanager import DataManager
 
 # pyogp messaging
 from pyogp.lib.base.message.packets import *
@@ -50,30 +51,17 @@ log = logger.log
 #   #CheckParcelAuctions (sim->dataserver)
 #   #ParcelAuctions (dataserver->sim)
 
-class ParcelManager(object):
+class ParcelManager(DataManager):
     """ a parcel manager, generally used as an attribute of a region """
 
     def __init__(self, region = None, agent = None, message_handler = None, events_handler = None, settings = None):
         """ initialize the parcel manager """
-
-        # allow the settings to be passed in
-        # otherwise, grab the defaults
-        if settings != None:
-            self.settings = settings
-        else:
-            from pyogp.lib.base.settings import Settings
-            self.settings = Settings()
-
-        # store the incoming parameters
+        super(ParcelManager, self).__init__(settings, agent)
+        
         self.region = region
-        self.agent = agent
 
-        # otherwise, let's just use our own
-        if message_handler != None:
-            self.message_handler = message_handler
-        else:
-            self.message_handler = MessageHandler()
-
+        self.message_handler = message_handler
+        
         # otherwise, let's just use our own
         if events_handler != None:
             self.events_handler = events_handler
@@ -90,8 +78,14 @@ class ParcelManager(object):
         # initialize map (x, y) with 0; filled in as parcel properties are received
         self.parcel_map = [[0 for _ in range(64)] for _ in range(64)]
         self.parcel_map_full = False
+        
+        if self.settings.LOG_VERBOSE: log(DEBUG, "Initializing the parcel manager in region %s." % (self.region.SimName))
 
-        # set up callbacks for parcel related packets
+    def enable_callbacks(self):
+        """enable the callback handlers for this ParcelManager"""
+        if self.message_handler == None:
+            self.message_handler = MessageHandler()
+
         self.onParcelOverlay_received = self.message_handler.register('ParcelOverlay')
         self.onParcelOverlay_received.subscribe(self.onParcelOverlay)
 
@@ -103,8 +97,6 @@ class ParcelManager(object):
 
         self.onParcelInfoReply_received = self.message_handler.register('ParcelInfoReply')
         self.onParcelInfoReply_received.subscribe(self.onParcelInfoReply)
-
-        if self.settings.LOG_VERBOSE: log(DEBUG, "Initializing the parcel manager in region %s." % (self.region.SimName))
 
     def onParcelOverlay(self, packet):
         """ parse and handle an incoming ParcelOverlay packet

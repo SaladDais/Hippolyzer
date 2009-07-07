@@ -10,9 +10,9 @@ from types import MsgType, EndianType
 class DataPacker(object):
     def __init__(self):
         self.packer = {}
-        self.packer[MsgType.MVT_FIXED]        = ('>',self.__pack_string)  #:DE 23oct2008 added handler for MVT_FIXED
-        self.packer[MsgType.MVT_VARIABLE]       = ('>', self.__pack_string)
-        self.packer[MsgType.MVT_S8]             = ('>', 'b')
+        self.packer[MsgType.MVT_FIXED]          = ('>',self.__pack_string)  #:DE 23oct2008 added handler for MVT_FIXED
+        self.packer[MsgType.MVT_VARIABLE]       = ('>',self.__pack_string)
+        self.packer[MsgType.MVT_S8]             = ('>','b')
         self.packer[MsgType.MVT_U8]             = ('>','B')
         self.packer[MsgType.MVT_BOOL]           = ('>','B')
         self.packer[MsgType.MVT_LLUUID]         = ('>',self.__pack_uuid)
@@ -33,13 +33,12 @@ class DataPacker(object):
 
     def pack_data(self, data, data_type, endian_type=EndianType.NONE):
         if data_type in self.packer:
-            pack_tup = self.packer[data_type]
-            endian = pack_tup[0]
-            #override endian
+            endian, pack = self.packer[data_type]
+
+            #override endian            
             if endian_type != EndianType.NONE:
                 endian = endian_type
 
-            pack = pack_tup[1]
             if callable(pack):
                 return pack(endian, data)
             else:
@@ -76,7 +75,9 @@ class DataPacker(object):
 
     def __pack_string(self, endian, pack_string):
         """Return the string UTF-8 encoded and null terminated."""
-        if isinstance(pack_string,unicode):
+        if pack_string == None:
+            return '\x00'
+        elif isinstance(pack_string,unicode):
             return pack_string.encode('utf-8') + '\x00'
         else:
             return pack_string + '\x00'

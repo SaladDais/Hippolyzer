@@ -1,0 +1,71 @@
+# standard python libs
+import unittest
+from binascii import unhexlify
+
+#related
+
+# pyogp
+from pyogp.lib.base.appearance import *
+from pyogp.lib.base.settings import Settings
+from pyogp.lib.base.agent import Agent
+from pyogp.lib.base.region import Region
+from pyogp.lib.base.datatypes import *
+# pyogp messaging
+from pyogp.lib.base.message.udpdeserializer import UDPMessageDeserializer
+
+# pyogp tests
+import pyogp.lib.base.tests.config 
+
+class TestAppearance(unittest.TestCase):
+
+    def setUp(self):
+        self.settings = Settings()
+
+        self.appearance = AppearanceManager(settings = self.settings)
+
+        self.agent = Agent()
+        self.agent.agent_id = UUID("01234567-89ab-cdef-0123-456789abcdef")
+        self.agent.session_id = UUID("fedcba98-7654-3210-fedc-ba9876543210")
+        self.agent.region = DummyRegion()
+        
+    def tearDown(self):
+        pass
+
+    def test_request_agent_wearables(self):
+        self.agent.appearance.request_agent_wearables()
+        packet_list = self.agent.region.dummy_packet_holder
+        self.assertEquals(len(packet_list), 1)
+        packet = packet_list.pop()
+        self.assertEquals(self.agent.agent_id, packet.blocks["AgentData"][0].get_variable('AgentID').data)
+        self.assertEquals(self.agent.session_id, packet.blocks["AgentData"][0].get_variable('SessionID').data)
+
+    def test_request_agent_noAgentIDorSessionID(self):
+        packet_list = self.agent.region.dummy_packet_holder
+        self.agent.agent_id = None
+        self.agent.appearance.request_agent_wearables()
+        self.assertEquals(len(packet_list), 0)
+        self.agent.agent_id = UUID()
+        self.agent.appearance.request_agent_wearables()
+        self.assertEquals(len(packet_list), 0)
+        self.agent.agent_id = UUID("01234567-89ab-cdef-0123-456789abcdef")
+        self.agent.session_id = None
+        self.agent.appearance.request_agent_wearables()
+        self.assertEquals(len(packet_list), 0)
+        self.agent.session_id = UUID()
+        self.agent.appearance.request_agent_wearables()
+        self.assertEquals(len(packet_list), 0)
+        
+   
+    def test_send_AgentIsNowWearing(self):
+        pass
+    
+class DummyRegion(Region):
+    dummy_packet_holder = []
+    def enqueue_message(self, packet, reliable = False):
+        self.dummy_packet_holder.append(packet)
+        
+def test_suite():
+    from unittest import TestSuite, makeSuite
+    suite = TestSuite()
+    suite.addTest(makeSuite(TestAppearance))
+    return suite

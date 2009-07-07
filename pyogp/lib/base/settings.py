@@ -42,6 +42,9 @@ class Settings(object):
         # toggle group chat handling
         self.ENABLE_GROUP_CHAT = True
 
+        # enable the appearance manager
+        self.ENABLE_APPEARANCE_MANAGEMENT = True
+        
         # ~~~~~~
         # Camera
         # ~~~~~~

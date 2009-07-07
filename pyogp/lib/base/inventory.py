@@ -12,6 +12,7 @@ from pyogp.lib.base.settings import Settings
 from pyogp.lib.base.message.packets import *
 from pyogp.lib.base.datatypes import *
 from pyogp.lib.base.exc import *
+from pyogp.lib.base.datamanager import DataManager
 
 # pyogp utilities
 from pyogp.lib.base.utilities.enums import ImprovedIMDialogue
@@ -22,11 +23,11 @@ log = logger.log
 
 # ToDo: handle library inventory properly. right now, it's treated as regular inv. store it in self.library_folders
 
-class Inventory(object):
+class InventoryManager(DataManager):
     """ is an inventory container 
 
     Initialize the event queue client class
-    >>> inventory = Inventory()
+    >>> inventory = InventoryManager()
 
     Sample implementations: agent.py
     Tests: tests/test_inventory.py
@@ -34,17 +35,7 @@ class Inventory(object):
 
     def __init__(self, agent = None, settings = None):
         """ set up the inventory manager """
-
-        # allow the settings to be passed in
-        # otherwise, grab the defaults
-        if settings != None:
-            self.settings = settings
-        else:
-            from pyogp.lib.base.settings import Settings
-            self.settings = Settings()
-
-        self.agent = agent
-
+        super(InventoryManager, self).__init__(settings, agent)
         # For now, store the inventory contents in a list
         #     of folders with it's contents list containing it's inventory items
         # Ditto the library
@@ -387,7 +378,7 @@ class Inventory(object):
         """
 
         if not (ItemID or agent_id):
-            log(WARNING, "ItemID and agent_id are required in Inventory().give_inventory()")
+            log(WARNING, "ItemID and agent_id are required in InventoryManager().give_inventory()")
             return
 
         item_id = self.search_inventory(item_id = ItemID)
@@ -396,7 +387,7 @@ class Inventory(object):
             log(WARNING, "ItemID %s not found in inventory of %s" % (ItemID, self.agent.Name()))
             return
         elif len(item_id) > 1:
-            log(WARNING, "Multiple matches in inventory for ItemID %s, using the first one in Inventory().give_inventory()" % (ItemID))
+            log(WARNING, "Multiple matches in inventory for ItemID %s, using the first one in InventoryManager().give_inventory()" % (ItemID))
 
         inv_item = item_id[0]
 
@@ -470,7 +461,7 @@ class Inventory(object):
 
         raise NotImplemented("sendFetchDescendentsRequest")
 
-class AIS(Inventory):
+class AIS(InventoryManager):
     """ AIS specific inventory manager """
 
     def __init__(self, agent, capabilities, settings = None):
@@ -621,7 +612,7 @@ class AIS(Inventory):
                 self._store_caps_items(member['items'], member['category']['category_id'], 'library')
 
 
-class UDP_Inventory(Inventory):
+class UDP_Inventory(InventoryManager):
     
     def __init__(self, agent, settings = None):
 
