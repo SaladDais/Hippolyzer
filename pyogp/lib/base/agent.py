@@ -984,9 +984,9 @@ class Agent(object):
     def fly(self, flying=True):
         """Start or stop flying"""
         if flying:
-            self.control_flags |= AgentControlFlags.StandUp
+            self.control_flags |= AgentControlFlags.Fly
         else:            
-            self.control_flags &= ~AgentControlFlags.StandUp
+            self.control_flags &= ~AgentControlFlags.Fly
         self._send_update()
 
     def _send_update(self):
@@ -994,8 +994,14 @@ class Agent(object):
         self.region.sendAgentUpdate(
             State=self.state,
             ControlFlags=self.control_flags,
-            Flags=self.agent_update_flags
+            Flags=self.agent_update_flags,
+
+            CameraAtAxis = self.settings.DEFAULT_CAMERA_AT_AXIS,
+            CameraLeftAxis = self.settings.DEFAULT_CAMERA_LEFT_AXIS,
+            CameraUpAxis = self.settings.DEFAULT_CAMERA_UP_AXIS,
+            Far = self.settings.DEFAULT_CAMERA_DRAW_DISTANCE
             )
+
             
 class Home(object):
     """ contains the parameters describing an agent's home location as returned in login_response['home'] """
