@@ -312,6 +312,21 @@ class Login(object):
             except TypeError, error:
                 log(WARNING, 'Invalid start_location specified (%s), using default of \'%s\'' % (start_location, self.settings.DEFAULT_START_LOCATION))
                 return self.settings.DEFAULT_START_LOCATION
+        elif type(start_location) == str and re.match("uri:", start_location[0:4].lower()):
+            location = start_location.split(":")[1]
+            mg = location.split('&',3)
+            # try forcing to ints
+            if len(mg) == 4:
+                return 'uri:%s&%i&%i&%i' % (mg[0],int(mg[1]),int(mg[2]),int(mg[3]))
+            elif len(mg) == 3:
+                return 'uri:%s&%i&%i&30' % (mg[0],int(mg[1]),int(mg[2]))
+            elif len(mg) == 2:
+                return 'uri:%s&%i&128&30' % (mg[0],int(mg[1]))
+            elif len(mg) == 1:
+                return 'uri:%s&128&128&30' % mg[0]
+            else:
+                return self.settings.DEFAULT_START_LOCATION
+
         elif type(start_location) == str:
             mg = start_location.split('/',3)
             # try forcing to ints
