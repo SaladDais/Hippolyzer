@@ -20,10 +20,10 @@ class TestAppearance(unittest.TestCase):
 
     def setUp(self):
         self.settings = Settings()
-
-        self.appearance = AppearanceManager(settings = self.settings)
-
         self.agent = Agent()
+        self.appearance = AppearanceManager(self.agent, settings = self.settings)
+
+        
         self.agent.agent_id = UUID("01234567-89ab-cdef-0123-456789abcdef")
         self.agent.session_id = UUID("fedcba98-7654-3210-fedc-ba9876543210")
         self.agent.region = DummyRegion()

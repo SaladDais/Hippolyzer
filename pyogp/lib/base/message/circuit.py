@@ -1,4 +1,4 @@
-from types import PackFlags
+from msgtypes import PackFlags
 
 class Host(object):
 

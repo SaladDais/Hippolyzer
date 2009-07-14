@@ -4,7 +4,7 @@ import re
 import pprint
 import binascii
 
-from types import MsgType, MsgBlockType
+from msgtypes import MsgType, MsgBlockType
 
 class MsgData(object):
     """ Used as a Message that is being created that will be
@@ -137,7 +137,7 @@ class MessageTemplateBlock(object):
 
 class MessageTemplate(object):
     frequency_strings = {-1:'fixed', 1:'high', 2:'medium', 4:'low'}      #strings for printout
-    depecration_strings = ["Deprecated","UDPDeprecated","NotDeprecated"] #using _as_string methods
+    depecration_strings = ["Deprecated","UDPDeprecated","UDPBlackListed","NotDeprecated"] #using _as_string methods
     encoding_strings = ["Unencoded","Zerocoded"]  #etc
     trusted_strings = ["Trusted","NotTrusted"]    #etc LDE 24oct2008
     def __init__(self, name):

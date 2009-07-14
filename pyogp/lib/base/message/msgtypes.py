@@ -58,7 +58,8 @@ class MsgEncoding(object):
 class MsgDeprecation(object):
     LL_DEPRECATED, \
     LL_UDPDEPRECATED, \
-    LL_NOTDEPRECATED = range(3)
+    LL_UDPBLACKLISTED, \
+    LL_NOTDEPRECATED = range(4)
 
 #message variable types
 class MsgType(object):

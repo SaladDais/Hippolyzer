@@ -7,7 +7,7 @@ from pyogp.lib.base.settings import Settings
 from pyogp.lib.base.message.message_handler import MessageHandler
 from template_dict import TemplateDictionary
 from template import MsgData, MsgBlockData, MsgVariableData
-from types import MsgType, MsgBlockType, MsgFrequency, PacketLayout, EndianType, PackFlags, sizeof
+from msgtypes import MsgType, MsgBlockType, MsgFrequency, PacketLayout, EndianType, PackFlags, sizeof
 from data_unpacker import DataUnpacker
 from message import Message
 
@@ -301,6 +301,7 @@ class UDPMessageDeserializer(object):
 
                     #HACK: this is a slow procedure, should passed in
                     if (decode_pos + var_size) > len(data):
+                        print var_size
                         log(WARNING, "ERROR: trying to read %s from a buffer of len %s in %s" % (str(decode_pos + var_size), str(len(data)), packet.name))
                         return None
                     unpacked_data = self.unpacker.unpack_data(data, \

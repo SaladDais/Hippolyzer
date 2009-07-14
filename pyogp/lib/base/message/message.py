@@ -1,5 +1,5 @@
 from template import MsgData, MsgBlockData, MsgVariableData
-from types import PackFlags
+from msgtypes import PackFlags
 
 # NOTE: right now there is no checking with the template
 

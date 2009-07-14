@@ -1,11 +1,11 @@
 # standard python libs
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import traceback
-#from types import *
+#from msgtypes import *
 
 # pyogp
 from circuit import CircuitManager
-from types import MsgType, MsgBlockType, MsgFrequency, PacketLayout, EndianType, PackFlags, sizeof
+from msgtypes import MsgType, MsgBlockType, MsgFrequency, PacketLayout, EndianType, PackFlags, sizeof
 from udpserializer import UDPMessageSerializer
 from udpdeserializer import UDPMessageDeserializer
 from data_unpacker import DataUnpacker

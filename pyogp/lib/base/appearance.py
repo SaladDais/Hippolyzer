@@ -213,8 +213,7 @@ class AppearanceManager(DataManager):
         pSessionID = packet.blocks['AgentData'][0].get_variable("SessionID").data
         if  str(pAgentID) != str(self.agent.agent_id):
             log(WARNING, "%s packet does not have an AgentID", packet.name)
-        if str(pSessionID) != str(self.agent.session_id):
-            log(WARNING, "%s packet does not have a SessionID" % packet.name)
+        
         
 class Wearable(object):
     """

@@ -5,7 +5,7 @@ import pprint
 # pyogp
 from pyogp.lib.base.settings import Settings
 #from pyogp.lib.base.message.udp_connection import MessageSystem
-from pyogp.lib.base.message.types import MsgType
+from pyogp.lib.base.message.msgtypes import MsgType
 from pyogp.lib.base.tests.mockup_net import MockupUDPServer, MockupUDPClient
 from pyogp.lib.base.message.message import Message, Block
 from pyogp.lib.base.message.circuit import Host

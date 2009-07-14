@@ -6,7 +6,7 @@ from indra.base import llsd
 
 #local libraries
 from pyogp.lib.base.message.llsd_builder import LLSDMessageBuilder
-from pyogp.lib.base.message.types import MsgType
+from pyogp.lib.base.message.msgtypes import MsgType
 
 class TestLLSDBuilder(unittest.TestCase):
 

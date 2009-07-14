@@ -7,8 +7,13 @@ import pprint
 #local libraries
 import template
 from data import msg_tmpl
-from types import MsgFrequency, MsgTrust, MsgEncoding
-from types import MsgDeprecation, MsgBlockType, MsgType, sizeof
+from msgtypes import MsgFrequency, MsgTrust, MsgEncoding
+from msgtypes import MsgDeprecation, MsgBlockType, MsgType, sizeof
+
+MESSAGE = 1
+BLOCK = 2
+DATA = 3
+
 
 class MessageTemplateParser(object):
     """a parser which parses the message template and creates MessageTemplate objects
@@ -21,194 +26,224 @@ class MessageTemplateParser(object):
         self.template_file = template_file
         self.message_templates = []
         self.version = ''
-        self.count = 0        
+        self.count = 0
+        self.state = 0
         self._parse_template_file()
+        
 
     def _add_template(self, new_template):
         self.count += 1
         self.message_templates.append(new_template)
 
     def _parse_template_file(self):
-        count = 0
-
+        
+        #regular expressions
         self.template_file.seek(0)
         lines = self.template_file
-        #results = re.match("^\t([^\t{}]+.+)",line) #gets packet headers
-        #results  = re.match("^\t\t([^{}]+.+)",line) #gets packet blocks
-        #results  = re.match("^\t\t([{}]+.+)",line)  #gets block data
+        start_re = '.*\{.*'
+        end_re = '.*\}.*'
+        block_data_re = '.*?(\w+)\s+(\w+)(\s+(\d+))?.*'
+        block_header_re = '.*?(\w+)\s+(\w+)(\s+(\d+))?.*'
+        message_header_re = '.*?(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)(\s+(\w+))?.*'
+        version_re = "version.(.+)"
+        comment_re = "^//.*$"
 
         current_template = None
         current_block = None
-
-        #we have to go through all the packets and parse them
-        while(True):
+        
+        
+        while True:
             try:
                 line = lines.next()
             except StopIteration:
                 break
-
+            if re.match(comment_re, line):
+                continue
+            
+            start = re.match(start_re, line)
+            end = re.match(end_re, line)
+            
             if self.version == '':
-                version_test = re.match("version.(.+)",line) #gets packet headers
+                version_test = re.match(version_re, line) #gets packet headers
                 if version_test != None:
                     parts = version_test.group(1)
                     parts = parts.split()
                     self.version = float(parts[0])
 
-            #get packet header, starting a new packet
-            # ToDo: this regex needs to accomodate the case where 4 spaces are used in place of a tab and start of line
-            packet_header = re.match("^\t([^\t{}]+.+)",line) #gets packet headers
-            if packet_header != None:
-                parts = packet_header.group(1)
-                parts = parts.split()
+            
+            if start:
+                self.state += 1
+                            
+            if self.state == MESSAGE:
+                message_header = re.match(message_header_re, line)
+                if message_header != None:
+                    current_template = self._start_new_template(message_header)
+                    self._add_template(current_template)
+                   
+            if self.state == BLOCK:
+                block_header = re.match(block_header_re, line)
+                if block_header != None:
+                    current_block = self._start_new_block(block_header)
+                    current_template.add_block(current_block)
+                                       
+            if self.state == DATA:
+                block_data = re.match(block_data_re, line)
+                if block_data != None:
+                    current_block.add_variable(self._start_new_var(block_data))
+                                       
+            if end:
+                self.state -= 1
+                
 
-                current_template = template.MessageTemplate(parts[0])
-                frequency = None
-                if parts[1] == 'Low':
-                    frequency = MsgFrequency.LOW_FREQUENCY_MESSAGE
-                elif parts[1] == 'Medium':
-                    frequency = MsgFrequency.MEDIUM_FREQUENCY_MESSAGE
-                elif parts[1] == 'High':
-                    frequency = MsgFrequency.HIGH_FREQUENCY_MESSAGE
-                elif parts[1] == 'Fixed':
-                    frequency = MsgFrequency.FIXED_FREQUENCY_MESSAGE
+    def _start_new_template(self, match):
+        
+        new_template = template.MessageTemplate(match.group(1))
 
-                current_template.frequency = frequency
+        frequency = None
+        if match.group(2) == 'Low':
+            frequency = MsgFrequency.LOW_FREQUENCY_MESSAGE
+        elif match.group(2) == 'Medium':
+            frequency = MsgFrequency.MEDIUM_FREQUENCY_MESSAGE
+        elif match.group(2) == 'High':
+            frequency = MsgFrequency.HIGH_FREQUENCY_MESSAGE
+        elif match.group(2) == 'Fixed':
+            frequency = MsgFrequency.FIXED_FREQUENCY_MESSAGE
+            
+        new_template.frequency = frequency
 
-                msg_num = string.atoi(parts[2],0)
-                if frequency == MsgFrequency.FIXED_FREQUENCY_MESSAGE:   
-                    #have to do this because Fixed messages are stored as a long in the template
-                    binTemp = struct.pack('>L', string.atol(parts[2],0))
-                    #msg_num_hex = binTemp
-                    msg_num = struct.unpack('>h','\x00' + binTemp[3])[0]
-                elif frequency == MsgFrequency.LOW_FREQUENCY_MESSAGE:
-                    msg_num_hex = struct.pack('>BBh',0xff,0xff, msg_num)
-                elif frequency == MsgFrequency.MEDIUM_FREQUENCY_MESSAGE:
-                    msg_num_hex = struct.pack('>BB',0xff, msg_num)
-                elif frequency == MsgFrequency.HIGH_FREQUENCY_MESSAGE:
-                    msg_num_hex = struct.pack('>B', msg_num)
+        msg_num = string.atoi(match.group(3),0)
+        if frequency == MsgFrequency.FIXED_FREQUENCY_MESSAGE:   
+            #have to do this because Fixed messages are stored as a long in the template
+            binTemp = struct.pack('>L', string.atol(match.group(3),0))
+            msg_num_hex = binTemp
+            msg_num = struct.unpack('>h','\x00' + binTemp[3])[0]
+        elif frequency == MsgFrequency.LOW_FREQUENCY_MESSAGE:
+            msg_num_hex = struct.pack('>BBB',0xff,0xff, msg_num)
+        elif frequency == MsgFrequency.MEDIUM_FREQUENCY_MESSAGE:
+            msg_num_hex = struct.pack('>BB',0xff, msg_num)
+        elif frequency == MsgFrequency.HIGH_FREQUENCY_MESSAGE:
+            msg_num_hex = struct.pack('>B', msg_num)
+            
+        new_template.msg_num = msg_num
+        new_template.msg_num_hex = msg_num_hex
+                
+        msg_trust = None
+        if match.group(4) == 'Trusted':
+            msg_trust = MsgTrust.LL_TRUSTED
+        elif match.group(4) == 'NotTrusted':
+            msg_trust = MsgTrust.LL_NOTRUST
 
-                current_template.msg_num = msg_num
-                current_template.msg_num_hex = msg_num_hex
+        new_template.msg_trust = msg_trust                 
 
-                msg_trust = None
-                if parts[3] == 'Trusted':
-                    msg_trust = MsgTrust.LL_TRUSTED
-                elif parts[3] == 'NotTrusted':
-                    msg_trust = MsgTrust.LL_NOTRUST
+        msg_encoding = None
+        if match.group(5) == 'Unencoded':
+            msg_encoding = MsgEncoding.LL_UNENCODED
+        elif match.group(5) == 'Zerocoded':
+            msg_encoding = MsgEncoding.LL_ZEROCODED
+            
+        new_template.msg_encoding = msg_encoding
 
-                current_template.msg_trust = msg_trust                 
+        msg_dep = None
+        if match.group(7) != None:
+            if match.group(7) == 'Deprecated':
+                msg_dep = MsgDeprecation.LL_DEPRECATED
+            elif match.group(7) == 'UDPDeprecated':
+                msg_dep = MsgDeprecation.LL_UDPDEPRECATED
+            elif match.group(7) == 'UDPBlackListed':
+                msg_dep = MsgDeprecation.LL_UDPBLACKLISTED
+            elif match.group(7) == 'NotDeprecated':
+                msg_dep = MsgDeprecation.LL_NOTDEPRECATED
+        else:
+            msg_dep = MsgDeprecation.LL_NOTDEPRECATED
+        if msg_dep == None:
+            print match.groups()
+        new_template.msg_deprecation = msg_dep
+        
+        return new_template
+        
+    def _start_new_block(self, match):
+        
+        new_block = template.MessageTemplateBlock(match.group(1))
 
-                msg_encoding = None
-                if parts[4] == 'Unencoded':
-                    msg_encoding = MsgEncoding.LL_UNENCODED
-                elif parts[4] == 'Zerocoded':
-                    msg_encoding = MsgEncoding.LL_ZEROCODED
+        block_type = None
+        block_num = 0
 
-                current_template.msg_encoding = msg_encoding
+        if match.group(2) == 'Single':
+            block_type = MsgBlockType.MBT_SINGLE
+        elif match.group(2) == 'Multiple':
+            block_type = MsgBlockType.MBT_MULTIPLE
+            block_num = int(match.group(4))
+        elif match.group(2) == 'Variable':
+            block_type = MsgBlockType.MBT_VARIABLE
 
-                msg_dep = None
-                if len(parts) > 5:
-                    if parts[5] == 'Deprecated':
-                        msg_dep = MsgDeprecation.LL_DEPRECATED
-                    elif parts[5] == 'UDPDeprecated':
-                        msg_dep = MsgDeprecation.LL_UDPDEPRECATED
-                    elif parts[5] == 'NotDeprecated':
-                        msg_dep = MsgDeprecation.LL_NOTDEPRECATED
-                else:
-                    msg_dep = MsgDeprecation.LL_NOTDEPRECATED
+        #LDE 230ct2008 block_type vs block.type issues...
+        new_block.block_type = block_type
+        new_block.number = block_num
 
-                current_template.msg_deprecation = msg_dep
+        return new_block
 
-                self._add_template(current_template)
+    def _start_new_var(self, match):
+        
+        type_string = match.group(2)
+        var_type = None
+        var_size = -1
+        if type_string == 'U8':
+            var_type = MsgType.MVT_U8
+        elif type_string == 'U16':
+            var_type = MsgType.MVT_U16                    
+        elif type_string == 'U32':
+            var_type = MsgType.MVT_U32                    
+        elif type_string == 'U64':
+            var_type = MsgType.MVT_U64                    
+        elif type_string == 'S8':
+            var_type = MsgType.MVT_S8                    
+        elif type_string == 'S16':
+            var_type = MsgType.MVT_S16                    
+        elif type_string == 'S32':
+            var_type = MsgType.MVT_S32                   
+        elif type_string == 'S64':
+            var_type = MsgType.MVT_S64                    
+        elif type_string == 'F32':
+            var_type = MsgType.MVT_F32                    
+        elif type_string == 'F64':
+            var_type = MsgType.MVT_F64                    
+        elif type_string == 'LLVector3':
+            var_type = MsgType.MVT_LLVector3                    
+        elif type_string == 'LLVector3d':
+            var_type = MsgType.MVT_LLVector3d                    
+        elif type_string == 'LLVector4':
+            var_type = MsgType.MVT_LLVector4                    
+        elif type_string == 'LLQuaternion':
+            var_type = MsgType.MVT_LLQuaternion                    
+        elif type_string == 'LLUUID':
+            var_type = MsgType.MVT_LLUUID                    
+        elif type_string == 'BOOL':
+            var_type = MsgType.MVT_BOOL                    
+        elif type_string == 'IPADDR':
+            var_type = MsgType.MVT_IP_ADDR                    
+        elif type_string == 'IPPORT':
+            var_type = MsgType.MVT_IP_PORT                    
+        elif type_string == 'Fixed' or  type_string == 'Variable':
+            if type_string == 'Fixed':
+                var_type = MsgType.MVT_FIXED
+            elif type_string == 'Variable':
+                var_type = MsgType.MVT_VARIABLE
+                
+            var_size = int(match.group(4))
+            if var_size <= 0:
+                raise exc.MessageTemplateParsingError("variable size %s does not match %s" % (var_size, type_string))
+        #if the size hasn't been read yet, then read it from message_types
+        if var_size == -1:
+            var_size = sizeof(var_type)
+            
+        #LDE 23oct2008 add var+type to creation of MTV object for subsequent formmating goodness
+        
+       
+        return template.MessageTemplateVariable(match.group(1), \
+                                                var_type, var_size)
+        
 
-            block_header = re.match("^\t\t([^{}]+.+)",line) #gets packet block header
-            if block_header != None:
-                parts = block_header.group(1)
-                parts = parts.split()
-
-                current_block = template.MessageTemplateBlock(parts[0])
-
-                block_type = None
-                block_num = 0
-
-                if parts[1] == 'Single':
-                    block_type = MsgBlockType.MBT_SINGLE
-                elif parts[1] == 'Multiple':
-                    block_type = MsgBlockType.MBT_MULTIPLE
-                    block_num = int(parts[2])
-                elif parts[1] == 'Variable':
-                    block_type = MsgBlockType.MBT_VARIABLE
-
-                #LDE 230ct2008 block_type vs block.type issues...
-                current_block.block_type = block_type
-                current_block.number = block_num
-
-                current_template.add_block(current_block)
-
-            block_data  = re.match("^\t\t([{}]+.+)",line)  #gets block data
-            if block_data != None:
-                parts = block_data.group(1)
-                parts = parts.split()
-                parts.remove('{')
-                parts.remove('}')
-
-                type_string = parts[1]
-                var_type = None
-                var_size = -1
-                if type_string == 'U8':
-                    var_type = MsgType.MVT_U8
-                elif type_string == 'U16':
-                    var_type = MsgType.MVT_U16                    
-                elif type_string == 'U32':
-                    var_type = MsgType.MVT_U32                    
-                elif type_string == 'U64':
-                    var_type = MsgType.MVT_U64                    
-                elif type_string == 'S8':
-                    var_type = MsgType.MVT_S8                    
-                elif type_string == 'S16':
-                    var_type = MsgType.MVT_S16                    
-                elif type_string == 'S32':
-                    var_type = MsgType.MVT_S32                   
-                elif type_string == 'S64':
-                    var_type = MsgType.MVT_S64                    
-                elif type_string == 'F32':
-                    var_type = MsgType.MVT_F32                    
-                elif type_string == 'F64':
-                    var_type = MsgType.MVT_F64                    
-                elif type_string == 'LLVector3':
-                    var_type = MsgType.MVT_LLVector3                    
-                elif type_string == 'LLVector3d':
-                    var_type = MsgType.MVT_LLVector3d                    
-                elif type_string == 'LLVector4':
-                    var_type = MsgType.MVT_LLVector4                    
-                elif type_string == 'LLQuaternion':
-                    var_type = MsgType.MVT_LLQuaternion                    
-                elif type_string == 'LLUUID':
-                    var_type = MsgType.MVT_LLUUID                    
-                elif type_string == 'BOOL':
-                    var_type = MsgType.MVT_BOOL                    
-                elif type_string == 'IPADDR':
-                    var_type = MsgType.MVT_IP_ADDR                    
-                elif type_string == 'IPPORT':
-                    var_type = MsgType.MVT_IP_PORT                    
-                elif type_string == 'Fixed' or  type_string == 'Variable':
-                    if type_string == 'Fixed':
-                        var_type = MsgType.MVT_FIXED
-                    elif type_string == 'Variable':
-                        var_type = MsgType.MVT_VARIABLE
-
-                    var_size = int(parts[2])
-                    if var_size <= 0:
-                        raise exc.MessageTemplateParsingError("variable size %s does not match %s" % (var_size, type_string))
-                #if the size hasn't been read yet, then read it from message_types
-                if var_size == -1:
-                    var_size = sizeof(var_type)
-
-                #LDE 23oct2008 add var+type to creation of MTV object for subsequent formmating goodness
-                current_var = template.MessageTemplateVariable(parts[0], var_type, var_size)
-                current_block.add_variable(current_var)
-
-        self.template_file.seek(0)
+        
 def print_packet_names(packet_list):
     frequency_counter = {"low":0, 'medium':0, "high":0, 'fixed':0}
     counter = 0

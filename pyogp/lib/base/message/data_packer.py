@@ -5,7 +5,7 @@ import struct
 from pyogp.lib.base.datatypes import UUID, Vector3, Quaternion
 
 # pyogp messaging
-from types import MsgType, EndianType
+from msgtypes import MsgType, EndianType
 from pyogp.lib.base.utilities.helpers import Helpers
 
 class DataPacker(object):

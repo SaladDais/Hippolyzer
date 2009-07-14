@@ -1,8 +1,8 @@
-from types import MsgFrequency
+from msgtypes import MsgFrequency
 from data import msg_tmpl, msg_details
 from template_parser import MessageTemplateParser
 from data_packer import DataPacker
-from types import MsgType, EndianType
+from msgtypes import MsgType, EndianType
 
 from pyogp.lib.base import exc
 

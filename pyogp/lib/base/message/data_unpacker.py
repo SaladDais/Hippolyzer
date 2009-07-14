@@ -8,7 +8,7 @@ from pyogp.lib.base.exc import *
 from pyogp.lib.base.datatypes import *
 
 # pygop messaging
-from types import MsgType, EndianType, sizeof
+from msgtypes import MsgType, EndianType, sizeof
 
 class DataUnpacker(object):
     def __init__(self):

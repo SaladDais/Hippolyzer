@@ -4,7 +4,7 @@ from uuid import UUID
 
 #local libraries
 from pyogp.lib.base.message.data import msg_tmpl
-from pyogp.lib.base.message.types import MsgType
+from pyogp.lib.base.message.msgtypes import MsgType
 from pyogp.lib.base.message.message import Message, Block
 from pyogp.lib.base.message.udpdeserializer import UDPMessageDeserializer
 

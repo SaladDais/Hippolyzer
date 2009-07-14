@@ -2,7 +2,7 @@
 import struct
 
 # pygop
-from types import MsgType, MsgBlockType, EndianType
+from msgtypes import MsgType, MsgBlockType, EndianType
 from data_packer import DataPacker
 from template_dict import TemplateDictionary
 from pyogp.lib.base import exc
