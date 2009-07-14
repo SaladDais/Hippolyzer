@@ -1,34 +1,32 @@
 # standard python libs
-from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
+from logging import getLogger, WARNING, INFO, DEBUG
 import re
 import sys
 import signal
-import uuid
 import sets
+import struct
 
 #related
 from eventlet import api
 
 # pyogp
 from pyogp.lib.base.login import Login, LegacyLoginParams, OGPLoginParams
-from pyogp.lib.base.datatypes import *
+from pyogp.lib.base.datatypes import  Quaternion, Vector3, UUID
 from pyogp.lib.base.exc import LoginError
 from pyogp.lib.base.region import Region
-from pyogp.lib.base.inventory import *
-from pyogp.lib.base.groups import *
-from pyogp.lib.base.event_system import *
-from pyogp.lib.base.appearance import *
-from pyogp.lib.base.assets import *
+from pyogp.lib.base.inventory import AIS, UDP_Inventory
+from pyogp.lib.base.groups import GroupManager, Group
+from pyogp.lib.base.event_system import AppEventsHandler, AppEvent
+from pyogp.lib.base.appearance import AppearanceManager
+from pyogp.lib.base.assets import AssetManager
 
 # pyogp messaging
-from pyogp.lib.base.message.message_handler import MessageHandler
-
-from pyogp.lib.base.message.packets import *
+from pyogp.lib.base.message.message import Message, Block
 
 # pyogp utilities
 from pyogp.lib.base.utilities.helpers import Helpers
-from pyogp.lib.base.utilities.enums import *
-
+#from pyogp.lib.base.utilities.enums import ImprovedIMDialogue
+from pyogp.lib.base.utilities.enums import ImprovedIMDialogue, MoneyTransactionType, TransactionFlags, AgentState, AgentUpdateFlags, AgentControlFlags
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.agent')
@@ -83,6 +81,13 @@ class Agent(object):
         self.session_id = None
         self.secure_session_id = None
         self.name = self.Name()
+        self.active_group_powers = None
+        self.active_group_name = None
+        self.active_group_title = None
+        self.active_group_id = None
+        self.health = None
+        self._login_params = None
+        self.circuit_code = None
 
         # other storage containers
         self.inventory_host = None
@@ -112,7 +117,7 @@ class Agent(object):
         self.Acceleration = Vector3()
         self.Rotation = Vector3()
         self.AngularVelocity = Vector3()
-       
+
         # movement
         self.state = AgentState.Null # typing, editing
         self.control_flags = 0
@@ -134,7 +139,8 @@ class Agent(object):
         # Cache of agent_id->(first_name, last_name); per agent to prevent info leaks
         self.agent_id_map = {}
 
-        if self.settings.LOG_VERBOSE: log(DEBUG, 'Initializing agent: %s' % (self))
+        if self.settings.LOG_VERBOSE: 
+            log(DEBUG, 'Initializing agent: %s' % (self))
 
     def Name(self):
         """ returns a concatenated firstname + ' ' + lastname"""
@@ -172,7 +178,7 @@ class Agent(object):
 
             else:
 
-                self._login_params = self._get_login_params(loginuri, self.firstname, self.lastname, self.password)
+                self._login_params = self._get_login_params(self.firstname, self.lastname, self.password)
 
         else:
 
@@ -191,7 +197,7 @@ class Agent(object):
 
         if connect_region:
             self._enable_current_region()
-                             
+
 
     def logout(self):
         """ logs an agent out of the current region. calls Region()._kill_coroutines() for all child regions, and Region().logout() for the host region """
@@ -207,7 +213,7 @@ class Agent(object):
         else:
 
             # kill udp and or event queue for child regions
-            [region._kill_coroutines() for region in self.child_regions]
+            [region.kill_coroutines() for region in self.child_regions]
 
             if self.region.logout():
                 self.connected = False
@@ -215,7 +221,7 @@ class Agent(object):
         # zero out the password in case we dump it somewhere
         self.password = ''
 
-    def _get_login_params(self, loginuri, firstname, lastname, password):
+    def _get_login_params(self, firstname, lastname, password):
         """ get the proper login parameters of the legacy or ogp enabled grid """
 
         if self.grid_type == 'OGP':
@@ -245,7 +251,8 @@ class Agent(object):
             self.udp_blacklist = self.login_response['udp_blacklist']
             self.start_location = self.login_response['start_location']
 
-            if self.login_response.has_key('home'): self.home = Home(self.login_response['home'])
+            if self.login_response.has_key('home'): 
+                self.home = Home(self.login_response['home'])
 
         elif self.grid_type == 'OGP':
 
@@ -271,13 +278,14 @@ class Agent(object):
         self.region.is_host_region = True        
 
         # start the simulator udp and event queue connections
-        if self.settings.LOG_COROUTINE_SPAWNS: log(INFO, "Spawning a coroutine for connecting to the agent's host region.")
+        if self.settings.LOG_COROUTINE_SPAWNS: 
+            log(INFO, "Spawning a coroutine for connecting to the agent's host region.")
 
         api.spawn(self.region.connect)
-        
+
         self.enable_callbacks()
 
-        
+
 
     def _enable_child_region(self, region_params):
         """ enables a child region. eligible simulators are sent in EnableSimulator over the event queue, and routed through the packet handler """
@@ -288,13 +296,20 @@ class Agent(object):
             log(DEBUG, "Not enabling a region we are already connected to: %s" % (str(region_params['IP']) + ":" + str(region_params['Port'])))
             return
 
-        child_region = Region(circuit_code = self.circuit_code, sim_ip = region_params['IP'], sim_port = region_params['Port'], handle = region_params['Handle'], agent = self, settings = self.settings, events_handler = self.events_handler)
+        child_region = Region(circuit_code = self.circuit_code, 
+                            sim_ip = region_params['IP'], 
+                            sim_port = region_params['Port'], 
+                            handle = region_params['Handle'], 
+                            agent = self, 
+                            settings = self.settings, 
+                            events_handler = self.events_handler)
 
         self.child_regions.append(child_region)
 
         log(INFO, "Enabling a child region with ip:port of %s" % (str(region_params['IP']) + ":" + str(region_params['Port'])))
 
-        if self.settings.LOG_COROUTINE_SPAWNS: log(INFO, "Spawning a coroutine for connecting to a neighboring region.")
+        if self.settings.LOG_COROUTINE_SPAWNS: 
+            log(INFO, "Spawning a coroutine for connecting to a neighboring region.")
 
         api.spawn(child_region.connect_child)
 
@@ -306,7 +321,7 @@ class Agent(object):
             if len(self._pending_child_regions) > 0:
 
                 for region_params in self._pending_child_regions:
-                    
+
                     self._enable_child_region(region_params)
                     self._pending_child_regions.remove(region_params)
 
@@ -329,28 +344,28 @@ class Agent(object):
     def enable_callbacks(self):
         """ enable the Agents() callback handlers for packet received events """
         # TODO oopify
-        
+
         if self.settings.ENABLE_INVENTORY_MANAGEMENT:
             while self.region.capabilities == {}:
 
                 api.sleep(0)
-            
+
             inventory_caps = ['FetchInventory', 'WebFetchInventoryDescendents', 'FetchLib', 'FetchLibDescendents']
-    
+
             if sets.Set(self.region.capabilities.keys()).intersection(inventory_caps):
-    
+
                 caps = dict([(capname, self.region.capabilities[capname]) for capname in inventory_caps])
-    
+
                 log(INFO, "Using the capability based inventory management mechanism")
-    
+
                 self.inventory = AIS(self, caps)
-    
+
             else:
-    
+
                 log(INFO, "Using the UDP based inventory management mechanism")
-    
+
                 self.inventory = UDP_Inventory(self)
-    
+
             self.inventory._parse_folders_from_login_response()   
             self.inventory.enable_callbacks()
 
@@ -397,7 +412,7 @@ class Agent(object):
             if self.settings.ENABLE_COMMUNICATIONS_TRACKING:
                 onChatFromSimulator_received = self.region.message_handler.register('ChatFromSimulator')
                 onChatFromSimulator_received.subscribe(self.onChatFromSimulator)
-    
+
 
     def simple_callback(self, blockname):
         """Generic callback creator for single-block packets."""
@@ -411,18 +426,18 @@ class Agent(object):
 
             return AppEvent(packet.name, payload=payload)
 
-        return lambda p: self.events_handler._handle(repack(p, blockname))
+        return lambda p: self.events_handler.handle(repack(p, blockname))
 
 
     def send_AgentDataUpdateRequest(self):
         """ queues a packet requesting an agent data update """
 
-        packet = AgentDataUpdateRequestPacket()
+        packet = Message('AgentDataUpdateRequest', 
+                        Block('AgentData', 
+                            AgentID = self.agent_id, 
+                            SessionID = self.session_id))
 
-        packet.AgentData['AgentID'] = self.agent_id
-        packet.AgentData['SessionID'] = self.session_id
-
-        self.region.enqueue_message(packet())
+        self.region.enqueue_message(packet)
 
     # ~~~~~~~~~~~~~~
     # Communications
@@ -430,7 +445,10 @@ class Agent(object):
 
     # Chat
 
-    def say(self, Message, Type = 1, Channel = 0):
+    def say(self, 
+            _Message, 
+            Type = 1, 
+            Channel = 0):
         """ queues a packet to send open chat via ChatFromViewer
 
         Channel: 0 is open chat
@@ -439,25 +457,29 @@ class Agent(object):
               2 = Shout
         """
 
-        packet = ChatFromViewerPacket()
+        packet = Message('ChatFromViewer', 
+                        Block('AgentData', 
+                            AgentID = self.agent_id, 
+                            SessionID = self.session_id), 
+                        Block('ChatData', 
+                            Message = _Message, 
+                            Type = Type, 
+                            Channel = Channel))
 
-        packet.AgentData['AgentID'] = self.agent_id
-        packet.AgentData['SessionID'] = self.session_id
-
-        packet.ChatData['Message'] = Message
-        packet.ChatData['Type'] = Type
-        packet.ChatData['Channel'] = Channel
-
-        self.region.enqueue_message(packet())
+        self.region.enqueue_message(packet)
 
     # Instant Message (im, group chat)
 
-    def instant_message(self, ToAgentID = None, Message = None, _ID = None):
+    def instant_message(self, 
+                        ToAgentID = None, 
+                        _Message = None, 
+                        _ID = None):
         """ sends an instant message to another avatar, wrapping Agent().send_ImprovedInstantMessage() with some handy defaults """
 
-        if ToAgentID != None and Message != None:
+        if ToAgentID != None and _Message != None:
 
-            if _ID == None: _ID = self.agent_id
+            if _ID == None: 
+                _ID = self.agent_id
 
             _AgentID = self.agent_id
             _SessionID = self.session_id
@@ -471,65 +493,81 @@ class Agent(object):
             _ID = _ID
             _Timestamp = 0
             _FromAgentName = self.firstname + ' ' + self.lastname
-            _Message = Message
+            _Message = _Message
             _BinaryBucket = ''
 
-            self.send_ImprovedInstantMessage(_AgentID, _SessionID, _FromGroup, _ToAgentID, _ParentEstateID, _RegionID, _Position, _Offline, _Dialog, _ID, _Timestamp, _FromAgentName, _Message, _BinaryBucket)
+            self.send_ImprovedInstantMessage(_AgentID, 
+                                            _SessionID, 
+                                            _FromGroup, 
+                                            _ToAgentID, 
+                                            _ParentEstateID, 
+                                            _RegionID, 
+                                            _Position, 
+                                            _Offline, 
+                                            _Dialog, 
+                                            _ID, 
+                                            _Timestamp, 
+                                            _FromAgentName, 
+                                            _Message, 
+                                            _BinaryBucket)
 
         else:
 
             log(INFO, "Please specify an agentid and message to send in agent.instant_message")
 
-    def send_ImprovedInstantMessage(self, AgentID = None, SessionID = None, FromGroup = None, ToAgentID = None, ParentEstateID = None, RegionID = None, Position = None, Offline = None, Dialog = None, _ID = None, Timestamp = None, FromAgentName = None, Message = None, BinaryBucket = None, AgentDataBlock = {}, MessageBlockBlock = {}):
+    def send_ImprovedInstantMessage(self, 
+                                    AgentID = None, 
+                                    SessionID = None, 
+                                    FromGroup = None, 
+                                    ToAgentID = None, 
+                                    ParentEstateID = None, 
+                                    RegionID = None, 
+                                    Position = None, 
+                                    Offline = None, 
+                                    Dialog = None, 
+                                    _ID = None, 
+                                    Timestamp = None, 
+                                    FromAgentName = None, 
+                                    _Message = None, 
+                                    BinaryBucket = None):
         """ sends an instant message packet to ToAgentID. this is a multi-purpose message for inventory offer handling, im, group chat, and more """
 
-        packet = ImprovedInstantMessagePacket()
+        packet = Message('ImprovedInstantMessage', 
+                        Block('AgentData', 
+                            AgentID = AgentID, 
+                            SessionID = SessionID), 
+                        Block('MessageBlock', 
+                            FromGroup = FromGroup, 
+                            ToAgentID = ToAgentID, 
+                            ParentEstateID = ParentEstateID, 
+                            RegionID = RegionID, 
+                            Position = Position, 
+                            Offline = Offline, 
+                            Dialog = Dialog, 
+                            ID = UUID(str(_ID)), 
+                            Timestamp = Timestamp, 
+                            FromAgentName = FromAgentName, 
+                            Message = _Message, 
+                            BinaryBucket = BinaryBucket))
 
-        if AgentDataBlock == {}:
-            packet.AgentData['AgentID'] = AgentID
-            packet.AgentData['SessionID'] = SessionID            
-        else:
-            packet.AgentData = AgentDataBlock
+        self.region.enqueue_message(packet, True)
 
-        if FromAgentName == None:
-            FromAgentName = self.Name()
-
-        # ha! when scripting out packets.py, never considered a block named *block
-        if MessageBlockBlock == {}:
-
-            packet.MessageBlock['FromGroup'] = FromGroup                   # Bool
-            packet.MessageBlock['ToAgentID'] = UUID(str(ToAgentID))   # LLUUID
-            packet.MessageBlock['ParentEstateID'] = ParentEstateID         # U32
-            packet.MessageBlock['RegionID'] = UUID(str(RegionID))     # LLUUID
-            packet.MessageBlock['Position'] = Position()                     # LLVector3
-            packet.MessageBlock['Offline'] = Offline                       # U8
-            packet.MessageBlock['Dialog'] = Dialog                         # U8 IM Type
-            packet.MessageBlock['ID'] = UUID(str(_ID))                # LLUUID
-            packet.MessageBlock['Timestamp'] = Timestamp                   # U32
-            packet.MessageBlock['FromAgentName'] = FromAgentName           # Variable 1
-            packet.MessageBlock['Message'] = Message                       # Variable 2
-            packet.MessageBlock['BinaryBucket'] = BinaryBucket             # Variable 2
-
-        self.region.enqueue_message(packet(), True)
- 
     def send_RetrieveInstantMessages(self):
         """ asks simulator for instant messages stored while agent was offline """
-        
-        packet = RetrieveInstantMessagesPackets()
-        
-        packet.AgentDataBlock['AgentID'] = self.agent_id
-        packet.AgentDataBlock['SessionID'] = self.session_id
-        
+
+        packet = Message('RetrieveInstantMessages', 
+                        Block('AgentData', 
+                            AgentID = self.agent_id, 
+                            SessionID = self.session_id))
+
         self.region.enqueue_message(packet())
 
 
-    def sigint_handler(self, signal, frame):
+    def sigint_handler(self, signal_sent, frame):
         """ catches terminal signals (Ctrl-C) to kill running client instances """
 
-        log(INFO, "Caught signal... %d. Stopping" % signal)
-        #self.running = False
+        log(INFO, "Caught signal... %d. Stopping" % signal_sent)
         self.logout()
-        #sys.exit(0)
 
     def __repr__(self):
         """ returns a representation of the agent """
@@ -551,13 +589,13 @@ class Agent(object):
         if self.lastname == None:
             self.firstname = packet.blocks['AgentData'][0].get_variable('LastName').data
 
-        self.GroupTitle = packet.blocks['AgentData'][0].get_variable('GroupTitle').data
+        self.active_group_title = packet.blocks['AgentData'][0].get_variable('GroupTitle').data
 
-        self.ActiveGroupID = packet.blocks['AgentData'][0].get_variable('ActiveGroupID').data
+        self.active_group_id = packet.blocks['AgentData'][0].get_variable('ActiveGroupID').data
 
-        self.GroupPowers = packet.blocks['AgentData'][0].get_variable('GroupPowers').data
+        self.active_group_powers = packet.blocks['AgentData'][0].get_variable('GroupPowers').data
 
-        self.GroupName = packet.blocks['AgentData'][0].get_variable('GroupName').data
+        self.active_group_name = packet.blocks['AgentData'][0].get_variable('GroupName').data
 
     def onAgentMovementComplete(self, packet):
         """ callback handler for received AgentMovementComplete messages which populates various Agent() and Region() attributes """
@@ -586,7 +624,7 @@ class Agent(object):
         payload['Acceleration'] = self.Acceleration
         payload['Rotation'] = self.Rotation
         payload['AngularVelocity'] = self.AngularVelocity
-        self.events_handler._handle(AppEvent("AgentDynamicsUpdate", payload=payload))
+        self.events_handler.handle(AppEvent("AgentDynamicsUpdate", payload=payload))
 
     def onHealthMessage(self, packet):
         """ callback handler for received HealthMessage messages which populates Agent().health """
@@ -597,7 +635,7 @@ class Agent(object):
         """ callback handler for received AgentGroupDataUpdate messages which updates stored group instances in the group_manager """
 
         # AgentData block
-        AgentID = packet.blocks['AgentData'][0].get_variable('AgentID').data
+        # AgentID = packet.blocks['AgentData'][0].get_variable('AgentID').data
 
         # GroupData block
         for GroupData_block in packet.blocks['GroupData']:
@@ -614,14 +652,12 @@ class Agent(object):
             GroupPowers = [ord(x) for x in GroupPowers]
             GroupPowers = ''.join([str(x) for x in GroupPowers])
 
-            group = Group(AcceptNotices, GroupPowers, GroupID, GroupName, ListInProfile, Contribution,GroupInsigniaID )
+            group = Group(AcceptNotices, GroupPowers, GroupID, GroupName, ListInProfile, Contribution, GroupInsigniaID )
 
             self.group_manager.store_group(group)
 
     def onChatFromSimulator(self, packet):
         """ callback handler for received ChatFromSimulator messages which parses and fires a ChatReceived event. """
-
-        log(INFO, "Working on parsing chat messages....")
 
         FromName = packet.blocks['ChatData'][0].get_variable('FromName').data
         SourceID = packet.blocks['ChatData'][0].get_variable('SourceID').data
@@ -630,18 +666,24 @@ class Agent(object):
         ChatType = packet.blocks['ChatData'][0].get_variable('ChatType').data
         Audible = packet.blocks['ChatData'][0].get_variable('Audible').data
         Position = packet.blocks['ChatData'][0].get_variable('Position').data
-        Message = packet.blocks['ChatData'][0].get_variable('Message').data 
+        _Message = packet.blocks['ChatData'][0].get_variable('Message').data 
 
-        message = AppEvent('ChatReceived', FromName = FromName, SourceID = SourceID, OwnerID = OwnerID, SourceType = SourceType, ChatType = ChatType, Audible = Audible, Position = Position, Message = Message)
+        message = AppEvent('ChatReceived', 
+                            FromName = FromName, 
+                            SourceID = SourceID, 
+                            OwnerID = OwnerID, 
+                            SourceType = SourceType, 
+                            ChatType = ChatType, 
+                            Audible = Audible, 
+                            Position = Position, 
+                            Message = _Message)
 
-        log(INFO, "Received chat from %s: %s" % (FromName, Message))
+        log(INFO, "Received chat from %s: %s" % (FromName, _Message))
 
-        self.events_handler._handle(message)
+        self.events_handler.handle(message)
 
     def onImprovedInstantMessage(self, packet):
         """ callback handler for received ImprovedInstantMessage messages. much is passed in this message, and handling the data is only partially implemented """
-
-        log(INFO, "Working on parsing ImprovedInstantMessage messages....")
 
         Dialog = packet.blocks['MessageBlock'][0].get_variable('Dialog').data
         FromAgentID = packet.blocks['AgentData'][0].get_variable('AgentID').data
@@ -674,13 +716,13 @@ class Agent(object):
             Position = packet.blocks['MessageBlock'][0].get_variable('Position').data
             ID = packet.blocks['MessageBlock'][0].get_variable('ID').data
             FromAgentName = packet.blocks['MessageBlock'][0].get_variable('FromAgentName').data
-            Message = packet.blocks['MessageBlock'][0].get_variable('Message').data
+            _Message = packet.blocks['MessageBlock'][0].get_variable('Message').data
 
-            message = AppEvent('InstantMessageReceived', FromAgentID = FromAgentID, RegionID = RegionID, Position = Position, ID = ID, FromAgentName = FromAgentName, Message = Message)
+            message = AppEvent('InstantMessageReceived', FromAgentID = FromAgentID, RegionID = RegionID, Position = Position, ID = ID, FromAgentName = FromAgentName, Message = _Message)
 
-            log(INFO, "Received instant message from %s: %s" % (FromAgentName, Message))
+            log(INFO, "Received instant message from %s: %s" % (FromAgentName, _Message))
 
-            self.events_handler._handle(message)
+            self.events_handler.handle(message)
 
         else:
 
@@ -689,11 +731,13 @@ class Agent(object):
     def onAlertMessage(self, packet):
         """ callback handler for received AlertMessage messages. logs and raises an event """
 
-        # ToDo: raise an event when this is received
-
         AlertMessage = packet.blocks['AlertData'][0].get_variable('Message').data
 
+        message = AppEvent('AlertMessage', AlertMessage = AlertMessage)
+
         log(WARNING, "AlertMessage from simulator: %s" % (AlertMessage))
+
+        self.events_handler.handle(message)
 
     def onEnableSimulator(self, packet):
         """ callback handler for received EnableSimulator messages. stores the region data for later connections """
@@ -752,9 +796,9 @@ class Agent(object):
         """Initiate a teleport to the specified location. When passing a region name
         it may be necessary to request the destination region handle from the current sim
         before the teleport can start."""
-        
+
         log(INFO, 'teleport name=%s handle=%s id=%s', str(region_name), str(region_handle), str(region_id))
-        
+
         # Handle intra-region teleports even by name
         if not region_id and region_name and region_name.lower() == self.region.SimName.lower():
             region_id = self.region.RegionID
@@ -764,30 +808,34 @@ class Agent(object):
             region_handle = self.region_name_map[region_name.lower()]
 
         if region_id:
-            log(INFO, 'sending TP request packet')
-            packet = TeleportRequestPacket()
 
-            packet.AgentData['AgentID'] = self.agent_id
-            packet.AgentData['SessionID'] = self.session_id
-            
-            packet.Info['RegionID'] = region_id
-            packet.Info['Position'] = position
-            packet.Info['LookAt'] = look_at
-            
-            self.region.enqueue_message(packet())
+            log(INFO, 'sending TP request packet')
+
+            packet = Message('TeleportRequest', 
+                            Block('AgentData', 
+                                AgentID = self.agent_id, 
+                                SessionID = self.session_id),
+                            Block('Info',
+                                RegionID = region_id,
+                                Position = position,
+                                LookAt = look_at))
+
+            self.region.enqueue_message(packet)
 
         elif region_handle:
-            log(INFO, 'sending TP location request packet')
-            packet = TeleportLocationRequestPacket()
 
-            packet.AgentData['AgentID'] = self.agent_id
-            packet.AgentData['SessionID'] = self.session_id
-            
-            packet.Info['RegionHandle'] = region_handle
-            packet.Info['Position'] = position
-            packet.Info['LookAt'] = look_at
-            
-            self.region.enqueue_message(packet())
+            log(INFO, 'sending TP location request packet')
+
+            packet = Message('TeleportLocationRequest', 
+                            Block('AgentData', 
+                                AgentID = self.agent_id, 
+                                SessionID = self.session_id),
+                            Block('Info',
+                                RegionHandle = region_handle,
+                                Position = position,
+                                LookAt = look_at))
+
+            self.region.enqueue_message(packet)
 
         else:
             log(INFO, "Target region's handle not known, sending map name request")
@@ -795,21 +843,27 @@ class Agent(object):
             self.send_MapNameRequest(
                 region_name,
                 lambda handle: self.teleport(region_handle=handle, position=position, look_at=look_at))
-                
-    
+
+
     def send_MapNameRequest(self, region_name, callback):
+        """ sends a MapNameRequest message to the host simulator """
 
         handler = self.region.message_handler.register('MapBlockReply')
-        
+
         def onMapBlockReplyPacket(packet):
+            """ handles the MapBlockReply message from a simulator """
+
             log(INFO, 'MapBlockReplyPacket received')
+
             for block in packet.blocks['Data']:
+
                 if block.get_variable('Name').data.lower() == region_name.lower():
+
                     handler.unsubscribe(onMapBlockReplyPacket)
 
                     x = block.get_variable('X').data
                     y = block.get_variable('Y').data
-                    region_handle = Region.xy_to_handle(x,y)
+                    region_handle = Region.xy_to_handle(x, y)
 
                     if region_handle:
                         self.region_name_map[region_name.lower()] = region_handle
@@ -821,20 +875,24 @@ class Agent(object):
                     return
 
             # Leave it registered, as the event may come later
-            
+
         # Register a handler for the response        
         handler.subscribe(onMapBlockReplyPacket)
 
         # ...and make the request
         log(INFO, 'sending MapNameRequestPacket')
-        packet = MapNameRequestPacket()
-        packet.AgentData['AgentID'] = self.agent_id
-        packet.AgentData['SessionID'] = self.session_id
-        packet.AgentData['Flags'] = 0 
-        packet.AgentData['EstateID'] = 0
-        packet.AgentData['Godlike'] = False
-        packet.NameData['Name'] = region_name.lower()
-        self.region.enqueue_message(packet()) 
+
+        packet = Message('MapNameRequest', 
+                        Block('AgentData', 
+                            AgentID = self.agent_id, 
+                            SessionID = self.session_id,
+                            Flags = 0,
+                            EstateID = 0,
+                            Godlike = False),
+                        Block('NameData',
+                            Name = region_name.lower()))
+
+        self.region.enqueue_message(packet) 
 
     def onTeleportFinish(self, packet):
         """Handle the end of a successful teleport"""
@@ -850,12 +908,12 @@ class Agent(object):
 
         # packed binary to dotted-octet
         sim_ip = packet.blocks['Info'][0].get_variable('SimIP').data
-        sim_ip = '.'.join(map(str,struct.unpack('BBBB', sim_ip))) 
+        sim_ip = '.'.join(map(str, struct.unpack('BBBB', sim_ip))) 
 
         # *TODO: Make this more graceful
         log(INFO, "Disconnecting from old region")
-        [region._kill_coroutines() for region in self.child_regions]
-        self.region._kill_coroutines()
+        [region.kill_coroutines() for region in self.child_regions]
+        self.region.kill_coroutines()
 
         self.region = None
         self.child_regions = []
@@ -870,20 +928,19 @@ class Agent(object):
             sim_port = packet.blocks['Info'][0].get_variable('SimPort').data
             )
 
-
     def request_agent_names(self, agent_ids, callback):
         """Request agent names. When all names are known, callback
         will be called with a list of tuples (agent_id, first_name,
         last_name). If all names are known, callback will be called
         immediately."""
-        
+
         def _fire_callback(_):
             cbdata = [(agent_id,
                        self.agent_id_map[agent_id][0],
                        self.agent_id_map[agent_id][1])
                       for agent_id in agent_ids]
             callback(cbdata)
-        
+
         names_to_request = [ agent_id
                              for agent_id in agent_ids
                              if agent_id not in self.agent_id_map ]
@@ -894,11 +951,14 @@ class Agent(object):
 
 
     def send_UUIDNameRequest(self, agent_ids, callback):
+        """ sends a UUIDNameRequest message to the host simulator """
+
         handler = self.region.message_handler.register('UUIDNameReply')
 
         def onUUIDNameReply(packet):
+            """ handles the UUIDNameReply message from a simulator """
             log(INFO, 'UUIDNameReplyPacket received')
-            
+
             cbdata = []
             for block in packet.blocks['UUIDNameBlock']:
                 agent_id = str(block.get_variable('ID').data)
@@ -915,13 +975,16 @@ class Agent(object):
                 handler.unsubscribe(onUUIDNameReply)
                 callback(cbdata)
             else:
-                log(INFO, 'Still waiting on %d names', len(missing))
-            
+                log(INFO, 'Still waiting on %d names in send_UUIDNameRequest', len(missing))
+
         handler.subscribe(onUUIDNameReply)
+
         log(INFO, 'sending UUIDNameRequest')
-        packet = UUIDNameRequestPacket()
-        packet.UUIDNameBlockBlocks = [ {'ID':UUID(agent_id) } for agent_id in agent_ids ]
-        self.region.enqueue_message(packet())
+
+        packet = Message('UUIDNameRequest', 
+                        [Block('UUIDNameBlock', ID = UUID(agent_id)) for agent_id in agent_ids])
+
+        self.region.enqueue_message(packet)
 
         # *TODO: Should use this instead, but somehow it fails ?!?
         #self.region.sendUUIDNameRequest(agent_ids=agent_ids)
@@ -931,51 +994,63 @@ class Agent(object):
         handler = self.region.message_handler.register('MoneyBalanceReply')
 
         def onMoneyBalanceReply(packet):
+            """ handles the MoneyBalanceReply message from a simulator """
             log(INFO, 'MoneyBalanceReply received')
             handler.unsubscribe(onMoneyBalanceReply) # One-shot handler
             balance = packet.blocks['MoneyData'][0].get_variable('MoneyBalance').data
             callback(balance)
 
         handler.subscribe(onMoneyBalanceReply)
+
         log(INFO, 'sending MoneyBalanceRequest')
-        packet = MoneyBalanceRequestPacket()
-        packet.AgentData['AgentID'] = self.agent_id
-        packet.AgentData['SessionID'] = self.session_id
-        packet.MoneyData['TransactionID'] = UUID()
-        self.region.enqueue_message(packet())
-        
+
+        packet = Message('MoneyBalanceRequest',
+                        Block('AgentData',
+                            AgentID = self.agent_id,
+                            SessionID = self.session_id),
+                        Block('MoneyData',
+                            TransactionID = UUID()))
+
+        self.region.enqueue_message(packet)
 
     def give_money(self, target_id, amount,
                    description='',
                    transaction_type=MoneyTransactionType.Gift,
                    flags=TransactionFlags.Null):
         """Give money to another agent"""
-        log(INFO, 'sending MoneyTransferRequest')
-        packet = MoneyTransferRequestPacket()
-        packet.AgentData['AgentID'] = self.agent_id
-        packet.AgentData['SessionID'] = self.session_id
-        packet.MoneyData['SourceID'] = self.agent_id
-        packet.MoneyData['DestID'] = UUID(target_id)
-        packet.MoneyData['Flags'] = flags
-        packet.MoneyData['Amount'] = amount
-        packet.MoneyData['AggregatePermNextOwner'] = 0
-        packet.MoneyData['AggregatePermInventory'] = 0
-        packet.MoneyData['TransactionType'] = transaction_type
-        packet.MoneyData['Description'] = description
-        self.region.enqueue_message(packet()) 
 
+        log(INFO, 'sending MoneyTransferRequest')
+
+        packet = Message('MoneyTransferRequest',
+                        Block('AgentData',
+                            AgentID = self.agent_id,
+                            SessionID = self.session_id),
+                        Block('MoneyData',
+                            SourceID = self.agent_id,
+                            DestID = UUID(target_id),
+                            Flags = flags,
+                            Amount = amount,
+                            AggregatePermNextOwner = 0,
+                            AggregatePermInventory = 0,
+                            TransactionType = transaction_type,
+                            Description = description))
+
+        self.region.enqueue_message(packet) 
 
     def sit_on_ground(self):
         """Sit on the ground at the agent's current location"""
+
         self.control_flags |= AgentControlFlags.SitOnGround
         self._send_update()
 
     def stand(self):
         """Stand up from sitting"""
+
         # Start standing...
         self.control_flags &= ~AgentControlFlags.SitOnGround
         self.control_flags |= AgentControlFlags.StandUp
         self._send_update()
+
         # And finish standing
         self.control_flags &= ~AgentControlFlags.StandUp
         self._send_update()
@@ -983,14 +1058,19 @@ class Agent(object):
 
     def fly(self, flying=True):
         """Start or stop flying"""
+
         if flying:
             self.control_flags |= AgentControlFlags.Fly
         else:            
             self.control_flags &= ~AgentControlFlags.Fly
+
         self._send_update()
 
     def _send_update(self):
+        """ force a send of an AgentUpdate message to the host simulator """
+
         log(INFO, 'sending AgentUpdate')
+
         self.region.sendAgentUpdate(
             State=self.state,
             ControlFlags=self.control_flags,
@@ -1002,7 +1082,7 @@ class Agent(object):
             Far = self.settings.DEFAULT_CAMERA_DRAW_DISTANCE
             )
 
-            
+
 class Home(object):
     """ contains the parameters describing an agent's home location as returned in login_response['home'] """
 
@@ -1024,9 +1104,9 @@ class Home(object):
         self.global_x = self.region_handle[0]
         self.global_y = self.region_handle[1]
 
-        self.local_x = self.position[0]
-        self.local_y = self.position[1]
-        self.local_z = self.position[2]
+        # convert the position and lookat to a Vector3 instance
+        self.look_at = Vector3(X=self.look_at[0], Y=self.look_at[1], Z=self.look_at[2])
+        self.position = Vector3(X=self.position[0], Y=self.position[1], Z=self.position[2])
 
 """
 Contributors can be viewed at:

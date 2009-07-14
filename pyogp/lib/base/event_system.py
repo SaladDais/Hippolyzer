@@ -49,7 +49,7 @@ class AppEventsHandler(object):
 
             return False
 
-    def _handle(self, event):
+    def handle(self, event):
         """ essentially a case statement to pass event data to notifiers """
 
         try:

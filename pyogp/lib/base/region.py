@@ -337,8 +337,8 @@ class Region(object):
             raise
             return False
 
-    def _kill_coroutines(self):
-        """ end processes spawned by the child regions """
+    def kill_coroutines(self):
+        """ trigger to end processes spawned by the child regions """
 
         self._isUDPRunning = False
         self._stopEventQueue()

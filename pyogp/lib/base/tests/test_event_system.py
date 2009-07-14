@@ -28,7 +28,7 @@ class TestEvents(unittest.TestCase):
         handler = eventshandler.register('MockEvent')
         handler.subscribe(self.onEvent, mock)
 
-        eventshandler._handle(mock)
+        eventshandler.handle(mock)
 
     def test_event_handler_timeout(self):
 

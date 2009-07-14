@@ -75,14 +75,14 @@ class TestAgent(unittest.TestCase):
     def test_legacy_get_login_params(self):
 
         self.client.grid_type = 'Legacy'
-        params = self.client._get_login_params(self.legacy_loginuri, self.firstname, self.lastname, self.password)
+        params = self.client._get_login_params(self.firstname, self.lastname, self.password)
 
         self.assertEquals(type(params), type(LegacyLoginParams(self.firstname, self.lastname, self.password)))
 
     def test_ogp_get_login_params(self):
 
         self.client.grid_type = 'OGP'
-        params = self.client._get_login_params(self.ogp_loginuri, self.firstname, self.lastname, self.password)
+        params = self.client._get_login_params(self.firstname, self.lastname, self.password)
 
         self.assertEquals(type(params), type(OGPLoginParams(self.firstname, self.lastname, self.password)))
 
@@ -102,7 +102,16 @@ class TestAgent(unittest.TestCase):
         home = Home(home_string)
 
         # Note: have not yet worked out precision on floats. Kinda need to
-        self.assertEquals(home.__dict__, {'local_z': 79.393799999999999, 'local_y': 148.25999999999999, 'local_x': 171.62200000000001, 'look_at': [0, 1, 0], 'global_x': 261120, 'global_y': 247040, 'region_handle': [261120, 247040], 'position': [171.62200000000001, 148.25999999999999, 79.393799999999999]})
+        self.assertEquals(home.region_handle, [261120, 247040])
+        self.assertEquals(home.position.X, 171.62200000000001)
+        self.assertEquals(home.position.Y, 148.25999999999999)
+        self.assertEquals(home.position.Z, 79.393799999999999)
+        self.assertEquals(home.look_at.X, 0)
+        self.assertEquals(home.look_at.Y, 1)
+        self.assertEquals(home.look_at.Z, 0)
+        self.assertEquals(home.global_x, 261120)
+        self.assertEquals(home.global_y, 247040)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

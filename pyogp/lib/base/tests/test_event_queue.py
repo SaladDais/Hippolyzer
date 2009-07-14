@@ -87,6 +87,7 @@ class TestEventQueue(unittest.TestCase):
         self.eq.stopped = True
         api.sleep(.1)
         self.assertTrue(self.eq.stopped)
+        api.sleep(1)
         self.assertFalse(self.eq._running)
         
 def test_suite():
