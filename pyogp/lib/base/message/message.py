@@ -42,9 +42,18 @@ class Block(MsgBlockData):
 
         for variable_name in var_list:
             variable_data = var_list[variable_name]
-            variable = MsgVariableData(variable_name, variable_data)
+            variable = Variable(variable_name, variable_data)
             self.add_variable(variable)
 
+class Variable(MsgVariableData):
+    """ base representation of a Variable (purely a convenience alias of MsgVariableData)
+
+    Variable expects a name, and data
+    """
+
+    def __init__(self, name, data, var_type = None):
+
+        super(Variable, self).__init__(name, data, var_type)
 
 class Message(MessageBase):
     """ an active message """

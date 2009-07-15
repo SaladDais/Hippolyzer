@@ -1,22 +1,21 @@
 # standard python libs
-from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
-import sys, traceback
+from logging import getLogger, ERROR, WARNING, INFO, DEBUG
+import traceback
 
 # related
 from eventlet import api, util
+
 # the following makes socket calls nonblocking. magic
 util.wrap_socket_with_coroutine_socket()
 
 # pyogp
-from pyogp.lib.base.utilities.events import Event
-from pyogp.lib.base.groups import *
-from pyogp.lib.base.exc import Deprecated, RegionCapNotAvailable
+
+from pyogp.lib.base.exc import RegionCapNotAvailable
 
 # messaging
 from pyogp.lib.base.message.message_handler import MessageHandler
-from pyogp.lib.base.message.message import Message
+from pyogp.lib.base.message.message import Message, Block, Variable
 from pyogp.lib.base.message.template_dict import TemplateDictionary
-from pyogp.lib.base.message.template import MsgData, MsgBlockData, MsgVariableData
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.event_queue')
@@ -79,12 +78,14 @@ class EventQueueClient(object):
         self.current_template = None
 
     def start(self):
+        """ spawns a coroutine connecting to the event queue on the target """
 
         try:
 
             if self.cap.name == 'event_queue':
 
-                if self.settings.LOG_COROUTINE_SPAWNS: log(INFO, "Spawning a coroutine for event queue in the agent domain context.")
+                if self.settings.LOG_COROUTINE_SPAWNS:
+                    log(INFO, "Spawning a coroutine for event queue in the agent domain context.")
 
                 self._processADEventQueue()
 
@@ -92,7 +93,8 @@ class EventQueueClient(object):
 
             elif self.cap.name == 'EventQueueGet':
 
-                if self.settings.LOG_COROUTINE_SPAWNS: log(INFO, "Spawning a coroutine for event queue in the simulator context for %s." % (str(self.region.sim_ip) + ':' + str(self.region.sim_port)))
+                if self.settings.LOG_COROUTINE_SPAWNS:
+                    log(INFO, "Spawning a coroutine for event queue in the simulator context for %s." % (str(self.region.sim_ip) + ':' + str(self.region.sim_port)))
 
                 self._processRegionEventQueue()
 
@@ -107,18 +109,21 @@ class EventQueueClient(object):
 
         except Exception, error:
 
-            log(ERROR, "Problem starting event queue for %s with cap of %s" % (str(self.region.sim_ip) + ':' + str(self.region.sim_port), str(self.cap)))
+            log(ERROR, "Problem starting event queue for %s with cap of %s, with an error of: %s" % (str(self.region.sim_ip) + ':' + str(self.region.sim_port), str(self.cap), error))
 
             return False
 
     def stop(self):
+        """ trigger the event queue to stop communicating with the simulator """
 
         log(INFO, "Stopping event queue.")
 
         self.stopped = True
 
         def stop_monitor(self, interval, times):
-            for i in range(0,times):
+            """ monitors the stopping of the event queue client connection """
+
+            for i in range(0, times):
                 api.sleep(interval)
                 if self._running == False:
                     log(INFO,
@@ -131,19 +136,6 @@ class EventQueueClient(object):
                 str(interval * times))
             
         api.spawn(stop_monitor, self, self.settings.REGION_EVENT_QUEUE_POLL_INTERVAL, 10)
-
-    def _handle(self, data):
-        """ essentially a case statement to pass packets to event notifiers in the form of self attributes """
-
-        try:
-            # Handle the event queue result if we have subscribers
-            if len(self.subscribers) > 0:
-                #log(DEBUG, 'Handling event queue results')
-                handler(data)
-
-        except AttributeError:
-            #log(INFO, "Received an unhandled packet: %s" % (packet.name))
-            pass
 
     def _processRegionEventQueue(self):
 
@@ -178,7 +170,6 @@ class EventQueueClient(object):
                         else:
                             host_string = ''
                         log(INFO, "Received an error we ought not care about%s: %s" % (host_string, error))
-                        pass
 
                     if self.result != None: 
                         self.last_id = self.result['id']
@@ -189,8 +180,6 @@ class EventQueueClient(object):
 
                 except Exception, error:
                     log(WARNING, "Error in a post to the event queue. Error was: %s" % (error))
-                #finally:
-                    #log(CRITICAL, "Why am i here?")
                     
             if self.last_id != -1:
                 # Need to ack the last message received, otherwise it will be
@@ -209,6 +198,7 @@ class EventQueueClient(object):
             log(DEBUG, "Stopped event queue processing for %s" % (self.region.SimName))
 
     def _processADEventQueue(self):
+        """ connects to an agent domain's event queue """
 
         if self.cap.name != 'event_queue':
             raise RegionCapNotAvailable('event_queue')
@@ -228,6 +218,8 @@ class EventQueueClient(object):
             self._running = False
 
     def _parse_result(self, data):
+        """ tries to parse the llsd response from an event queue request. 
+        if successful, the event queue passes messages through the message_handler for evaluation"""
 
         # if there are subscribers to the event queue and packet handling is enabled
         if self.settings.HANDLE_PACKETS: # and (len(self.handler) > 0):
@@ -250,14 +242,17 @@ class EventQueueClient(object):
                         parsed_data = self._decode_eq_result(data)
 
                         for packet in parsed_data:
-                            self.message_handler._handle(packet)
+                            self.message_handler.handle(packet)
 
             except Exception, error:
+
                 traceback.print_exc()
+
                 if self.settings.ENABLE_HOST_LOGGING:
                     host_string = ' from (%s)' % (str(self.region.sim_ip) + ':' + str(self.region.sim_port))
                 else:
                     host_string = ''
+
                 log(WARNING, "Error parsing even queue results%s. Error: %s. Data was: %s" % (host_string, error, data))
 
     def _decode_eq_result(self, data=None):
@@ -286,41 +281,7 @@ class EventQueueClient(object):
 
                             # move this to a proper solution, for now, append to some list eq events
                             # or some dict mapping name to action to take
-                            '''
-                            if message['message'] == 'ChatterBoxInvitation':
 
-                                message['name'] = message['message']
-                                group_chat = ChatterBoxInvitation_Message(ChatterBoxInvitation_Data = message['body'])
-
-                                self.message_handler._handle(group_chat)
-
-                            elif message['message'] == 'ChatterBoxSessionEventReply':
-
-                                message['name'] = message['message']
-
-                                chat_response = ChatterBoxSessionEventReply_Message(message['body'])
-                                self.message_handler._handle(chat_response)
-
-                            elif message['message'] == 'ChatterBoxSessionAgentListUpdates':
-
-                                message['name'] = message['message']
-
-                                group_agent_update = ChatterBoxSessionAgentListUpdates_Message(message['body'])
-                                self.message_handler._handle(group_agent_update)
-
-                            elif message['message'] == 'ChatterBoxSessionStartReply':
-
-                                message['name'] = message['message']
-
-                                group_chat_session_data = ChatterBoxSessionStartReply_Message(message['body'])
-                                self.message_handler._handle(group_chat_session_data)
-
-                            elif message['message'] == 'EstablishAgentCommunication':
-
-                                #message['name'] == message['message']
-                                establish_agent_communication_data = EstablishAgentCommunication_Message(message['body'])
-                                self.message_handler._handle(establish_agent_communication_data)
-                            '''
                             in_template = self.template_dict.get_template(message['message'])
                             
                             if in_template:
@@ -334,16 +295,16 @@ class EventQueueClient(object):
                                 for block_name in message['body']:
 
                                     # block_data keys off of block.name, which here is the body attribute
-                                    block_data = MsgBlockData(block_name)
+                                    block = Block(block_name)
 
-                                    new_message.add_block(block_data)
+                                    new_message.add_block(block)
 
                                     for items in message['body'][block_name]:                                       
 
                                         for variable in items:
 
-                                            var_data = MsgVariableData(variable, items[variable], -1)
-                                            block_data.add_variable(var_data)
+                                            var_data = Variable(variable, items[variable], -1)
+                                            block.add_variable(var_data)
 
                                 #packet.blocks = message.blocks
                                 messages.append(new_message)
@@ -356,14 +317,14 @@ class EventQueueClient(object):
                                 new_message.event_queue_id = self.last_id
                                 new_message.host = self.region.host
 
-                                # faux block
-                                block_data = MsgBlockData('Message_Data')
-                                new_message.add_block(block_data)
+                                # faux block with a name of Message_Data
+                                block = Block('Message_Data')
+                                new_message.add_block(block)
                                 
                                 for var in message['body']:
 
-                                    var_data = MsgVariableData(var, message['body'][var], -1)
-                                    block_data.add_variable(var_data)
+                                    var_data = Variable(var, message['body'][var], -1)
+                                    block.add_variable(var_data)
  
                                 messages.append(new_message)                                   
 

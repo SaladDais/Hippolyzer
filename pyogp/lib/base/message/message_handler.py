@@ -46,7 +46,7 @@ class MessageHandler(object):
 
             return False
 
-    def _handle(self, message):
+    def handle(self, message):
         """ essentially a case statement to pass messages to event notifiers in the form of self attributes """
 
         try:

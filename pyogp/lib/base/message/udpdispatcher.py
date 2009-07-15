@@ -131,7 +131,7 @@ class UDPDispatcher(object):
                 log(DEBUG, 'Received packet%s : %s (%s)%s' % (host_string, recv_packet.name, recv_packet.packet_id, hex_string))
 
             if self.settings.HANDLE_PACKETS:
-                self.message_handler._handle(recv_packet)
+                self.message_handler.handle(recv_packet)
 
         return recv_packet
 
@@ -162,7 +162,7 @@ class UDPDispatcher(object):
 
         # enable monitoring of outgoing packets
         if self.settings.HANDLE_PACKETS:
-            self.message_handler._handle(packet)
+            self.message_handler.handle(packet)
 
         #use circuit manager to get the circuit to send on
         circuit = self.find_circuit(host)

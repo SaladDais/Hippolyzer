@@ -21,6 +21,6 @@ Stage a packet
 Fire the event, it returns a packet
 Unpossible to include this in the test, the memory ref keeps changing
 But, you get the idea...
-    event_data = message_handler._handle(packet)
+    event_data = message_handler.handle(packet)
     <pyogp.lib.base.message.message.Message object at 0x14da450>
 
