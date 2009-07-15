@@ -1,5 +1,5 @@
 # standard python libraries
-from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
+from logging import getLogger, ERROR, WARNING, INFO, DEBUG
 import signal
 import sys
 
@@ -7,7 +7,8 @@ import sys
 from eventlet import api
 
 # pyogp
-from pyogp.lib.base.datatypes import *
+from pyogp.lib.base.datatypes import UUID
+from pyogp.lib.base.exc import LoginError
 from pyogp.lib.base.utilities.helpers import Wait
 
 # initialize logging
@@ -39,7 +40,8 @@ class AgentManager(object):
         # signal handler to capture erm signals
         self.signal_handler = signal.signal(signal.SIGINT, self.sigint_handler)
 
-        if self.settings.LOG_VERBOSE: log(DEBUG, 'Initializing agent manager for %s agents' % (len(self.agents)))
+        if self.settings.LOG_VERBOSE: 
+            log(DEBUG, 'Initializing agent manager for %s agents' % (len(self.agents)))
 
     def initialize(self, agents):
         """ accept a list of Agent() instances, and store them in the agents attribute """
@@ -112,12 +114,13 @@ class AgentManager(object):
     def login(self, key, loginuri, start_location):
         """ spawns a new agent via an eventlet coroutine """
 
-        if self.settings.LOG_COROUTINE_SPAWNS: log(INFO, "Spawning a coroutine for agent login for %s." % (self.agents[key].Name()))
+        if self.settings.LOG_COROUTINE_SPAWNS: 
+            log(INFO, "Spawning a coroutine for agent login for %s." % (self.agents[key].Name()))
 
         try:
             api.spawn(self.agents[key].login, loginuri = loginuri, start_location = start_location)
         except LoginError, error:
-            log(ERROR, "Skipping agent with failed login: %s." % (self.agents[key].Name()))
+            log(ERROR, "Skipping agent with failed login: %s due to %s." % (self.agents[key].Name(), error))
 
     def has_agents_running(self):
         """ returns true if there is a client who's running value = True """
@@ -138,9 +141,10 @@ class AgentManager(object):
 
         return active
 
-    def sigint_handler(self, signal, frame):
+    def sigint_handler(self, sigint, frame):
+        """ handles signals from the command line (and others) and logs out all agents """
 
-        log(INFO, "Caught signal... %d. Stopping" % signal)
+        log(INFO, "Caught signal... %d. Stopping" % sigint)
 
         for agent in self.get_active_agents():
             agent.logout()
