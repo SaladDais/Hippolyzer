@@ -1,6 +1,5 @@
 # standard python libs
-from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
-from datatypes import *
+from logging import getLogger, WARNING, INFO, DEBUG
 import re
 
 # related
@@ -13,13 +12,13 @@ import tty
 import termios
 
 # pyogp
-from pyogp.lib.base.datatypes import *
+from pyogp.lib.base.datatypes import UUID, Vector3
 from pyogp.lib.base.exc import DataParsingError
-from pyogp.lib.base.utilities.helpers import Helpers, Wait
+from pyogp.lib.base.utilities.helpers import Wait
 from pyogp.lib.base.datamanager import DataManager
 
 # pyogp messaging
-from pyogp.lib.base.message.packets import *
+from pyogp.lib.base.message.message import Message, Block
 
 # pyogp utilities
 from pyogp.lib.base.utilities.enums import ImprovedIMDialogue
@@ -41,7 +40,8 @@ class GroupManager(DataManager):
         # of Group() instances
         self.group_store = []
         
-        if self.settings.LOG_VERBOSE: log(DEBUG, "Initialized the Group Manager")
+        if self.settings.LOG_VERBOSE:
+            log(DEBUG, "Initialized the Group Manager")
 
     def enable_callbacks(self):
         """enables the callback handlers for this GroupManager"""
@@ -83,7 +83,8 @@ class GroupManager(DataManager):
 
             self.group_store[index[0]] = _group
 
-            if self.settings.LOG_VERBOSE: log(DEBUG, 'Replacing a stored group: \'%s\'' % (_group.GroupID))
+            if self.settings.LOG_VERBOSE:
+                log(DEBUG, 'Replacing a stored group: \'%s\'' % (_group.GroupID))
 
         except:
 
@@ -124,7 +125,8 @@ class GroupManager(DataManager):
 
         if group != []:
             group[0].update_properties(group_data)
-            if self.settings.LOG_VERBOSE: log(DEBUG, 'Updating a stored group: \'%s\'' % (group[0].GroupName))
+            if self.settings.LOG_VERBOSE:
+                log(DEBUG, 'Updating a stored group: \'%s\'' % (group[0].GroupName))
         else:
             log(INFO, "Received an update for an unknown group with a session id of: %s" % (str(group_data['session_id'])))
 
@@ -141,23 +143,21 @@ class GroupManager(DataManager):
             if AgentID == None: AgentID = self.agent.agent_id
             if SessionID == None: SessionID = self.agent.session_id
 
-            packet = CreateGroupRequestPacket()
+            packet = Message('CreateGroupRequest',
+                                Block('AgentData',
+                                        AgentID = AgentID,
+                                        SessionID = SessionID),
+                                Block('GroupData',
+                                        Name = Name,
+                                        Charter = Charter,
+                                        ShowInList = ShowInList,
+                                        InsigniaID = InsigniaID,
+                                        MembershipFee = MembershipFee,
+                                        OpenEnrollment = OpenEnrollment,
+                                        AllowPublish = AllowPublish,
+                                        MaturePublish = MaturePublish))
 
-            # populate the AgentData block
-            packet.AgentData['AgentID'] = AgentID       # MVT_LLUUID
-            packet.AgentData['SessionID'] = SessionID # MVT_LLUUID
-
-            # populate the GroupData block
-            packet.GroupData['Name'] = Name    # MVT_VARIABLE
-            packet.GroupData['Charter'] = Charter    # MVT_VARIABLE
-            packet.GroupData['ShowInList'] = ShowInList    # MVT_BOOL
-            packet.GroupData['InsigniaID'] = InsigniaID    # MVT_LLUUID
-            packet.GroupData['MembershipFee'] = MembershipFee    # MVT_S32
-            packet.GroupData['OpenEnrollment'] = OpenEnrollment    # MVT_BOOL
-            packet.GroupData['AllowPublish'] = AllowPublish    # MVT_BOOL
-            packet.GroupData['MaturePublish'] = MaturePublish    # MVT_BOOL
-
-            self.agent.region.enqueue_message(packet(), True)
+            self.agent.region.enqueue_message(packet, True)
 
             if self.settings.HANDLE_PACKETS:
                 # enable the callback to watch for the CreateGroupReply packet
@@ -180,20 +180,18 @@ class GroupManager(DataManager):
     def join_group(self, group_id):
         """ sends a JoinGroupRequest packet for the specified uuid """
 
-        group_id = group_id
-
-        packet = JoinGroupRequestPacket()
-
-        packet.AgentData['AgentID'] = self.agent.agent_id      # MVT_LLUUID
-        packet.AgentData['SessionID'] = self.agent.session_id # MVT_LLUUID
-
-        packet.GroupData['GroupID'] = group_id
+        packet = Message('JoinGroupRequest',
+                        Block('AgentData',
+                                AgentID = AgentID,
+                                SessionID = SessionID),
+                            Block('GroupData',
+                                GroupID = group_id))
 
         # set up the callback
         self.onJoinGroupReply_received = self.agent.message_handler.register('JoinGroupReply')
         self.onJoinGroupReply_received.subscribe(self.onJoinGroupReply)
 
-        self.agent.region.enqueue_message(packet(), True)
+        self.agent.region.enqueue_message(packet, True)
 
     def activate_group(self, group_id):
         """ set a particular group as active """
@@ -219,13 +217,13 @@ class GroupManager(DataManager):
         AgentID = packet.blocks['AgentData'][0].get_variable('AgentID').data
         GroupID = packet.blocks['ReplyData'][0].get_variable('GroupID').data
         Success = packet.blocks['ReplyData'][0].get_variable('Success').data
-        Message = packet.blocks['ReplyData'][0].get_variable('Message').data
+        _Message = packet.blocks['ReplyData'][0].get_variable('Message').data
 
         if Success:
-            log(INFO, "Created group %s. Message data is: %s" % (GroupID, Message))
+            log(INFO, "Created group %s. Message data is: %s" % (GroupID, _Message))
             log(WARNING, "We now need to request the group data...")
         else:
-            log(WARNING, "Failed to create group due to: %s" % (Message))
+            log(WARNING, "Failed to create group due to: %s" % (_Message))
 
     def onJoinGroupReply(self, packet):
         """ the simulator tells us if joining a group was a success. """
@@ -316,13 +314,13 @@ class Group(object):
     def activate_group(self):
         """ set this group as active """
 
-        packet = ActivateGroupPacket()
+        packet = Message('ActivateGroup',
+                            Block('AgentData',
+                                    AgentID = self.agent.agent_id,
+                                    SessionID = self.agent.session_id,
+                                    GroupID = self.GroupID))
 
-        packet.AgentData['AgentID'] = self.agent.agent_id      # MVT_LLUUID
-        packet.AgentData['SessionID'] = self.agent.session_id # MVT_LLUUID
-        packet.AgentData['SessionID'] = self.GroupID
-
-        self.agent.region.enqueue_message(packet())
+        self.agent.region.enqueue_message(packet)
 
     def update_properties(self, properties):
         """ takes a dictionary of attribute:value and makes it so """
@@ -388,6 +386,7 @@ class Group(object):
             self.agent.send_ImprovedInstantMessage(_AgentID, _SessionID, _FromGroup, _ToAgentID, _ParentEstateID, _RegionID, _Position, _Offline, _Dialog, _ID, _Timestamp, _FromAgentName, _Message, _BinaryBucket)
 
     def handle_inbound_chat(self, message):
+        """ parses an incoming chat message from a group """
 
         session_id = message.blocks['Message_Data'][0].get_variable('session_id').data
         session_name = message.blocks['Message_Data'][0].get_variable('session_name').data
@@ -396,6 +395,7 @@ class Group(object):
 
         self.chat_history.append(message)
 
+        # Todo: raise an app level event
         log(INFO, "Group chat received. Group: %s From: %s Message: %s" % (session_name, from_name, _message))
 
 class MockChatInterface(object):
