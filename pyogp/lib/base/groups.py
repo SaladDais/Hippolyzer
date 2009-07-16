@@ -39,7 +39,7 @@ class GroupManager(DataManager):
         # the group store consists of a list
         # of Group() instances
         self.group_store = []
-        
+
         if self.settings.LOG_VERBOSE:
             log(DEBUG, "Initialized the Group Manager")
 
@@ -79,7 +79,7 @@ class GroupManager(DataManager):
 
         try:
 
-            index = [self.group_store.index(_object_) for _group_ in self.group_store if _group_.ID == _group.GroupID]
+            index = [self.group_store.index(_group_) for _group_ in self.group_store if _group_.ID == _group.GroupID]
 
             self.group_store[index[0]] = _group
 
@@ -90,7 +90,8 @@ class GroupManager(DataManager):
 
             self.group_store.append(_group)
 
-            if self.settings.LOG_VERBOSE: log(DEBUG, 'Stored a new group: \'%s\'' % (_group.GroupID))
+            if self.settings.LOG_VERBOSE:
+                log(DEBUG, 'Stored a new group: \'%s\'' % (_group.GroupID))
 
     def update_group(self, group_data):
         """ accepts a dictionary of group data and creates/updates a group """
@@ -99,9 +100,15 @@ class GroupManager(DataManager):
 
         if group != []:
             group[0].update_properties(group_data)
-            if self.settings.LOG_VERBOSE: log(DEBUG, 'Updating a stored group: \'%s\'' % (group[0].GroupID))
+            if self.settings.LOG_VERBOSE:
+                log(DEBUG, 'Updating a stored group: \'%s\'' % (group[0].GroupID))
         else:
-            group = Group(GroupID = group_data['GroupID'], GroupPowers = group_data['GroupPowers'], AcceptNotices = group_data['AcceptNotices'], GroupInsigniaID = group_data['GroupInsigniaID'], Contribution = group_data['Contribution'], GroupName = group_data['GroupName'])
+            group = Group(GroupID = group_data['GroupID'], 
+                        GroupPowers = group_data['GroupPowers'], 
+                        AcceptNotices = group_data['AcceptNotices'], 
+                        GroupInsigniaID = group_data['GroupInsigniaID'], 
+                        Contribution = group_data['Contribution'], 
+                        GroupName = group_data['GroupName'])
 
             self.store_group(group)
 
@@ -114,7 +121,8 @@ class GroupManager(DataManager):
 
         if group != []:
             group[0].update_properties(group_data)
-            if self.settings.LOG_VERBOSE: log(DEBUG, 'Updating a stored group: \'%s\'' % (group[0].GroupName))
+            if self.settings.LOG_VERBOSE:
+                log(DEBUG, 'Updating a stored group: \'%s\'' % (group[0].GroupName))
         else:
             log(INFO, "Received an update for an unknown group for name: %s" % (name))
 
@@ -130,7 +138,17 @@ class GroupManager(DataManager):
         else:
             log(INFO, "Received an update for an unknown group with a session id of: %s" % (str(group_data['session_id'])))
 
-    def create_group(self, AgentID = None, SessionID = None, Name = None, Charter = '', ShowInList = True, InsigniaID = UUID(), MembershipFee = 0, OpenEnrollment = False, AllowPublish = False, MaturePublish = False):
+    def create_group(self,
+                    AgentID = None,
+                    SessionID = None,
+                    Name = None,
+                    Charter = '',
+                    ShowInList = True,
+                    InsigniaID = UUID(),
+                    MembershipFee = 0,
+                    OpenEnrollment = False,
+                    AllowPublish = False,
+                    MaturePublish = False):
         """ sends a message to the agent's current region requesting to create a group
 
         enables a callback (which should be unsubscribed from once we get a response)
@@ -140,8 +158,10 @@ class GroupManager(DataManager):
 
             log(INFO, "Sending a request to create group with a name of \'%s\'" % (Name))
 
-            if AgentID == None: AgentID = self.agent.agent_id
-            if SessionID == None: SessionID = self.agent.session_id
+            if AgentID == None:
+                AgentID = self.agent.agent_id
+            if SessionID == None:
+                SessionID = self.agent.session_id
 
             packet = Message('CreateGroupRequest',
                                 Block('AgentData',
@@ -180,6 +200,15 @@ class GroupManager(DataManager):
     def join_group(self, group_id):
         """ sends a JoinGroupRequest packet for the specified uuid """
 
+        # set up the callback
+        self.onJoinGroupReply_received = self.agent.message_handler.register('JoinGroupReply')
+        self.onJoinGroupReply_received.subscribe(self.onJoinGroupReply)
+
+        self.send_JoinGroupRequest(self.agent.agent_id, self.agent.session_id, group_id)
+
+    def send_JoinGroupRequest(self, agent_id, session_id, group_id):
+        """ sends a JoinGroupRequest message to the hsot simulator """
+
         packet = Message('JoinGroupRequest',
                         Block('AgentData',
                                 AgentID = AgentID,
@@ -187,22 +216,23 @@ class GroupManager(DataManager):
                             Block('GroupData',
                                 GroupID = group_id))
 
-        # set up the callback
-        self.onJoinGroupReply_received = self.agent.message_handler.register('JoinGroupReply')
-        self.onJoinGroupReply_received.subscribe(self.onJoinGroupReply)
-
         self.agent.region.enqueue_message(packet, True)
 
     def activate_group(self, group_id):
         """ set a particular group as active """
 
-        packet = ActivateGroupPacket()
+        self.send_ActivateGroup(self.agent.agent_id, self.agent.session_id, group_id)
 
-        packet.AgentData['AgentID'] = self.agent.agent_id      # MVT_LLUUID
-        packet.AgentData['SessionID'] = self.agent.session_id # MVT_LLUUID
-        packet.AgentData['GroupID'] = group_id
+    def send_ActivateGroup(self, agent_id, session_id, group_id):
+        """ sends an ActivateGroup message to the host simulator """
 
-        self.agent.region.enqueue_message(packet())
+        packet = Message('ActivateGroup',
+                        Block('AgentData',
+                                AgentID = agent_id,
+                                SessionID = session_id,
+                                GroupID = group_id))
+
+        self.agent.region.enqueue_message(packet)
 
     # ~~~~~~~~~~~~~~~~~~
     # Callback functions
@@ -314,11 +344,16 @@ class Group(object):
     def activate_group(self):
         """ set this group as active """
 
+        self.send_ActivateGroup(self.agent.agent_id, self.agent.session_id, self.GroupID)
+
+    def send_ActivateGroup(self, agent_id, session_id, group_id):
+        """ send an ActivateGroup message to the host simulator """
+
         packet = Message('ActivateGroup',
                             Block('AgentData',
-                                    AgentID = self.agent.agent_id,
-                                    SessionID = self.agent.session_id,
-                                    GroupID = self.GroupID))
+                                    AgentID = agent_id,
+                                    SessionID = session_id,
+                                    GroupID = group_id))
 
         self.agent.region.enqueue_message(packet)
 
@@ -349,7 +384,20 @@ class Group(object):
         _Message = 'Message'''
         _BinaryBucket = ''
 
-        self.agent.send_ImprovedInstantMessage(_AgentID, _SessionID, _FromGroup, _ToAgentID, _ParentEstateID, _RegionID, _Position, _Offline, _Dialog, _ID, _Timestamp, _FromAgentName, _Message, _BinaryBucket)
+        self.agent.send_ImprovedInstantMessage(_AgentID,
+                                                _SessionID,
+                                                _FromGroup,
+                                                _ToAgentID,
+                                                _ParentEstateID,
+                                                _RegionID,
+                                                _Position,
+                                                _Offline,
+                                                _Dialog,
+                                                _ID,
+                                                _Timestamp,
+                                                _FromAgentName,
+                                                _Message,
+                                                _BinaryBucket)
 
     def chat(self, Message = None):
         """ sends an instant message to another avatar
@@ -383,7 +431,20 @@ class Group(object):
             _Message = Message + "\x00" #struct.pack(">" + str(len(Message)) + "c", *(Message))
             _BinaryBucket = "\x00" # self.GroupName #struct.pack(">" + str(len(self.GroupName)) + "c", *(self.GroupName))
 
-            self.agent.send_ImprovedInstantMessage(_AgentID, _SessionID, _FromGroup, _ToAgentID, _ParentEstateID, _RegionID, _Position, _Offline, _Dialog, _ID, _Timestamp, _FromAgentName, _Message, _BinaryBucket)
+            self.agent.send_ImprovedInstantMessage(_AgentID,
+                                                    _SessionID,
+                                                    _FromGroup,
+                                                    _ToAgentID,
+                                                    _ParentEstateID,
+                                                    _RegionID,
+                                                    _Position,
+                                                    _Offline,
+                                                    _Dialog,
+                                                    _ID,
+                                                    _Timestamp,
+                                                    _FromAgentName,
+                                                    _Message,
+                                                    _BinaryBucket)
 
     def handle_inbound_chat(self, message):
         """ parses an incoming chat message from a group """
@@ -399,7 +460,7 @@ class Group(object):
         log(INFO, "Group chat received. Group: %s From: %s Message: %s" % (session_name, from_name, _message))
 
 class MockChatInterface(object):
-    """ a super simple chat interface for testing"""
+    """ a super simple chat interface for testing group chat in a console """
 
     def __init__(self, agent, chat_handler):
 
@@ -448,7 +509,7 @@ class MockChatInterface(object):
         self.message = raw_input("Enter Message to group")
         self.chat_handler(self.message)
 
-
+'''
 class ChatterBoxInvitation_Message(object):
     """ a group chat message sent over the event queue """
 
@@ -549,6 +610,7 @@ class ChatterBoxSessionStartReply_Message(object):
         self.name = "ChatterBoxSessionStartReply"
 
         #{'body': {'temp_session_id': 4dd70b7f-8b3a-eef9-fc2f-909151d521f6, 'success': True, 'session_id': 4dd70b7f-8b3a-eef9-fc2f-909151d521f6, 'session_info': {'voice_enabled': True, 'session_name': "Enus' Construction Crew", 'type': 0, 'moderated_mode': {'voice': False}}}, 'message': 'ChatterBoxSessionStartReply'}],
+'''
 
 """
 Contributors can be viewed at:
