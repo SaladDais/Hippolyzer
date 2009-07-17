@@ -208,7 +208,7 @@ class MessageDeserializationError(MessageSystemError):
         self.reason = reason
 
     def __str__(self):   
-        return "Error serializing '%s' due to reason: '%s'" % (self.label, self.reason) 
+        return "Error deserializing '%s' due to reason: '%s'" % (self.label, self.reason) 
 
 class DataUnpackingError(MessageSystemError):
     """ problem deserializing packet data

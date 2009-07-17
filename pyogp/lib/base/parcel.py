@@ -1,25 +1,20 @@
 # standard python modules
-from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
+from logging import getLogger, WARNING, INFO, DEBUG
 
 # related
 from eventlet import api
 
 # pyogp
-from pyogp.lib.base.settings import Settings
 from pyogp.lib.base.datatypes import UUID
-from pyogp.lib.base.exc import *
+from pyogp.lib.base.exc import NotImplemented
 from pyogp.lib.base.datamanager import DataManager
 
 # pyogp messaging
-from pyogp.lib.base.message.packets import *
+from pyogp.lib.base.message.message import Message, Block
 from pyogp.lib.base.message.message_handler import MessageHandler
 
 # utilities
 from pyogp.lib.base.utilities.helpers import Helpers
-
-# pyogp messaging
-
-# pyogp utilities
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.parcel')
@@ -63,10 +58,11 @@ class ParcelManager(DataManager):
         self.message_handler = message_handler
         
         # otherwise, let's just use our own
-        if events_handler != None:
-            self.events_handler = events_handler
-        else:
-            self.events_handler = AppEventsHandler()
+        # unused atm
+        #if events_handler != None:
+        #    self.events_handler = events_handler
+        #else:
+        #    self.events_handler = AppEventsHandler()
 
         self.helpers = Helpers()
 
@@ -312,15 +308,15 @@ class ParcelManager(DataManager):
         self.onEstateCovenantReply_received = self.message_handler.register('EstateCovenantReply')
         self.onEstateCovenantReply_received.subscribe(self.onEstateCovenantReply)
 
-        self.sendEstateCovenantRequest()
+        self.sendEstateCovenantRequest(self.agent.agent_id, self.agent.session_id)
 
-    def sendEstateCovenantRequest(self):
-        """ send an EstateCovenantRequest packet """
+    def sendEstateCovenantRequest(self, agent_id, session_id):
+        """ send an EstateCovenantRequest message to the host simulator """
 
-        packet = EstateCovenantRequestPacket()
-
-        packet.AgentData['AgentID'] = self.agent.agent_id
-        packet.AgentData['SessionID'] = self.agent.session_id
+        packet = Message('EstateCovenantRequest',
+                        Block('AgentData',
+                                AgentID = agent_id,
+                                SessionID = session_id))
 
         self.region.enqueue_message(packet)
 
@@ -345,33 +341,33 @@ class ParcelManager(DataManager):
         # storing this data as a dict in the parcel manager until we have something better to do with it
         self.estatecovenantreply = {'CovenantID': CovenantID, 'CovenantTimestamp': CovenantTimestamp, 'EstateName': EstateName, 'EstateOwnerID': EstateOwnerID}
 
-    def sendParcelPropertiesRequest(self, SequenceID, West, South, East, North, SnapSelection):
-        """ sends a ParcelPropertiesRequest packet """
+    def sendParcelPropertiesRequest(self, agent_id, session_id, SequenceID, West, South, East, North, SnapSelection):
+        """ sends a ParcelPropertiesRequest message to the host simulator """
 
-        packet = ParcelPropertiesRequestPacket()
-
-        packet.AgentData['AgentID'] = self.agent.agent_id
-        packet.AgentData['SessionID'] = self.agent.session_id
-
-        packet.ParcelData['SequenceID'] = SequenceID
-        packet.ParcelData['West'] = West
-        packet.ParcelData['South'] = South
-        packet.ParcelData['East'] = East
-        packet.ParcelData['North'] = North
-        packet.ParcelData['SnapSelection'] = SnapSelection
+        packet = Message('ParcelPropertiesRequest', 
+                        Block('AgentData',
+                                AgentID = agent_id,
+                                SessionID = session_id),
+                        Block('ParcelData',
+                                SequenceID = SequenceID,
+                                West = West,
+                                South = South,
+                                East = East,
+                                North = North,
+                                SnapSelection = SnapSelection))
 
         self.region.enqueue_message(packet)
 
-    def sendParcelPropertiesRequestByID(self, SequenceID, LocalID):
+    def sendParcelPropertiesRequestByID(self, agent_id, session_id, SequenceID, LocalID):
         """ sends a ParcelPropertiesRequestByID packet """
 
-        packet = ParcelPropertiesRequestByID()
-
-        packet.AgentData['AgentID'] = self.agent.agent_id
-        packet.AgentData['SessionID'] = self.agent.session_id
-
-        packet.ParcelData['SequenceID'] = SequenceID
-        packet.ParcelData['LocalID'] = LocalID
+        packet = Message('ParcelPropertiesRequestByID', 
+                        Block('AgentData',
+                                AgentID = agent_id,
+                                SessionID = session_id),
+                        Block('ParcelData',
+                                SequenceID = SequenceID,
+                                LocalID = LocalID))
 
         self.region.enqueue_message(packet)
 
@@ -396,18 +392,17 @@ class ParcelManager(DataManager):
 
             return
 
-        self.sendParcelInfoRequest(parcel_id)
+        self.sendParcelInfoRequest(self.agent.agent_id, self.agent.session_id, parcel_id)
 
-    def sendParcelInfoRequest(self, parcel_id):
+    def sendParcelInfoRequest(self, agent_id, session_id, parcel_id):
         """ send a ParcelInfoRequest packet for the specified parcel_id """
 
-        packet = ParcelInfoRequestPacket()
-
-        # build the agent data block
-        packet.AgentData['AgentID'] = self.agent.agent_id
-        packet.AgentData['SessionID'] = self.agent.session_id
-
-        packet.Data['ParcelID'] = parcel_id
+        packet = Message('ParcelInfoRequest', 
+                        Block('AgentData',
+                                AgentID = agent_id,
+                                SessionID = session_id),
+                        Block('Data',
+                                ParcelID = parcel_id))
 
         self.region.enqueue_message(packet)
 
@@ -441,7 +436,7 @@ class ParcelManager(DataManager):
         y = self.agent.Position.Y
 
         if refresh or self.get_parcel_id_by_location(x, y) == 0:
-            self.sendParcelPropertiesRequest(-50000, x, y, x, y, False)
+            self.sendParcelPropertiesRequest(self.agent.agent_id, self.agent.session_id, -50000, x, y, x, y, False)
             
     def request_all_parcel_properties(self, delay = 0.5, refresh = False):
         """ request the properties of all of the parcels on the current region. The delay parameter is a sleep between the send of each packet request; if refresh, current data will be discarded before requesting. If refresh is not True, data will not be re-requested for region locations already queried. """
@@ -465,7 +460,7 @@ class ParcelManager(DataManager):
                     # Target: center of 4m by 4m parcel
                     tx = x * 4 + 2
                     ty = y * 4 + 2
-                    self.sendParcelPropertiesRequest(-50000, tx, ty, tx, ty, False)
+                    self.sendParcelPropertiesRequest(self.agent.agent_id, self.agent.session_id, -50000, tx, ty, tx, ty, False)
 
                     api.sleep(delay)
 
@@ -684,21 +679,19 @@ class ParcelManager(DataManager):
         self.onParcelAccessListReply_received = self.message_handler.register('ParcelAccessListReply')
         self.onParcelAccessListReply_received.subscribe(self.onParcelAccessListReply, LocalID = LocalID)
 
-        self.sendParcelAccessListRequest(LocalID, Flags)
+        self.sendParcelAccessListRequest(self.agent.agent_id, self.agent.session_id, LocalID, Flags)
 
-    def sendParcelAccessListRequest(self, LocalID, Flags, SequenceID = -5150):
-        """ send a ParcelAccessListRequest packet """
+    def sendParcelAccessListRequest(self, agent_id, session_id, LocalID, Flags, SequenceID = -5150):
+        """ send a ParcelAccessListRequest packet to the host simulator """
 
-        packet = ParcelAccessListRequestPacket()
-
-        # build the agent data block
-        packet.AgentData['AgentID'] = self.agent.agent_id
-        packet.AgentData['SessionID'] = self.agent.session_id
-
-        # build the Data block. the region will populate the ParcelID
-        packet.Data['SequenceID'] = SequenceID
-        packet.Data['Flags'] = Flags
-        packet.Data['LocalID'] = LocalID
+        packet = Message('ParcelAccessListRequest', 
+                        Block('AgentData',
+                                AgentID = agent_id,
+                                SessionID = session_id),
+                        Block('Data',
+                                SequenceID = SequenceID,
+                                Flags = Flags,
+                                LocalID = LocalID))
 
         self.region.enqueue_message(packet)
 
@@ -737,20 +730,18 @@ class ParcelManager(DataManager):
         self.onParcelDwellReply_received = self.message_handler.register('ParcelDwellReply')
         self.onParcelDwellReply_received.subscribe(self.onParcelDwellReply, LocalID = LocalID)
 
-        self.sendParcelDwellRequest(LocalID)
+        self.sendParcelDwellRequest(self.agent.agent_id, self.agent.session_id, LocalID)
 
-    def sendParcelDwellRequest(self, LocalID):
+    def sendParcelDwellRequest(self, agent_id, session_id, LocalID):
         """ send a ParcelDwellRequest packet """
 
-        packet = ParcelDwellRequestPacket()
-
-        # build the agent data block
-        packet.AgentData['AgentID'] = self.agent.agent_id
-        packet.AgentData['SessionID'] = self.agent.session_id
-
-        # build the Data block. the region will populate the ParcelID
-        packet.Data['LocalID'] = LocalID
-        packet.Data['ParcelID'] = UUID()
+        packet = Message('ParcelDwellRequest', 
+                        Block('AgentData',
+                                AgentID = agent_id,
+                                SessionID = session_id),
+                        Block('Data',
+                                LocalID = LocalID,
+                                ParcelID = UUID()))
 
         self.region.enqueue_message(packet, True)
 
