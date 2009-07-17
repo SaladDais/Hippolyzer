@@ -1,18 +1,18 @@
 # standard python libs
-from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
+from logging import getLogger, ERROR, WARNING, INFO, DEBUG
 import re
 
 # related
 import uuid
 import struct
-from indra.base import llsd
 
 # pyogp
-from pyogp.lib.base.settings import Settings
-from pyogp.lib.base.message.packets import *
-from pyogp.lib.base.datatypes import *
-from pyogp.lib.base.exc import *
+from pyogp.lib.base.datatypes import UUID
+from pyogp.lib.base.exc import ResourceError, ResourceNotFound, DataParsingError
 from pyogp.lib.base.datamanager import DataManager
+
+# pyogp.message
+from pyogp.lib.base.message.message import Message, Block
 
 # pyogp utilities
 from pyogp.lib.base.utilities.enums import ImprovedIMDialogue
@@ -47,7 +47,8 @@ class InventoryManager(DataManager):
         self.inventory_root = None
         self.library_root = None
 
-        if self.settings.LOG_VERBOSE: log(INFO, "Initializing inventory storage")
+        if self.settings.LOG_VERBOSE:
+            log(INFO, "Initializing inventory storage")
 
     def enable_callbacks(self):
         """ enable monitors for certain inventory related packet events """
@@ -109,14 +110,35 @@ class InventoryManager(DataManager):
             _CreationDate = ItemData_block.get_variable('CreationDate').data
             _CRC = ItemData_block.get_variable('CRC').data
 
-            inventory_item = InventoryItem(_ItemID, _FolderID, _CreatorID, _OwnerID, _GroupID, _BaseMask, _OwnerMask, _GroupMask, _EveryoneMask, _NextOwnerMask, _GroupOwned, _AssetID, _Type, _InvType, _Flags, _SaleType, _SalePrice, _Name, _Description, _CreationDate, _CRC)
+            inventory_item = InventoryItem(_ItemID,
+                                            _FolderID,
+                                            _CreatorID,
+                                            _OwnerID,
+                                            _GroupID,
+                                            _BaseMask,
+                                            _OwnerMask,
+                                            _GroupMask,
+                                            _EveryoneMask,
+                                            _NextOwnerMask,
+                                            _GroupOwned,
+                                            _AssetID,
+                                            _Type,
+                                            _InvType,
+                                            _Flags,
+                                            _SaleType,
+                                            _SalePrice,
+                                            _Name,
+                                            _Description,
+                                            _CreationDate,
+                                            _CRC)
 
             self._store_inventory_item(inventory_item)
 
     def _parse_folders_from_login_response(self):
         """ the login response may contain inventory information, append data to our folders list """
 
-        if self.settings.LOG_VERBOSE: log(DEBUG, 'Parsing the login response for inventory folders')
+        if self.settings.LOG_VERBOSE:
+            log(DEBUG, 'Parsing the login response for inventory folders')
 
         if self.agent.login_response.has_key('inventory-skeleton'):
             [self._store_inventory_folder(folder, 'inventory') for folder in self.agent.login_response['inventory-skeleton']]
@@ -149,7 +171,8 @@ class InventoryManager(DataManager):
         # did not find a folder for this item
         # this is probably a case we are not handling correctly
         if len(index) == 0:
-            if self.settings.LOG_VERBOSE: log(DEBUG, 'Did not find parent folder %s for Inventory Item %s: %s' % (inventory_item.ItemID, inventory_item.FolderID, inventory_item.Name))
+            if self.settings.LOG_VERBOSE:
+                log(DEBUG, 'Did not find parent folder %s for Inventory Item %s: %s' % (inventory_item.ItemID, inventory_item.FolderID, inventory_item.Name))
             return
 
         try:
@@ -158,13 +181,15 @@ class InventoryManager(DataManager):
 
             container[index[0]].inventory[inventory_index[0]] = inventory_item
 
-            if self.settings.LOG_VERBOSE: log(DEBUG, 'Replacing a stored inventory item: %s for agent \'%s\'' % (inventory_item.ItemID, self.agent.agent_id))
+            if self.settings.LOG_VERBOSE:
+                log(DEBUG, 'Replacing a stored inventory item: %s for agent \'%s\'' % (inventory_item.ItemID, self.agent.agent_id))
 
         except:
 
             container[index[0]].inventory.append(inventory_item)
 
-            if self.settings.LOG_VERBOSE: log(DEBUG, 'Storing a new inventory item: %s in agent \'%s\'' % (inventory_item.ItemID, self.agent.agent_id))
+            if self.settings.LOG_VERBOSE:
+                log(DEBUG, 'Storing a new inventory item: %s in agent \'%s\'' % (inventory_item.ItemID, self.agent.agent_id))
 
     def search_inventory(self, folder_list = [], item_id = None, name = None, match_list = []):
         """ search through all inventory folders for an id(uuid) or Name, and
@@ -238,7 +263,7 @@ class InventoryManager(DataManager):
                         match_list.append(item)
 
                 elif isinstance(item, InventoryFolder):
-                    if item.FolderID== _id:
+                    if item.FolderID == _id:
                         match_list.append(item)
 
             elif name != None:
@@ -353,22 +378,24 @@ class InventoryManager(DataManager):
 
         if id_list != None:
 
-            packet = FetchInventoryPacket()
+            self.send_FetchInventory(self.agent.agent_id, self.agent.session_id, self.agent.agent_id, id_list)
 
-            # AgentData block
-            packet.AgentData['AgentID'] = self.agent.agent_id    # MVT_LLUUID
-            packet.AgentData['SessionID'] = self.agent.session_id    # MVT_LLUUID
+    def send_FetchInventory(self, agent_id, session_id, owner_id, inventory_ids):
+        """
+        send a FetchInventory message to the host simulator 
+        each of the ids in inventory_ids will be sent in it's own InventoryData block
+        """
 
-            for inventory_id in id_list:
+        packet = Message('FetchInventory',
+                        Block('AgentData',
+                                AgentID = agent_id,
+                                SessionID = session_id),
+                        *[Block('InventoryData',
+                                OwnerID = owner_id,
+                                ItemID = item_id) for item_id in inventory_ids])
 
-                InventoryData = {}
-                InventoryData['OwnerID'] = self.agent.agent_id    # MVT_LLUUID
-                InventoryData['ItemID'] = inventory_id    # MVT_LLUUID
-
-                packet.InventoryDataBlocks.append(InventoryData)
-
-            # enqueue the message
-            self.region.enqueue_message(packet())                
+        # enqueue the message
+        self.region.enqueue_message(packet)
 
     def give_inventory(self, ItemID = None, agent_id = None):
         """ offers another agent the specified inventory item 
@@ -400,7 +427,7 @@ class InventoryManager(DataManager):
         FromAgentName = packet.blocks['MessageBlock'][0].get_variable('FromAgentName').data
         InventoryName = packet.blocks['MessageBlock'][0].get_variable('Message').data
         ID = packet.blocks['MessageBlock'][0].get_variable('ID').data
-        Message = packet.blocks['MessageBlock'][0].get_variable('Message').data
+        _Message = packet.blocks['MessageBlock'][0].get_variable('Message').data
         ToAgentID = packet.blocks['MessageBlock'][0].get_variable('ToAgentID').data
 
         BinaryBucket = packet.blocks['MessageBlock'][0].get_variable('BinaryBucket').data
@@ -417,7 +444,8 @@ class InventoryManager(DataManager):
 
             log(INFO, "%s received an inventory offer from %s for %s." % (self.agent.Name(), FromAgentName, InventoryName))
 
-            if self.settings.LOG_VERBOSE: log(DEBUG, "Inventory offer data. \n\tFromAgentID: %s \n\tFromAgentName: %s \n\tInventoryName: %s \n\tID: %s \n\tAssetType: %s \n\tItemID: %s \n\tMessage: %s" % (FromAgentID, FromAgentName, InventoryName, ID, AssetType, ItemID, Message))
+            if self.settings.LOG_VERBOSE:
+                log(DEBUG, "Inventory offer data. \n\tFromAgentID: %s \n\tFromAgentName: %s \n\tInventoryName: %s \n\tID: %s \n\tAssetType: %s \n\tItemID: %s \n\tMessage: %s" % (FromAgentID, FromAgentName, InventoryName, ID, AssetType, ItemID, Message))
 
         if self.agent.settings.ACCEPT_INVENTORY_OFFERS:
 
@@ -484,7 +512,7 @@ class AIS(InventoryManager):
 
         post_body = {'items': [{'item_id': str(item_id)} for item_id in item_ids]}
 
-        custom_headers={'Accept' : 'application/llsd+xml'}
+        custom_headers = {'Accept' : 'application/llsd+xml'}
 
         try:
             result = cap.POST(post_body, custom_headers)
@@ -513,7 +541,7 @@ class AIS(InventoryManager):
 
         post_body = {'items': [{'item_id': str(item_id)} for item_id in item_ids]}
 
-        custom_headers={'Accept' : 'application/llsd+xml'}
+        custom_headers = {'Accept' : 'application/llsd+xml'}
 
         try:
             result = cap.POST(post_body, custom_headers)
@@ -535,7 +563,7 @@ class AIS(InventoryManager):
 
         post_body = {'folders': [{'folder_id': str(folder_id), 'owner_id': str(self.agent.agent_id)}]}
 
-        custom_headers={'Accept' : 'application/llsd+xml'}
+        custom_headers = {'Accept' : 'application/llsd+xml'}
 
         try:
             response = cap.POST(post_body, custom_headers)
@@ -581,7 +609,7 @@ class AIS(InventoryManager):
 
         post_body = {'folders': [{'folder_id': str(folder_id), 'owner_id': self.settings.ALEXANDRIA_LINDEN}]}
 
-        custom_headers={'Accept' : 'application/llsd+xml'}
+        custom_headers = {'Accept' : 'application/llsd+xml'}
 
         try:
             response = cap.POST(post_body, custom_headers)
@@ -631,26 +659,23 @@ class UDP_Inventory(InventoryManager):
     def sendFetchInventoryDescendentsRequest(self, folder_id = None):
         """ send a request to the grid for folder contents """
 
-        # the name case is not handled at this time
-        packet = FetchInventoryDescendentsPacket()
+        packet = Message('FetchInventoryDescendents',
+                        Block('AgentData',
+                                AgentID = self.agent.agent_id,          # MVT_LLUUID
+                                SessionID = self.agent.session_id),     # MVT_LLUUID
+                        Block('InventoryData',
+                                FolderID = UUID(str(folder_id)),        # MVT_LLUUID
+                                OwnerID = self.agent.agent_id,          # MVT_LLUUID
+                                SortOrder = 0,                          # MVT_S32, 0 = name, 1 = time
+                                FetchFolders = True,                    # MVT_BOOL
+                                FetchItems = True))                     # MVT_BOOL
 
-        # AgentData block
-        packet.AgentData['AgentID'] = self.agent.agent_id    # MVT_LLUUID
-        packet.AgentData['SessionID'] = self.agent.session_id    # MVT_LLUUID
-
-        # InventoryData block
-        packet.InventoryData['FolderID'] = UUID(str(folder_id))    # MVT_LLUUID
-        packet.InventoryData['OwnerID'] = self.agent.agent_id    # MVT_LLUUID
-        packet.InventoryData['SortOrder'] = 0    # MVT_S32, 0 = name, 1 = time
-        packet.InventoryData['FetchFolders'] = True    # MVT_BOOL
-        packet.InventoryData['FetchItems'] = True    # MVT_BOOL
-
-        self.agent.region.enqueue_message(packet())
+        self.agent.region.enqueue_message(packet)
 
     def sendFetchLibDescendentsRequest(self, folder_id = None):
         """ send a request to the grid for library items """
 
-        raise NotImplemented("sendFetchInventoryRequest")
+        raise NotImplemented("sendFetchLibDescendentsRequest")
 
     def onFetchInventoryReply(self, packet):
 
@@ -767,47 +792,64 @@ class InventoryFolder(object):
     def purge_descendents(self, agent):
         """ removes inventory from this folder, by unlinking the inventory from this parent folder """
 
-        packet = PurgeInventoryDescendentsPacket()
+        self.send_PurgeInventoryDescendents(agent.agent_id, agent.session_id, self.FolderID)
 
-        packet.AgentData['AgentID'] = agent.agent_id
-        packet.AgentData['SessionID'] = agent.session_id
+    def send_PurgeInventoryDescendents(self, agent, agent_id, session_id, folder_id):
+        """ send a PurgeInventoryDescendents message to the host simulator """
 
-        packet.InventoryData['FolderID'] = self.FolderID
+        packet = Message('PurgeInventoryDescendents',
+                        Block('AgentData',
+                                AgentID = agent_id,
+                                SessionID = session_id),
+                        Block('InventoryData',
+                                FolderID = folder_id))
 
         agent.region.enqueue_message(packet)
 
     def move(self, agent, parent_id, restamp = False):
         """ reparents this inventory folder """
 
-        packet = MoveInventoryFolderPacket()
+        self.send_MoveInventoryFolder(agent, agent.agent_id, agent.session_id, restamp, self.FolderID, UUID(str(parent_id)))
 
-        packet.AgentData['AgentID'] = agent.agent_id
-        packet.AgentData['SessionID'] = agent.session_id
-        packet.AgentData['Stamp'] = restamp
+    def send_MoveInventoryFolder(self, agent, agent_id, session_id, restamp, folder_id, parent_id):
+        """ sends a MoveInventoryFolder message to the host simulator """
 
-        # this packet allows for variable instances of the InventoryData block
-        # populate a dict and append to the list
-        packet.InventoryData['FolderID'] = self.FolderID
-        packet.InventoryData['ParentID'] = UUID(str(parent_id))
+        # ToDo: the InventoryData block may the variable, if moved to a more
+        # generic location (not nested under Inventory folder),
+        # make it such that multiple blocks can be sent
+        # use *[Block('InventoryData',FolderID = folder_id) for folder_id in folder_ids]
 
-        packet.InventoryDataBlocks.append(packet.InventoryData)
+        packet = Message('MoveInventoryFolder',
+                        Block('AgentData',
+                            AgentID = agent_id,
+                            SessionID = session_id,
+                            Stamp = restamp),
+                        Block('InventoryData',
+                            FolderID = folder_id,
+                            ParentID = parent_id))
 
         agent.region.enqueue_message(packet)
 
     def remove(self, agent):
         """ removes this inventory folder """
 
-        packet = RemoveInventoryFolderPacket()
+        self.send_RemoveInventoryFolder(agent, agent.agent_id, agent.session_id, False, self.FolderID)
 
-        packet.AgentData['AgentID'] = agent.agent_id
-        packet.AgentData['SessionID'] = agent.session_id
-        packet.AgentData['Stamp'] = restamp
+    def send_RemoveInventoryFolder(self, agent, agent_id, session_id, restamp, folder_id):
+        """ sends a RemoveInventoryFolder message to the host simulator """
 
-        # this packet allows for variable instances of the InventoryData block
-        # populate a dict and append to the list
-        packet.InventoryData['FolderID'] = self.FolderID
+        # ToDo: the InventoryData block may the variable, if moved to a more
+        # generic location (not nested under Inventory folder),
+        # make it such that multiple blocks can be sent
+        # use *[Block('InventoryData',FolderID = folder_id) for folder_id in folder_ids]
 
-        packet.InventoryDataBlocks.append(packet.InventoryData)
+        packet = Message('RemoveInventoryFolder',
+                        Block('AgentData',
+                                AgentID = agent_id,
+                                SessionID = session_id,
+                                Stamp = restamp),
+                        Block('InventoryData',
+                                FolderID = folder_id))
 
         agent.region.enqueue_message(packet)
 
@@ -860,7 +902,7 @@ class InventoryItem(object):
 
         sendRezObject(agent, self, location_to_rez, location_to_rez)
 
-    def update(agent, name = None, value = None):
+    def update(self, agent, name = None, value = None):
         """ allow arbitraty update to any data in the inventory item 
         
         accepts a dictionary of key:value pairs which will update the stored inventory items
@@ -903,87 +945,85 @@ class InventoryItem(object):
 def sendUpdateInventoryItem(agent, inventory_items = [], ):
     """ sends an UpdateInventoryItem packet to a region 
 
-    this function expects an already transformed InventoryItem instance
+    this function expects an InventoryItem instance already with updated data
     """
 
-    packet - UpdateInventoryItemPacket()
+    packet = Message('UpdateInventoryItem',
+                    Block('AgentData',
+                            AgentID = agent.agent_id,
+                            SessionID = agent.session_id,
+                            TransactionID = UUID()),
+                    *[Block('InventoryData',
+                            ItemID = item.ItemID,
+                            FolderID = item.FolderID,
+                            CallbackID = UUID(),
+                            CreatorID = item.CreatorID,
+                            OwnerID = item.OwnerID,
+                            GroupID = item.GroupID,
+                            BaseMask = item.BaseMask,
+                            OwnerMask = item.OwnerMask,
+                            GroupMask = item.GroupMask,
+                            EveryoneMask = item.EveryoneMask,
+                            NextOwnerMask = item.NextOwnerMask,
+                            GroupOwned = item.GroupOwned,
+                            TransactionID = UUID(),
+                            Type = item.Type,
+                            InvType = item.InvType,
+                            Flags = item.Flags,
+                            SaleType = item.SaleType,
+                            SalePrice = item.SalePrice,
+                            Name = item.Name,
+                            Description = item.Description,
+                            CreationDate = item.CreationDate,
+                            CRC = item.CRC) for item in inventory_items])
 
-    packet.AgentData["AgentID"] = agent.agent_id
-    packet.AgentData["SessionID"] = agent.session_id
-    packet.AgentData["TransactionID"] = UUID()
-
-    for item in inventory_items:
-
-        packet.InventoryData['ItemID'] = item.ItemID
-        packet.InventoryData['FolderID'] = item.FolderID
-        packet.InventoryData['CallbackID'] = UUID()
-        packet.InventoryData['CreatorID'] = item.CreatorID
-        packet.InventoryData['OwnerID'] = item.OwnerID
-        packet.InventoryData['GroupID'] = item.GroupID
-        packet.InventoryData['BaseMask'] = item.BaseMask
-        packet.InventoryData['OwnerMask'] = item.OwnerMask
-        packet.InventoryData['GroupMask'] = item.GroupMask
-        packet.InventoryData['EveryoneMask'] = item.EveryoneMask
-        packet.InventoryData['NextOwnerMask'] = item.NextOwnerMask
-        packet.InventoryData['GroupOwned'] = item.GroupOwned
-        packet.InventoryData['TransactionID'] = UUID()
-        packet.InventoryData['Type'] = item.Type 
-        packet.InventoryData['InvType'] = item.InvType
-        packet.InventoryData['Flags'] = item.Flags
-        packet.InventoryData['SaleType'] = item.SaleType
-        packet.InventoryData['SalePrice'] = item.SalePrice
-        packet.InventoryData['Name'] = item.Name
-        packet.InventoryData['Description'] = item.Description
-        packet.InventoryData['CreationDate'] = item.CreationDate
-        packet.InventoryData['CRC'] = item.CRC
-
-    agent.region.enqueue_message(packet())
+    agent.region.enqueue_message(packet)
 
 def sendRezObject(agent, inventory_item, RayStart, RayEnd, FromTaskID = UUID(), BypassRaycast = 1,  RayTargetID = UUID(), RayEndIsIntersection = False, RezSelected = False, RemoveItem = False, ItemFlags = 0, GroupMask = 0, EveryoneMask = 0, NextOwnerMask = 0):
     """ sends a RezObject packet to a region """
 
-    packet = RezObjectPacket()
+    packet = Message('RezObject',
+                    Block('AgentData',
+                            AgentID = agent.agent_id,
+                            SessionID = agent.session_id,
+                            GroupID = agent.ActiveGroupID),
+                    Block('RezData',
+                            FromTaskID = UUID(str(FromTaskID)),
+                            BypassRaycast = BypassRaycast,
+                            RayStart = RayStart,
+                            RayEnd = RayEnd,
+                            RayTargetID = UUID(str(RayTargetID)),
+                            RayEndIsIntersection = RayEndIsIntersection,
+                            RezSelected = RezSelected,
+                            RemoveItem = RemoveItem,
+                            ItemFlags = ItemFlags,
+                            GroupMask = GroupMask,
+                            EveryoneMask = EveryoneMask,
+                            NextOwnerMask = NextOwnerMask),
+                    Block('InventoryData',
+                            ItemID = inventory_item.ItemID,
+                            FolderID = inventory_item.FolderID,
+                            CreatorID = inventory_item.CreatorID,
+                            OwnerID = inventory_item.OwnerID,
+                            GroupID = inventory_item.GroupID,
+                            BaseMask = inventory_item.BaseMask,
+                            OwnerMask = inventory_item.OwnerMask,
+                            GroupMask = inventory_item.GroupMask,
+                            EveryoneMask = inventory_item.EveryoneMask,
+                            GroupOwned = inventory_item.GroupOwned,
+                            TransactionID = UUID(),
+                            Type = inventory_item.Type,
+                            InvType = inventory_item.InvType,
+                            Flags = inventory_item.Flags,
+                            SaleType = inventory_item.SaleType,
+                            SalePrice = inventory_item.SalePrice,
+                            Name = inventory_item.Name,
+                            Description = inventory_item.Description,
+                            CreationDate = inventory_item.CreationDate,
+                            CRC = inventory_item.CRC,
+                            NextOwnerMask = inventory_item.NextOwnerMask))
 
-    packet.AgentData['AgentID'] = agent.agent_id
-    packet.AgentData['SessionID'] = agent.session_id
-    packet.AgentData['GroupID'] = agent.ActiveGroupID
-
-    packet.RezData['FromTaskID'] = UUID(str(FromTaskID))
-    packet.RezData['BypassRaycast'] = BypassRaycast     # ???
-    packet.RezData['RayStart'] = RayStart
-    packet.RezData['RayEnd'] = RayEnd
-    packet.RezData['RayTargetID'] = UUID(str(RayTargetID))
-    packet.RezData['RayEndIsIntersection'] = RayEndIsIntersection
-    packet.RezData['RezSelected'] = RezSelected
-    packet.RezData['RemoveItem'] = RemoveItem
-    packet.RezData['ItemFlags'] = ItemFlags
-    packet.RezData['GroupMask'] = GroupMask
-    packet.RezData['EveryoneMask'] = EveryoneMask
-    packet.RezData['NextOwnerMask'] = inventory_item.NextOwnerMask
-
-    packet.InventoryData['ItemID'] = inventory_item.ItemID
-    packet.InventoryData['FolderID'] = inventory_item.FolderID
-    packet.InventoryData['CreatorID'] = inventory_item.CreatorID
-    packet.InventoryData['OwnerID'] = inventory_item.OwnerID
-    packet.InventoryData['GroupID'] = inventory_item.GroupID
-    packet.InventoryData['BaseMask'] = inventory_item.BaseMask
-    packet.InventoryData['OwnerMask'] = inventory_item.OwnerMask
-    packet.InventoryData['GroupMask'] = inventory_item.GroupMask
-    packet.InventoryData['EveryoneMask'] = inventory_item.EveryoneMask
-    packet.InventoryData['GroupOwned'] = inventory_item.GroupOwned
-    packet.InventoryData['TransactionID'] = UUID()
-    packet.InventoryData['Type'] = inventory_item.Type 
-    packet.InventoryData['InvType'] = inventory_item.InvType
-    packet.InventoryData['Flags'] = inventory_item.Flags
-    packet.InventoryData['SaleType'] = inventory_item.SaleType
-    packet.InventoryData['SalePrice'] = inventory_item.SalePrice
-    packet.InventoryData['Name'] = inventory_item.Name
-    packet.InventoryData['Description'] = inventory_item.Description
-    packet.InventoryData['CreationDate'] = inventory_item.CreationDate
-    packet.InventoryData['CRC'] = inventory_item.CRC
-    packet.InventoryData['NextOwnerMask'] = inventory_item.NextOwnerMask
-
-    agent.region.enqueue_message(packet())
+    agent.region.enqueue_message(packet)
 
 """
 Contributors can be viewed at:
