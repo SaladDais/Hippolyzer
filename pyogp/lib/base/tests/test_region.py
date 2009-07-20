@@ -4,8 +4,7 @@ import unittest
 # pyogp
 from pyogp.lib.base.exc import *
 from pyogp.lib.base.region import Region
-from pyogp.lib.base.message.packets import AgentDataUpdateRequestPacket, SetStartLocationPacket
-
+from pyogp.lib.base.message.message import Message, Block
 
 # pyogp tests
 import pyogp.lib.base.tests.config 
@@ -33,8 +32,8 @@ class TestRegion(unittest.TestCase):
 
     def test_enqueue_message(self):
 
-        fake_packet = AgentDataUpdateRequestPacket()
-        fake_packet2 = AgentDataUpdateRequestPacket()
+        fake_packet = Message('AgentDataUpdateRequest')
+        fake_packet2 = Message('AgentDataUpdateRequest')
 
         self.region.enqueue_message(fake_packet)
         self.region.enqueue_message(fake_packet2)
@@ -48,10 +47,10 @@ class TestRegion(unittest.TestCase):
 
     def test_enqueue_urgent_message(self):
 
-        fake_packet = AgentDataUpdateRequestPacket()
-        fake_packet2 = AgentDataUpdateRequestPacket()
+        fake_packet = Message('AgentDataUpdateRequest')
+        fake_packet2 = Message('AgentDataUpdateRequest')
 
-        fake_urgent_packet = SetStartLocationPacket()
+        fake_urgent_packet = Message('SetStartLocation')
 
         self.region.enqueue_message(fake_packet)
         self.region.enqueue_message(fake_packet2)
