@@ -1070,7 +1070,7 @@ class Agent(object):
 
         log(INFO, 'sending AgentUpdate')
 
-        self.region.sendAgentUpdate(
+        self.region.sendAgentUpdate(self.agent_id, self.session_id,
             State=self.state,
             ControlFlags=self.control_flags,
             Flags=self.agent_update_flags,

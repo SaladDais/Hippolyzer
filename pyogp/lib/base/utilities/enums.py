@@ -68,7 +68,7 @@ class InventoryType(object):
     Count = 21
     NONE = -1
 
-class PCode(object):
+class PCodeEnum(object):
     """ classifying the PCode of objects """
 
     Primitive = 9          # 0x09

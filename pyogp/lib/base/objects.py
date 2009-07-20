@@ -1,8 +1,7 @@
 # standard python libs
-from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
+from logging import getLogger, ERROR, WARNING, INFO, DEBUG
 import uuid
 import re
-from binascii import hexlify
 import struct
 import math
 
@@ -11,16 +10,17 @@ import math
 # pyogp
 from pyogp.lib.base import *
 from pyogp.lib.base.datamanager import DataManager
-from pyogp.lib.base.permissions import *
+from pyogp.lib.base.permissions import PermissionsTarget, PermissionsMask
+from pyogp.lib.base.datatypes import UUID, Vector3, Quaternion
 
 # pyogp message
 from pyogp.lib.base.message.message_handler import MessageHandler
-from pyogp.lib.base.message.packets import *
-from pyogp.lib.base.datatypes import *
+from pyogp.lib.base.message.message import Message, Block
+
 
 # pyogp utilities
 from pyogp.lib.base.utilities.helpers import Helpers
-from pyogp.lib.base.utilities.enums import *
+from pyogp.lib.base.utilities.enums import PCodeEnum, CompressedUpdateFlags
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.objects')
@@ -69,13 +69,13 @@ class ObjectManager(DataManager):
             onObjectUpdateCached_received = self.message_handler.register('ObjectUpdateCached')
             onObjectUpdateCached_received.subscribe(self.onObjectUpdateCached)
 
-            onObjectUpdateCompressed_received= self.message_handler.register('ObjectUpdateCompressed')
+            onObjectUpdateCompressed_received = self.message_handler.register('ObjectUpdateCompressed')
             onObjectUpdateCompressed_received.subscribe(self.onObjectUpdateCompressed)
 
             onObjectProperties_received = self.message_handler.register('ObjectProperties')
             onObjectProperties_received.subscribe(self.onObjectProperties)
 
-            onKillObject_received= self.message_handler.register('KillObject')
+            onKillObject_received = self.message_handler.register('KillObject')
             onKillObject_received.subscribe(self.onKillObject)
 
             # uncomment these to view packets sent back to simulator
@@ -95,20 +95,22 @@ class ObjectManager(DataManager):
         """ append to or replace an object in self.objects """
 
         # this is an avatar
-        if _object.PCode == PCode.Avatar:
+        if _object.PCode == PCodeEnum.Avatar:
 
             self.store_avatar(_object)
 
         # this is a Primitive
-        elif _object.PCode == PCode.Primitive:
+        elif _object.PCode == PCodeEnum.Primitive:
 
             self.store_object(_object)
 
         else:
 
-            if self.settings.LOG_VERBOSE: log(DEBUG, "Not processing object update of type %s" % (PCode(PCode)))
+            if self.settings.LOG_VERBOSE:
+                log(DEBUG, "Not processing object update of type %s" % (PCodeEnum(_object.PCode)))
 
     def store_object(self, _object):
+        """ store a representation of an object that has been transformed from data off the wire """
 
         # replace an existing list member, else, append
 
@@ -127,6 +129,10 @@ class ObjectManager(DataManager):
             #if self.settings.LOG_VERBOSE: log(DEBUG, 'Stored a new object: %s in region \'%s\'' % (_object.LocalID, self.region.SimName))
 
     def store_avatar(self, _objectdata):
+        """ store a representation of an avatar (Object() instance) that has been transformed from data off the wire  """
+
+        #ToDo: should there be a separate Avatar() class?
+
         # if the object data pertains to us, update our data!
         if str(_objectdata.FullID) == str(self.agent.agent_id):
 
@@ -220,16 +226,19 @@ class ObjectManager(DataManager):
 
         for item in self.object_store:
 
-            if item.Position == None: continue
+            if item.Position == None:
+                continue
 
-            if math.sqrt(math.pow((item.Position.X - self.agent.Position.X),2) +  math.pow((item.Position.Y - self.agent.Position.Y),2) + math.pow((item.Position.Z - self.agent.Position.Z),2)) <= radius:
+            if math.sqrt(math.pow((item.Position.X - self.agent.Position.X), 2) +  math.pow((item.Position.Y - self.agent.Position.Y), 2) + math.pow((item.Position.Z - self.agent.Position.Z), 2)) <= radius:
                 objects_nearby.append(item)
 
         return objects_nearby
 
     def remove_object_from_store(self, ID = None):
+        """ handles removing a stored object representation """
 
         victim = self.get_object_from_store(LocalID = ID)
+
         if victim == None:
             victim = self.get_avatar_from_store(LocalID = ID)
 
@@ -238,26 +247,29 @@ class ObjectManager(DataManager):
             return
 
         # this is an avatar
-        if victim.PCode == PCode.Avatar:
+        if victim.PCode == PCodeEnum.Avatar:
 
             self.kill_stored_avatar(ID)
 
         # this is a Primitive
-        elif victim.PCode == PCode.Primitive:
+        elif victim.PCode == PCodeEnum.Primitive:
 
             self.kill_stored_object(ID)
 
         else:
 
-            if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Not processing kill of unstored object type %s" % (PCode(PCode)))
+            if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING:
+                log(DEBUG, "Not processing kill of unstored object type %s" % (PCodeEnum(victim.PCode)))
 
     def kill_stored_avatar(self, ID):
+        """ removes a stored avatar (Object() instance) from our list """
 
         index = [self.avatar_store.index(_avatar_) for _avatar_ in self.avatar_store if _avatar_.LocalID == ID]
 
         if index != []:
             del self.avatar_store[index[0]]
-            if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Kill on object data for avatar tracked as local id %s" % (ID))
+            if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING:
+                log(DEBUG, "Kill on object data for avatar tracked as local id %s" % (ID))
 
     def kill_stored_object(self, ID):
 
@@ -265,7 +277,8 @@ class ObjectManager(DataManager):
 
         if index != []:
             del self.object_store[index[0]]
-            if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Kill on object data for object tracked as local id %s" % (ID))
+            if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING:
+                log(DEBUG, "Kill on object data for object tracked as local id %s" % (ID))
 
     def update_multiple_objects_properties(self, object_list):
         """ update the attributes of objects """
@@ -287,7 +300,7 @@ class ObjectManager(DataManager):
 
         if object_properties.has_key('PCode'):
             # this is an avatar
-            if object_properties['PCode'] == PCode.Avatar:
+            if object_properties['PCode'] == PCodeEnum.Avatar:
 
                 #if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Creating a new avatar and storing their attributes. LocalID = %s" % (object_properties['LocalID']))
 
@@ -302,51 +315,38 @@ class ObjectManager(DataManager):
 
         else:
 
-                self.update_prim_properties(object_properties)
+            self.update_prim_properties(object_properties)
 
     def update_prim_properties(self, prim_properties):
+        """ handles an object update and updates or adds to internal representation """
 
-            _object = self.get_object_from_store(FullID = prim_properties['FullID'])
+        _object = self.get_object_from_store(FullID = prim_properties['FullID'])
 
-            if _object == None:
-                #if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Creating a new object and storing it's attributes. LocalID = %s" % (object_properties['LocalID']))
-                _object = Object()
-                _object._update_properties(prim_properties)
-                self.store_object(_object)
-            else:
-                #if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Updating an object's attributes. LocalID = %s" % (object_properties['LocalID']))
-                _object._update_properties(prim_properties)
+        if _object == None:
+            #if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Creating a new object and storing it's attributes. LocalID = %s" % (object_properties['LocalID']))
+            _object = Object()
+            _object._update_properties(prim_properties)
+            self.store_object(_object)
+        else:
+            #if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Updating an object's attributes. LocalID = %s" % (object_properties['LocalID']))
+            _object._update_properties(prim_properties)
 
-    def request_object_update(self, ID = None, ID_list = None):
+    def request_object_update(self, AgentID, SessionID, ID_CacheMissType_list = None):
         """ requests object updates from the simulator
 
-        accepts a tuple of (ID, CacheMissType), or a list of such tuples
+        accepts a list of (ID, CacheMissType)
         """
 
-        packet = RequestMultipleObjectsPacket()
-        packet.AgentData['AgentID'] = self.agent.agent_id
-        packet.AgentData['SessionID'] = self.agent.session_id
-
-        if ID != None:
-
-            ObjectData = {}
-            ObjectData['CacheMissType'] = ID[1]
-            ObjectData['ID'] = ID[0]
-
-            packet.ObjectDataBlocks.append(ObjectData)
-
-        else:
-
-            for ID in ID_list:
-
-                ObjectData = {}
-                ObjectData['CacheMissType'] = ID[1]
-                ObjectData['ID'] = ID[0]
-
-                packet.ObjectDataBlocks.append(ObjectData)
+        packet = Message('RequestMultipleObjects',
+                        Block('AgentData',
+                                AgentID = AgentID,
+                                SessionID = SessionID),
+                        *[Block('ObjectData',
+                                CacheMissType = ID_CacheMissType[1],
+                                ID = ID_CacheMissType[0]) for ID_CacheMissType in ID_CacheMissType_list])
 
         # enqueue the message, send as reliable
-        self.region.enqueue_message(packet(), True)
+        self.region.enqueue_message(packet, True)
 
     def create_default_box(self, GroupID = UUID(), relative_position = (1, 0, 0)):
         """ creates the default box, defaulting as 1m to the east, with an option GroupID to set the prim to"""
@@ -361,9 +361,9 @@ class ObjectManager(DataManager):
         # not sure what RayTargetID is, send as uuid of zeros
         RayTargetID = UUID()
 
-        self.object_add(GroupID = GroupID, PCode = PCode.Primitive, Material = 3, AddFlags = 2, PathCurve = 16, ProfileCurve = 1, PathBegin = 0, PathEnd = 0, PathScaleX = 100, PathScaleY = 100, PathShearX = 0, PathShearY = 0, PathTwist = 0, PathTwistBegin = 0, PathRadiusOffset = 0, PathTaperX = 0, PathTaperY = 0, PathRevolutions = 0, PathSkew = 0, ProfileBegin = 0, ProfileEnd = 0, ProfileHollow = 0, BypassRaycast = 1, RayStart = location_to_rez, RayEnd = location_to_rez, RayTargetID = RayTargetID, RayEndIsIntersection = 0, Scale = (0.5, 0.5, 0.5), Rotation = (0, 0, 0, 1), State = 0)
+        self.object_add(self.agent.agent_id, self.agent.session_id, GroupID = GroupID, PCode = PCodeEnum.Primitive, Material = 3, AddFlags = 2, PathCurve = 16, ProfileCurve = 1, PathBegin = 0, PathEnd = 0, PathScaleX = 100, PathScaleY = 100, PathShearX = 0, PathShearY = 0, PathTwist = 0, PathTwistBegin = 0, PathRadiusOffset = 0, PathTaperX = 0, PathTaperY = 0, PathRevolutions = 0, PathSkew = 0, ProfileBegin = 0, ProfileEnd = 0, ProfileHollow = 0, BypassRaycast = 1, RayStart = location_to_rez, RayEnd = location_to_rez, RayTargetID = RayTargetID, RayEndIsIntersection = 0, Scale = (0.5, 0.5, 0.5), Rotation = (0, 0, 0, 1), State = 0)
 
-    def object_add(self, PCode, Material, AddFlags, PathCurve, ProfileCurve, PathBegin, PathEnd, PathScaleX, PathScaleY, PathShearX, PathShearY, PathTwist, PathTwistBegin, PathRadiusOffset, PathTaperX, PathTaperY, PathRevolutions, PathSkew, ProfileBegin, ProfileEnd, ProfileHollow, BypassRaycast, RayStart, RayEnd, RayTargetID, RayEndIsIntersection, Scale, Rotation, State, GroupID = UUID()):
+    def object_add(self, AgentID, SessionID, PCode, Material, AddFlags, PathCurve, ProfileCurve, PathBegin, PathEnd, PathScaleX, PathScaleY, PathShearX, PathShearY, PathTwist, PathTwistBegin, PathRadiusOffset, PathTaperX, PathTaperY, PathRevolutions, PathSkew, ProfileBegin, ProfileEnd, ProfileHollow, BypassRaycast, RayStart, RayEnd, RayTargetID, RayEndIsIntersection, Scale, Rotation, State, GroupID = UUID()):
         '''
         ObjectAdd - create new object in the world
         Simulator will assign ID and send message back to signal
@@ -376,45 +376,43 @@ class ObjectManager(DataManager):
         GroupID defaults to (No group active)
         '''
 
-        packet = ObjectAddPacket()
+        packet = Message('ObjectAdd',
+                        Block('AgentData',
+                            AgentID = AgentID,
+                            SessionID = SessionID,
+                            GroupID = GroupID),
+                        Block('ObjectData',
+                            PCode = PCode,
+                            Material = Material,
+                            AddFlags = AddFlags,
+                            PathCurve = PathCurve,
+                            ProfileCurve = ProfileCurve,
+                            PathBegin = PathBegin,
+                            PathEnd = PathEnd,
+                            PathScaleX = PathScaleX,
+                            PathScaleY = PathScaleY,
+                            PathShearX = PathShearX,
+                            PathShearY = PathShearY,
+                            PathTwist = PathTwist,
+                            PathTwistBegin = PathTwistBegin,
+                            PathRadiusOffset = PathRadiusOffset,
+                            PathTaperX = PathTaperX,
+                            PathTaperY = PathTaperY,
+                            PathRevolutions = PathRevolutions,
+                            PathSkew = PathSkew,
+                            ProfileBegin = ProfileBegin,
+                            ProfileEnd = ProfileEnd,
+                            ProfileHollow = ProfileHollow,
+                            BypassRaycast = BypassRaycast,
+                            RayStart = RayStart,
+                            RayEnd = RayEnd,
+                            RayTargetID = RayTargetID,
+                            RayEndIsIntersection = RayEndIsIntersection,
+                            Scale = Scale,
+                            Rotation = Rotation,
+                            State = State))
 
-        # build the AgentData block
-        packet.AgentData['AgentID'] = self.agent.agent_id
-        packet.AgentData['SessionID'] = self.agent.session_id
-        packet.AgentData['GroupID'] = GroupID
-
-        # build the ObjectData block (it's a Single)
-        packet.ObjectData['PCode'] = PCode
-        packet.ObjectData['Material'] = Material
-        packet.ObjectData['AddFlags'] = AddFlags
-        packet.ObjectData['PathCurve'] = PathCurve
-        packet.ObjectData['ProfileCurve'] = ProfileCurve
-        packet.ObjectData['PathBegin'] = PathBegin
-        packet.ObjectData['PathEnd'] = PathEnd
-        packet.ObjectData['PathScaleX'] = PathScaleX
-        packet.ObjectData['PathScaleY'] = PathScaleY
-        packet.ObjectData['PathShearX'] = PathShearX
-        packet.ObjectData['PathShearY'] = PathShearY
-        packet.ObjectData['PathTwist'] = PathTwist
-        packet.ObjectData['PathTwistBegin'] = PathTwistBegin
-        packet.ObjectData['PathRadiusOffset'] = PathRadiusOffset
-        packet.ObjectData['PathTaperX'] = PathTaperX
-        packet.ObjectData['PathTaperY'] = PathTaperY
-        packet.ObjectData['PathRevolutions'] = PathRevolutions
-        packet.ObjectData['PathSkew'] = PathSkew
-        packet.ObjectData['ProfileBegin'] = ProfileBegin
-        packet.ObjectData['ProfileEnd'] = ProfileEnd
-        packet.ObjectData['ProfileHollow'] = ProfileHollow
-        packet.ObjectData['BypassRaycast'] = BypassRaycast
-        packet.ObjectData['RayStart'] = RayStart
-        packet.ObjectData['RayEnd'] = RayEnd
-        packet.ObjectData['RayTargetID'] = RayTargetID
-        packet.ObjectData['RayEndIsIntersection'] = RayEndIsIntersection
-        packet.ObjectData['Scale'] = Scale
-        packet.ObjectData['Rotation'] = Rotation
-        packet.ObjectData['State'] = State
-
-        self.region.enqueue_message(packet(), True)
+        self.region.enqueue_message(packet, True)
 
     def onObjectUpdate(self, packet):
         """ populates an Object instance and adds it to the ObjectManager() store """
@@ -616,9 +614,10 @@ class ObjectManager(DataManager):
             _request_list.append((LocalID, CacheMissType))
 
         # ask the simulator for updates
-        self.request_object_update(ID_list = _request_list)
+        self.request_object_update(self.agent.agent_id, self.agent.session_id, ID_CacheMissType_list = _request_list)
 
     def onObjectUpdateCompressed(self, packet):
+        """ handles an ObjectUpdateCompressed message from a simulator """
 
         object_list = []
 
@@ -681,7 +680,7 @@ class ObjectManager(DataManager):
 
             if object_properties['Flags'] != 0:
 
-                log(WARNING, "FixMe! Quiting parsing an ObjectUpdateCompressed packet with flags due to incomplete implemention. Storing a partial representation of an object with uuid of %s" % (_FullID))
+                log(WARNING, "FixMe! Quiting parsing an ObjectUpdateCompressed packet with flags due to incomplete implemention. Storing a partial representation of an object with uuid of %s" % (object_properties['FullID']))
 
                 # the commented code is not working right, we need to figure out why!
                 # ExtraParams in particular seemed troublesome
@@ -1017,23 +1016,29 @@ class Object(object):
         This will update a specific bit to a specific value.
         """
 
-        packet = ObjectPermissionsPacket()
+        self.send_ObjectPermissions(agent, agent.agent_id, agent.session_id, Field, Set, Mask, Override)
 
-        # build the AgentData block
-        packet.AgentData['AgentID'] = agent.agent_id
-        packet.AgentData['SessionID'] = agent.session_id
+    def send_ObjectPermissions(self, agent, AgentID, SessionID, Field, Set, Mask, Override):
+        """ send an ObjectPermissions message to the host simulator"""
 
-        packet.HeaderData['Override'] = Override # BOOL, God-bit.
+        # Todo: ObjectData is variable
+        # in the future when making this message not be Object() specific
+        # make it such that one can pass in a dictionary containing
+        # a list of attributes to build the *[Block()]
 
-        ObjectData = {}
-        ObjectData['ObjectLocalID'] = self.LocalID
-        ObjectData['Field'] = Field         # U32
-        ObjectData['Set'] = Set             # U8
-        ObjectData['Mask'] = Mask           # S32
+        packet = Message('ObjectPermissions',
+                        Block('AgentData',
+                                AgentID = AgentID,
+                                SessionID = SessionID),
+                        Block('HeaderData',
+                                Override = Override),
+                        Block('ObjectData',
+                                ObjectLocalID = self.LocalID,
+                                Field = Field,
+                                Set = Set,
+                                Mask = Mask))
 
-        packet.ObjectDataBlocks.append(ObjectData)
-
-        agent.region.enqueue_message(packet())
+        agent.region.enqueue_message(packet)
 
     def set_object_full_permissions(self, agent):
         """ 
@@ -1098,63 +1103,70 @@ class Object(object):
 
         """
 
-        packet = ObjectNamePacket()
+        self.send_ObjectName(agent, agent.agent_id, agent.session_id, {1:[self.LocalID, Name]})
 
-        # build the AgentData block
-        packet.AgentData['AgentID'] = agent.agent_id
-        packet.AgentData['SessionID'] = agent.session_id
+    def send_ObjectName(self, agent, AgentID, SessionID, LocalID_Name_map):
+        """ send on ObjectName message to the host simulator 
 
-        ObjectData = {}
-        ObjectData['LocalID'] = self.LocalID
-        ObjectData['Name'] = Name
+        expects LocalID_Name_map = {1:[LocalID, Name]}
+        """
 
-        packet.ObjectDataBlocks.append(ObjectData)
+        packet = Message('ObjectName',
+                        Block('AgentData',
+                                AgentID = AgentID,
+                                SessionID = SessionID),
+                        *[Block('ObjectData',
+                                LocalID = LocalID_Name_map[item][0],
+                                Name = LocalID_Name_map[item][1]) for item in LocalID_Name_map])
 
-        agent.region.enqueue_message(packet())
+        agent.region.enqueue_message(packet)
 
     def set_object_description(self, agent, Description):
         """ update the description of an objects 
 
         """
 
-        packet = ObjectDescriptionPacket()
+        self.send_ObjectDescription(agent, agent.agent_id, agent.session_id, {1:[self.LocalID, Description]})
 
-        # build the AgentData block
-        packet.AgentData['AgentID'] = agent.agent_id
-        packet.AgentData['SessionID'] = agent.session_id
+    def send_ObjectDescription(self, agent, AgentID, SessionID, LocalID_Description_map):
+        """ send on ObjectDescription message to the host simulator 
 
-        ObjectData = {}
-        ObjectData['LocalID'] = self.LocalID
-        ObjectData['Description'] = Description
+        expects LocalID_Description_map = {1:[LocalID, Description]}
+        """
 
-        packet.ObjectDataBlocks.append(ObjectData)
+        packet = Message('ObjectDescription',
+                        Block('AgentData',
+                                AgentID = AgentID,
+                                SessionID = SessionID),
+                        *[Block('ObjectData',
+                                LocalID = LocalID_Description_map[item][0],
+                                Description = LocalID_Description_map[item][1]) for item in LocalID_Description_map])
 
-        agent.region.enqueue_message(packet())
+        agent.region.enqueue_message(packet)
 
-    def derez(self, agent, destination, destinationID, transactionID, GroupID):
+    def derez(self, agent, destination, destinationID, transactionID, GroupID, PacketCount = 1, PacketNumber = 0):
         """ derez an object, specifying the destination """
 
-        packet = DeRezObjectPacket()
+        self.send_DerezObject(agent, agent.agent_id, agent.session_id, GroupID, destination, destinationID, transactionID, PacketCount, PacketNumber, self.LocalID)
 
-        # build the AgentData block
-        packet.AgentData['AgentID'] = agent.agent_id
-        packet.AgentData['SessionID'] = agent.session_id
+    def send_DerezObject(self, agent, AgentID, SessionID, GroupID, Destination, DestinationID, TransactionID, PacketCount, PacketNumber, ObjectLocalID):
+        """ send a DerezObject message to the host simulator """
 
-        packet.AgentBlock['GroupID'] = GroupID
-        packet.AgentBlock['Destination'] = destination
-        packet.AgentBlock['DestinationID'] = destinationID
-        packet.AgentBlock['TransactionID'] = transactionID
+        packet = Message('DerezObject',
+                        Block('AgentData',
+                                AgentID = AgentID,
+                                SessionID = SessionID),
+                        Block('AgentBlock',
+                                GroupID = GroupID,
+                                Destination = Destination,
+                                DestinationID = DestinationID,
+                                TransactionID = TransactionID,
+                                PacketCount = PacketCount,
+                                PacketNumber = PacketNumber),
+                        Block('ObjectData',
+                                ObjectLocalID = ObjectLocalID))
 
-        # fix me: faking these values
-        packet.AgentBlock['PacketCount']   = 1
-        packet.AgentBlock['PacketNumber']  = 0
-
-        ObjectData = {}
-        ObjectData['ObjectLocalID'] = self.LocalID
-
-        packet.ObjectDataBlocks.append(ObjectData)
-
-        agent.region.enqueue_message(packet())
+        agent.region.enqueue_message(packet)
 
     def take(self, agent):
         """ take object into inventory """
@@ -1182,36 +1194,42 @@ class Object(object):
 
         """
 
-        packet = ObjectSelectPacket()
+        self.send_ObjectSelect(agent, agent.agent_id, agent.session_id, [self.LocalID])
 
-        # build the AgentData block
-        packet.AgentData['AgentID'] = agent.agent_id
-        packet.AgentData['SessionID'] = agent.session_id
+    def send_ObjectSelect(self, agent, AgentID, SessionID, ObjectLocalIDs):
+        """ send an ObjectSelect message to the agent's host simulator
+        
+        expects a list of ObjectLocalIDs """
 
-        ObjectData = {}
-        ObjectData['ObjectLocalID'] = self.LocalID
+        packet = Message('ObjectSelect',
+                        Block('AgentData',
+                                AgentID = AgentID,
+                                SessionID = SessionID),
+                        *[Block('ObjectData',
+                                ObjectLocalID = ObjectLocalID) for ObjectLocalID in ObjectLocalIDs])
 
-        packet.ObjectDataBlocks.append(ObjectData)
-
-        agent.region.enqueue_message(packet())
+        agent.region.enqueue_message(packet)
 
     def deselect(self, agent):
         """ deselect an object
 
         """
 
-        packet = ObjectDeselectPacket()
+        self.send_ObjectSelect(agent, agent.agent_id, agent.session_id, [self.LocalID])
 
-        # build the AgentData block
-        packet.AgentData['AgentID'] = agent.agent_id
-        packet.AgentData['SessionID'] = agent.session_id
+    def send_ObjectDeselect(self, agent, AgentID, SessionID, ObjectLocalIDs):
+        """ send an ObjectDeselect message to the agent's host simulator
 
-        ObjectData = {}
-        ObjectData['ObjectLocalID'] = self.LocalID
+        expects a list of ObjectLocalIDs """
 
-        packet.ObjectDataBlocks.append(ObjectData)
+        packet = Message('ObjectDeselect',
+                        Block('AgentData',
+                                AgentID = AgentID,
+                                SessionID = SessionID),
+                        *[Block('ObjectData',
+                                ObjectLocalID = ObjectLocalID) for ObjectLocalID in ObjectLocalIDs])
 
-        agent.region.enqueue_message(packet())
+        agent.region.enqueue_message(packet)
 
     def _update_properties(self, properties):
         """ takes a dictionary of attribute:value and makes it so """
