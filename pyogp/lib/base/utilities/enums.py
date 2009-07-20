@@ -384,6 +384,61 @@ class WearableMap(object):
         self.map[BakedIndex.BAKED_SKIRT] = [WearablesIndex.WT_SKIRT]
         self.map[BakedIndex.BAKED_HAIR] = [WearablesIndex.WT_HAIR]
 
+
+class AssetType(object):
+    Texture         = 0
+    Sound           = 1
+    CallingCard     = 2
+    Landmark        = 3
+    Script          = 4
+    Clothing        = 5
+    Object          = 6
+    NoteCard        = 7
+    Category        = 8
+    RootCategory    = 9
+    LSLText         = 10
+    LSLByteCode     = 11
+    TextureTGA      = 12
+    BodyPart        = 13
+    Trash           = 14
+    SnapshotCategory = 15
+    LostAndFound    = 16
+    SoundWav        = 17
+    ImageTGA        = 18
+    ImageJPEG       = 19
+    Animation       = 20
+    Gesture         = 21
+    Simstate        = 22
+    Count           = 23
+    NONE            = -1
+
+class TransferChannelType(object):
+    Unknown    = 0
+    Misc       = 1
+    Asset      = 2
+    NumTypes   = 3
+
+class TransferSourceType(object):
+    Unknown    = 0
+    File       = 1
+    Asset      = 2
+    SimInvItem = 3
+    SimEstate  = 4
+    NumTypes   = 5
+
+class TransferTargetType(object):
+    Unknown    = 0
+    File       = 1
+    VFile      = 2
+
+class TransferStatus(object):
+    OK         = 0
+    Done       = 1
+    Skip       = 2
+    Abort      = 3
+    Error      = -1
+    UnknownSource = -2
+    InsufficientPermissions = -3
         
 """
 Contributors can be viewed at:
