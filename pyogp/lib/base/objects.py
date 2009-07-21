@@ -151,8 +151,7 @@ class ObjectManager(DataManager):
 
             if self.settings.ENABLE_APPEARANCE_MANAGEMENT:
                 self.agent.appearance.TextureEntry = _objectdata.TextureEntry
-                self.agent.appearance.send_AgentSetAppearance()
-                
+                                
             self.agent.sendDynamicsUpdate()
             
         index = [self.avatar_store.index(_avatar_) for _avatar_ in self.avatar_store if _avatar_.LocalID == _objectdata.LocalID]

@@ -96,7 +96,7 @@ class Agent(object):
         self.inventory = None
         self.start_location = None
         self.group_manager = GroupManager(self, self.settings)
-        self.assets = AssetManager(self, self.settings)
+        self.asset_manager = AssetManager(self, self.settings)
 
         # additional attributes
         self.login_response = None
