@@ -155,6 +155,7 @@ class AssetWearable(Asset):
                     while count > 0:
                         paramID = int(i.next())
                         paramVal = i.next()
+                        #TODO Verify this is correct behavior this fix may be a hack
                         if paramVal == '.':
                             self.params[paramID] = 0.0
                         else:
