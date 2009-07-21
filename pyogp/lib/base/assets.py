@@ -154,7 +154,11 @@ class AssetWearable(Asset):
                     count = int(i.next())
                     while count > 0:
                         paramID = int(i.next())
-                        self.params[paramID] = float(i.next())
+                        paramVal = i.next()
+                        if paramVal == '.':
+                            self.params[paramID] = 0.0
+                        else:
+                            self.params[paramID] = float(paramVal)
                         count -= 1
                 if token.lower() == 'textures':
                     count = int(i.next())
