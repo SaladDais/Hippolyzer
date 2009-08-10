@@ -182,16 +182,17 @@ class InventoryManager(DataManager):
             container[index[0]].inventory[inventory_index[0]] = inventory_item
 
             if self.settings.LOG_VERBOSE:
-                log(DEBUG, 'Replacing a stored inventory item: %s for agent \'%s\'' % (inventory_item.ItemID, self.agent.agent_id))
+                log(DEBUG, 'Replacing a stored inventory item: %s' % (inventory_item.ItemID))
 
         except:
 
             container[index[0]].inventory.append(inventory_item)
 
             if self.settings.LOG_VERBOSE:
-                log(DEBUG, 'Storing a new inventory item: %s in agent \'%s\'' % (inventory_item.ItemID, self.agent.agent_id))
+                log(DEBUG, 'Storing a new inventory item: %s ' % (inventory_item.ItemID))
 
-    def search_inventory(self, folder_list = [], item_id = None, name = None, match_list = []):
+    def search_inventory(self, folder_list = [], item_id = None, name = None,
+                         match_list = []):
         """ search through all inventory folders for an id(uuid) or Name, and
         return a list of matching InventoryItems or InventoryFolders
 
@@ -200,60 +201,52 @@ class InventoryManager(DataManager):
 
         This does not request inventory from the grid. It could, were we to go about enabling this...
         """ 
+        
+        def match():
+            _match = lambda arg : False
+            if item_id != None:
+                def _match(arg):
+                    if isinstance(arg, InventoryItem):
+                        return str(arg.ItemID) == str(item_id)
+                    else:
+                        return str(arg.FolderID) == str(item_id)
+            elif name != None:
+                pattern = re.compile(name)
+                def _match(arg):
+                    if pattern.match(arg.Name):
+                        return True
+                    else:
+                        return False
+            return _match
+
+        is_match = match()
 
         # search our inventory storage if we aren't told what to look in
-        if folder_list == []: 
+        if folder_list == []:
             search_folders = self.folders
         else:
             search_folders = folder_list
 
-        if item_id != None:
-
-            item_id = UUID(str(item_id))
-
-            for item in search_folders:
-
-                if isinstance(item, InventoryItem):
-                    if str(item.ItemID) == str(item_id):
-                        match_list.append(item)
-
-                elif isinstance(item, InventoryFolder):
-                    matches = self.search_inventory_folder(item.FolderID, _id = item_id)
-                    match_list.extend(matches)
-
-            return match_list
-
-        elif name != None:
-
-            for item in search_folders:
-
-                pattern = re.compile(name)
-
-                if isinstance(item, InventoryItem):
-                    if pattern.match(item.Name):
-                        match_list.append(item)
-
-                elif isinstance(item, InventoryFolder):
-                    matches = self.search_inventory_folder(item.FolderID, name = name.strip())
-                    match_list.extend(matches)
-
-            return match_list
-
-        else:
-
-            # return an empty list
-            return []
-
+        for item in search_folders:
+            if is_match(item):
+                match_list.append(item)
+            if isinstance(item, InventoryFolder):
+                matches = self.search_inventory_folder(item.FolderID,
+                                                       _id=item_id,
+                                                       name=name)
+                match_list.extend(matches)
+        return match_list
+        
     def search_inventory_folder(self, folder_id, _id = None, name = None):
         """ search an inventory folder for _id or name
 
         return a list of matches
         """ 
-
+        
         match_list = []
-
+        
         search_folder = [folder for folder in self.folders if str(folder.FolderID) == str(folder_id)][0]
-
+        
         for item in search_folder.inventory:
 
             if _id != None:
@@ -261,9 +254,8 @@ class InventoryManager(DataManager):
                 if isinstance(item, InventoryItem):
                     if str(item.ItemID) == str(_id):
                         match_list.append(item)
-
                 elif isinstance(item, InventoryFolder):
-                    if item.FolderID == _id:
+                    if str(item.FolderID) == str(_id):
                         match_list.append(item)
 
             elif name != None:
@@ -469,6 +461,81 @@ class InventoryManager(DataManager):
 
         self.agent.send_ImprovedInstantMessage(self.agent.agent_id, self.agent.session_id, 0, FromAgentID, 0, UUID(), self.agent.Position, 0, accept_key, ID, 0, self.agent.Name(), '', '')
 
+    def create_new_item(self, folder, name, desc, asset_type, inv_type,
+                        wearable_type, next_owner_permission, callback=None):
+        """
+        Creates a new item in folder.
+        """
+        transaction_id = UUID()
+        transaction_id.random()
+        
+        updateCreateInventoryHandler = self.agent.region.message_handler.register('UpdateCreateInventoryItem')
+
+        def onUpdateCreateInventoryItem(packet):
+            if str(transaction_id) != \
+                   str(packet.blocks['AgentData'][0]\
+                       .get_variable('TransactionID').data):
+                inv_data = packet.blocks['InventoryData'][0]
+                item = InventoryItem(inv_data.get_variable('ItemID').data,
+                                     inv_data.get_variable('FolderID').data,
+                                     inv_data.get_variable('CreatorID').data,
+                                     inv_data.get_variable('OwnerID').data,
+                                     inv_data.get_variable('GroupID').data,
+                                     inv_data.get_variable('BaseMask').data,
+                                     inv_data.get_variable('OwnerMask').data,
+                                     inv_data.get_variable('GroupMask').data,
+                                     inv_data.get_variable('EveryoneMask').data,
+                                     inv_data.get_variable('NextOwnerMask').data,
+                                     inv_data.get_variable('GroupOwned').data,
+                                     inv_data.get_variable('AssetID').data,
+                                     inv_data.get_variable('Type').data,
+                                     inv_data.get_variable('InvType').data,
+                                     inv_data.get_variable('Flags').data,
+                                     inv_data.get_variable('SaleType').data,
+                                     inv_data.get_variable('SalePrice').data,
+                                     inv_data.get_variable('Name').data,
+                                     inv_data.get_variable('Description').data,
+                                     inv_data.get_variable('CreationDate').data,
+                                     inv_data.get_variable('CRC').data)
+                                                                 
+                self._store_inventory_item(item)
+                updateCreateInventoryHandler.unsubscribe(onUpdateCreateInventoryItem)
+                if callback != None:
+                    callback(item)
+                
+        updateCreateInventoryHandler.subscribe(onUpdateCreateInventoryItem) 
+        
+        self.send_CreateInventoryItem(self.agent.agent_id,
+                                      self.agent.session_id,
+                                      0,
+                                      folder.FolderID,
+                                      transaction_id,
+                                      next_owner_permission,
+                                      asset_type,
+                                      inv_type,
+                                      wearable_type,
+                                      name,
+                                      desc)
+                
+    def send_CreateInventoryItem(self, agent_id, session_id, callback_id,
+                                 folder_id, transaction_id, next_owner_mask,
+                                 type_, inv_type, wearable_type, name, desc):
+        """ sends a CreateInventoryItem message """
+        args = [Block('AgentData',
+                      AgentID = agent_id,
+                      SessionID = session_id)]
+        args += [Block('InventoryBlock',
+                       CallbackID = callback_id,
+                       FolderID = folder_id,
+                       TransactionID = transaction_id,
+                       NextOwnerMask = next_owner_mask,
+                       Type = type_,
+                       InvType = inv_type,
+                       WearableType = wearable_type,
+                       Name = name,
+                       Description = desc)]
+        self.agent.region.enqueue_message(Message("CreateInventoryItem", *args))
+        
     def sendFetchInventoryDescendentsRequest(self, folder_id = None):
         """ send a request to the grid for folder contents """
 
@@ -863,7 +930,29 @@ class InventoryItem(object):
     Tests: tests/test_inventory.py
     """
 
-    def __init__(self, ItemID = None, FolderID = None, CreatorID = None, OwnerID = None, GroupID = None, BaseMask = None, OwnerMask = None, GroupMask = None, EveryoneMask = None, NextOwnerMask = 0, GroupOwned = None, AssetID = None, Type = None, InvType = None, Flags = None, SaleType = None, SalePrice = None, Name = None, Description = None, CreationDate = None, CRC = None, LastOwnerID = UUID()):
+    def __init__(self,
+                 ItemID = None,
+                 FolderID = None,
+                 CreatorID = None,
+                 OwnerID = None,
+                 GroupID = None,
+                 BaseMask = None,
+                 OwnerMask = None,
+                 GroupMask = None,
+                 EveryoneMask = None,
+                 NextOwnerMask = 0,
+                 GroupOwned = None,
+                 AssetID = None,
+                 Type = None,
+                 InvType = None,
+                 Flags = None,
+                 SaleType = None,
+                 SalePrice = None,
+                 Name = None,
+                 Description = None,
+                 CreationDate = None,
+                 CRC = None,
+                 LastOwnerID = UUID()):
         """ initialize the inventory item """
 
         self.type = 'InventoryItem'
@@ -984,47 +1073,49 @@ def sendRezObject(agent, inventory_item, RayStart, RayEnd, FromTaskID = UUID(), 
 
     packet = Message('RezObject',
                     Block('AgentData',
-                            AgentID = agent.agent_id,
-                            SessionID = agent.session_id,
-                            GroupID = agent.ActiveGroupID),
+                          AgentID = agent.agent_id,
+                          SessionID = agent.session_id,
+                          GroupID = agent.ActiveGroupID),
                     Block('RezData',
-                            FromTaskID = UUID(str(FromTaskID)),
-                            BypassRaycast = BypassRaycast,
-                            RayStart = RayStart,
-                            RayEnd = RayEnd,
-                            RayTargetID = UUID(str(RayTargetID)),
-                            RayEndIsIntersection = RayEndIsIntersection,
-                            RezSelected = RezSelected,
-                            RemoveItem = RemoveItem,
-                            ItemFlags = ItemFlags,
-                            GroupMask = GroupMask,
-                            EveryoneMask = EveryoneMask,
-                            NextOwnerMask = NextOwnerMask),
+                          FromTaskID = UUID(str(FromTaskID)),
+                          BypassRaycast = BypassRaycast,
+                          RayStart = RayStart,
+                          RayEnd = RayEnd,
+                          RayTargetID = UUID(str(RayTargetID)),
+                          RayEndIsIntersection = RayEndIsIntersection,
+                          RezSelected = RezSelected,
+                          RemoveItem = RemoveItem,
+                          ItemFlags = ItemFlags,
+                          GroupMask = GroupMask,
+                          EveryoneMask = EveryoneMask,
+                          NextOwnerMask = NextOwnerMask),
                     Block('InventoryData',
-                            ItemID = inventory_item.ItemID,
-                            FolderID = inventory_item.FolderID,
-                            CreatorID = inventory_item.CreatorID,
-                            OwnerID = inventory_item.OwnerID,
-                            GroupID = inventory_item.GroupID,
-                            BaseMask = inventory_item.BaseMask,
-                            OwnerMask = inventory_item.OwnerMask,
-                            GroupMask = inventory_item.GroupMask,
-                            EveryoneMask = inventory_item.EveryoneMask,
-                            GroupOwned = inventory_item.GroupOwned,
-                            TransactionID = UUID(),
-                            Type = inventory_item.Type,
-                            InvType = inventory_item.InvType,
-                            Flags = inventory_item.Flags,
-                            SaleType = inventory_item.SaleType,
-                            SalePrice = inventory_item.SalePrice,
-                            Name = inventory_item.Name,
-                            Description = inventory_item.Description,
-                            CreationDate = inventory_item.CreationDate,
-                            CRC = inventory_item.CRC,
-                            NextOwnerMask = inventory_item.NextOwnerMask))
+                          ItemID = inventory_item.ItemID,
+                          FolderID = inventory_item.FolderID,
+                          CreatorID = inventory_item.CreatorID,
+                          OwnerID = inventory_item.OwnerID,
+                          GroupID = inventory_item.GroupID,
+                          BaseMask = inventory_item.BaseMask,
+                          OwnerMask = inventory_item.OwnerMask,
+                          GroupMask = inventory_item.GroupMask,
+                          EveryoneMask = inventory_item.EveryoneMask,
+                          GroupOwned = inventory_item.GroupOwned,
+                          TransactionID = UUID(),
+                          Type = inventory_item.Type,
+                          InvType = inventory_item.InvType,
+                          Flags = inventory_item.Flags,
+                          SaleType = inventory_item.SaleType,
+                          SalePrice = inventory_item.SalePrice,
+                          Name = inventory_item.Name,
+                          Description = inventory_item.Description,
+                          CreationDate = inventory_item.CreationDate,
+                          CRC = inventory_item.CRC,
+                          NextOwnerMask = inventory_item.NextOwnerMask))
 
     agent.region.enqueue_message(packet)
 
+
+    
 """
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 

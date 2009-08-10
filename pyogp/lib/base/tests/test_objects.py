@@ -8,9 +8,12 @@ from binascii import unhexlify
 from pyogp.lib.base.objects import *
 from pyogp.lib.base.settings import Settings
 from pyogp.lib.base.region import Region
+from pyogp.lib.base.agent import Agent
+from pyogp.lib.base.datatypes import UUID, Vector3
 
 # pyogp messaging
 from pyogp.lib.base.message.udpdeserializer import UDPMessageDeserializer
+from pyogp.lib.base.message.message import Message, Block
 
 # pyogp tests
 import pyogp.lib.base.tests.config 
@@ -29,6 +32,7 @@ class TestObjects(unittest.TestCase):
 
         self.object_store = ObjectManager(region = self.region, settings = self.settings)
         self.object_store.enable_callbacks()
+        self.data = []
     def tearDown(self):
 
         pass
@@ -67,7 +71,59 @@ class TestObjects(unittest.TestCase):
         
         self.assertEquals(known_objects, [(str(uuid.UUID('e2ba7ac7-db28-24e3-484d-f418b045e62d')), 159536), (str(uuid.UUID('6cbafc4a-9758-9481-cd74-c7ccc89e7440')), 171059), (str(uuid.UUID('d2b300c3-71f1-6887-2750-6d48da05e2f5')), 171036), (str(uuid.UUID('dbb7d110-3f65-0859-d494-3dc40ffb2b61')), 171037), (str(uuid.UUID('1f389eb9-8639-28ff-c37b-a3e4f39a7fed')), 171038)])
 
+    def test_onObjectUpdate_selected(self):
 
+        self.object_store.agent = Agent()
+        fake_uuid = UUID()
+        fake_uuid.random()
+        packet = Message('ObjectUpdate',
+                         Block('RegionData',
+                               RegionHandle=0,
+                               TimeDilation=0),
+                         Block('ObjectData',
+                               ID=1,
+                               State=1,
+                               FullID=fake_uuid,
+                               CRC=0,
+                               PCode=0,
+                               Material=0,
+                               ClickAction=0,
+                               Scale=Vector3(X=0.0, Y=0.0, Z=0.0),
+                               ObjectData='',
+                               ParentID=fake_uuid,
+                               UpdateFlags=0,
+                               ProfileCurve=0,
+                               PathBegin=0.0,
+                               PathEnd=0.0,
+                               PathScaleX=0.0,
+                               PathScaleY=0.0,
+                               PathShearX=0.0,
+                               PathShearY=0.0,
+                               PathTwist=-1,
+                               PathTwistBegin=-1,
+                               PathRadiusOffset=-1,
+                               PathTaperX=-1,
+                               PathTaperY=-1,
+                               PathRevolutions=0,
+                               PathSkew=-1,
+                               ProfileBegin=0,
+                               ProfileEnd=0,
+                               ProfileHollow=0,
+                               TextureEntry='',
+                               TextureAnim='',
+                               NameValue='Test',
+                               Data='',
+                               Text='',
+                               TextColor=0x0,
+                               MedialURL=''))
+        
+        def callback(payload):
+            self.data.append("foo")
+        object_handler = self.object_store.agent.events_handler.register("ObjectSelected")
+        object_handler.subscribe(callback)
+        self.object_store.region.message_handler.handle(packet)
+        self.assertTrue(self.data.pop, "foo")
+    
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()

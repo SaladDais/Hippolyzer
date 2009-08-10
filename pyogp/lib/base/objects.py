@@ -7,11 +7,13 @@ import math
 
 # related
 
+
 # pyogp
 from pyogp.lib.base import *
 from pyogp.lib.base.datamanager import DataManager
 from pyogp.lib.base.permissions import PermissionsTarget, PermissionsMask
 from pyogp.lib.base.datatypes import UUID, Vector3, Quaternion
+from pyogp.lib.base.event_system import AppEvent
 
 # pyogp message
 from pyogp.lib.base.message.message_handler import MessageHandler
@@ -20,7 +22,8 @@ from pyogp.lib.base.message.message import Message, Block
 
 # pyogp utilities
 from pyogp.lib.base.utilities.helpers import Helpers
-from pyogp.lib.base.utilities.enums import PCodeEnum, CompressedUpdateFlags
+from pyogp.lib.base.utilities.enums import PCodeEnum, CompressedUpdateFlags, \
+     Permissions, AssetType
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.objects')
@@ -329,6 +332,11 @@ class ObjectManager(DataManager):
         else:
             #if self.settings.LOG_VERBOSE and self.settings.ENABLE_OBJECT_LOGGING: log(DEBUG, "Updating an object's attributes. LocalID = %s" % (object_properties['LocalID']))
             _object._update_properties(prim_properties)
+        if _object.UpdateFlags & 2 != 0 and self.agent != None:
+            
+            self.agent.events_handler.handle(AppEvent("ObjectSelected",
+                                                      payload = {'object':_object}))
+          
 
     def request_object_update(self, AgentID, SessionID, ID_CacheMissType_list = None):
         """ requests object updates from the simulator
@@ -360,9 +368,28 @@ class ObjectManager(DataManager):
         # not sure what RayTargetID is, send as uuid of zeros
         RayTargetID = UUID()
 
-        self.object_add(self.agent.agent_id, self.agent.session_id, GroupID = GroupID, PCode = PCodeEnum.Primitive, Material = 3, AddFlags = 2, PathCurve = 16, ProfileCurve = 1, PathBegin = 0, PathEnd = 0, PathScaleX = 100, PathScaleY = 100, PathShearX = 0, PathShearY = 0, PathTwist = 0, PathTwistBegin = 0, PathRadiusOffset = 0, PathTaperX = 0, PathTaperY = 0, PathRevolutions = 0, PathSkew = 0, ProfileBegin = 0, ProfileEnd = 0, ProfileHollow = 0, BypassRaycast = 1, RayStart = location_to_rez, RayEnd = location_to_rez, RayTargetID = RayTargetID, RayEndIsIntersection = 0, Scale = (0.5, 0.5, 0.5), Rotation = (0, 0, 0, 1), State = 0)
+        self.object_add(self.agent.agent_id, self.agent.session_id,
+                        GroupID = GroupID, PCode = PCodeEnum.Primitive,
+                        Material = 3, AddFlags = 2, PathCurve = 16,
+                        ProfileCurve = 1, PathBegin = 0, PathEnd = 0,
+                        PathScaleX = 100, PathScaleY = 100, PathShearX = 0,
+                        PathShearY = 0, PathTwist = 0, PathTwistBegin = 0,
+                        PathRadiusOffset = 0, PathTaperX = 0, PathTaperY = 0,
+                        PathRevolutions = 0, PathSkew = 0, ProfileBegin = 0,
+                        ProfileEnd = 0, ProfileHollow = 0, BypassRaycast = 1,
+                        RayStart = location_to_rez, RayEnd = location_to_rez,
+                        RayTargetID = RayTargetID, RayEndIsIntersection = 0,
+                        Scale = (0.5, 0.5, 0.5), Rotation = (0, 0, 0, 1),
+                        State = 0)
 
-    def object_add(self, AgentID, SessionID, PCode, Material, AddFlags, PathCurve, ProfileCurve, PathBegin, PathEnd, PathScaleX, PathScaleY, PathShearX, PathShearY, PathTwist, PathTwistBegin, PathRadiusOffset, PathTaperX, PathTaperY, PathRevolutions, PathSkew, ProfileBegin, ProfileEnd, ProfileHollow, BypassRaycast, RayStart, RayEnd, RayTargetID, RayEndIsIntersection, Scale, Rotation, State, GroupID = UUID()):
+    def object_add(self, AgentID, SessionID, PCode, Material, AddFlags,
+                   PathCurve, ProfileCurve, PathBegin, PathEnd, PathScaleX,
+                   PathScaleY, PathShearX, PathShearY, PathTwist,
+                   PathTwistBegin, PathRadiusOffset, PathTaperX,
+                   PathTaperY, PathRevolutions, PathSkew, ProfileBegin,
+                   ProfileEnd, ProfileHollow, BypassRaycast, RayStart,
+                   RayEnd, RayTargetID, RayEndIsIntersection, Scale,
+                   Rotation, State, GroupID = UUID()):
         '''
         ObjectAdd - create new object in the world
         Simulator will assign ID and send message back to signal
@@ -580,7 +607,7 @@ class ObjectManager(DataManager):
                     X=Helpers.packed_u8_to_float(objdata, 13, -REGION_SIZE, REGION_SIZE),
                     Y=Helpers.packed_u8_to_float(objdata, 14, -REGION_SIZE, REGION_SIZE),
                     Z=Helpers.packed_u8_to_float(objdata, 15, -REGION_SIZE, REGION_SIZE))
-
+            
             object_list.append(object_properties)
 
         self.update_multiple_objects_properties(object_list)
@@ -913,6 +940,61 @@ class ObjectManager(DataManager):
 
         self.update_multiple_objects_properties(object_list)
 
+    def send_RezScript(self, agent, prim, item_id=UUID(),
+                       Enabled=True,
+                       GroupID=UUID(),
+                       BaseMask=Permissions.All,
+                       OwnerMask=Permissions.All,
+                       GroupMask=Permissions.None_,
+                       EveryoneMask=Permissions.None_,
+                       NextOwnerMask=Permissions.Transfer&Permissions.Move,
+                       GroupOwned=False,
+                       Type=AssetType.LSLText,
+                       InvType=AssetType.LSLText,
+                       Flags=0,
+                       SaleType=0,
+                       SalePrice=0,
+                       Name="New Script",
+                       Description="Created by PyOGP",
+                       CreationDate=0,
+                       CRC=0):
+        """ sends a RezScript message to the sim, not providing a item_id will
+        rez the default script otherwise the script with ItemID item_id will be rezzed
+        to prim"""
+        packet = Message('RezScript',
+                         Block('AgentData',
+                               AgentID = agent.agent_id,
+                               SessionID = agent.session_id,
+                               GroupID = agent.ActiveGroupID),
+                         Block('UpdateBlock',
+                               ObjectLocalID = prim.LocalID,
+                               Enabled = Enabled),
+                         Block('InventoryBlock',
+                               ItemID = item_id,
+                               FolderID = prim.FullID,
+                               CreatorID = agent.agent_id,
+                               OwnerID = agent.agent_id,
+                               GroupID = GroupID,
+                               BaseMask = BaseMask,
+                               OwnerMask = OwnerMask,
+                               GroupMask = GroupMask,
+                               EveryoneMask = EveryoneMask,
+                               NextOwnerMask = NextOwnerMask,
+                               GroupOwned = GroupOwned,
+                               TransactionID = UUID(),
+                               Type = Type,
+                               InvType = InvType,
+                               Flags = Flags,
+                               SaleType = SaleType,
+                               SalePrice = SalePrice,
+                               Name = Name,
+                               Description = Description,
+                               CreationDate = CreationDate,
+                               CRC = CRC))
+        agent.region.enqueue_message(packet)
+    
+
+
 class Object(object):
     """ represents an Object
 
@@ -1214,7 +1296,7 @@ class Object(object):
 
         """
 
-        self.send_ObjectSelect(agent, agent.agent_id, agent.session_id, [self.LocalID])
+        self.send_ObjectDeselect(agent, agent.agent_id, agent.session_id, [self.LocalID])
 
     def send_ObjectDeselect(self, agent, AgentID, SessionID, ObjectLocalIDs):
         """ send an ObjectDeselect message to the agent's host simulator
@@ -1230,13 +1312,15 @@ class Object(object):
 
         agent.region.enqueue_message(packet)
 
+        
     def _update_properties(self, properties):
         """ takes a dictionary of attribute:value and makes it so """
 
-        for attribute in properties:
+        for attribute in properties.keys():
 
             setattr(self, attribute, properties[attribute])
 
+        
 """
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 

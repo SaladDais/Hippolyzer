@@ -2,7 +2,7 @@
 import urllib2
 from types import *
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
-
+import re
 # related
 
 # pyogp
@@ -107,15 +107,42 @@ class Capability(object):
             else:
                 raise ResourceError(self.public_url, e.code, e.msg, e.fp.read(), method="POST")
 
+        return self._response_handler(response)
+        
+    def POST_FILE(self, file_name, custom_headers={}):
+        """ Opens file at file_name and posts contents to this cap. """
+        headers = {"Content-type" : "application/octet-stream"}
+        fd = open(file_name)
+        payload = fd.read()
+        fd.close
+        
+        try:
+            response = self.restclient.POST(self.public_url,
+                                            payload, headers=headers)
+        except HTTPError, e:
+            if e.code==404:
+                raise ResourceNotFound(self.public_url)
+            else:
+                raise ResourceError(self.public_url, e.code, e.msg,
+                                    e.fp.read(), method="POST")
+
+        return self._response_handler(response)
+        
+    def _response_handler(self, response):
         # now deserialize the data again, we ask for a utility with the content type
         # as the name
         content_type_charset = response.headers['Content-Type']
         content_type = content_type_charset.split(";")[0] # remove the charset part
 
+        pattern = re.compile('<\?xml\sversion="1.0"\s\?><llsd>.*?</llsd>')
         # ToDo: write a generic serializer/deserializer
-        if (content_type == 'application/llsd+xml') or (content_type == 'application/xml'):
+        if (content_type == 'application/llsd+xml') or \
+               (content_type == 'application/xml') or \
+               (content_type == 'text/html' and \
+                pattern.match(response.body) != None):
             deserializer = LLSDDeserializer()
         else:
+            print response
             raise DeserializerNotFound(content_type)
 	
         data = deserializer.deserialize(response.body)
@@ -124,6 +151,7 @@ class Capability(object):
         if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, 'Post to cap %s response is: %s' % (self.public_url, data))        
 
         return data
+
 
     def __repr__(self):
         return "<Capability '%s' for %s>" %(self.name, self.public_url)

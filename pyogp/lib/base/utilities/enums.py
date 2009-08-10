@@ -439,7 +439,17 @@ class TransferStatus(object):
     Error      = -1
     UnknownSource = -2
     InsufficientPermissions = -3
-        
+
+
+
+class Permissions(object):
+    Transfer = 1 << 13
+    Modify = 1 << 14
+    Copy = 1 << 15
+    Move = 1 << 19
+    None_ = 0
+    All = 0x7FFFFFFF
+    Unrestricted = Transfer | Modify | Copy
 """
 Contributors can be viewed at:
 http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 

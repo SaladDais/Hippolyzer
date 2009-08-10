@@ -14,9 +14,10 @@ from pyogp.lib.base.utilities.enums import TransferChannelType, TransferSourceTy
 from pyogp.lib.base.message.message_handler import MessageHandler
 from pyogp.lib.base.message.message import Message, Block
 from pyogp.lib.base.utilities.helpers import Helpers
-from pyogp.lib.base.exc import NotImplemented
+from pyogp.lib.base.exc import NotImplemented, ResourceError, ResourceNotFound
 from pyogp.lib.base.objects import Object
 from pyogp.lib.base.datatypes import Vector3, UUID
+from pyogp.lib.base.caps import Capability
 
 
 # initialize logging
@@ -35,12 +36,12 @@ class AssetManager(DataManager):
         super(AssetManager, self).__init__(agent, settings)
         #indexed by assetID
         self.assets = {} 
-
+                
     def enable_callbacks(self):
         pass
 
 
-    def request_asset(self, assetID, assetType, isPriority, callback):
+    def request_asset(self, assetID, assetType, isPriority, callback=None, itemID=None):
         """
         Sends a TransferRequest to the sim for asset assetID with type assetType,
         will call back with the assetID and True with asset received or False
@@ -55,26 +56,31 @@ class AssetManager(DataManager):
         def onTransferPacket(packet):
             """
             TransferPacket of a successful TransferRequest
+            TODO wait for all all packets to arrive and assemble the data
             """
             # fill in data for Asset in the requests queue and pop it off and story in assets dict
             if str(transferID) == str(packet.blocks['TransferData'][0].get_variable('TransferID').data):
                 
                 self.assets[str(assetID)] = AssetWearable(assetID, assetType,
                                                          packet.blocks['TransferData'][0].get_variable('Data').data)
-                callback(assetID, True)
+                if callback != None:
+                    callback(assetID, True)
                 transferPacketHandler.unsubscribe(onTransferPacket)
         
         def onTransferInfo(packet):
             """
             Status of TransferRequest
             Account for size and multiple packets
+            TODO set packet count
             """
+            
             if str(transferID) == str(packet.blocks['TransferInfo'][0].get_variable('TransferID')):
                 status = packet.blocks['TransferInfo'][0].get_variable("Status").data
                 if status != TransferStatus.OK:
                     log(WARNING, "Request for asset %s failed with status %s" \
                         % (assetID, status))
-                    callback(assetID, False)
+                    if callback != None:
+                        callback(assetID, False)
                     transferPacketHandler.unsubscribe(onTransferPacket)
                 transferInfoHandler.unsubscribe(onTransferInfo)
             
@@ -85,8 +91,17 @@ class AssetManager(DataManager):
             priority = 1.0
         else:
             priortity = 0.0
-        params = assetID.get_bytes() \
-                 + Helpers().int_to_bytes(assetType) 
+
+        params = ''
+        if itemID != None:
+            params += self.agent.agent_id.get_bytes() + \
+                      self.agent.session_id.get_bytes() + \
+                      self.agent.agent_id.get_bytes() + \
+                      UUID().get_bytes() + \
+                      itemID.get_bytes()
+                      
+        params += assetID.get_bytes() + \
+                  Helpers().int_to_bytes(assetType) 
         
         self.send_TransferRequest(transferID,
                                   TransferChannelType.Asset,
@@ -94,10 +109,70 @@ class AssetManager(DataManager):
                                   priority,
                                   params)
 
+
+    """
+    def upload_asset(self, transaction_id, type_, tempfile, store_local,
+                     asset_data=None):
+        
+        assetUploadCompleteHandler = self.agent.region.message_handler.register('AssetUploadComplete')
+        def onAssetUploadComplete(packet):
+            log(INFO, "AssetUploadComplete: %s" % packet)
+            
+        assetUploadCompleteHandler.subscribe(onAssetUploadComplete)
+        
+        self.send_AssetUploadRequest(transaction_id, type_, tempfile,
+                                     store_local)
+    """
+    def upload_script_via_caps(self, item_id, script):
+
+        def upload_script_via_caps_responder(response):
+        
+            if response['state'] == 'upload':
+                cap = Capability('UpdateScriptAgentResponse', response['uploader'])
+                response = cap.POST_FILE(script)
+                upload_script_via_caps_responder(response)
+            elif response['state'] == 'complete':
+                log(DEBUG, "Upload of script Successful")
+            else:
+                log(WARNING, "Upload failed")
+        
+        cap = self.agent.region.capabilities['UpdateScriptAgent']
+        post_body = {'item_id' : str(item_id), 'target': 'lsl2'}
+        custom_headers = {'Accept' : 'application/llsd+xml'}
+
+        try:
+            response = cap.POST(post_body, custom_headers)
+        except ResourceError, error:
+            log(ERROR, error)
+            return
+        except ResourceNotFound, error:
+            log(ERROR, "404 calling: %s" % (error))
+            return
+        upload_script_via_caps_responder(response)
+        
+    
+        
+        
+    def upload_via_udp(self):
+        pass
     
     def get_asset(self, assetID):
-
         return self.assets[str(assetID)]
+
+    def send_AssetUploadRequest(self, TransactionID, Type, Tempfile, \
+                                StoreLocal, AssetData=None):
+        """
+        Sends an AssetUploadRequest packet to request that an asset be
+        uploaded to the to the sim
+        """
+        packet = Message('AssetUploadRequest',
+                         Block('AssetBlock',
+                               TransactionID = TransactionID,
+                               Type = Type,
+                               Tempfile = Tempfile,
+                               StoreLocal = StoreLocal,
+                               AssetData = AssetData))
+        self.agent.region.enqueue_message(packet)
 
     
     def send_TransferRequest(self, TransferID, ChannelType, SourceType,
@@ -117,8 +192,6 @@ class AssetManager(DataManager):
 
         
         self.agent.region.enqueue_message(packet)
-        
-
         
 class Asset(object):
     def __init__(self, assetID, assetType, data):
