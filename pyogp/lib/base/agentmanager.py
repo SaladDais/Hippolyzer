@@ -1,3 +1,21 @@
+
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/trunk/CONTRIBUTORS.txt 
+
+$LicenseInfo:firstyear=2008&license=apachev2$
+
+Copyright 2009, Linden Research, Inc.
+
+Licensed under the Apache License, Version 2.0.
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/LICENSE.txt
+
+$/LicenseInfo$
+"""
+
 # standard python libraries
 from logging import getLogger, ERROR, WARNING, INFO, DEBUG
 import signal
@@ -155,20 +173,5 @@ class AgentManager(object):
             log(WARNING, "These agents have not yet shut down. Killing the process hard.\n\t\t%s" % (self.get_active_agents()))
             sys.exit(1)
 
-"""
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
 
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2009, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at:
-    http://www.apache.org/licenses/LICENSE-2.0
-or in 
-    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
 

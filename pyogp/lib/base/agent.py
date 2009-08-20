@@ -1,3 +1,21 @@
+
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/trunk/CONTRIBUTORS.txt 
+
+$LicenseInfo:firstyear=2008&license=apachev2$
+
+Copyright 2009, Linden Research, Inc.
+
+Licensed under the Apache License, Version 2.0.
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/LICENSE.txt
+
+$/LicenseInfo$
+"""
+
 # standard python libs
 from logging import getLogger, WARNING, INFO, DEBUG
 import re
@@ -1107,19 +1125,4 @@ class Home(object):
         self.look_at = Vector3(X=self.look_at[0], Y=self.look_at[1], Z=self.look_at[2])
         self.position = Vector3(X=self.position[0], Y=self.position[1], Z=self.position[2])
 
-"""
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt 
 
-$LicenseInfo:firstyear=2008&license=apachev2$
-
-Copyright 2009, Linden Research, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at:
-    http://www.apache.org/licenses/LICENSE-2.0
-or in 
-    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
-
-$/LicenseInfo$
-"""
