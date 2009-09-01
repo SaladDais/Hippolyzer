@@ -411,7 +411,7 @@ class AssetType(object):
     Script          = 4
     Clothing        = 5
     Object          = 6
-    NoteCard        = 7
+    Notecard        = 7
     Category        = 8
     RootCategory    = 9
     LSLText         = 10
@@ -468,6 +468,20 @@ class Permissions(object):
     None_ = 0
     All = 0x7FFFFFFF
     Unrestricted = Transfer | Modify | Copy
+
+
+class DeRezDestination(object):
+    SaveIntoAgentInventory  = 0
+    AcquireToAgentInventory = 1
+    SaveIntoTaskInventory   = 2
+    Attachment              = 3
+    TakeIntoAgentInventory  = 4
+    ForceToGodInventory     = 5
+    Trash                   = 6
+    AttachmentToInventory   = 7
+    AttachmentExists        = 8
+    ReturnToOwner           = 9
+    ReturnToLastOwner       = 10
 
 
 
