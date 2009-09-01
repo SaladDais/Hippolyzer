@@ -41,7 +41,7 @@ if debug:
     logging.getLogger('').setLevel(logging.DEBUG)
     logger = logging.getLogger('pyogp.lib.base.tests.helpers')
 
-    logger.debug('setting debug to True')
+    logger.debug(('setting debug to True')
 
 
 

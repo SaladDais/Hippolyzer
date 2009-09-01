@@ -36,7 +36,6 @@ from pyogp.lib.base.utilities.helpers import Helpers
 
 # initialize logging
 logger = getLogger('message.udpdispatcher')
-log = logger.log
 
 #maybe make a global utility
 class UDPDispatcher(object):
@@ -146,7 +145,7 @@ class UDPDispatcher(object):
                     host_string = ' (%s)' % (host)
                 else:
                     host_string = ''
-                log(DEBUG, 'Received packet%s : %s (%s)%s' % (host_string, recv_packet.name, recv_packet.packet_id, hex_string))
+                logger.debug('Received packet%s : %s (%s)%s' % (host_string, recv_packet.name, recv_packet.packet_id, hex_string))
 
             if self.settings.HANDLE_PACKETS:
                 self.message_handler.handle(recv_packet)
@@ -209,7 +208,7 @@ class UDPDispatcher(object):
                         host_string = ' (%s)' % (host)
                     else:
                         host_string = ''
-                    log(DEBUG, 'Sent packet    %s : %s (%s)%s' % (host_string, packet.name, packet.packet_id, hex_string))
+                    logger.debug('Sent packet    %s : %s (%s)%s' % (host_string, packet.name, packet.packet_id, hex_string))
 
             #TODO: remove this when testing a network
             self.udp_client.send_packet(self.socket, send_buffer, host)
@@ -219,7 +218,7 @@ class UDPDispatcher(object):
             return send_buffer
 
         except Exception, error:
-            log(WARNING, "Error trying to serialize the following packet: %s" % (packet))
+            logger.warning("Error trying to serialize the following packet: %s" % (packet))
             traceback.print_exc()
 
             return
@@ -279,7 +278,7 @@ class UDPDispatcher(object):
                 msg.add_block(block)
 
                 if self.settings.LOG_VERBOSE and not self.settings.DISABLE_SPAMMERS:
-                    log(DEBUG, "Acking packet id: %s" % (packet_id))
+                    logger.debug("Acking packet id: %s" % (packet_id))
 
                 acks_this_packet += 1
 
@@ -302,7 +301,7 @@ class UDPDispatcher(object):
         return False
 
     def __repr__(self):
-        
+
         return 'UDPDispatcher to %s' % (str(self.udp_client.sender))
 
 

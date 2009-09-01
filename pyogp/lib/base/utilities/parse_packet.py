@@ -30,7 +30,6 @@ from pyogp.lib.base.settings import Settings
 from logging import getLogger, StreamHandler, Formatter, CRITICAL, ERROR, WARNING, INFO, DEBUG
 
 logger = getLogger('parse_packet')
-log = logger.log
 
 class parsingStats(object):
 
@@ -101,7 +100,7 @@ def process_file(options, stats):
             linecount = len(lines)
             markers = [10,20,30,40,50,60,70,80,90,100]
 
-            log(INFO, 'Processing %s of up to %s packets' % (options.count, linecount))
+            logger.info('Processing %s of up to %s packets' % (options.count, linecount))
 
         percent = 0.0
         for line in lines:
@@ -118,9 +117,9 @@ def process_file(options, stats):
                 if re.search('field name="data"', line):
                     if options.count > 0:
                         percent = (counter/float(options.count)) * 100
-                        #log(INFO, "%s percent complete... (%s of %s)" % (percent, counter, options.count))
+                        #logger.info("%s percent complete... (%s of %s)" % (percent, counter, options.count))
                         if (percent) in markers:
-                            log(INFO, "%s percent complete... (%s of %s)" % (int(percent), counter, options.count))
+                            logger.info("%s percent complete... (%s of %s)" % (int(percent), counter, options.count))
                     counter += 1
                     items = line.split()
                     process_stream(items[2][7:len(items[2])-3], packetSource, stats)

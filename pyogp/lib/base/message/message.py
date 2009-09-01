@@ -25,7 +25,7 @@ from msgtypes import PackFlags
 
 class MessageBase(MsgData):
     """ base representation of a message's name, blocks, and variables.
-    
+
     MessageBase expects a name, and *args consisting of Block() instances 
     (which takes a name and **kwargs)
     """
@@ -47,7 +47,7 @@ class MessageBase(MsgData):
 
 class Block(MsgBlockData):
     """ base representation of a block
-    
+
     Block expects a name, and kwargs for variables (var_name = value)
     """
 

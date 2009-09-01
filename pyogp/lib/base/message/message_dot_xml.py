@@ -30,7 +30,6 @@ from pyogp.lib.base.message.data import msg_details
 
 # initialize logging
 logger = getLogger('...message.message_dot_xml')
-log = logger.log
 
 class MessageDotXML(object):
     """ storage class for a python representation of the llsd message.xml """

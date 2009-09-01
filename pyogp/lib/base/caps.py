@@ -31,7 +31,6 @@ from pyogp.lib.base.utilities.helpers import LLSDDeserializer, ListLLSDSerialize
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.caps')
-log = logger.log
 
 class Capability(object):
     """ models a capability 
@@ -64,12 +63,12 @@ class Capability(object):
 
         self.name = name
         self.public_url = public_url
-        #log(DEBUG, 'instantiated cap %s' %self)
+        #logger.debug('instantiated cap %s' %self)
 
     def GET(self,custom_headers={}):
         """call this capability, return the parsed result"""
 
-        if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, '%s: GETing %s' %(self.name, self.public_url))
+        if self.settings.ENABLE_CAPS_LOGGING: logger.debug('%s: GETing %s' %(self.name, self.public_url))
 
         try:
             response = self.restclient.GET(self.public_url)
@@ -88,18 +87,18 @@ class Capability(object):
             deserializer = LLSDDeserializer()
         else:
             raise DeserializerNotFound(content_type)
-	
+
         data = deserializer.deserialize(response.body)
 
-        if self.settings.LOG_VERBOSE and self.settings.ENABLE_CAPS_LLSD_LOGGING: log(DEBUG, 'Received the following llsd from %s: %s' % (self.public_url, response.body.strip()))
-        if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, 'Get of cap %s response is: %s' % (self.public_url, data))        
+        if self.settings.LOG_VERBOSE and self.settings.ENABLE_CAPS_LLSD_LOGGING: logger.debug('Received the following llsd from %s: %s' % (self.public_url, response.body.strip()))
+        if self.settings.ENABLE_CAPS_LOGGING: logger.debug('Get of cap %s response is: %s' % (self.public_url, data))        
 
         return data
 
     def POST(self,payload,custom_headers={}):
         """call this capability, return the parsed result"""
 
-        if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, 'Sending to cap %s the following payload: %s' %(self.public_url, payload))        
+        if self.settings.ENABLE_CAPS_LOGGING: logger.debug('Sending to cap %s the following payload: %s' %(self.public_url, payload))        
 
         # serialize the data
         if (type(payload) is ListType):
@@ -112,7 +111,7 @@ class Capability(object):
         content_type = serializer.content_type
         serialized_payload = serializer.serialize()
 
-        if self.settings.LOG_VERBOSE and self.settings.ENABLE_CAPS_LLSD_LOGGING: log(DEBUG, 'Posting the following payload to %s: %s' % (self.public_url, serialized_payload))
+        if self.settings.LOG_VERBOSE and self.settings.ENABLE_CAPS_LLSD_LOGGING: logger.debug('Posting the following payload to %s: %s' % (self.public_url, serialized_payload))
 
         headers = {"Content-type" : content_type}
         headers.update(custom_headers)  # give the user the ability to add headers 
@@ -126,14 +125,14 @@ class Capability(object):
                 raise ResourceError(self.public_url, e.code, e.msg, e.fp.read(), method="POST")
 
         return self._response_handler(response)
-        
+
     def POST_FILE(self, file_name, custom_headers={}):
         """ Opens file at file_name and posts contents to this cap. """
         headers = {"Content-type" : "application/octet-stream"}
         fd = open(file_name)
         payload = fd.read()
         fd.close
-        
+
         try:
             response = self.restclient.POST(self.public_url,
                                             payload, headers=headers)
@@ -145,7 +144,7 @@ class Capability(object):
                                     e.fp.read(), method="POST")
 
         return self._response_handler(response)
-        
+
     def _response_handler(self, response):
         # now deserialize the data again, we ask for a utility with the content type
         # as the name
@@ -162,11 +161,11 @@ class Capability(object):
         else:
             print response
             raise DeserializerNotFound(content_type)
-	
+
         data = deserializer.deserialize(response.body)
 
-        if self.settings.ENABLE_CAPS_LLSD_LOGGING: log(DEBUG, 'Received the following llsd from %s: %s' % (self.public_url, response.body.strip()))
-        if self.settings.ENABLE_CAPS_LOGGING: log(DEBUG, 'Post to cap %s response is: %s' % (self.public_url, data))        
+        if self.settings.ENABLE_CAPS_LLSD_LOGGING: logger.debug('Received the following llsd from %s: %s' % (self.public_url, response.body.strip()))
+        if self.settings.ENABLE_CAPS_LOGGING: logger.debug('Post to cap %s response is: %s' % (self.public_url, data))        
 
         return data
 

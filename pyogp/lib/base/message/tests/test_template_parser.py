@@ -172,7 +172,7 @@ class TestTemplates(unittest.TestCase):
                 line = lines.next()
             except StopIteration:
                 break
-            
+
             low = re.match(l, line)
             medium = re.match(m, line)
             high = re.match(h, line)
@@ -185,7 +185,7 @@ class TestTemplates(unittest.TestCase):
                 high_count += 1
             if fixed:
                 fixed_count += 1
-            
+
         frequency_counter = {"low":0, 'medium':0, "high":0, 'fixed':0}
         for template in self.msg_dict.message_templates.values():
             frequency_counter[template.get_frequency_as_string()]+=1

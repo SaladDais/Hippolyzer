@@ -29,7 +29,6 @@ from pyogp.lib.base.exc import DataParsingError
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.datatypes')
-log = logger.log
 
 class Vector3(object):
     """ represents a vector as a tuple"""
@@ -91,7 +90,7 @@ class Vector3(object):
         z = a.Z - b.Z
         return x*x + y*y + z*z
     dist_squared = staticmethod(dist_squared)
-    
+
 
 class Quaternion(object):
     """ represents a quaternion as a tuple"""
@@ -187,7 +186,7 @@ class UUID(object):
             return self.uuid
 
         else:
-            log(WARNING, "Attempted to overwrite a stored uuid %s with a random, that is a bad idea..." % (str(self.uuid)))
+            logger.warning("Attempted to overwrite a stored uuid %s with a random, that is a bad idea..." % (str(self.uuid)))
 
     def unpack_from_bytes(self, bytes, offset):
         """ unpack uuid from binary """
@@ -224,14 +223,14 @@ class UUID(object):
             return self.uuid == other.uuid
         else:
             return False
-    
+
 
     def __xor__(self, arg):
         """ the xor of two UUIDs """
         temp = self.uuid.int ^ arg.uuid.int
         result = uuid.UUID(int = temp)
         return UUID(result.__str__())
-        
+
 
 
 

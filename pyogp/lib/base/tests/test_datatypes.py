@@ -122,7 +122,7 @@ class TestDatatypes(unittest.TestCase):
     def test_UUID_new(self):
 
         tmp_uuid = UUID()
-        
+
         self.assertEquals(tmp_uuid.__dict__, {'uuid': uuid.UUID('00000000-0000-0000-0000-000000000000')})
         self.assertEquals(tmp_uuid(), uuid.UUID('00000000-0000-0000-0000-000000000000'))
 

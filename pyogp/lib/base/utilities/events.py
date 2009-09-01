@@ -22,7 +22,6 @@ import traceback
 
 # initialize logging
 logger = getLogger('utilities.events')
-log = logger.log
 
 class Event(object):
     """ an object containing data which will be passed out to all subscribers """
@@ -62,7 +61,7 @@ class Event(object):
             except Exception, error:
 
                 traceback.print_exc()
-                log(WARNING, "Error in event firing module")
+                logger.warning("Error in event firing module")
                 raise 
 
     def getSubscriberCount(self):

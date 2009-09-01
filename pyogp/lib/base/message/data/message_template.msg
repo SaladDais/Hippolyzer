@@ -342,7 +342,7 @@ version 2.0
 		{	Message				Variable	1	}
 	}
 }
- 
+
 
 // ****************************************************************************
 // Simulator to dataserver messages

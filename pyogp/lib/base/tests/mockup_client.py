@@ -65,8 +65,8 @@ class MockupClient(object):
         return response
 
     def __repr__(self):
-	    """ return a representation of itself """
-	    return "Restclient is MockupClient using webob and wsgi for %s" % (self.app)
+        """ return a representation of itself """
+        return "Restclient is MockupClient using webob and wsgi for %s" % (self.app)
 
 
 

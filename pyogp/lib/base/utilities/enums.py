@@ -158,7 +158,7 @@ class MoneyTransactionType(object):
     """ Money transaction type constants """
 
     Null                   = 0
-    
+
 # Codes 1000-1999 reserved for one-time charges
     ObjectClaim            = 1000
     LandClaim              = 1001
@@ -278,7 +278,7 @@ class AgentControlFlags(object):
     _ControlMlLbuttonDownIndex       = 30
     _ControlMlLbuttonUpIndex         = 31
     _TotalControls                   = 32
-    
+
     AtPos                 = 0x1 << _ControlAtPosIndex            # 0x00000001
     AtNeg                 = 0x1 << _ControlAtNegIndex            # 0x00000002
     LeftPos               = 0x1 << _ControlLeftPosIndex          # 0x00000004
@@ -289,18 +289,18 @@ class AgentControlFlags(object):
     PitchNeg              = 0x1 << _ControlPitchNegIndex         # 0x00000080
     YawPos                = 0x1 << _ControlYawPosIndex           # 0x00000100
     YawNeg                = 0x1 << _ControlYawNegIndex           # 0x00000200
-    
+
     FastAt                = 0x1 << _ControlFastAtIndex           # 0x00000400
     FastLeft              = 0x1 << _ControlFastLeftIndex         # 0x00000800
     FastUp                = 0x1 << _ControlFastUpIndex           # 0x00001000
-    
+
     Fly                   = 0x1 << _ControlFlyIndex              # 0x00002000
     Stop                  = 0x1 << _ControlStopIndex             # 0x00004000
     FinishAnim            = 0x1 << _ControlFinishAnimIndex       # 0x00008000
     StandUp               = 0x1 << _ControlStandUpIndex          # 0x00010000
     SitOnGround           = 0x1 << _ControlSitOnGroundIndex      # 0x00020000
     Mouselook             = 0x1 << _ControlMouselookIndex        # 0x00040000
-    
+
     NudgeAtPos            = 0x1 << _ControlNudgeAtPosIndex       # 0x00080000
     NudgeAtNeg            = 0x1 << _ControlNudgeAtNegIndex       # 0x00100000
     NudgeLeftPos          = 0x1 << _ControlNudgeLeftPosIndex     # 0x00200000
@@ -309,14 +309,14 @@ class AgentControlFlags(object):
     NudgeUpNeg            = 0x1 << _ControlNudgeUpNegIndex       # 0x01000000
     TurnLeft              = 0x1 << _ControlTurnLeftIndex         # 0x02000000
     TurnRight             = 0x1 << _ControlTurnRightIndex        # 0x04000000
-    
+
     Away                  = 0x1 << _ControlAwayIndex             # 0x08000000
-    
+
     LbuttonDown           = 0x1 << _ControlLbuttonDownIndex      # 0x10000000
     LbuttonUp             = 0x1 << _ControlLbuttonUpIndex        # 0x20000000
     MlLbuttonDown         = 0x1 << _ControlMlLbuttonDownIndex    # 0x40000000
     MlLbuttonUp           = 0x1 << _ControlMlLbuttonUpIndex      # 0x80000000
-    
+
     At                    = AtPos | AtNeg | NudgeAtPos | NudgeAtNeg    
     Left                  = LeftPos | LeftNeg | NudgeLeftPos | NudgeLeftNeg    
     Up                    = UpPos | UpNeg | NudgeUpPos | NudgeUpNeg    
@@ -374,7 +374,7 @@ class BakedIndex(object):
             return TextureIndex.TEX_HAIR_BAKED
         else:
             return -1
-        
+
 
 class WearablesIndex(object):
     WT_SHAPE      = 0
@@ -390,11 +390,11 @@ class WearablesIndex(object):
     WT_UNDERSHIRT = 10
     WT_UNDERPANTS = 11
     WT_SKIRT      = 12
-    
+
 class WearableMap(object):
     def __init__(self):
         self.map = {}
-       
+
         self.map[BakedIndex.BAKED_HEAD] = [WearablesIndex.WT_SHAPE, WearablesIndex.WT_SKIN, WearablesIndex.WT_HAIR]
         self.map[BakedIndex.BAKED_UPPER] = [WearablesIndex.WT_SHAPE, WearablesIndex.WT_SKIN, WearablesIndex.WT_SHIRT, WearablesIndex.WT_JACKET, WearablesIndex.WT_GLOVES, WearablesIndex.WT_UNDERSHIRT]
         self.map[BakedIndex.BAKED_LOWER] = [WearablesIndex.WT_SHAPE, WearablesIndex.WT_SKIN, WearablesIndex.WT_PANTS, WearablesIndex.WT_SHOES, WearablesIndex.WT_SOCKS,  WearablesIndex.WT_JACKET, WearablesIndex.WT_UNDERPANTS]
@@ -470,4 +470,4 @@ class Permissions(object):
     Unrestricted = Transfer | Modify | Copy
 
 
- 
+

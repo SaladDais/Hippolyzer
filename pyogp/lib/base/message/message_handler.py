@@ -25,7 +25,6 @@ from pyogp.lib.base.settings import Settings
 
 # initialize logging
 logger = getLogger('...message.message_handler')
-log = logger.log
 
 class MessageHandler(object):
     """ general class handling individual messages """
@@ -45,7 +44,7 @@ class MessageHandler(object):
 
     def register(self, message_name):
 
-        if self.settings.LOG_VERBOSE: log(DEBUG, 'Creating a monitor for %s' % (message_name))
+        if self.settings.LOG_VERBOSE: logger.debug('Creating a monitor for %s' % (message_name))
 
         return self.handlers.setdefault(message_name, MessageHandledNotifier(message_name, self.settings))
 
@@ -74,12 +73,12 @@ class MessageHandler(object):
             # Handle the message if we have subscribers
             # Conveniently, this will also enable verbose message logging
             if len(handler) > 0:
-                if self.settings.LOG_VERBOSE and not (self.settings.UDP_SPAMMERS and self.settings.DISABLE_SPAMMERS): log(DEBUG, 'Handling message : %s' % (message.name))
+                if self.settings.LOG_VERBOSE and not (self.settings.UDP_SPAMMERS and self.settings.DISABLE_SPAMMERS): logger.debug('Handling message : %s' % (message.name))
 
                 handler(message)
 
         except KeyError:
-            #log(INFO, "Received an unhandled message: %s" % (message.name))
+            #logger.info("Received an unhandled message: %s" % (message.name))
             pass
 
 class MessageHandledNotifier(object):
@@ -100,7 +99,7 @@ class MessageHandledNotifier(object):
     def unsubscribe(self, *args, **kwdargs):
         self.event.unsubscribe(*args, **kwdargs)
 
-        if self.settings.LOG_VERBOSE: log(DEBUG, "Removed the monitor for %s by %s" % (args, kwdargs))
+        if self.settings.LOG_VERBOSE: logger.debug("Removed the monitor for %s by %s" % (args, kwdargs))
 
     def __len__(self):
 

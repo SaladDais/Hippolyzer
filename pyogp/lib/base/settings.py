@@ -62,7 +62,7 @@ class Settings(object):
 
         # enable the appearance manager
         self.ENABLE_APPEARANCE_MANAGEMENT = True
-        
+
         # ~~~~~~
         # Camera
         # ~~~~~~

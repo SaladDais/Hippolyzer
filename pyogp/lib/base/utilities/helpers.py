@@ -31,7 +31,6 @@ from pyogp.lib.base.exc import DataParsingError, DeserializationFailed
 
 # initialize loggin
 logger = getLogger('...utilities.helpers')
-log = logger.log
 
 
 
@@ -118,7 +117,7 @@ class Helpers(object):
             val = 0.0
 
         return val
-   
+
 
     @staticmethod
     def pack_quaternion_to_vector3(quaternion):
@@ -148,13 +147,13 @@ class Helpers(object):
     def log_packet(packet, _object):
         """ default logging function for packets  """
 
-        log(INFO, "Object %s is monitoring packet type %s: \n%s" % (type(_object), packet.name, packet.data()))
+        logger.info("Object %s is monitoring packet type %s: \n%s" % (type(_object), packet.name, packet.data()))
 
     @staticmethod
     def log_event_queue_data(data, _object):
         """ default logging function for event queue data events  """
 
-        log(INFO, "Object %s is monitoring event queue data event %s: \n%s" % (type(_object), data.name, data.__dict__))
+        logger.info("Object %s is monitoring event queue data event %s: \n%s" % (type(_object), data.name, data.__dict__))
 
     @staticmethod
     def null_packet_handler(packet, _object):

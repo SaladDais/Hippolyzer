@@ -29,11 +29,11 @@ class DataManager(object):
             from pyogp.lib.base.settings import Settings
             self.settings = Settings()
         self.agent = agent
-    
+
     def enable_callbacks(self):
         """
         Implementing class would instantiate its message handlers here
         """
         raise NotImplemented("enable_callbacks")
-    
-    
+
+

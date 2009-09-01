@@ -32,7 +32,6 @@ from message import Message
 from pyogp.lib.base import exc
 
 logger = getLogger('message.udpdeserializer') 
-log = logger.log 
 
 class UDPMessageDeserializer(object):
 
@@ -115,13 +114,13 @@ class UDPMessageDeserializer(object):
                 try:
                     return self.__decode_data(msg_buff)
                 except exc.DataUnpackingError, error:
-                    #log(WARNING, "Error parsing packet due to: %s" % (error))
+                    #logger.warning("Error parsing packet due to: %s" % (error))
                     raise exc.MessageDeserializationError("packet parsing", error)
                     return None
 
             else:
 
-                if self.settings.LOG_VERBOSE and self.settings.ENABLE_UDP_LOGGING and self.settings.LOG_SKIPPED_PACKETS: log(DEBUG, 'Received packet : %s (Skipping)' % (self.current_template.name))
+                if self.settings.LOG_VERBOSE and self.settings.ENABLE_UDP_LOGGING and self.settings.LOG_SKIPPED_PACKETS: logger.debug('Received packet : %s (Skipping)' % (self.current_template.name))
 
         return None
 
@@ -143,7 +142,7 @@ class UDPMessageDeserializer(object):
         if self.current_template != None:
             return True
 
-        log(INFO, "Received unknown packet: '%s', packet is not in our message_template" % (header)) 
+        logger.info("Received unknown packet: '%s', packet is not in our message_template" % (header)) 
 
         return False
 
@@ -272,7 +271,7 @@ class UDPMessageDeserializer(object):
 
                 decode_pos += 1
             else:
-                log(WARNING, "ERROR: Unknown block type: %s in %s packet." % (str(block.block_type), packet.name))
+                logger.warning("ERROR: Unknown block type: %s in %s packet." % (str(block.block_type), packet.name))
                 return None
 
             for i in range(repeat_count):
@@ -294,7 +293,7 @@ class UDPMessageDeserializer(object):
                         #HACK: this is a slow procedure, should passed in
                         templen = len(data)
                         if (decode_pos + data_size) > templen:
-                            log(WARNING, "ERROR: trying to read %s from a buffer of len %s in %s" % (str(decode_pos + var_size), str(len(data)), packet.name))
+                            logger.warning("ERROR: trying to read %s from a buffer of len %s in %s" % (str(decode_pos + var_size), str(len(data)), packet.name))
                             return None
                         if data_size == 1:
                             #print "Reading VARIABLE variable size 1 byte"
@@ -320,7 +319,7 @@ class UDPMessageDeserializer(object):
                     #HACK: this is a slow procedure, should passed in
                     if (decode_pos + var_size) > len(data):
                         print var_size
-                        log(WARNING, "ERROR: trying to read %s from a buffer of len %s in %s" % (str(decode_pos + var_size), str(len(data)), packet.name))
+                        logger.warning("ERROR: trying to read %s from a buffer of len %s in %s" % (str(decode_pos + var_size), str(len(data)), packet.name))
                         return None
                     unpacked_data = self.unpacker.unpack_data(data, \
                                                               variable.type, \

@@ -47,14 +47,14 @@ class MessageTemplateParser(object):
         self.count = 0
         self.state = 0
         self._parse_template_file()
-        
+
 
     def _add_template(self, new_template):
         self.count += 1
         self.message_templates.append(new_template)
 
     def _parse_template_file(self):
-        
+
         #regular expressions
         self.template_file.seek(0)
         lines = self.template_file
@@ -68,8 +68,8 @@ class MessageTemplateParser(object):
 
         current_template = None
         current_block = None
-        
-        
+
+
         while True:
             try:
                 line = lines.next()
@@ -77,10 +77,10 @@ class MessageTemplateParser(object):
                 break
             if re.match(comment_re, line):
                 continue
-            
+
             start = re.match(start_re, line)
             end = re.match(end_re, line)
-            
+
             if self.version == '':
                 version_test = re.match(version_re, line) #gets packet headers
                 if version_test != None:
@@ -88,33 +88,33 @@ class MessageTemplateParser(object):
                     parts = parts.split()
                     self.version = float(parts[0])
 
-            
+
             if start:
                 self.state += 1
-                            
+
             if self.state == MESSAGE:
                 message_header = re.match(message_header_re, line)
                 if message_header != None:
                     current_template = self._start_new_template(message_header)
                     self._add_template(current_template)
-                   
+
             if self.state == BLOCK:
                 block_header = re.match(block_header_re, line)
                 if block_header != None:
                     current_block = self._start_new_block(block_header)
                     current_template.add_block(current_block)
-                                       
+
             if self.state == DATA:
                 block_data = re.match(block_data_re, line)
                 if block_data != None:
                     current_block.add_variable(self._start_new_var(block_data))
-                                       
+
             if end:
                 self.state -= 1
-                
+
 
     def _start_new_template(self, match):
-        
+
         new_template = template.MessageTemplate(match.group(1))
 
         frequency = None
@@ -126,7 +126,7 @@ class MessageTemplateParser(object):
             frequency = MsgFrequency.HIGH_FREQUENCY_MESSAGE
         elif match.group(2) == 'Fixed':
             frequency = MsgFrequency.FIXED_FREQUENCY_MESSAGE
-            
+
         new_template.frequency = frequency
 
         msg_num = string.atoi(match.group(3),0)
@@ -141,10 +141,10 @@ class MessageTemplateParser(object):
             msg_num_hex = struct.pack('>BB', 0xff, msg_num)
         elif frequency == MsgFrequency.HIGH_FREQUENCY_MESSAGE:
             msg_num_hex = struct.pack('>B', msg_num)
-            
+
         new_template.msg_num = msg_num
         new_template.msg_num_hex = msg_num_hex
-                
+
         msg_trust = None
         if match.group(4) == 'Trusted':
             msg_trust = MsgTrust.LL_TRUSTED
@@ -158,7 +158,7 @@ class MessageTemplateParser(object):
             msg_encoding = MsgEncoding.LL_UNENCODED
         elif match.group(5) == 'Zerocoded':
             msg_encoding = MsgEncoding.LL_ZEROCODED
-            
+
         new_template.msg_encoding = msg_encoding
 
         msg_dep = None
@@ -176,11 +176,11 @@ class MessageTemplateParser(object):
         if msg_dep == None:
             print match.groups()
         new_template.msg_deprecation = msg_dep
-        
+
         return new_template
-        
+
     def _start_new_block(self, match):
-        
+
         new_block = template.MessageTemplateBlock(match.group(1))
 
         block_type = None
@@ -201,7 +201,7 @@ class MessageTemplateParser(object):
         return new_block
 
     def _start_new_var(self, match):
-        
+
         type_string = match.group(2)
         var_type = None
         var_size = -1
@@ -246,22 +246,22 @@ class MessageTemplateParser(object):
                 var_type = MsgType.MVT_FIXED
             elif type_string == 'Variable':
                 var_type = MsgType.MVT_VARIABLE
-                
+
             var_size = int(match.group(4))
             if var_size <= 0:
                 raise exc.MessageTemplateParsingError("variable size %s does not match %s" % (var_size, type_string))
         #if the size hasn't been read yet, then read it from message_types
         if var_size == -1:
             var_size = sizeof(var_type)
-            
+
         #LDE 23oct2008 add var+type to creation of MTV object for subsequent formmating goodness
-        
-       
+
+
         return template.MessageTemplateVariable(match.group(1), \
                                                 var_type, var_size)
-        
 
-        
+
+
 def print_packet_names(packet_list):
     frequency_counter = {"low":0, 'medium':0, "high":0, 'fixed':0}
     counter = 0
