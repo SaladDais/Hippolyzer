@@ -18,14 +18,17 @@ $/LicenseInfo$
 
 class Settings(object):
 
-    def __init__(self, quiet_logging = False):
+    def __init__(self, quiet_logging = False, spammy_logging = False, log_tests = True):
         """ some lovely configurable settings 
 
         These are applied application wide, and can be
         overridden at any time in a specific instance
+        
+        quiet_logging overrides spammy_logging
         """
 
         self.quiet_logging = quiet_logging
+        self.spammy_logging = spammy_logging
 
         # toggle handling udp packets
         self.HANDLE_PACKETS = True
@@ -38,9 +41,9 @@ class Settings(object):
         # make sure we can tone it down as well
 
         self.LOG_VERBOSE = True
-        self.ENABLE_BYTES_TO_HEX_LOGGING = True
+        self.ENABLE_BYTES_TO_HEX_LOGGING = False
         self.ENABLE_CAPS_LOGGING = True
-        self.ENABLE_CAPS_LLSD_LOGGING = True
+        self.ENABLE_CAPS_LLSD_LOGGING = False
         self.ENABLE_EQ_LOGGING = True
         self.ENABLE_UDP_LOGGING = True
         self.ENABLE_OBJECT_LOGGING = True
@@ -51,6 +54,11 @@ class Settings(object):
         # allow disabling logging of certain packets
         self.DISABLE_SPAMMERS = True
         self.UDP_SPAMMERS = ['PacketAck', 'AgentUpdate']
+
+        if self.spammy_logging:
+            self.ENABLE_BYTES_TO_HEX_LOGGING = True
+            self.ENABLE_CAPS_LLSD_LOGGING = True
+            self.DISABLE_SPAMMERS = False
 
         # override the defaults
         if self.quiet_logging:
@@ -64,12 +72,16 @@ class Settings(object):
             self.ENABLE_OBJECT_LOGGING = False
             self.ENABLE_HOST_LOGGING = False
             self.LOG_COROUTINE_SPAWNS = False
+            self.DISABLE_SPAMMERS = True
 
         #~~~~~~~~~~~~~~~~~~~~~~
         # Test related settings
         #~~~~~~~~~~~~~~~~~~~~~~
 
-        self.ENABLE_LOGGING_IN_TESTS = True
+        if log_tests:
+            self.ENABLE_LOGGING_IN_TESTS = True
+        else:
+            self.ENABLE_LOGGING_IN_TESTS = False
 
 
 
