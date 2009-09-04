@@ -18,7 +18,7 @@ $/LicenseInfo$
 
 #standard libs
 import struct
-from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG 
+from logging import getLogger
 
 #pyogp libs
 from pyogp.lib.base.settings import Settings

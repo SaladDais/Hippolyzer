@@ -19,7 +19,7 @@ $/LicenseInfo$
 # std lib
 import urllib2
 from types import *
-from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
+from logging import getLogger
 import re
 # related
 

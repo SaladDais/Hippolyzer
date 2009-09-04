@@ -20,7 +20,7 @@ $/LicenseInfo$
 import unittest
 
 # pyogp
-from pyogp.lib.base.utilities.events import Event
+from pyogp.lib.base.events import Event
 
 # pyogp tests
 import pyogp.lib.base.tests.config 
