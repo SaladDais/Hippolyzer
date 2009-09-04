@@ -24,7 +24,7 @@ from pyogp.lib.base.datatypes import UUID, Vector3, Quaternion
 
 # pyogp messaging
 from msgtypes import MsgType, EndianType
-from pyogp.lib.base.utilities.helpers import Helpers
+from pyogp.lib.base.helpers import Helpers
 
 class DataPacker(object):
     def __init__(self):

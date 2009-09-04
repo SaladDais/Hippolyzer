@@ -27,7 +27,7 @@ import re
 from pyogp.lib.base.network.stdlib_client import StdLibClient, HTTPError
 from pyogp.lib.base.exc import ResourceNotFound, ResourceError, DeserializerNotFound
 from pyogp.lib.base.settings import Settings
-from pyogp.lib.base.utilities.helpers import LLSDDeserializer, ListLLSDSerializer, DictLLSDSerializer
+from pyogp.lib.base.helpers import LLSDDeserializer, ListLLSDSerializer, DictLLSDSerializer
 
 # initialize logging
 logger = getLogger('pyogp.lib.base.caps')

@@ -32,7 +32,7 @@ from message import Message, Block
 from pyogp.lib.base.network.net import NetUDPClient
 from pyogp.lib.base import exc
 from pyogp.lib.base.settings import Settings
-from pyogp.lib.base.utilities.helpers import Helpers
+from pyogp.lib.base.helpers import Helpers
 
 # initialize logging
 logger = getLogger('message.udpdispatcher')

@@ -44,7 +44,7 @@ def test_suite():
                 )
             )
     #suite.addTest(doctest.DocTestSuite('pyogp.lib.base.caps', optionflags=optionflags))
-    suite.addTest(doctest.DocTestSuite('pyogp.lib.base.utilities.helpers', optionflags=optionflags))
+    suite.addTest(doctest.DocTestSuite('pyogp.lib.base.helpers', optionflags=optionflags))
     #suite.addTest(doctest.DocTestSuite('pyogp.lib.base.api', optionflags=optionflags))
 
 

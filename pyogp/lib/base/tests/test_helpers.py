@@ -20,7 +20,7 @@ $/LicenseInfo$
 import unittest
 
 # pyogp
-from pyogp.lib.base.utilities.helpers import Helpers, ListLLSDSerializer, DictLLSDSerializer, LLSDDeserializer
+from pyogp.lib.base.helpers import Helpers, ListLLSDSerializer, DictLLSDSerializer, LLSDDeserializer
 from pyogp.lib.base.exc import DataParsingError
 
 # pyogp tests
