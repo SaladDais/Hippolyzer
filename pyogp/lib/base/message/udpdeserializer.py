@@ -72,10 +72,11 @@ class UDPMessageDeserializer(object):
         msg_len = len(msg_buff)
 
         if ord(msg_buff[0]) & PackFlags.LL_ACK_FLAG:
-            #print "have acks! that number: "
-            acks = ord(msg_buff[msg_len-1])
-            ack_offset = msg_len - 1 - 4*acks
-            temp_acks = msg_buff[:ack_offset]
+            num_acks = ord(msg_buff[msg_len-1])
+            logger.debug("Decoding packet with acks: %d", num_acks)
+            ack_length = 1 + sizeof(MsgType.MVT_U32) * num_acks
+            temp_acks = msg_buff[-ack_length:]
+            msg_buff = msg_buff[:-ack_length]
 
         #Now zero decode the entire msg except the acks, in order to get the correct evaluation of the template
 
@@ -219,13 +220,13 @@ class UDPMessageDeserializer(object):
         if packet.send_flags & PackFlags.LL_ACK_FLAG:
             msg_size -= 1
             acks = self.unpacker.unpack_data(data, MsgType.MVT_U8, msg_size)
-            ack_start = acks * sizeof(MsgType.MVT_S32)
+            ack_start = acks * sizeof(MsgType.MVT_U32)
             ack_data = data[msg_size-ack_start:]
             ack_pos = 0
             while acks > 0:
-                ack_packet_id = self.unpacker.unpack_data(ack_data, MsgType.MVT_S32, \
+                ack_packet_id = self.unpacker.unpack_data(ack_data, MsgType.MVT_U32, \
                                                           start_index=ack_pos)
-                ack_pos += sizeof(MsgType.MVT_S32)
+                ack_pos += sizeof(MsgType.MVT_U32)
                 packet.add_ack(ack_packet_id)
                 acks -= 1
 
