@@ -41,11 +41,9 @@ logger = getLogger('message.udpdispatcher')
 class UDPDispatcher(object):
     #implements(IUDPDispatcher)
 
-    def __init__(self, udp_client = None, settings = None, message_handler = None, region = None):
+    def __init__(self, udp_client = None, settings = None, message_handler = None):
         #holds the details of the message, or how the messages should be sent,
         #built, and read
-
-        self.region = region
 
         self.packets_in = 0
         self.packets_out = 0

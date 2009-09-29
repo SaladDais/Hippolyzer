@@ -72,18 +72,20 @@ class MessageManager(object):
         
         #event queue-related attributes
         self.capabilities = capabilities
-        self.event_queue = EventQueueClient(self.capabilities['EventQueueGet'], 
-                                            settings = self.settings, 
-                                            message_handler = self.message_handler, 
-                                            region = self.region,
-                                            host = self.host)
+        if self.capabilities.has_key('EventQueueGet'):
+            self.event_queue = EventQueueClient(self.capabilities['EventQueueGet'], 
+                                                settings = self.settings, 
+                                                message_handler = self.message_handler, 
+                                                region = self.region,
+                                                host = self.host)
+        else:
+            self.event_queue = None
         
         #UDP-related attributes
         self.incoming_queue = []
         self.outgoing_queue = []
         self.udp_dispatcher = UDPDispatcher(settings = self.settings, 
-                                            message_handler = self.message_handler,
-                                            region = self.region) 
+                                            message_handler = self.message_handler) 
                 
         # if start parameter = True, kick off the queue monitors
         if start_monitors:
@@ -94,8 +96,9 @@ class MessageManager(object):
         self._is_running = True
         logger.debug('Spawning region UDP connection')
         api.spawn(self._udp_dispatcher)
-        logger.debug('Spawning region event queue connection')
-        api.spawn(self.event_queue.start)
+        if self.event_queue != None:
+            logger.debug('Spawning region event queue connection')
+            api.spawn(self.event_queue.start)
         #api.spawn(self.monitor_outgoing_queue)
         #api.spawn(self.monitor_incoming_queue)
         
