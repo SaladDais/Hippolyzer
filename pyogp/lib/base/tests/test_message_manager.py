@@ -40,12 +40,16 @@ class TestMessageManager(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_start_monitors(self):
+    def test_start_stop_monitors(self):
         self.message_manager.start_monitors()
+        api.sleep(0)
         self.assertTrue(self.message_manager._is_running)
-        api.sleep(.1)
         self.assertTrue(self.message_manager.event_queue._running)
-                
+        self.message_manager.stop_monitors()
+        api.sleep(0)
+        self.assertFalse(self.message_manager._is_running)
+        #self.assertFalse(self.message_manager.event_queue._running)
+        
     def test_enqueue_message(self):
         pass
 

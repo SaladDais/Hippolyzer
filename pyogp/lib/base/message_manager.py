@@ -57,7 +57,7 @@ class MessageManager(object):
             self.message_handler = MessageHandler()
 
         logger.debug("Initializing the Message Manager ")        
-        
+
         self.host = Host((region.sim_ip, region.sim_port))
         # initialize the manager's base attributes
         #self.builder = MessageBuilder()     # 
@@ -104,7 +104,7 @@ class MessageManager(object):
     def stop_monitors(self):
         """ stops monitoring coroutines """
         #stops udp_dispatcher
-        self._running = False
+        self._is_running = False
         #stops event_queue
         if self.event_queue._running:
             self.event_queue.stop()        
