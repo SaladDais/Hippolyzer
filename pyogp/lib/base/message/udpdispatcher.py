@@ -302,5 +302,3 @@ class UDPDispatcher(object):
 
         return 'UDPDispatcher to %s' % (str(self.udp_client.sender))
 
-
-

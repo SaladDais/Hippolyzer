@@ -36,7 +36,7 @@ from pyogp.lib.base.message.message import Message, Block, Variable
 from pyogp.lib.base.message.template_dict import TemplateDictionary
 
 # initialize logging
-logger = getLogger('pyogp.lib.client.event_queue')
+logger = getLogger('pyogp.lib.base.event_queue')
 
 class EventQueueClient(object):
     """ handles an event queue of either an agent domain or a simulator 
@@ -64,7 +64,7 @@ class EventQueueClient(object):
         if settings != None:
             self.settings = settings
         else:
-            from pyogp.lib.client.settings import Settings
+            from pyogp.lib.base.settings import Settings
             self.settings = Settings()
 
         # allow the packet_handler to be passed in

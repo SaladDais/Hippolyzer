@@ -55,6 +55,10 @@ class Settings(object):
         self.DISABLE_SPAMMERS = True
         self.UDP_SPAMMERS = ['PacketAck', 'AgentUpdate']
 
+        # how many seconds to wait between polling
+        # a region's event queue
+        self.REGION_EVENT_QUEUE_POLL_INTERVAL = 1
+        
         if self.spammy_logging:
             self.ENABLE_BYTES_TO_HEX_LOGGING = True
             self.ENABLE_CAPS_LLSD_LOGGING = True
@@ -83,5 +87,5 @@ class Settings(object):
         else:
             self.ENABLE_LOGGING_IN_TESTS = False
 
-
+        
 

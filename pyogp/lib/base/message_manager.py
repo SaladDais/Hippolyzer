@@ -27,7 +27,7 @@ from pyogp.lib.base.settings import Settings
 from eventlet import api
 
 # initialize logging
-logger = getLogger('pyogp.lib.client.message_manager')
+logger = getLogger('pyogp.lib.base.message_manager')
 
 class MessageManager(object):
     """ 
@@ -59,7 +59,6 @@ class MessageManager(object):
         logger.debug("Initializing the Message Manager ")        
         
         self.host = Host((region.sim_ip, region.sim_port))
-        print self.host
         # initialize the manager's base attributes
         #self.builder = MessageBuilder()     # 
         #self.connections = {}               # a connection = {Host():
@@ -74,7 +73,6 @@ class MessageManager(object):
         self.capabilities = capabilities
         if self.capabilities.has_key('EventQueueGet'):
             self.event_queue = EventQueueClient(self.capabilities['EventQueueGet'], 
-                                                settings = self.settings, 
                                                 message_handler = self.message_handler, 
                                                 region = self.region,
                                                 host = self.host)
@@ -82,6 +80,7 @@ class MessageManager(object):
             self.event_queue = None
         
         #UDP-related attributes
+        #NOTE udpdispatcher can already multiplex hosts 
         self.incoming_queue = []
         self.outgoing_queue = []
         self.udp_dispatcher = UDPDispatcher(settings = self.settings, 
@@ -112,7 +111,8 @@ class MessageManager(object):
 
     def monitor_outgoing_queue(self):
         """  """
-
+        pass
+        
     def enqueue_message(self, message, endpoint, reliable = False,
                         now = False):
         """ enqueues a Message() in the outgoing_queue """
