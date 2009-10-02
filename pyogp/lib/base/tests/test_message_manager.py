@@ -22,7 +22,9 @@ import unittest
 # pyogp
 from pyogp.lib.base.message_manager import MessageManager
 from pyogp.lib.base.caps import Capability
-from pyogp.lib.client.region import Region
+from pyogp.lib.base.message.message import Message, Block
+from pyogp.lib.base.tests.mockup_net import MockupUDPServer, MockupUDPClient
+from pyogp.lib.base.message.circuit import Host
 
 # pyogp tests
 import pyogp.lib.base.tests.config 
@@ -32,11 +34,11 @@ from eventlet import api
 class TestMessageManager(unittest.TestCase):
 
     def setUp(self):
-        region = Region()
-        region.sim_ip = '127.0.0.1'
-        region.sim_port = '9009'
-        self.message_manager = MessageManager(region, capabilities={'EventQueueGet' : Capability('EventQueueGet', 'http://127.0.0.1')})
-                                              
+        self.host = Host((MockupUDPServer(), 80))
+        self.message_manager = MessageManager(self.host,
+                                              capabilities={'EventQueueGet' : Capability('EventQueueGet', 'http://127.0.0.1')})
+
+        
     def tearDown(self):
         pass
 
@@ -46,12 +48,38 @@ class TestMessageManager(unittest.TestCase):
         self.assertTrue(self.message_manager._is_running)
         self.assertTrue(self.message_manager.event_queue._running)
         self.message_manager.stop_monitors()
-        api.sleep(0)
+        api.sleep(2)
         self.assertFalse(self.message_manager._is_running)
-        #self.assertFalse(self.message_manager.event_queue._running)
+        self.assertTrue(self.message_manager.event_queue.stopped)
+        self.assertFalse(self.message_manager.event_queue._running)
         
     def test_enqueue_message(self):
-        pass
+        message = Message('TestMessage1',
+                          Block('TestBlock1',
+                                Test1 = 0),
+                          Block('NeighborBlock',
+                                Test0 = 0,
+                                Test1 = 1,
+                                Test2 = 2))
+        self.message_manager.enqueue_message(message,
+                                             reliable = True)
+        self.assertEqual(self.message_manager.outgoing_queue[0][0].name,
+                         'TestMessage1')
+        self.assertTrue(self.message_manager.outgoing_queue[0][1])
+        message2 = Message('TestMessage2',
+                          Block('TestBlock1',
+                                Test1 = 0),
+                          Block('NeighborBlock',
+                                Test0 = 0,
+                                Test1 = 1,
+                                Test2 = 2))
+        self.message_manager.enqueue_message(message2,
+                                             reliable = False,
+                                             now = True)
+        self.assertEqual(self.message_manager.outgoing_queue[0][0].name,
+                         'TestMessage2')
+        self.assertFalse(self.message_manager.outgoing_queue[0][1])
+        
 
     def test_send_udp_message(self):
         pass

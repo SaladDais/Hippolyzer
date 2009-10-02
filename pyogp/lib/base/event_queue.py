@@ -56,7 +56,7 @@ class EventQueueClient(object):
     """
 
     def __init__(self, capability = None, settings = None, \
-                 message_handler = None, region = None, host = None):
+                 message_handler = None, host = None):
         """ set up the event queue attributes """
 
         # allow the settings to be passed in
@@ -75,7 +75,6 @@ class EventQueueClient(object):
         else:
             self.message_handler = MessageHandler()
 
-        self.region = region
         self.host = host
 
         self.cap = capability
@@ -147,11 +146,11 @@ class EventQueueClient(object):
                 if self._running == False:
                     logger.info(
                         "Stopped event queue processing for %s",
-                        self.region.SimName)
+                        self.host)
                     return
             logger.warning(
                 "Failed to stop event queue for %s after %s seconds",
-                self.region.SimName,
+                self.host,
                 str(interval * times))
 
         api.spawn(stop_monitor, self, self.settings.REGION_EVENT_QUEUE_POLL_INTERVAL, 10)
@@ -208,7 +207,7 @@ class EventQueueClient(object):
 
             self._running = False
 
-            logger.debug("Stopped event queue processing for %s" % (self.region.SimName))
+            logger.debug("Stopped event queue processing for %s" % (self.host))
 
     def _processADEventQueue(self):
         """ connects to an agent domain's event queue """

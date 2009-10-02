@@ -21,7 +21,6 @@ from logging import getLogger
 
 from pyogp.lib.base.message.udpdispatcher import UDPDispatcher
 from pyogp.lib.base.message.message_handler import MessageHandler
-from pyogp.lib.base.message.circuit import Host
 from pyogp.lib.base.event_queue import EventQueueClient
 from pyogp.lib.base.settings import Settings
 from eventlet import api
@@ -35,13 +34,15 @@ class MessageManager(object):
     functionality in the base/message directory.
     """
 
-    def __init__(self, region, message_handler=None, capabilities={},
+    def __init__(self, host, message_handler=None, capabilities={},
                  settings=None, start_monitors=False):
         """ 
         Initialize the MessageManager, applying custom settings and dedicated 
         message_handler if needed 
         """
-        self.region = region
+
+        logger.debug("Initializing the Message Manager ")        
+        self.host = host
         # allow the settings to be passed in
         # otherwise, grab the defaults
         if settings != None:
@@ -55,10 +56,7 @@ class MessageManager(object):
             self.message_handler = message_handler
         elif self.settings.HANDLE_PACKETS:
             self.message_handler = MessageHandler()
-
-        logger.debug("Initializing the Message Manager ")        
-
-        self.host = Host((region.sim_ip, region.sim_port))
+        
         # initialize the manager's base attributes
         #self.builder = MessageBuilder()     # 
         #self.connections = {}               # a connection = {Host():
@@ -74,7 +72,6 @@ class MessageManager(object):
         if self.capabilities.has_key('EventQueueGet'):
             self.event_queue = EventQueueClient(self.capabilities['EventQueueGet'], 
                                                 message_handler = self.message_handler, 
-                                                region = self.region,
                                                 host = self.host)
         else:
             self.event_queue = None
@@ -113,7 +110,7 @@ class MessageManager(object):
         """  """
         pass
         
-    def enqueue_message(self, message, endpoint, reliable = False,
+    def enqueue_message(self, message, reliable = False,
                         now = False):
         """ enqueues a Message() in the outgoing_queue """
 
@@ -149,7 +146,7 @@ class MessageManager(object):
                 (packet, reliable) = self.outgoing_queue.pop(0)
                 self.send_udp_message(packet, reliable)
                 
-        logger.debug("Stopped the UDP connection for %s" % (self.region.SimName))
+        logger.debug("Stopped the UDP connection for %s" % (self.host))
 
     def send_udp_message(self, packet, reliable=False):
         """
