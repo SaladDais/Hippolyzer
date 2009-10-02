@@ -77,7 +77,7 @@ class Vector3(object):
     def __repr__(self):
         """ represent a vector as a string """
 
-        return str((self.X, self.Y, self.Z))
+        return '<%s, %s, %s>' % (self.X, self.Y, self.Z)
 
     def __call__(self):
         """ represent a vector as a tuple """
@@ -91,6 +91,18 @@ class Vector3(object):
         return x*x + y*y + z*z
     dist_squared = staticmethod(dist_squared)
 
+    @staticmethod
+    def parse(s):
+        """Parse a string of the form '<x, y, z>' or 'x, y, z' and return a Vector3.
+        Will raise a ValueError
+        """
+        s = s.replace('<', '').replace('>', '')
+        dims = s.split(',')
+        if len(dims) != 3:
+            raise ValueError("Expected 3 values in string")
+
+        x, y, z = [float(d.strip()) for d in dims]
+        return Vector3(X=x, Y=y, Z=z)
 
 class Quaternion(object):
     """ represents a quaternion as a tuple"""
