@@ -206,12 +206,6 @@ class EventQueueClient(object):
                 self.data = {'ack':self.last_id, 'done':True}
                 self.cap.POST(self.data)
 
-            if self.last_id != -1:
-                # Need to ack the last message received, otherwise it will be
-                # resent if we re-connect to the same queue
-                self.data = {'ack':self.last_id, 'done':True}
-                self.cap.POST(self.data)
-
             self._running = False
 
             logger.debug("Stopped event queue processing for %s" % (self.region.SimName))
