@@ -294,19 +294,15 @@ class EventQueueClient(object):
 
                                 for block_name in message['body']:
 
-                                    # block_data keys off of block.name, which here is the body attribute
-                                    block = Block(block_name)
+                                    for block_data in message['body'][block_name]:                                       
+                                        block = Block(block_name)
+                                        new_message.add_block(block)
 
-                                    new_message.add_block(block)
+                                        for variable in block_data:
 
-                                    for items in message['body'][block_name]:                                       
-
-                                        for variable in items:
-
-                                            var_data = Variable(variable, items[variable], -1)
+                                            var_data = Variable(variable, block_data[variable], -1)
                                             block.add_variable(var_data)
 
-                                #packet.blocks = message.blocks
                                 messages.append(new_message)
 
                             else:
