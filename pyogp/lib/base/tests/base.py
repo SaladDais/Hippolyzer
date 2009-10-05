@@ -84,7 +84,7 @@ class MockXMLRPCLogin(object):
 
         # ToDo: we should really parse the data we receive in the string and respond nicely
 
-        if self.request.path=="/login.cgi":
+        if self.request.path=="/cgi-bin/login.cgi":
             return self.handle_legacy_login(data)
         else:
             return self.send_response(404, 'resource not found.')

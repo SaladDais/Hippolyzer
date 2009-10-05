@@ -17,7 +17,9 @@ $/LicenseInfo$
 """
 
 #standard libraries
-import unittest, doctest, re
+import unittest
+import doctest
+import re
 
 #local libraries
 from pyogp.lib.base.message.data import msg_tmpl
@@ -27,6 +29,7 @@ from pyogp.lib.base.message.template_parser import MessageTemplateParser
 from pyogp.lib.base.message.msgtypes import MsgFrequency, MsgTrust, MsgEncoding, MsgDeprecation, MsgBlockType, MsgType
 
 class TestDictionary(unittest.TestCase):
+
     def setUp(self):
         self.template_file = msg_tmpl
         parser = MessageTemplateParser(self.template_file)
@@ -34,6 +37,26 @@ class TestDictionary(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    '''
+    # ToDo: in progress
+    def test_template_dict_has_all_messages(self):
+
+        f = msg_tmpl
+        msg_dict = TemplateDictionary(self.template_list)
+        matches = 0
+        print type(f)
+
+        # parse the file handle's contents, trying to establish which lines indicate 
+        # it's the declaration of a new message type
+        for line in f:
+            print 'pretty please'
+            line = f.next()
+            if re.search('Fixed|Low|High', line) and re.search('Trusted|NotTrusted', line):
+                matches += 1
+
+        self.assertEquals(len(msg_dict.message_dict), matches)
+    '''
 
     def test_create_dictionary(self):
         try:
@@ -200,6 +223,4 @@ def test_suite():
     suite.addTest(makeSuite(TestTemplates))
     suite.addTest(makeSuite(TestDictionary))
     return suite
-
-
 

@@ -342,7 +342,7 @@ version 2.0
 		{	Message				Variable	1	}
 	}
 }
-
+ 
 
 // ****************************************************************************
 // Simulator to dataserver messages
@@ -594,7 +594,7 @@ version 2.0
 // global x,y,z.  Otherwise, use center of the AABB.
 // reliable
 {
-	PlacesReply Low 30 Trusted Zerocoded
+	PlacesReply Low 30 Trusted Zerocoded UDPDeprecated
 	{
 		AgentData		Single
 		{	AgentID		LLUUID		}
@@ -619,6 +619,7 @@ version 2.0
 		{	SnapshotID		LLUUID			}
 		{	Dwell			F32				}
 		{	Price			S32				}
+		//{	ProductSKU		Variable	1	}
 	}
 }
 
@@ -723,6 +724,10 @@ version 2.0
 		{	Auction			BOOL		}
 		{	Dwell			F32			}
 	}
+	{
+		StatusData            Variable
+		{	Status		U32		}
+	}
 }
 
 // DirPeopleReply
@@ -766,6 +771,10 @@ version 2.0
 		{	Date		Variable	1	}
 		{	UnixTime	U32				}
 		{	EventFlags	U32				}
+	}
+	{
+		StatusData Variable
+		{	Status		U32			}
 	}
 }
 
@@ -852,6 +861,10 @@ version 2.0
 		{	ExpirationDate	U32			}
 		{	PriceForListing	S32			}
 	}
+	{
+		StatusData Variable
+		{	Status			U32		}
+	}
 }
 
 
@@ -899,11 +912,11 @@ version 2.0
 // reliable
 {
 	ClassifiedInfoReply Low 44 Trusted Unencoded
-	{
-		AgentData    Single
-		{	AgentID			LLUUID		}
-		}
-		{
+    {
+        AgentData    Single
+        {	AgentID			LLUUID		}
+    }
+    {
 		Data        Single
 		{	ClassifiedID	LLUUID		}
 		{	CreatorID		LLUUID		}
@@ -911,16 +924,16 @@ version 2.0
 		{	ExpirationDate	U32			}
 		{	Category		U32			}
 		{	Name			Variable 1	}
-		{	Desc			Variable 2	}
+        {	Desc			Variable 2	}
 		{	ParcelID		LLUUID		}
 		{	ParentEstate	U32			}
-		{	SnapshotID		LLUUID		}
-		{	SimName			Variable 1	}
-		{	PosGlobal		LLVector3d	}
-		{	ParcelName		Variable 1	}
+        {	SnapshotID		LLUUID		}
+        {	SimName			Variable 1	}
+        {	PosGlobal		LLVector3d	}
+        {	ParcelName		Variable 1	}
 		{	ClassifiedFlags	U8			}
 		{	PriceForListing	S32			}
-	}
+    }
 }
 
 
@@ -1036,7 +1049,7 @@ version 2.0
 // dataserver -> simulator -> viewer
 // reliable
 {
-	DirLandReply Low 50 Trusted Zerocoded
+	DirLandReply Low 50 Trusted Zerocoded UDPDeprecated
 	{
 		AgentData			Single
 		{	AgentID			LLUUID	}
@@ -1053,14 +1066,15 @@ version 2.0
 		{	ForSale			BOOL		}
 		{	SalePrice		S32			}
 		{	ActualArea		S32			}
+		//{	ProductSKU		Variable 1	}
 	}
 }
 
-// DirPopularQuery viewer->sim
+// DEPRECATED: DirPopularQuery viewer->sim
 // Special query for the land for sale/auction panel.
 // reliable
 {
-	DirPopularQuery Low 51 NotTrusted Zerocoded
+	DirPopularQuery Low 51 NotTrusted Zerocoded Deprecated
 	{
 		AgentData			Single
 		{	AgentID			LLUUID	}
@@ -1073,11 +1087,11 @@ version 2.0
 	}
 }
 
-// DirPopularQueryBackend sim->dataserver
+// DEPRECATED: DirPopularQueryBackend sim->dataserver
 // Special query for the land for sale/auction panel.
 // reliable
 {
-	DirPopularQueryBackend Low 52 Trusted Zerocoded
+	DirPopularQueryBackend Low 52 Trusted Zerocoded Deprecated
 	{
 		AgentData			Single
 		{	AgentID			LLUUID	}
@@ -1091,11 +1105,11 @@ version 2.0
 	}
 }
 
-// DirPopularReply
+// DEPRECATED: DirPopularReply
 // dataserver -> simulator -> viewer
 // reliable
 {
-	DirPopularReply Low 53 Trusted Zerocoded
+	DirPopularReply Low 53 Trusted Zerocoded Deprecated
 	{
 		AgentData			Single
 		{	AgentID			LLUUID	}
@@ -1465,7 +1479,7 @@ version 2.0
 	}
 }
 
-// TeleportFailed somehwere->sim->viewer
+// TeleportFailed somewhere->sim->viewer
 // announce failure of teleport request
 {
 	TeleportFailed Low 74 Trusted Unencoded
@@ -1473,6 +1487,11 @@ version 2.0
 		Info		Single
 		{	AgentID		LLUUID			}
 		{	Reason		Variable	1	}  // string
+	}
+	{
+		AlertInfo			Variable
+		{	Message			Variable	1	}	// string id
+		{	ExtraParams		Variable	1	}	// llsd extra parameters
 	}
 }
 
@@ -2589,6 +2608,10 @@ version 2.0
 		{	East			F32		}
 		{	North			F32		}
 	}
+	{
+		ModifyBlockExtended Variable
+		{   BrushSize       F32 }
+	}
 }
 
 
@@ -2697,7 +2720,7 @@ version 2.0
 // end viewer to simulator section
 
 {
-	ViewerStats Low 131 NotTrusted Zerocoded
+       ViewerStats Low 131 NotTrusted Zerocoded UDPDeprecated
        {
                AgentData                       Single
                {       AgentID                 LLUUID      }
@@ -2805,6 +2828,11 @@ version 2.0
 	{
 		AlertData			Single
 		{	Message			Variable	1	}
+	}
+	{
+		AlertInfo			Variable
+		{	Message			Variable	1	}
+		{	ExtraParams		Variable	1	}
 	}
 }
 
@@ -3116,10 +3144,10 @@ version 2.0
 		{	You		S16	}
 		{	Prey	S16	}
 	}
-	{
-		AgentData       Variable
-		{       AgentID                 LLUUID                  }
-	}
+    {
+         AgentData       Variable
+         {       AgentID                 LLUUID                  }
+    }
 }
 
 // ImageData - sent to viewer to transmit information about an image 
@@ -3187,6 +3215,7 @@ version 2.0
 		ObjectData			Variable
 		{	ID				U32	}
 		{	State			U8	}
+
 		{	FullID			LLUUID	}
 		{	CRC				U32	}	// TEMPORARY HACK FOR JAMES
 		{	PCode			U8	}
@@ -3194,8 +3223,10 @@ version 2.0
 		{	ClickAction		U8	}
 		{	Scale			LLVector3	}
 		{	ObjectData		Variable	1	}
+
 		{	ParentID		U32	}
 		{	UpdateFlags		U32	}	// U32, see object_flags.h
+
 		{	PathCurve		U8	}
 		{	ProfileCurve	U8	}
 		{	PathBegin		U16	}	// 0 to 1, quanta = 0.01
@@ -3214,20 +3245,33 @@ version 2.0
 		{	ProfileBegin	U16	}	// 0 to 1, quanta = 0.01
 		{	ProfileEnd		U16	}	// 0 to 1, quanta = 0.01
 		{	ProfileHollow	U16	}	// 0 to 1, quanta = 0.01
+
 		{	TextureEntry	Variable	2	}
 		{	TextureAnim		Variable	1	}
+
 		{	NameValue		Variable	2	}
 		{	Data			Variable	2	}
 		{	Text			Variable	1	}	// llSetText() hovering text
 		{	TextColor		Fixed		4	}	// actually, a LLColor4U
 		{	MediaURL		Variable	1	}	// URL for web page, movie, etc.
+
+		// Info for particle systems
 		{	PSBlock			Variable	1	}
+		
+		// Extra parameters
 		{	ExtraParams		Variable	1	}
+		
+		// info for looped attached sounds
+        // because these are almost always all zero
+		// the hit after zero-coding is only 2 bytes
+		// not the 42 you see here
 		{	Sound           LLUUID  }
 		{	OwnerID			LLUUID	}	// HACK object's owner id, only set if non-null sound, for muting
 		{	Gain            F32		}
 		{	Flags           U8		}
 		{	Radius          F32		}  // cutoff radius
+
+		// joint info -- is sent in the update of each joint-child-root
 		{	JointType 			U8		}
 		{	JointPivot			LLVector3	}
 		{	JointAxisOrAnchor 	LLVector3	}
@@ -4058,26 +4102,26 @@ version 2.0
 // reliable
 {
 	PickInfoReply Low 184 Trusted Unencoded
-	{
-		AgentData    Single
-		{    AgentID        LLUUID    }
-	}
-	{
+    {
+        AgentData    Single
+        {    AgentID        LLUUID    }
+    }
+    {
 		Data        Single
 		{	PickID			LLUUID		}
 		{	CreatorID		LLUUID		}
 		{	TopPick			BOOL		}
 		{	ParcelID		LLUUID		}
 		{	Name			Variable 1	}
-		{	Desc			Variable 2	}
-		{	SnapshotID		LLUUID		}
-		{	User			Variable 1	}
-		{	OriginalName	Variable 1	}
-		{	SimName			Variable 1	}
-		{	PosGlobal		LLVector3d	}
-		{	SortOrder		S32			}
-		{	Enabled			BOOL		}
-	}
+        {	Desc			Variable 2	}
+        {	SnapshotID		LLUUID		}
+        {	User			Variable 1	}
+        {	OriginalName	Variable 1	}
+        {	SimName			Variable 1	}
+        {	PosGlobal		LLVector3d	}
+        {	SortOrder		S32			}
+        {	Enabled			BOOL		}
+    }
 }
 
 
@@ -4540,7 +4584,7 @@ version 2.0
 // viewer -> sim
 // reliable
 {
-	EstateCovenantRequest Low 203 NotTrusted Unencoded
+    EstateCovenantRequest Low 203 NotTrusted Unencoded
 	{
 		AgentData			Single
 		{	AgentID			LLUUID	}
@@ -4552,7 +4596,7 @@ version 2.0
 // sim -> viewer
 // reliable
 {
-	EstateCovenantReply Low 204 Trusted Unencoded
+    EstateCovenantReply Low 204 Trusted Unencoded
 	{
 		Data        Single
 		{	CovenantID		    LLUUID		    }
@@ -4867,6 +4911,12 @@ version 2.0
 		{	ActualArea		S32		}
 		{	Final			BOOL	}  // true if buyer should be in tier
 	}
+    {
+       RegionData Single  // included so region name shows up in transaction logs
+       {   RegionID   LLUUID }
+       {   GridX      U32    }
+       {   GridY      U32    }
+    }
 }
 
 // sim ->dataserver
@@ -5233,6 +5283,15 @@ version 2.0
 		VisualParam				Variable
 		{	ParamValue			U8	}
 	}
+	{
+		AgentAccess				Variable
+		{	AgentLegacyAccess		U8	}
+		{	AgentMaxAccess			U8	}
+	}
+	{
+		AgentInfo				Variable
+		{	Flags					U32	}
+	}
 }
 
 // ChildAgentAlive
@@ -5297,8 +5356,8 @@ version 2.0
 
 // This message is sent how objects get passed between regions.
 {
-	AtomicPassObject High 28 Trusted Unencoded
-	{
+    AtomicPassObject High 28 Trusted Unencoded
+    {
 		TaskData		Single
 		{	TaskID				LLUUID	}
 		{	AttachmentNeedsSave	BOOL	}	// true iff is attachment and needs asset saved
@@ -5604,7 +5663,7 @@ version 2.0
 // GodlikeMessage - generalized construct for Gods to send messages
 // around the system. Each Request has it's own internal protocol.
 {
-	GodlikeMessage Low 259 NotTrusted Zerocoded
+    GodlikeMessage Low 259 NotTrusted Zerocoded
 	{
 		AgentData 		Single
 		{   AgentID     LLUUID  }
@@ -5625,7 +5684,7 @@ version 2.0
 // EstateOwnerMessage
 // format must be identical to above
 {
-	EstateOwnerMessage	Low 260 NotTrusted Zerocoded
+    EstateOwnerMessage	Low 260 NotTrusted Zerocoded
 	{
 		AgentData 		Single
 		{   AgentID     LLUUID  	}
@@ -5647,7 +5706,7 @@ version 2.0
 // format must be identical to above
 // As above, but don't have to be god or estate owner to send.
 {
-	GenericMessage	Low 261 NotTrusted Zerocoded
+    GenericMessage	Low 261 NotTrusted Zerocoded
 	{
 		AgentData 		Single
 		{   AgentID     LLUUID  	}
@@ -8467,7 +8526,7 @@ version 2.0
 // Generalized system message. Each Requst has its own protocol for
 // the StringData block format and contents.
 {
-	SystemMessage Low 404 Trusted Zerocoded
+    SystemMessage Low 404 Trusted Zerocoded
 	{
 		MethodData	 	Single
 		{	Method		Variable 1	}
@@ -8655,27 +8714,27 @@ version 2.0
 // Script on simulator requests rpc channel from rpcserver
 // simulator -> dataserver -> MySQL
 {
-	RpcChannelRequest Low 413 Trusted Unencoded
-	{
+    RpcChannelRequest Low 413 Trusted Unencoded
+    {
 		DataBlock		Single
 		{	GridX		U32 }
 		{	GridY		U32 }
-		{   TaskID      LLUUID }
-		{   ItemID		LLUUID }
-	}
+        {   TaskID      LLUUID }
+        {   ItemID		LLUUID }
+    }
 }
 
 // RpcServer allocated a session for the script
 // ChannelID will be the NULL UUID if unable to register
 // dataserver -> simulator
 {
-	RpcChannelReply Low 414 Trusted Unencoded
-	{
-		DataBlock   Single
-		{   TaskID      LLUUID }
-		{   ItemID		LLUUID }
-		{   ChannelID   LLUUID }
-	}
+    RpcChannelReply Low 414 Trusted Unencoded
+    {
+        DataBlock   Single
+        {   TaskID      LLUUID }
+        {   ItemID		LLUUID }
+        {   ChannelID   LLUUID }
+    }
 }
 
 // Inbound RPC requests follow this path:
@@ -8701,7 +8760,7 @@ version 2.0
 
 // spaceserver -> simulator
 {
-	RpcScriptRequestInboundForward Low 416 Trusted Unencoded
+	RpcScriptRequestInboundForward Low 416 Trusted Unencoded UDPDeprecated
 	{
 		DataBlock Single
 		{	RPCServerIP	IPADDR }
@@ -8890,3 +8949,26 @@ version 2.0
 		{	CRC				U32	}
 	}
 }
+
+// Link inventory
+{
+	LinkInventoryItem	Low	426 NotTrusted	Zerocoded
+	{
+		AgentData		Single
+		{	AgentID		LLUUID	}
+		{	SessionID	LLUUID	}
+	}
+	{
+		InventoryBlock		Single
+		{	CallbackID	U32			} // Async Response
+		{	FolderID		LLUUID	}
+		{	TransactionID			LLUUID	} // Going to become TransactionID
+		{	OldItemID		LLUUID	}
+		{	Type			S8	}
+		{	InvType			S8	}
+		{	Name			Variable	1	}
+		{	Description		Variable	1	}
+
+	}
+}
+
