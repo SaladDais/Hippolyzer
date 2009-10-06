@@ -25,6 +25,7 @@ from pyogp.lib.base.caps import Capability
 from pyogp.lib.base.message.message import Message, Block
 from pyogp.lib.base.tests.mockup_net import MockupUDPServer, MockupUDPClient
 from pyogp.lib.base.message.circuit import Host
+from pyogp.lib.base.message.udpdispatcher import UDPDispatcher
 
 # pyogp tests
 import pyogp.lib.base.tests.config 
@@ -82,8 +83,18 @@ class TestMessageManager(unittest.TestCase):
         
 
     def test_send_udp_message(self):
-        pass
-
+        self.message_manager.udp_dispatcher = UDPDispatcher(MockupUDPClient(),
+                                                            self.message_manager.settings,
+                                                            self.message_manager.message_handler)
+        message = Message('PacketAck',
+                      Block('Packets', ID=0x00000003))
+        buf =  self.message_manager.send_udp_message(message)
+        assert buf == \
+               '\x00' + '\x00\x00\x00\x01' + '\x00' + '\xff\xff\xff\xfb' + \
+               '\x01' + '\x03\x00\x00\x00', \
+               'Received: ' + repr(buf) + '  ' + \
+               'Expected: ' + repr('\x00' + '\x00\x00\x00\x01' + '\x00' + \
+                            '\xff\xff\xff\xfb' + '\x01' + '\x03\x00\x00\x00')
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()

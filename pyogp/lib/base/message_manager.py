@@ -153,6 +153,7 @@ class MessageManager(object):
         Immediately sends an udp message to host
         """
         if reliable:
-            self.udp_dispatcher.send_reliable(packet, self.host, 0)
+            return self.udp_dispatcher.send_reliable(packet, self.host, 0)
         else:
-            self.udp_dispatcher.send_message(packet, self.host)
+            return self.udp_dispatcher.send_message(packet, self.host)
+            
