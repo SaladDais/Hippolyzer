@@ -64,7 +64,7 @@ class MessageTemplateParser(object):
         block_header_re = '.*?(\w+)\s+(\w+)(\s+(\d+))?.*'
         message_header_re = '.*?(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)(\s+(\w+))?.*'
         version_re = "version.(.+)"
-        comment_re = "^//.*$"
+        comment_re = "^\s*//.*$"
 
         current_template = None
         current_block = None
