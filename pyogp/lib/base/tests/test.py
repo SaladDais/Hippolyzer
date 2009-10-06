@@ -63,4 +63,4 @@ else:
     print 'No eggs dir to add to path. Make sure to add the necessary module dependencies to your python path prior to running.'
 
 if __name__ == '__main__':
-    nose.main(argv=['nose']+[client_package_path]+sys.argv[1:])
+    nose.main(argv=['nose']+sys.argv[1:])
