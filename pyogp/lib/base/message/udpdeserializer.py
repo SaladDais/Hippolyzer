@@ -35,14 +35,14 @@ logger = getLogger('message.udpdeserializer')
 
 class UDPMessageDeserializer(object):
 
-    def __init__(self, message_handler = None, settings = None):
+    def __init__(self, message_handler = None, settings = None, message_template = None):
 
         self.context = None
         self.unpacker = DataUnpacker()
         self.current_template = None
         self.current_block = None
 
-        self.template_dict = TemplateDictionary()
+        self.template_dict = TemplateDictionary(message_template = message_template)
 
         # allow the settings to be passed in
         # otherwise, grab the defaults

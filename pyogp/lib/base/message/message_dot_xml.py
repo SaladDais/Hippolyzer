@@ -34,10 +34,14 @@ logger = getLogger('...message.message_dot_xml')
 class MessageDotXML(object):
     """ storage class for a python representation of the llsd message.xml """
 
-    def __init__(self, settings = None):
+    def __init__(self, message_xml = None):
         """ parse message.xml and store a representation of the map """
 
-        self.raw_llsd = msg_details
+        if not message_xml:
+            self.raw_llsd = msg_details
+        else:
+            self.raw_llsd = message_xml
+
         self.parsed_llsd = llsd.parse(self.raw_llsd)
 
         self.serverDefaults = self.parsed_llsd['serverDefaults']

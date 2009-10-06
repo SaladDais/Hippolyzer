@@ -32,11 +32,11 @@ class UDPMessageSerializer(object):
         that data in data structure form. A serializer should be used on
         the message produced by this so that it can be sent over a network. """
 
-    def __init__(self):
+    def __init__(self, message_template = None):
         """initialize the adapter"""
         self.context = None	# the UDPMessage
 
-        self.template_dict = TemplateDictionary()
+        self.template_dict = TemplateDictionary(message_template)
         self.current_template = None
         self.packer = DataPacker()
 

@@ -38,26 +38,6 @@ class TestDictionary(unittest.TestCase):
     def tearDown(self):
         pass
 
-    '''
-    # ToDo: in progress
-    def test_template_dict_has_all_messages(self):
-
-        f = msg_tmpl
-        msg_dict = TemplateDictionary(self.template_list)
-        matches = 0
-        print type(f)
-
-        # parse the file handle's contents, trying to establish which lines indicate 
-        # it's the declaration of a new message type
-        for line in f:
-            print 'pretty please'
-            line = f.next()
-            if re.search('Fixed|Low|High', line) and re.search('Trusted|NotTrusted', line):
-                matches += 1
-
-        self.assertEquals(len(msg_dict.message_dict), matches)
-    '''
-
     def test_create_dictionary(self):
         try:
             msg_dict = TemplateDictionary(None)

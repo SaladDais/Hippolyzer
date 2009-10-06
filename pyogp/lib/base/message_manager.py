@@ -19,10 +19,14 @@ $/LicenseInfo$
 #stdlib
 from logging import getLogger
 
+# pyogp.lib.base
 from pyogp.lib.base.message.udpdispatcher import UDPDispatcher
 from pyogp.lib.base.message.message_handler import MessageHandler
+from pyogp.lib.base.message.message_dot_xml import MessageDotXML
 from pyogp.lib.base.event_queue import EventQueueClient
 from pyogp.lib.base.settings import Settings
+
+# related
 from eventlet import api
 
 # initialize logging
@@ -35,14 +39,16 @@ class MessageManager(object):
     """
 
     def __init__(self, host, message_handler=None, capabilities={},
-                 settings=None, start_monitors=False):
+                 settings=None, start_monitors=False, message_template = None, message_xml = None):
         """ 
         Initialize the MessageManager, applying custom settings and dedicated 
         message_handler if needed 
         """
 
         logger.debug("Initializing the Message Manager ")        
+
         self.host = host
+
         # allow the settings to be passed in
         # otherwise, grab the defaults
         if settings != None:
@@ -56,14 +62,34 @@ class MessageManager(object):
             self.message_handler = message_handler
         elif self.settings.HANDLE_PACKETS:
             self.message_handler = MessageHandler()
-        
+
+        # allow the passing in of message_template.msg as a file handle
+        if not message_template:
+            self.message_template = None
+        else:
+            if isinstance(message_template, file):
+                self.message_template = message_template
+            else:
+                log.warning("%s parameter is expected to be a filehandle, it is a %s. \
+                        Using the embedded message_template.msg" % (message_template, type(message_template)))
+
+                from pyogp.lib.base.data import msg_tmpl
+                self.message_template = msg_tmpl
+
+        # allow the passing in of message.xml as a file handle
+        # mapped to MessageDotXML()
+        if not message_xml:
+            self.message_xml = MessageDotXML()
+        else:
+            if isinstance(message_xml, file):
+                self.message_xml = MessageDotXML(message_xml = message_xml.read())
+            else:
+                log.warning("%s parameter is expected to be a filehandle, it is a %s. \
+                        Using the embedded message.xml" % (message_xml, type(message_xml)))
+                self.message_xml = MessageDotXML()
+
         # initialize the manager's base attributes
-        #self.builder = MessageBuilder()     # 
-        #self.connections = {}               # a connection = {Host():
-                                            #                       {'udp':UDPDispatcher(),
-                                            #                       'event_queue_client':EventQueueClient()}}
-                    # a list of incoming Message() instances
-                    # a list of (Message(), reliable) instances to be sent to an endpoint
+        #self.builder = MessageBuilder()
 
         self._is_running = False
         
@@ -80,8 +106,10 @@ class MessageManager(object):
         #NOTE udpdispatcher can already multiplex hosts 
         self.incoming_queue = []
         self.outgoing_queue = []
-        self.udp_dispatcher = UDPDispatcher(settings = self.settings, 
-                                            message_handler = self.message_handler) 
+
+        self.udp_dispatcher = UDPDispatcher(settings = self.settings,
+                                            message_handler = self.message_handler,
+                                            message_template = self.message_template)
                 
         # if start parameter = True, kick off the queue monitors
         if start_monitors:

@@ -27,7 +27,6 @@ from msgtypes import MsgType, MsgBlockType, MsgFrequency, PacketLayout, EndianTy
 from udpserializer import UDPMessageSerializer
 from udpdeserializer import UDPMessageDeserializer
 from data_unpacker import DataUnpacker
-#from packet import UDPMessage
 from message import Message, Block
 from pyogp.lib.base.network.net import NetUDPClient
 from pyogp.lib.base import exc
@@ -41,7 +40,7 @@ logger = getLogger('message.udpdispatcher')
 class UDPDispatcher(object):
     #implements(IUDPDispatcher)
 
-    def __init__(self, udp_client = None, settings = None, message_handler = None):
+    def __init__(self, udp_client = None, settings = None, message_handler = None, message_template = None):
         #holds the details of the message, or how the messages should be sent,
         #built, and read
 
@@ -70,6 +69,17 @@ class UDPDispatcher(object):
         else:
             self.settings = Settings()
 
+        # allow the passing in of message_template.xml as a file handle
+        if not message_template:
+            self.message_template = None
+        else:
+            if isinstance(message_template, file):
+                self.message_template = message_template
+            else:
+                log.warning("%s parameter is expected to be a filehandle, it is a %s. \
+                        Using the embedded message_template.msg" % (message_template, type(message_template)))
+                self.message_template = None
+
         self.helpers = Helpers()
 
         # allow the packet_handler to be passed in
@@ -81,8 +91,10 @@ class UDPDispatcher(object):
             self.message_handler = MessageHandler()
 
         # set up our parsers
-        self.udp_deserializer = UDPMessageDeserializer(self.message_handler, self.settings)
-        self.udp_serializer = UDPMessageSerializer()
+        self.udp_deserializer = UDPMessageDeserializer(self.message_handler, 
+                                                        self.settings,
+                                                        message_template = self.message_template)
+        self.udp_serializer = UDPMessageSerializer(message_template = self.message_template)
 
     def find_circuit(self, host):
         circuit = self.circuit_manager.get_circuit(host)

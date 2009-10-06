@@ -27,10 +27,15 @@ from pyogp.lib.base import exc
 class TemplateDictionary(object):
     """the dictionary with all known templates"""
 
-    def __init__(self, template_list=None):
+    def __init__(self, template_list=None, message_template = None):
 
         if template_list == None:
-            parser = MessageTemplateParser(msg_tmpl)
+
+            if message_template == None:
+                parser = MessageTemplateParser(msg_tmpl)
+            else:
+                parser = MessageTemplateParser(message_template)
+
             template_list = parser.message_templates
             template_dict = TemplateDictionary(template_list)
             # adding below so we can check how many packets we can parse easily len(self.template_list)

@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<llsd>
+    <map>
+		  <key>serverDefaults</key>
+            <!--
+				    a map of server names to default message transport
+				-->
+		  <map>
+				<key>simulator</key>
+				<string>template</string>
+
+
+		  </map>
+		  <key>messages</key>
+            <!--
+				    a map of individual message names that override defaults
+				-->
+		  <map>
+				<!--
+					Circuit related messages
+				-->
+				<key>PacketAck</key>
+				<map>
+					<key>flavor</key>
+					<string>template</string>
+					<key>trusted-sender</key>
+					<boolean>false</boolean>
+				</map>
+
+		  </map>
+  	  	<key>capBans</key>
+    	<map>
+			<key>MapLayer</key>
+			<boolean>false</boolean>
+
+			<key>UploadBakedTexture</key>
+			<boolean>true</boolean>
+		</map>
+
+		<key>messageBans</key>
+		<map>
+			<key>trusted</key>
+			<map>
+			</map>
+		
+			<key>untrusted</key>
+			<map>
+			</map>
+		</map>
+
+		<key>maxQueuedEvents</key>
+		<integer>100</integer>
+    </map>
+</llsd>
