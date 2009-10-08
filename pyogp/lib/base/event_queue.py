@@ -282,15 +282,16 @@ class EventQueueClient(object):
                             # move this to a proper solution, for now, append to some list eq events
                             # or some dict mapping name to action to take
 
+                            new_message = Message(message['message'])
+                            new_message.event_queue_id = self.last_id
+                            new_message.host = self.host
+
                             in_template = self.template_dict.get_template(message['message'])
 
                             if in_template:
                                 # this is a message found in the message_template
 
                                 #self.current_template = self.template_dict.get_template(message['message'])
-                                new_message = Message(message['message'])
-                                new_message.event_queue_id = self.last_id
-                                new_message.host = self.host
 
                                 for block_name in message['body']:
 
@@ -303,15 +304,9 @@ class EventQueueClient(object):
                                             var_data = Variable(variable, block_data[variable], -1)
                                             block.add_variable(var_data)
 
-                                messages.append(new_message)
-
                             else:
 
                                 # this is e.g. EstablishAgentCommunication or ChatterBoxInvitation, etc
-
-                                new_message = Message(message['message'])
-                                new_message.event_queue_id = self.last_id
-                                new_message.host = self.host
 
                                 # faux block with a name of Message_Data
                                 block = Block('Message_Data')
@@ -322,7 +317,7 @@ class EventQueueClient(object):
                                     var_data = Variable(var, message['body'][var], -1)
                                     block.add_variable(var_data)
 
-                                messages.append(new_message)                                   
+                            messages.append(new_message)                                   
 
             return messages
 

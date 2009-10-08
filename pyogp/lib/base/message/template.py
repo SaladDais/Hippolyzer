@@ -42,6 +42,9 @@ class MsgData(object):
     def get_block(self, block_name):
         return self.blocks[block_name]
 
+    def __getitem__(self, block_name):
+        return self.get_block(block_name)
+
     def add_data(self, block_name, var_name, data, data_size):
         get_block(block_name).add_data(var_name, data, data_size)
 
@@ -58,6 +61,9 @@ class MsgBlockData(object):
 
     def get_variable(self, var_name):
         return self.vars[var_name]
+
+    def __getitem__(self, name):
+        return self.get_variable(name).data
 
     def get_variables(self):
         return self.vars.values()
