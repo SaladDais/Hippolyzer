@@ -70,6 +70,31 @@ class TestMessage(unittest.TestCase):
         assert msg.blocks['Test'][0].vars['Code'].data == 123, \
                "Incorrect data in block Test ID"
 
+
+    def test_getitem_helpers(self):
+        msg = Message('TestPacket',
+                      Block('CircuitCode', ID=1234,Code=789),
+                      Block('CircuitCode', ID=5678,Code=456),
+                      Block('Test', ID=9101,Code=123)
+                      )
+
+        assert msg.blocks['CircuitCode'][0].vars['ID'].data == msg['CircuitCode'][0]['ID'], \
+               "Explicit blocks/vars/data doesn't match __getitem__ shortcut"
+        assert msg.blocks['CircuitCode'][1].vars['ID'].data == msg['CircuitCode'][1]['ID'], \
+               "Explicit blocks/vars/data doesn't match __getitem__ shortcut"
+
+        assert msg.blocks['CircuitCode'][0].vars['Code'].data == msg['CircuitCode'][0]['Code'], \
+               "Explicit blocks/vars/data doesn't match __getitem__ shortcut"
+        assert msg.blocks['CircuitCode'][1].vars['Code'].data == msg['CircuitCode'][1]['Code'], \
+               "Explicit blocks/vars/data doesn't match __getitem__ shortcut"
+
+        assert msg.blocks['Test'][0].vars['ID'].data == msg['Test'][0]['ID'], \
+               "Explicit blocks/vars/data doesn't match __getitem__ shortcut"
+        assert msg.blocks['Test'][0].vars['Code'].data == msg['Test'][0]['Code'], \
+               "Explicit blocks/vars/data doesn't match __getitem__ shortcut"
+
+
+
     def test_build_chat(self):
         import uuid
         msg = Message('ChatFromViewer',
