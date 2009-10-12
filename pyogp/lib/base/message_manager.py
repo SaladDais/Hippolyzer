@@ -92,7 +92,7 @@ class MessageManager(object):
         #self.builder = MessageBuilder()
 
         self._is_running = False
-        
+
         #event queue-related attributes
         self.capabilities = capabilities
         if self.capabilities.has_key('EventQueueGet'):
@@ -101,7 +101,7 @@ class MessageManager(object):
                                                 host = self.host)
         else:
             self.event_queue = None
-        
+
         #UDP-related attributes
         #NOTE udpdispatcher can already multiplex hosts 
         self.incoming_queue = []
@@ -110,34 +110,43 @@ class MessageManager(object):
         self.udp_dispatcher = UDPDispatcher(settings = self.settings,
                                             message_handler = self.message_handler,
                                             message_template = self.message_template)
-                
+
         # if start parameter = True, kick off the queue monitors
         if start_monitors:
             self.start_monitors()
 
     def start_monitors(self):
         """ spawn queue monitoring coroutines """
+
         self._is_running = True
+
         logger.debug('Spawning region UDP connection')
+
         api.spawn(self._udp_dispatcher)
+
         if self.event_queue != None:
             logger.debug('Spawning region event queue connection')
             api.spawn(self.event_queue.start)
+
         #api.spawn(self.monitor_outgoing_queue)
         #api.spawn(self.monitor_incoming_queue)
-        
+
     def stop_monitors(self):
         """ stops monitoring coroutines """
+
         #stops udp_dispatcher
+
         self._is_running = False
+
         #stops event_queue
+
         if self.event_queue._running:
             self.event_queue.stop()        
 
     def monitor_outgoing_queue(self):
         """  """
         pass
-        
+
     def enqueue_message(self, message, reliable = False,
                         now = False):
         """ enqueues a Message() in the outgoing_queue """
@@ -154,7 +163,7 @@ class MessageManager(object):
 
     def new_message(self, name):
         pass
-    
+
     def _udp_dispatcher(self):
         """
         Sends and receives UDP messages.
@@ -169,11 +178,11 @@ class MessageManager(object):
             #self.incoming_queue.append(recv_packet)
             if self.udp_dispatcher.has_unacked():
                 self.udp_dispatcher.process_acks()
-                
+
             while len(self.outgoing_queue) > 0:                
                 (packet, reliable) = self.outgoing_queue.pop(0)
                 self.send_udp_message(packet, reliable)
-                
+
         logger.debug("Stopped the UDP connection for %s" % (self.host))
 
     def send_udp_message(self, packet, reliable=False):
@@ -184,4 +193,4 @@ class MessageManager(object):
             return self.udp_dispatcher.send_reliable(packet, self.host, 0)
         else:
             return self.udp_dispatcher.send_message(packet, self.host)
-            
+

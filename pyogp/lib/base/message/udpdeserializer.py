@@ -271,6 +271,8 @@ class UDPMessageDeserializer(object):
                                                          decode_pos)
 
                 decode_pos += 1
+            # ToDo: we need to allow the system to parse as much as it knows about 
+            # and to return what is can, not return None
             else:
                 logger.warning("ERROR: Unknown block type: %s in %s packet." % (str(block.block_type), packet.name))
                 return None
