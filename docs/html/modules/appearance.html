@@ -1,0 +1,224 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>appearance &mdash; Pyogp v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Pyogp v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Modules" href="../modules.html" />
+    <link rel="next" title="assets" href="assets.html" />
+    <link rel="prev" title="agentmanager" href="agentmanager.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="assets.html" title="assets"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="agentmanager.html" title="agentmanager"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" accesskey="U">Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="agentmanager.html"
+                                  title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">agentmanager</span></tt></a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="assets.html"
+                                  title="next chapter"><tt class="docutils literal"><span class="pre">assets</span></tt></a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/modules/appearance.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pyogp.lib.base.appearance">
+<h1><tt class="xref docutils literal"><span class="pre">appearance</span></tt><a class="headerlink" href="#module-pyogp.lib.base.appearance" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pyogp.lib.base.appearance.AvatarTexture">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.appearance.</tt><tt class="descname">AvatarTexture</tt><big>(</big><em>TextureIndex</em>, <em>TextureID=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.AvatarTexture" title="Permalink to this definition">¶</a></dt>
+<dd>Represents 1 of the 21 baked and not baked textures of an avatar.</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.appearance.BakedTexture">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.appearance.</tt><tt class="descname">BakedTexture</tt><big>(</big><em>bakedIndex</em>, <em>TextureID=00000000-0000-0000-0000-000000000000</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.BakedTexture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents 1 of the 6 baked textures of an avatar</p>
+<dl class="method">
+<dt id="pyogp.lib.base.appearance.BakedTexture.get_hash">
+<tt class="descname">get_hash</tt><big>(</big><em>wearables</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.BakedTexture.get_hash" title="Permalink to this definition">¶</a></dt>
+<dd>Creates a hash using the assetIDs for each wearable in a baked layer</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.appearance.AppearanceManager">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.appearance.</tt><tt class="descname">AppearanceManager</tt><big>(</big><em>agent</em>, <em>settings=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.AppearanceManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>The AppearanceManager class handles appearance of an Agent() instance</p>
+<p>Sample implementations: 
+Tests:</p>
+<p>initialize the appearance manager
+TODO Fix the Z by generating actual height</p>
+<dl class="method">
+<dt id="pyogp.lib.base.appearance.AppearanceManager.enable_callbacks">
+<tt class="descname">enable_callbacks</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.AppearanceManager.enable_callbacks" title="Permalink to this definition">¶</a></dt>
+<dd>enables the calback handlers for this AppearanceManager</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.appearance.AppearanceManager.onAgentCachedTextureResponse">
+<tt class="descname">onAgentCachedTextureResponse</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.AppearanceManager.onAgentCachedTextureResponse" title="Permalink to this definition">¶</a></dt>
+<dd>Update the bakedTextures with their TextureIDs and HostNames and call
+send_AgentSetAppearance</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.appearance.AppearanceManager.onAgentWearablesUpdate">
+<tt class="descname">onAgentWearablesUpdate</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.AppearanceManager.onAgentWearablesUpdate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Automatically tells simulator avatar is wearing the wearables from
+the AgentWearables update packet.
+This message should only be received once.</p>
+<p>Error Checking: make sure agent and session id are correct
+make sure this method is only called once.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.appearance.AppearanceManager.onAvatarAppearance">
+<tt class="descname">onAvatarAppearance</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.AppearanceManager.onAvatarAppearance" title="Permalink to this definition">¶</a></dt>
+<dd>Informs viewer how other avatars look</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.appearance.AppearanceManager.onAvatarTextureUpdate">
+<tt class="descname">onAvatarTextureUpdate</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.AppearanceManager.onAvatarTextureUpdate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.appearance.AppearanceManager.request_agent_wearables">
+<tt class="descname">request_agent_wearables</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.AppearanceManager.request_agent_wearables" title="Permalink to this definition">¶</a></dt>
+<dd>Asks the simulator what the avatar is wearing
+#TODO create a one&#8211;shot callback</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.appearance.AppearanceManager.send_AgentCachedTexture">
+<tt class="descname">send_AgentCachedTexture</tt><big>(</big><em>AgentID</em>, <em>SessionID</em>, <em>bakedTextures</em>, <em>wearables</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.AppearanceManager.send_AgentCachedTexture" title="Permalink to this definition">¶</a></dt>
+<dd>Ask the simulator what baked textures it has cached.
+TODO Create a one-shot callback?</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.appearance.AppearanceManager.send_AgentIsNowWearing">
+<tt class="descname">send_AgentIsNowWearing</tt><big>(</big><em>AgentID</em>, <em>SessionID</em>, <em>wearables</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.AppearanceManager.send_AgentIsNowWearing" title="Permalink to this definition">¶</a></dt>
+<dd>Tell the simulator that avatar is wearing initial items</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.appearance.AppearanceManager.send_AgentSetAppearance">
+<tt class="descname">send_AgentSetAppearance</tt><big>(</big><em>AgentID</em>, <em>SessionID</em>, <em>Size</em>, <em>bakedTextures</em>, <em>TextureEntry</em>, <em>visualParams</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.AppearanceManager.send_AgentSetAppearance" title="Permalink to this definition">¶</a></dt>
+<dd>Informs simulator how avatar looks</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.appearance.AppearanceManager.send_AgentWearablesRequest">
+<tt class="descname">send_AgentWearablesRequest</tt><big>(</big><em>AgentID</em>, <em>SessionID</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.AppearanceManager.send_AgentWearablesRequest" title="Permalink to this definition">¶</a></dt>
+<dd>sends and AgentWearablesRequest message.</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.appearance.AppearanceManager.verifyAgentData">
+<tt class="descname">verifyAgentData</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.AppearanceManager.verifyAgentData" title="Permalink to this definition">¶</a></dt>
+<dd>verifies that packet refers to this agent</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.appearance.AppearanceManager.wearableArrived">
+<tt class="descname">wearableArrived</tt><big>(</big><em>assetID</em>, <em>isSuccess</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.AppearanceManager.wearableArrived" title="Permalink to this definition">¶</a></dt>
+<dd>callback for wearables request</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.appearance.Wearable">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.appearance.</tt><tt class="descname">Wearable</tt><big>(</big><em>WearableType=None</em>, <em>ItemID=00000000-0000-0000-0000-000000000000</em>, <em>AssetID=00000000-0000-0000-0000-000000000000</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.Wearable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents 1 of the 13 wearables an avatar can wear</p>
+<dl class="method">
+<dt id="pyogp.lib.base.appearance.Wearable.getAssetType">
+<tt class="descname">getAssetType</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.appearance.Wearable.getAssetType" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="assets.html" title="assets"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="agentmanager.html" title="agentmanager"
+             >previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" >Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Pyogp team.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,689 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>exc &mdash; pyogp.lib.base v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="pyogp.lib.base v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Modules" href="../modules.html" />
+    <link rel="next" title="factory" href="factory.html" />
+    <link rel="prev" title="events" href="events.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="factory.html" title="factory"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="events.html" title="events"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pyogp.lib.base v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" accesskey="U">Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="events.html"
+                                  title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">events</span></tt></a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="factory.html"
+                                  title="next chapter"><tt class="docutils literal"><span class="pre">factory</span></tt></a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/modules/exc.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pyogp.lib.base.exc">
+<h1><tt class="xref docutils literal"><span class="pre">exc</span></tt><a class="headerlink" href="#module-pyogp.lib.base.exc" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pyogp.lib.base.exc.MessageDeserializationError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">MessageDeserializationError</tt><big>(</big><em>label=''</em>, <em>reason=''</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.MessageDeserializationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>problem deserializing packet data</p>
+<p>stores the label and reason in <tt class="docutils literal"><span class="pre">label</span></tt> and <tt class="docutils literal"><span class="pre">reason</span></tt> attributes</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.MessageDeserializationError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.MessageDeserializationError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.MessageDeserializationError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.MessageDeserializationError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.AgentDomainError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">AgentDomainError</tt><a class="headerlink" href="#pyogp.lib.base.exc.AgentDomainError" title="Permalink to this definition">¶</a></dt>
+<dd><p>base exception for all errors which can occur on an agent domain</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.AgentDomainError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.AgentDomainError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.AgentDomainError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.AgentDomainError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.UserNotFound">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">UserNotFound</tt><big>(</big><em>credentials=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.UserNotFound" title="Permalink to this definition">¶</a></dt>
+<dd><p>user couldn&#8217;t be found</p>
+<p>This exception stores the credentials used inside a <tt class="docutils literal"><span class="pre">credentials</span></tt> attribute</p>
+<p>initialize this exception</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.UserNotFound.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.UserNotFound.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.UserNotFound.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.UserNotFound.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.ResourceNotFound">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">ResourceNotFound</tt><big>(</big><em>url=''</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.ResourceNotFound" title="Permalink to this definition">¶</a></dt>
+<dd><p>raised if a resource couldn&#8217;t be found</p>
+<p>the URL to that resource is stored inside a <tt class="docutils literal"><span class="pre">url</span></tt> attribute.</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.ResourceNotFound.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.ResourceNotFound.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.ResourceNotFound.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.ResourceNotFound.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.DataParsingError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">DataParsingError</tt><big>(</big><em>error=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.DataParsingError" title="Permalink to this definition">¶</a></dt>
+<dd><p>an error raised data parsing fails</p>
+<p>initialize this exception</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.DataParsingError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.DataParsingError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.DataParsingError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.DataParsingError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.AgentError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">AgentError</tt><a class="headerlink" href="#pyogp.lib.base.exc.AgentError" title="Permalink to this definition">¶</a></dt>
+<dd><p>general Agent exception</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.AgentError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.AgentError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.AgentError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.AgentError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.MessageSerializationError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">MessageSerializationError</tt><big>(</big><em>label=''</em>, <em>reason=''</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.MessageSerializationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>problem serializing packet data</p>
+<p>stores the label and reason in <tt class="docutils literal"><span class="pre">label</span></tt> and <tt class="docutils literal"><span class="pre">reason</span></tt> attributes</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.MessageSerializationError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.MessageSerializationError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.MessageSerializationError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.MessageSerializationError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.DeserializationError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">DeserializationError</tt><a class="headerlink" href="#pyogp.lib.base.exc.DeserializationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>deserialization related exception</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.DeserializationError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.DeserializationError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.DeserializationError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.DeserializationError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.RegionSeedCapNotAvailable">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">RegionSeedCapNotAvailable</tt><big>(</big><em>reason=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.RegionSeedCapNotAvailable" title="Permalink to this definition">¶</a></dt>
+<dd><p>an error raised in case a user couldn&#8217;t be authorized</p>
+<p>stores the cap used inside a <tt class="docutils literal"><span class="pre">cap</span></tt> attribute</p>
+<p>initialize this exception</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.RegionSeedCapNotAvailable.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.RegionSeedCapNotAvailable.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.RegionSeedCapNotAvailable.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.RegionSeedCapNotAvailable.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.RegionCapNotAvailable">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">RegionCapNotAvailable</tt><big>(</big><em>cap=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.RegionCapNotAvailable" title="Permalink to this definition">¶</a></dt>
+<dd><p>an error raised in case a user couldn&#8217;t be authorized</p>
+<p>stores the cap used inside a <tt class="docutils literal"><span class="pre">cap</span></tt> attribute</p>
+<p>initialize this exception</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.RegionCapNotAvailable.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.RegionCapNotAvailable.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.RegionCapNotAvailable.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.RegionCapNotAvailable.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.MessageTemplateParsingError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">MessageTemplateParsingError</tt><big>(</big><em>context=''</em>, <em>template=''</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.MessageTemplateParsingError" title="Permalink to this definition">¶</a></dt>
+<dd><p>message template parsing error</p>
+<p>stores the context in a <tt class="docutils literal"><span class="pre">context</span></tt> attribute</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.MessageTemplateParsingError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.MessageTemplateParsingError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.MessageTemplateParsingError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.MessageTemplateParsingError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.UserNotAuthorized">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">UserNotAuthorized</tt><big>(</big><em>credentials=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.UserNotAuthorized" title="Permalink to this definition">¶</a></dt>
+<dd><p>an error raised in case a user couldn&#8217;t be authorized</p>
+<p>stores the credentials used inside a <tt class="docutils literal"><span class="pre">credentials</span></tt> attribute</p>
+<p>initialize this exception</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.UserNotAuthorized.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.UserNotAuthorized.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.UserNotAuthorized.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.UserNotAuthorized.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.DataUnpackingError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">DataUnpackingError</tt><big>(</big><em>data=''</em>, <em>reason=''</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.DataUnpackingError" title="Permalink to this definition">¶</a></dt>
+<dd><p>problem deserializing packet data</p>
+<p>stores the label and reason in <tt class="docutils literal"><span class="pre">label</span></tt> and <tt class="docutils literal"><span class="pre">reason</span></tt> attributes</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.DataUnpackingError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.DataUnpackingError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.DataUnpackingError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.DataUnpackingError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.CircuitNotFound">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">CircuitNotFound</tt><big>(</big><em>host=''</em>, <em>reason=''</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.CircuitNotFound" title="Permalink to this definition">¶</a></dt>
+<dd><p>circuit to host could not be found</p>
+<p>stores the host missing a circuit in a <tt class="docutils literal"><span class="pre">host</span></tt> attribute</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.CircuitNotFound.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.CircuitNotFound.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.CircuitNotFound.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.CircuitNotFound.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.ResourceError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">ResourceError</tt><big>(</big><em>url=''</em>, <em>code=''</em>, <em>message=''</em>, <em>body=''</em>, <em>method='GET'</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.ResourceError" title="Permalink to this definition">¶</a></dt>
+<dd><p>raised if any other error occurred (usually a 500)</p>
+<p>contains <tt class="docutils literal"><span class="pre">url</span></tt> to the resource and <tt class="docutils literal"><span class="pre">code</span></tt> and <tt class="docutils literal"><span class="pre">message</span></tt> and <tt class="docutils literal"><span class="pre">body</span></tt></p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.ResourceError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.ResourceError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.ResourceError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.ResourceError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.CredentialDeserializerNotFound">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">CredentialDeserializerNotFound</tt><big>(</big><em>payload=''</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.CredentialDeserializerNotFound" title="Permalink to this definition">¶</a></dt>
+<dd><p>raised if a deserializer for a certain content type couldn&#8217;t be found</p>
+<p>stores the content type inside a <tt class="docutils literal"><span class="pre">content_type</span></tt> attribute.</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.CredentialDeserializerNotFound.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.CredentialDeserializerNotFound.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.CredentialDeserializerNotFound.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.CredentialDeserializerNotFound.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.NotImplemented">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">NotImplemented</tt><big>(</big><em>error=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.NotImplemented" title="Permalink to this definition">¶</a></dt>
+<dd><p>an error raised when method is not implemented</p>
+<p>initialize this exception</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.NotImplemented.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.NotImplemented.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.NotImplemented.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.NotImplemented.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.MessageSystemError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">MessageSystemError</tt><a class="headerlink" href="#pyogp.lib.base.exc.MessageSystemError" title="Permalink to this definition">¶</a></dt>
+<dd><p>message system related exception</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.MessageSystemError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.MessageSystemError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.MessageSystemError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.MessageSystemError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.DeserializerNotFound">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">DeserializerNotFound</tt><big>(</big><em>content_type=''</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.DeserializerNotFound" title="Permalink to this definition">¶</a></dt>
+<dd><p>raised if a deserializer for a certain content type couldn&#8217;t be found</p>
+<p>stores the content type inside a <tt class="docutils literal"><span class="pre">content_type</span></tt> attribute.</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.DeserializerNotFound.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.DeserializerNotFound.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.DeserializerNotFound.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.DeserializerNotFound.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.LoginError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">LoginError</tt><big>(</big><em>error</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.LoginError" title="Permalink to this definition">¶</a></dt>
+<dd><p>raised if there is an error in login</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.LoginError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.LoginError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.LoginError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.LoginError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.SerializationError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">SerializationError</tt><a class="headerlink" href="#pyogp.lib.base.exc.SerializationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>serialization related exceptions</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.SerializationError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.SerializationError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.SerializationError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.SerializationError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.ParseStartLocError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">ParseStartLocError</tt><big>(</big><em>error</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.ParseStartLocError" title="Permalink to this definition">¶</a></dt>
+<dd><p>raised when the is an error in parsing the user specified start location</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.ParseStartLocError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.ParseStartLocError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.ParseStartLocError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.ParseStartLocError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.RegionDomainError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">RegionDomainError</tt><a class="headerlink" href="#pyogp.lib.base.exc.RegionDomainError" title="Permalink to this definition">¶</a></dt>
+<dd><p>base exception for all errors which can occur on an region domain</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.RegionDomainError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.RegionDomainError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.RegionDomainError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.RegionDomainError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.Error">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">Error</tt><a class="headerlink" href="#pyogp.lib.base.exc.Error" title="Permalink to this definition">¶</a></dt>
+<dd><p>base exception for all pyogp related exceptions</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.Error.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.Error.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.Error.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.Error.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.HTTPError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">HTTPError</tt><big>(</big><em>code</em>, <em>msg</em>, <em>fp</em>, <em>details=''</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.HTTPError" title="Permalink to this definition">¶</a></dt>
+<dd><p>an HTTP error</p>
+<p>initialize this exception</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.HTTPError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.HTTPError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.HTTPError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.HTTPError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.DeserializationFailed">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">DeserializationFailed</tt><big>(</big><em>payload=''</em>, <em>reason=''</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.DeserializationFailed" title="Permalink to this definition">¶</a></dt>
+<dd><p>raised if a deserializer couldn&#8217;t deserialize a payload</p>
+<p>stores the payload inside a <tt class="docutils literal"><span class="pre">payload</span></tt> attribute and the error message
+inside a <tt class="docutils literal"><span class="pre">reason</span></tt> attribute.</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.DeserializationFailed.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.DeserializationFailed.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.DeserializationFailed.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.DeserializationFailed.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.RegionMessageError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">RegionMessageError</tt><big>(</big><em>region=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.RegionMessageError" title="Permalink to this definition">¶</a></dt>
+<dd><p>an error raised when a region does not have a connection
+over which it can send UDP messages</p>
+<p>accepts a region object as an attribute</p>
+<p>initialize this exception</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.RegionMessageError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.RegionMessageError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.RegionMessageError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.RegionMessageError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.Deprecated">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">Deprecated</tt><big>(</big><em>thing=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.Deprecated" title="Permalink to this definition">¶</a></dt>
+<dd><p>an error raised when method is not implemented</p>
+<p>initialize this exception</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.Deprecated.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.Deprecated.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.Deprecated.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.Deprecated.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.UserRezFailed">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">UserRezFailed</tt><big>(</big><em>region=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.UserRezFailed" title="Permalink to this definition">¶</a></dt>
+<dd><p>an error raised in case a user couldn&#8217;t rez on a sim</p>
+<p>stores the region used inside a <tt class="docutils literal"><span class="pre">region</span></tt> attribute</p>
+<p>initialize this exception</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.UserRezFailed.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.UserRezFailed.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.UserRezFailed.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.UserRezFailed.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.MessageTemplateNotFound">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">MessageTemplateNotFound</tt><big>(</big><em>context=''</em>, <em>template=''</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.MessageTemplateNotFound" title="Permalink to this definition">¶</a></dt>
+<dd><p>message template file not found</p>
+<p>stores the context in a <tt class="docutils literal"><span class="pre">context</span></tt> attribute</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.MessageTemplateNotFound.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.MessageTemplateNotFound.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.MessageTemplateNotFound.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.MessageTemplateNotFound.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.NetworkError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">NetworkError</tt><a class="headerlink" href="#pyogp.lib.base.exc.NetworkError" title="Permalink to this definition">¶</a></dt>
+<dd><p>general network exception</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.NetworkError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.NetworkError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.NetworkError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.NetworkError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.exc.MessageBuildingError">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.exc.</tt><tt class="descname">MessageBuildingError</tt><big>(</big><em>label=''</em>, <em>reason=''</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.exc.MessageBuildingError" title="Permalink to this definition">¶</a></dt>
+<dd><p>problem serializing packet data</p>
+<p>stores the label and reason in <tt class="docutils literal"><span class="pre">label</span></tt> and <tt class="docutils literal"><span class="pre">reason</span></tt> attributes</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.MessageBuildingError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#pyogp.lib.base.exc.MessageBuildingError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyogp.lib.base.exc.MessageBuildingError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#pyogp.lib.base.exc.MessageBuildingError.message" title="Permalink to this definition">¶</a></dt>
+<dd>exception message</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="factory.html" title="factory"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="events.html" title="events"
+             >previous</a> |</li>
+        <li><a href="../index.html">pyogp.lib.base v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" >Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Pyogp team.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

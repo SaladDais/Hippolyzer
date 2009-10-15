@@ -16,11 +16,11 @@ or in
 $/LicenseInfo$
 """
 
-PacketHandler
-~~~~~~~~~~~~~
+MessageHandler
+~~~~~~~~~~~~~~
 
-The basic packet handling event/callbackcase
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The basic message handling event/callbackcase
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 First, initialize the packet handler
     >>> from pyogp.lib.base.message.message_handler import MessageHandler
@@ -36,9 +36,7 @@ Stage a packet
     >>> from pyogp.lib.base.message.message import Message
     >>> packet = Message('StartPingCheck')
 
-Fire the event, it returns a packet
-Unpossible to include this in the test, the memory ref keeps changing
-But, you get the idea...
-    event_data = message_handler.handle(packet)
-    <pyogp.lib.base.message.message.Message object at 0x14da450>
+Fire the event, it returns a Message instance
+    >>> type(message_handler.handle(packet))
+    >>> Message
 

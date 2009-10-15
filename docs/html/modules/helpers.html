@@ -1,0 +1,307 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>helpers &mdash; pyogp.lib.base v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="pyogp.lib.base v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Modules" href="../modules.html" />
+    <link rel="next" title="llsd_builder" href="llsd_builder.html" />
+    <link rel="prev" title="factory" href="factory.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="llsd_builder.html" title="llsd_builder"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="factory.html" title="factory"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pyogp.lib.base v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" accesskey="U">Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="factory.html"
+                                  title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">factory</span></tt></a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="llsd_builder.html"
+                                  title="next chapter"><tt class="docutils literal"><span class="pre">llsd_builder</span></tt></a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/modules/helpers.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pyogp.lib.base.helpers">
+<h1><tt class="xref docutils literal"><span class="pre">helpers</span></tt><a class="headerlink" href="#module-pyogp.lib.base.helpers" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pyogp.lib.base.helpers.LLSDDeserializer">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.helpers.</tt><tt class="descname">LLSDDeserializer</tt><a class="headerlink" href="#pyogp.lib.base.helpers.LLSDDeserializer" title="Permalink to this definition">¶</a></dt>
+<dd><p>utility for deserializing LLSD data</p>
+<p>The deserialization component is defined as a utility because the input
+data can be a string or a file. It might be possible to define this as 
+an adapter on a string but a string is too generic for this. So that&#8217;s 
+why it is a utility.</p>
+<p>You can use it like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="o">=</span><span class="s">&#39;&lt;?xml version=&quot;1.0&quot; ?&gt;&lt;llsd&gt;&lt;map&gt;&lt;key&gt;test&lt;/key&gt;&lt;integer&gt;1234&lt;/integer&gt;&lt;key&gt;foo&lt;/key&gt;&lt;string&gt;bar&lt;/string&gt;&lt;/map&gt;&lt;/llsd&gt;&#39;</span>
+</pre></div>
+</div>
+<p>We use queryUtility because this returns None instead of an exception
+when a utility is not registered. We use the content type we received
+as the name of the utility. Another option would of course be to subclas
+string to some LLSDString class and use an adapter. We then would need some
+factory for generating the LLSDString class from whatever came back from
+the HTTP call.</p>
+<p>So here is how you use that utility:
+&gt;&gt;&gt; deserializer = LLSDDeserializer()
+&gt;&gt;&gt; llsd = deserializer.deserialize(s)
+&gt;&gt;&gt; llsd
+{&#8216;test&#8217;: 1234, &#8216;foo&#8217;: &#8216;bar&#8217;}</p>
+<p>We can also test this with some non-LLSD string:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">llsd</span> <span class="o">=</span> <span class="n">deserializer</span><span class="o">.</span><span class="n">deserialize_string</span><span class="p">(</span><span class="s">&#39;mumpitz&#39;</span><span class="p">)</span>   <span class="c"># this is not LLSD</span>
+<span class="gp">...</span>
+<span class="go">DeserializationFailed: deserialization failed for &#39;mumpitz&#39;, reason: &#39;invalid token at index 0: 109&#39;</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">llsd</span> <span class="o">=</span> <span class="n">deserializer</span><span class="o">.</span><span class="n">deserialize_string</span><span class="p">(</span><span class="s">&#39;barfoo&#39;</span><span class="p">)</span> 
+<span class="gp">...</span>
+<span class="go">DeserializationFailed: deserialization failed for &#39;barfoo&#39;, reason: &#39;binary notation not yet supported&#39;</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="pyogp.lib.base.helpers.LLSDDeserializer.deserialize">
+<tt class="descname">deserialize</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.LLSDDeserializer.deserialize" title="Permalink to this definition">¶</a></dt>
+<dd>convenience class to handle a variety of inputs</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.helpers.LLSDDeserializer.deserialize_file">
+<tt class="descname">deserialize_file</tt><big>(</big><em>fp</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.LLSDDeserializer.deserialize_file" title="Permalink to this definition">¶</a></dt>
+<dd>deserialize a file</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.helpers.LLSDDeserializer.deserialize_string">
+<tt class="descname">deserialize_string</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.LLSDDeserializer.deserialize_string" title="Permalink to this definition">¶</a></dt>
+<dd>deserialize a string</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.helpers.ListLLSDSerializer">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.helpers.</tt><tt class="descname">ListLLSDSerializer</tt><big>(</big><em>context</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.ListLLSDSerializer" title="Permalink to this definition">¶</a></dt>
+<dd><p>adapter for serializing a list to LLSD</p>
+<p>An example:
+&gt;&gt;&gt; d=[&#8216;ChatSessionRequest&#8217;, &#8216;CopyInventoryFromNotecard&#8217;]
+&gt;&gt;&gt; serializer = ListLLSDSerializer(d)
+&gt;&gt;&gt; serializer.serialize()
+&#8216;&lt;?xml version=&#8221;1.0&#8221; ?&gt;&lt;llsd&gt;&lt;array&gt;&lt;string&gt;ChatSessionRequest&lt;/string&gt;&lt;string&gt;CopyInventoryFromNotecard&lt;/string&gt;&lt;/array&gt;&lt;/llsd&gt;&#8217;
+&gt;&gt;&gt; serializer.content_type
+&#8216;application/llsd+xml&#8217;</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.helpers.ListLLSDSerializer.content_type">
+<tt class="descname">content_type</tt><a class="headerlink" href="#pyogp.lib.base.helpers.ListLLSDSerializer.content_type" title="Permalink to this definition">¶</a></dt>
+<dd>return the content type of this serializer</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.helpers.ListLLSDSerializer.serialize">
+<tt class="descname">serialize</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.ListLLSDSerializer.serialize" title="Permalink to this definition">¶</a></dt>
+<dd>convert the payload to LLSD</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.helpers.Helpers">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.helpers.</tt><tt class="descname">Helpers</tt><a class="headerlink" href="#pyogp.lib.base.helpers.Helpers" title="Permalink to this definition">¶</a></dt>
+<dd><p>contains useful helper functions</p>
+<dl class="staticmethod">
+<dt id="pyogp.lib.base.helpers.Helpers.bytes_to_ascii">
+<em class="property">
+static </em><tt class="descname">bytes_to_ascii</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.Helpers.bytes_to_ascii" title="Permalink to this definition">¶</a></dt>
+<dd>converts bytes to ascii format</dd></dl>
+
+<dl class="staticmethod">
+<dt id="pyogp.lib.base.helpers.Helpers.bytes_to_base64">
+<em class="property">
+static </em><tt class="descname">bytes_to_base64</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.Helpers.bytes_to_base64" title="Permalink to this definition">¶</a></dt>
+<dd>converts bytes to ascii format</dd></dl>
+
+<dl class="staticmethod">
+<dt id="pyogp.lib.base.helpers.Helpers.bytes_to_hex">
+<em class="property">
+static </em><tt class="descname">bytes_to_hex</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.Helpers.bytes_to_hex" title="Permalink to this definition">¶</a></dt>
+<dd>converts bytes to hex format</dd></dl>
+
+<dl class="staticmethod">
+<dt id="pyogp.lib.base.helpers.Helpers.hex_to_ascii">
+<em class="property">
+static </em><tt class="descname">hex_to_ascii</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.Helpers.hex_to_ascii" title="Permalink to this definition">¶</a></dt>
+<dd>converts bytes to ascii format</dd></dl>
+
+<dl class="staticmethod">
+<dt id="pyogp.lib.base.helpers.Helpers.int_to_bytes">
+<em class="property">
+static </em><tt class="descname">int_to_bytes</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.Helpers.int_to_bytes" title="Permalink to this definition">¶</a></dt>
+<dd>converts an int to a string of bytes</dd></dl>
+
+<dl class="staticmethod">
+<dt id="pyogp.lib.base.helpers.Helpers.log_event_queue_data">
+<em class="property">
+static </em><tt class="descname">log_event_queue_data</tt><big>(</big><em>data</em>, <em>_object</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.Helpers.log_event_queue_data" title="Permalink to this definition">¶</a></dt>
+<dd>default logging function for event queue data events</dd></dl>
+
+<dl class="staticmethod">
+<dt id="pyogp.lib.base.helpers.Helpers.log_packet">
+<em class="property">
+static </em><tt class="descname">log_packet</tt><big>(</big><em>packet</em>, <em>_object</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.Helpers.log_packet" title="Permalink to this definition">¶</a></dt>
+<dd>default logging function for packets</dd></dl>
+
+<dl class="staticmethod">
+<dt id="pyogp.lib.base.helpers.Helpers.null_packet_handler">
+<em class="property">
+static </em><tt class="descname">null_packet_handler</tt><big>(</big><em>packet</em>, <em>_object</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.Helpers.null_packet_handler" title="Permalink to this definition">¶</a></dt>
+<dd>just a null event handler for watching aka fully parsing specific packets</dd></dl>
+
+<dl class="staticmethod">
+<dt id="pyogp.lib.base.helpers.Helpers.pack_quaternion_to_vector3">
+<em class="property">
+static </em><tt class="descname">pack_quaternion_to_vector3</tt><big>(</big><em>quaternion</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.Helpers.pack_quaternion_to_vector3" title="Permalink to this definition">¶</a></dt>
+<dd>pack a normalized quaternion (tuple) into a vector3 (tuple)</dd></dl>
+
+<dl class="staticmethod">
+<dt id="pyogp.lib.base.helpers.Helpers.packed_u16_to_float">
+<em class="property">
+static </em><tt class="descname">packed_u16_to_float</tt><big>(</big><em>bytes</em>, <em>offset</em>, <em>lower</em>, <em>upper</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.Helpers.packed_u16_to_float" title="Permalink to this definition">¶</a></dt>
+<dd>Extract float packed as u16 in a byte buffer</dd></dl>
+
+<dl class="staticmethod">
+<dt id="pyogp.lib.base.helpers.Helpers.packed_u8_to_float">
+<em class="property">
+static </em><tt class="descname">packed_u8_to_float</tt><big>(</big><em>bytes</em>, <em>offset</em>, <em>lower</em>, <em>upper</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.Helpers.packed_u8_to_float" title="Permalink to this definition">¶</a></dt>
+<dd>Extract float packed as u8 in a byte buffer</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.helpers.DictLLSDSerializer">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.helpers.</tt><tt class="descname">DictLLSDSerializer</tt><big>(</big><em>context</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.DictLLSDSerializer" title="Permalink to this definition">¶</a></dt>
+<dd><p>adapter for serializing a dictionary to LLSD</p>
+<p>An example:
+&gt;&gt;&gt; d={&#8216;foo&#8217;:&#8217;bar&#8217;, &#8216;test&#8217;:1234}
+&gt;&gt;&gt; serializer = DictLLSDSerializer(d)
+&gt;&gt;&gt; serializer.serialize()
+&#8216;&lt;?xml version=&#8221;1.0&#8221; ?&gt;&lt;llsd&gt;&lt;map&gt;&lt;key&gt;test&lt;/key&gt;&lt;integer&gt;1234&lt;/integer&gt;&lt;key&gt;foo&lt;/key&gt;&lt;string&gt;bar&lt;/string&gt;&lt;/map&gt;&lt;/llsd&gt;&#8217;
+&gt;&gt;&gt; serializer.content_type
+&#8216;application/llsd+xml&#8217;</p>
+<dl class="attribute">
+<dt id="pyogp.lib.base.helpers.DictLLSDSerializer.content_type">
+<tt class="descname">content_type</tt><a class="headerlink" href="#pyogp.lib.base.helpers.DictLLSDSerializer.content_type" title="Permalink to this definition">¶</a></dt>
+<dd>return the content type of this serializer</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.helpers.DictLLSDSerializer.serialize">
+<tt class="descname">serialize</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.DictLLSDSerializer.serialize" title="Permalink to this definition">¶</a></dt>
+<dd>convert the payload to LLSD</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.helpers.Wait">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.helpers.</tt><tt class="descname">Wait</tt><big>(</big><em>duration</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.Wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>a simple timer that blocks a calling routine for the specified number of seconds</p>
+<p>done since we were writing timing loops in test scripts repeatedly
+returns True when it&#8217;s done</p>
+<dl class="method">
+<dt id="pyogp.lib.base.helpers.Wait.run">
+<tt class="descname">run</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.Wait.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.helpers.Wait.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.helpers.Wait.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="llsd_builder.html" title="llsd_builder"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="factory.html" title="factory"
+             >previous</a> |</li>
+        <li><a href="../index.html">pyogp.lib.base v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" >Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Pyogp team.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>caps &mdash; pyogp.lib.base v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="pyogp.lib.base v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Modules" href="../modules.html" />
+    <link rel="next" title="circuit" href="circuit.html" />
+    <link rel="prev" title="Modules" href="../modules.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="circuit.html" title="circuit"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../modules.html" title="Modules"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pyogp.lib.base v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" accesskey="U">Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="../modules.html"
+                                  title="previous chapter">Modules</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="circuit.html"
+                                  title="next chapter"><tt class="docutils literal"><span class="pre">circuit</span></tt></a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/modules/caps.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pyogp.lib.base.caps">
+<h1><tt class="xref docutils literal"><span class="pre">caps</span></tt><a class="headerlink" href="#module-pyogp.lib.base.caps" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pyogp.lib.base.caps.Capability">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.caps.</tt><tt class="descname">Capability</tt><big>(</big><em>name</em>, <em>public_url</em>, <em>restclient=None</em>, <em>settings=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.caps.Capability" title="Permalink to this definition">¶</a></dt>
+<dd><p>models a capability 
+A capability is a web resource which enables functionality for a client
+The seed capability is a special type, through which other capabilities 
+are procured</p>
+<p>A capability in pyogp provides a GET and a POST method</p>
+<p>Sample implementations: region.py
+Tests: tests/caps.txt, tests/test_caps.py</p>
+<p>initialize the capability</p>
+<dl class="method">
+<dt id="pyogp.lib.base.caps.Capability.GET">
+<tt class="descname">GET</tt><big>(</big><em>custom_headers={}</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.caps.Capability.GET" title="Permalink to this definition">¶</a></dt>
+<dd>call this capability, return the parsed result</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.caps.Capability.POST">
+<tt class="descname">POST</tt><big>(</big><em>payload</em>, <em>custom_headers={}</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.caps.Capability.POST" title="Permalink to this definition">¶</a></dt>
+<dd>call this capability, return the parsed result</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.caps.Capability.POST_FILE">
+<tt class="descname">POST_FILE</tt><big>(</big><em>file_name</em>, <em>custom_headers={}</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.caps.Capability.POST_FILE" title="Permalink to this definition">¶</a></dt>
+<dd>Opens file at file_name and posts contents to this cap.</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.caps.SeedCapability">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.caps.</tt><tt class="descname">SeedCapability</tt><big>(</big><em>name</em>, <em>public_url</em>, <em>restclient=None</em>, <em>settings=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.caps.SeedCapability" title="Permalink to this definition">¶</a></dt>
+<dd><p>a seed capability which is able to retrieve other capabilities</p>
+<p>initialize the capability</p>
+<dl class="method">
+<dt id="pyogp.lib.base.caps.SeedCapability.GET">
+<tt class="descname">GET</tt><big>(</big><em>custom_headers={}</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.caps.SeedCapability.GET" title="Permalink to this definition">¶</a></dt>
+<dd>call this capability, return the parsed result</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.caps.SeedCapability.POST">
+<tt class="descname">POST</tt><big>(</big><em>payload</em>, <em>custom_headers={}</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.caps.SeedCapability.POST" title="Permalink to this definition">¶</a></dt>
+<dd>call this capability, return the parsed result</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.caps.SeedCapability.POST_FILE">
+<tt class="descname">POST_FILE</tt><big>(</big><em>file_name</em>, <em>custom_headers={}</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.caps.SeedCapability.POST_FILE" title="Permalink to this definition">¶</a></dt>
+<dd>Opens file at file_name and posts contents to this cap.</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.caps.SeedCapability.get">
+<tt class="descname">get</tt><big>(</big><em>names=</em><span class="optional">[</span><span class="optional">]</span><big>)</big><a class="headerlink" href="#pyogp.lib.base.caps.SeedCapability.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>if this is a seed cap we can retrieve other caps here</p>
+<p>Note: changing post key from &#8216;caps&#8217; to &#8216;capabilities&#8217; for OGP spec updates in Draft 3
+see <a class="reference external" href="http://wiki.secondlife.com/wiki/OGP_Base_Draft_3#Seed_Capability_.28Resource_Class.29">http://wiki.secondlife.com/wiki/OGP_Base_Draft_3#Seed_Capability_.28Resource_Class.29</a></p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="circuit.html" title="circuit"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../modules.html" title="Modules"
+             >previous</a> |</li>
+        <li><a href="../index.html">pyogp.lib.base v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" >Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Pyogp team.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

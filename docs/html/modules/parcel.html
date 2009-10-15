@@ -1,0 +1,339 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>parcel &mdash; Pyogp v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Pyogp v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Modules" href="../modules.html" />
+    <link rel="next" title="parse_packet" href="parse_packet.html" />
+    <link rel="prev" title="objects" href="objects.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="parse_packet.html" title="parse_packet"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="objects.html" title="objects"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" accesskey="U">Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="objects.html"
+                                  title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">objects</span></tt></a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="parse_packet.html"
+                                  title="next chapter"><tt class="docutils literal"><span class="pre">parse_packet</span></tt></a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/modules/parcel.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pyogp.lib.base.parcel">
+<h1><tt class="xref docutils literal"><span class="pre">parcel</span></tt><a class="headerlink" href="#module-pyogp.lib.base.parcel" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pyogp.lib.base.parcel.ParcelManager">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.parcel.</tt><tt class="descname">ParcelManager</tt><big>(</big><em>agent=None</em>, <em>region=None</em>, <em>settings=None</em>, <em>message_handler=None</em>, <em>events_handler=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>a parcel manager, generally used as an attribute of a region</p>
+<p>initialize the parcel manager</p>
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.disable_objects">
+<tt class="descname">disable_objects</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.disable_objects" title="Permalink to this definition">¶</a></dt>
+<dd>set objects nonphysical and disable scripts for the specified parcel</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.divide_parcel">
+<tt class="descname">divide_parcel</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.divide_parcel" title="Permalink to this definition">¶</a></dt>
+<dd>divide the selection into a new parcel</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.enable_callbacks">
+<tt class="descname">enable_callbacks</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.enable_callbacks" title="Permalink to this definition">¶</a></dt>
+<dd>enable the callback handlers for this ParcelManager</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.get_current_parcel">
+<tt class="descname">get_current_parcel</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.get_current_parcel" title="Permalink to this definition">¶</a></dt>
+<dd>Returns the agent&#8217;s current parcel if info has been received, None otherwise.</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.get_parcel_by_id">
+<tt class="descname">get_parcel_by_id</tt><big>(</big><em>local_id</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.get_parcel_by_id" title="Permalink to this definition">¶</a></dt>
+<dd>Returns a parcel if info has been received, None otherwise.</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.get_parcel_by_location">
+<tt class="descname">get_parcel_by_location</tt><big>(</big><em>local_x</em>, <em>local_y</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.get_parcel_by_location" title="Permalink to this definition">¶</a></dt>
+<dd>Returns a parcel if info has been received, None otherwise.</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.get_parcel_id_by_location">
+<tt class="descname">get_parcel_id_by_location</tt><big>(</big><em>local_x</em>, <em>local_y</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.get_parcel_id_by_location" title="Permalink to this definition">¶</a></dt>
+<dd>Returns a parcel&#8217;s local id if info has been received, 0 otherwise.</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.join_parcels">
+<tt class="descname">join_parcels</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.join_parcels" title="Permalink to this definition">¶</a></dt>
+<dd>joins the specified parcels</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.onEstateCovenantReply">
+<tt class="descname">onEstateCovenantReply</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.onEstateCovenantReply" title="Permalink to this definition">¶</a></dt>
+<dd>parse and handle an EstateCovenantReply packet</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.onParcelAccessListReply">
+<tt class="descname">onParcelAccessListReply</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.onParcelAccessListReply" title="Permalink to this definition">¶</a></dt>
+<dd>parse and handle a ParcelAccessListReply packet</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.onParcelDwellReply">
+<tt class="descname">onParcelDwellReply</tt><big>(</big><em>packet</em>, <em>LocalID=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.onParcelDwellReply" title="Permalink to this definition">¶</a></dt>
+<dd>parse and handle a ParcelDwellReply packet</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.onParcelInfoReply">
+<tt class="descname">onParcelInfoReply</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.onParcelInfoReply" title="Permalink to this definition">¶</a></dt>
+<dd>parse and handle a ParcelInfoReply packet</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.onParcelOverlay">
+<tt class="descname">onParcelOverlay</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.onParcelOverlay" title="Permalink to this definition">¶</a></dt>
+<dd><p>parse and handle an incoming ParcelOverlay packet</p>
+<p>Currently, we store this data in the ParcelManager.packet_overlay dictionary
+as parcel_overlay[sequence_id] = data (unparsed binary)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.onParcelProperties">
+<tt class="descname">onParcelProperties</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.onParcelProperties" title="Permalink to this definition">¶</a></dt>
+<dd>parse and handle an incoming ParcelProperties packet. Parse and serialize the info into a Parcel() representation, then store it (or replace the stored version)</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.onParcelPropertiesUpdate">
+<tt class="descname">onParcelPropertiesUpdate</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.onParcelPropertiesUpdate" title="Permalink to this definition">¶</a></dt>
+<dd>parse and handle an incoming ParcelPropertiesUpdate packet. parse the data into a dictionary and pass the blob to the Parcel() instance for self handling</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.request_all_parcel_properties">
+<tt class="descname">request_all_parcel_properties</tt><big>(</big><em>delay=0.5</em>, <em>refresh=False</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.request_all_parcel_properties" title="Permalink to this definition">¶</a></dt>
+<dd>request the properties of all of the parcels on the current region. The delay parameter is a sleep between the send of each packet request; if refresh, current data will be discarded before requesting. If refresh is not True, data will not be re-requested for region locations already queried.</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.request_current_parcel_properties">
+<tt class="descname">request_current_parcel_properties</tt><big>(</big><em>refresh=False</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.request_current_parcel_properties" title="Permalink to this definition">¶</a></dt>
+<dd>request the properties of the parcel the agent currently inhabits</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.request_estate_covenant">
+<tt class="descname">request_estate_covenant</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.request_estate_covenant" title="Permalink to this definition">¶</a></dt>
+<dd>request the estate covenant (for the current estate)</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.request_parcel_access_list">
+<tt class="descname">request_parcel_access_list</tt><big>(</big><em>LocalID</em>, <em>Flags</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.request_parcel_access_list" title="Permalink to this definition">¶</a></dt>
+<dd>request an access list for the specified parcel, while enabling a callback handler for the response</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.request_parcel_dwell">
+<tt class="descname">request_parcel_dwell</tt><big>(</big><em>LocalID</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.request_parcel_dwell" title="Permalink to this definition">¶</a></dt>
+<dd>request dwell for the specified parcel, while enabling a callback handler for the response</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.request_parcel_info">
+<tt class="descname">request_parcel_info</tt><big>(</big><em>parcel_id</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.request_parcel_info" title="Permalink to this definition">¶</a></dt>
+<dd>request information for a parcel by id</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.return_parcel_objects">
+<tt class="descname">return_parcel_objects</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.return_parcel_objects" title="Permalink to this definition">¶</a></dt>
+<dd>return the specified objects for the specified parcel</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.sendEstateCovenantRequest">
+<tt class="descname">sendEstateCovenantRequest</tt><big>(</big><em>agent_id</em>, <em>session_id</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.sendEstateCovenantRequest" title="Permalink to this definition">¶</a></dt>
+<dd>send an EstateCovenantRequest message to the host simulator</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.sendParcelAccessListRequest">
+<tt class="descname">sendParcelAccessListRequest</tt><big>(</big><em>agent_id</em>, <em>session_id</em>, <em>LocalID</em>, <em>Flags</em>, <em>SequenceID=-5150</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.sendParcelAccessListRequest" title="Permalink to this definition">¶</a></dt>
+<dd>send a ParcelAccessListRequest packet to the host simulator</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.sendParcelDisableObjects">
+<tt class="descname">sendParcelDisableObjects</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.sendParcelDisableObjects" title="Permalink to this definition">¶</a></dt>
+<dd>send a ParcelDisableObjects packet</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.sendParcelDivide">
+<tt class="descname">sendParcelDivide</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.sendParcelDivide" title="Permalink to this definition">¶</a></dt>
+<dd>send a ParcelDivide packet</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.sendParcelDwellRequest">
+<tt class="descname">sendParcelDwellRequest</tt><big>(</big><em>agent_id</em>, <em>session_id</em>, <em>LocalID</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.sendParcelDwellRequest" title="Permalink to this definition">¶</a></dt>
+<dd>send a ParcelDwellRequest packet</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.sendParcelInfoRequest">
+<tt class="descname">sendParcelInfoRequest</tt><big>(</big><em>agent_id</em>, <em>session_id</em>, <em>parcel_id</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.sendParcelInfoRequest" title="Permalink to this definition">¶</a></dt>
+<dd>send a ParcelInfoRequest packet for the specified parcel_id</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.sendParcelJoin">
+<tt class="descname">sendParcelJoin</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.sendParcelJoin" title="Permalink to this definition">¶</a></dt>
+<dd>send a ParcelJoin packet</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.sendParcelPropertiesRequest">
+<tt class="descname">sendParcelPropertiesRequest</tt><big>(</big><em>agent_id</em>, <em>session_id</em>, <em>SequenceID</em>, <em>West</em>, <em>South</em>, <em>East</em>, <em>North</em>, <em>SnapSelection</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.sendParcelPropertiesRequest" title="Permalink to this definition">¶</a></dt>
+<dd>sends a ParcelPropertiesRequest message to the host simulator</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.ParcelManager.sendParcelPropertiesRequestByID">
+<tt class="descname">sendParcelPropertiesRequestByID</tt><big>(</big><em>agent_id</em>, <em>session_id</em>, <em>SequenceID</em>, <em>LocalID</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.ParcelManager.sendParcelPropertiesRequestByID" title="Permalink to this definition">¶</a></dt>
+<dd>sends a ParcelPropertiesRequestByID packet</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.parcel.Parcel">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.parcel.</tt><tt class="descname">Parcel</tt><big>(</big><em>region</em>, <em>agent</em>, <em>RequestResult=None</em>, <em>SequenceID=None</em>, <em>SnapSelection=None</em>, <em>SelfCount=None</em>, <em>OtherCount=None</em>, <em>PublicCount=None</em>, <em>LocalID=None</em>, <em>OwnerID=None</em>, <em>IsGroupOwned=None</em>, <em>AuctionID=None</em>, <em>ClaimDate=None</em>, <em>ClaimPrice=None</em>, <em>RentPrice=None</em>, <em>AABBMin=None</em>, <em>AABBMax=None</em>, <em>Bitmap=None</em>, <em>Area=None</em>, <em>Status=None</em>, <em>SimWideMaxPrims=None</em>, <em>SimWideTotalPrims=None</em>, <em>MaxPrims=None</em>, <em>TotalPrims=None</em>, <em>OwnerPrims=None</em>, <em>GroupPrims=None</em>, <em>OtherPrims=None</em>, <em>SelectedPrims=None</em>, <em>ParcelPrimBonus=None</em>, <em>OtherCleanTime=None</em>, <em>ParcelFlags=None</em>, <em>SalePrice=None</em>, <em>Name=None</em>, <em>Desc=None</em>, <em>MusicURL=None</em>, <em>MediaURL=None</em>, <em>MediaID=None</em>, <em>MediaAutoScale=None</em>, <em>GroupID=None</em>, <em>PassPrice=None</em>, <em>PassHours=None</em>, <em>Category=None</em>, <em>AuthBuyerID=None</em>, <em>SnapshotID=None</em>, <em>UserLocation=None</em>, <em>UserLookAt=None</em>, <em>LandingType=None</em>, <em>RegionPushOverride=None</em>, <em>RegionDenyAnonymous=None</em>, <em>RegionDenyIdentified=None</em>, <em>RegionDenyTransacted=None</em>, <em>RegionDenyAgeUnverified=None</em>, <em>ParcelID=None</em>, <em>ActualArea=None</em>, <em>BillableArea=None</em>, <em>Flags=None</em>, <em>GlobalX=None</em>, <em>GlobalY=None</em>, <em>GlobalZ=None</em>, <em>SimName=None</em>, <em>Dwell=None</em>, <em>settings=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.Parcel" title="Permalink to this definition">¶</a></dt>
+<dd><p>a representation of a parcel</p>
+<p>initialize a representation of a parcel. the data is currently being populated directly from the ParcelProperties message</p>
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.Parcel.buy">
+<tt class="descname">buy</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.Parcel.buy" title="Permalink to this definition">¶</a></dt>
+<dd>buy this parcel</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.Parcel.claim">
+<tt class="descname">claim</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.Parcel.claim" title="Permalink to this definition">¶</a></dt>
+<dd>change the owner of a parcel</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.Parcel.deed_to_group">
+<tt class="descname">deed_to_group</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.Parcel.deed_to_group" title="Permalink to this definition">¶</a></dt>
+<dd>deed this parcel to a group</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.Parcel.disable_objects">
+<tt class="descname">disable_objects</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.Parcel.disable_objects" title="Permalink to this definition">¶</a></dt>
+<dd>set objects nonphysical and disable scripts for this parcel</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.Parcel.godforce_owner">
+<tt class="descname">godforce_owner</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.Parcel.godforce_owner" title="Permalink to this definition">¶</a></dt>
+<dd>god force own this parcel</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.Parcel.reclaim">
+<tt class="descname">reclaim</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.Parcel.reclaim" title="Permalink to this definition">¶</a></dt>
+<dd>reclaim this parcel</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.Parcel.release">
+<tt class="descname">release</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.Parcel.release" title="Permalink to this definition">¶</a></dt>
+<dd>release this parcel to the public</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.Parcel.return_objects">
+<tt class="descname">return_objects</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.Parcel.return_objects" title="Permalink to this definition">¶</a></dt>
+<dd>return the specified objects for this parcel</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.Parcel.select_objects">
+<tt class="descname">select_objects</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.Parcel.select_objects" title="Permalink to this definition">¶</a></dt>
+<dd>selects the specified objects for this parcel</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.parcel.Parcel.set_other_clean_time">
+<tt class="descname">set_other_clean_time</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.parcel.Parcel.set_other_clean_time" title="Permalink to this definition">¶</a></dt>
+<dd>sends a SetOtherCleanTime packet for this parcel</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="parse_packet.html" title="parse_packet"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="objects.html" title="objects"
+             >previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" >Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Pyogp team.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

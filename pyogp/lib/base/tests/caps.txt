@@ -90,12 +90,10 @@ and retrieve it via GET:
     >>> cap.GET()
     {'some': 12345, 'something': 'else'}
 
-
 or post something to it (the demo will simply update the base dict):
 
     >>> cap.POST({'Tao':'Takashi'})
     {'Tao': 'Takashi', 'some': 12345, 'something': 'else'}
-
 
 Testing errors
 ~~~~~~~~~~~~~~
@@ -117,8 +115,6 @@ Try the same for GET:
     ...
     DeserializerNotFound: deserialization for 'text/foobar' not supported
 
-
-
 Now we test if network errors are handled correctly::
 
     >>> cap = Capability('test','http://127.0.0.1:12345/cap/error', client)
@@ -126,7 +122,6 @@ Now we test if network errors are handled correctly::
     Traceback (most recent call last):
     ...
     ResourceError: Error using 'POST' on resource 'http://127.0.0.1:12345/cap/error': Internal Server Error (500)
-
 
 And some 404:
 

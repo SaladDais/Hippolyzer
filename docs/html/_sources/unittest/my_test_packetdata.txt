@@ -1,0 +1,10 @@
+:mod:`my_test_packetdata`
+=========================
+
+.. automodule:: pyogp.lib.base.message.tests.my_test_packetdata
+
+.. autoclass:: pyogp.lib.base.message.tests.my_test_packetdata.TestPacketDecode
+  :members:
+  :undoc-members:
+  :inherited-members:
+

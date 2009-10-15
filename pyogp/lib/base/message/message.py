@@ -24,10 +24,10 @@ from msgtypes import PackFlags
 # reference message_template.msg for the proper schema for messages
 
 class MessageBase(MsgData):
-    """ base representation of a message's name, blocks, and variables.
-
-    MessageBase expects a name, and *args consisting of Block() instances 
-    (which takes a name and **kwargs)
+    """ 
+    base representation of a message name, blocks, and variables.
+    MessageBase expects a name, and args consisting of Block() instances 
+    (which takes a name and kwargs)
     """
 
     def __init__(self, name, *args):
@@ -36,9 +36,10 @@ class MessageBase(MsgData):
         self.parse_blocks(args)
 
     def parse_blocks(self, block_list):
+        """ parse the Block() instances in the args """
 
+        #can have a list of blocks if it is multiple or variable
         for block in block_list:
-            #can have a list of blocks if it is multiple or variable
             if type(block) == list:
                 for bl in block:
                     self.add_block(bl)                                
@@ -46,8 +47,8 @@ class MessageBase(MsgData):
                 self.add_block(block)                                
 
 class Block(MsgBlockData):
-    """ base representation of a block
-
+    """ 
+    base representation of a block
     Block expects a name, and kwargs for variables (var_name = value)
     """
 
@@ -57,6 +58,7 @@ class Block(MsgBlockData):
         self.__parse_vars(kwargs)
 
     def __parse_vars(self, var_list):
+        """ parse the Variable() instances in the args"""
 
         for variable_name in var_list:
             variable_data = var_list[variable_name]

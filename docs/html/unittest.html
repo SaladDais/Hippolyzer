@@ -1,0 +1,211 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Unit Tests &mdash; pyogp.lib.base v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pyogp.lib.base v0.1 documentation" href="index.html" />
+    <link rel="next" title="base" href="unittest/base.html" />
+    <link rel="prev" title="udpserializer" href="modules/udpserializer.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="unittest/base.html" title="base"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="modules/udpserializer.html" title="udpserializer"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">pyogp.lib.base v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Unit Tests</a><ul>
+<li><a class="reference external" href="#installing-nose">Installing Nose</a></li>
+<li><a class="reference external" href="#running-unit-tests">Running Unit Tests</a><ul>
+<li><a class="reference external" href="#against-a-checkout-of-a-package">Against a checkout of a package</a></li>
+<li><a class="reference external" href="#when-part-of-buildout">When part of buildout</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#adding-tests">Adding Tests</a></li>
+<li><a class="reference external" href="#current-tests">Current Tests</a><ul>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="modules/udpserializer.html"
+                                  title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">udpserializer</span></tt></a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="unittest/base.html"
+                                  title="next chapter"><tt class="docutils literal"><span class="pre">base</span></tt></a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/unittest.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="unit-tests">
+<h1>Unit Tests<a class="headerlink" href="#unit-tests" title="Permalink to this headline">¶</a></h1>
+<p>Pyogp unit testing ~ pyogp.lib.base contains internal tests that validate consistency of the library implementation. Using unittest and doctest, along with wsgi and mock objects, these tests simulate interaction with a grid where needed, or use predefined data where possible, to validate methods and such.</p>
+<p>Coverage is unfortunately sparse currently, though, enough examples exist and the api is generally stable enough that tests can reliably be created now.</p>
+<div class="section" id="installing-nose">
+<h2>Installing Nose<a class="headerlink" href="#installing-nose" title="Permalink to this headline">¶</a></h2>
+<p>use Nose! <a class="reference external" href="http://somethingaboutorange.com/mrl/projects/nose/0.11.1/">http://somethingaboutorange.com/mrl/projects/nose/0.11.1/</a></p>
+<p>Install Steps:</p>
+<ol class="arabic simple">
+<li>easy_install nose</li>
+</ol>
+<ul class="simple">
+<li>or -</li>
+</ul>
+<ol class="arabic simple">
+<li><a class="reference external" href="http://somethingaboutorange.com/mrl/projects/nose/nose-0.11.1.tar.gz">http://somethingaboutorange.com/mrl/projects/nose/nose-0.11.1.tar.gz</a></li>
+<li>gzip -dc nose-0.11.1.tar.gz | tar xf -</li>
+<li>cd nose-0.11.1</li>
+<li>python setup.py install</li>
+</ol>
+</div>
+<div class="section" id="running-unit-tests">
+<h2>Running Unit Tests<a class="headerlink" href="#running-unit-tests" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="against-a-checkout-of-a-package">
+<h3>Against a checkout of a package<a class="headerlink" href="#against-a-checkout-of-a-package" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic simple">
+<li>nosetests &#8211;where={path to src/pyogp.lib.base}</li>
+<li>see nosetests &#8211;help for more info</li>
+<li>disable library logging via setting Settings.ENABLE_LOGGING_IN_TESTS to False</li>
+</ol>
+</div>
+<div class="section" id="when-part-of-buildout">
+<h3>When part of buildout<a class="headerlink" href="#when-part-of-buildout" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="http://wiki.secondlife.com/wiki/PyOGP_Package_Unittests">http://wiki.secondlife.com/wiki/PyOGP_Package_Unittests</a> for guidance on running tests when operating in pyogp&#8217;s buildout.</p>
+</div>
+</div>
+<div class="section" id="adding-tests">
+<h2>Adding Tests<a class="headerlink" href="#adding-tests" title="Permalink to this headline">¶</a></h2>
+<p>doctest: add a {class}.txt file to pyogp.lib.base.tests.
+unittest: add a test_{class}.py file to pyogp.lib.base.tests.</p>
+<p>base.py ~ contains the wsgi handlers for certain mock objects (like MockXMLRPC, etc)</p>
+</div>
+<div class="section" id="current-tests">
+<h2>Current Tests<a class="headerlink" href="#current-tests" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="unittest/base.html"><tt class="docutils literal"><span class="pre">base</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/basics.html">basics</a><ul>
+<li class="toctree-l2"><a class="reference external" href="unittest/basics.html#networking-basics">Networking Basics</a></li>
+<li class="toctree-l2"><a class="reference external" href="unittest/basics.html#posting-something">POSTing something</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="unittest/caps.html">caps</a><ul>
+<li class="toctree-l2"><a class="reference external" href="unittest/caps.html#the-capabilities-component">The Capabilities component</a></li>
+<li class="toctree-l2"><a class="reference external" href="unittest/caps.html#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference external" href="unittest/caps.html#testing-errors">Testing errors</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="unittest/config.html"><tt class="docutils literal"><span class="pre">config</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/message_handler.html">message_handler</a><ul>
+<li class="toctree-l2"><a class="reference external" href="unittest/message_handler.html#messagehandler">MessageHandler</a></li>
+<li class="toctree-l2"><a class="reference external" href="unittest/message_handler.html#the-basic-message-handling-event-callbackcase">The basic message handling event/callbackcase</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="unittest/mock_xmlrpc.html"><tt class="docutils literal"><span class="pre">mock_xmlrpc</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/mockup_client.html"><tt class="docutils literal"><span class="pre">mockup_client</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/mockup_net.html"><tt class="docutils literal"><span class="pre">mockup_net</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/packet_test.html"><tt class="docutils literal"><span class="pre">packet_test</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/test.html"><tt class="docutils literal"><span class="pre">test</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/testDocTests.html"><tt class="docutils literal"><span class="pre">testDocTests</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/test_circuits.html"><tt class="docutils literal"><span class="pre">test_circuits</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/test_datatypes.html"><tt class="docutils literal"><span class="pre">test_datatypes</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/test_events.html"><tt class="docutils literal"><span class="pre">test_events</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/test_helpers.html"><tt class="docutils literal"><span class="pre">test_helpers</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/test_llsd_builder.html"><tt class="docutils literal"><span class="pre">test_llsd_builder</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/test_message_manager.html"><tt class="docutils literal"><span class="pre">test_message_manager</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/test_message_wrapper.html"><tt class="docutils literal"><span class="pre">test_message_wrapper</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/test_packetdata.html"><tt class="docutils literal"><span class="pre">test_packetdata</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/test_settings.html"><tt class="docutils literal"><span class="pre">test_settings</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/test_template_parser.html"><tt class="docutils literal"><span class="pre">test_template_parser</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/test_udp_deserializer.html"><tt class="docutils literal"><span class="pre">test_udp_deserializer</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/test_udp_serializer.html"><tt class="docutils literal"><span class="pre">test_udp_serializer</span></tt></a></li>
+<li class="toctree-l1"><a class="reference external" href="unittest/test_udpconnection.html"><tt class="docutils literal"><span class="pre">test_udpconnection</span></tt></a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="unittest/base.html" title="base"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="modules/udpserializer.html" title="udpserializer"
+             >previous</a> |</li>
+        <li><a href="index.html">pyogp.lib.base v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Pyogp team.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

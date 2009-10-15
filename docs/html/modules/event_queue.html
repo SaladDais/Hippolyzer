@@ -1,0 +1,144 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>event_queue &mdash; pyogp.lib.base v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="pyogp.lib.base v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Modules" href="../modules.html" />
+    <link rel="next" title="events" href="events.html" />
+    <link rel="prev" title="datatypes" href="datatypes.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="events.html" title="events"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="datatypes.html" title="datatypes"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pyogp.lib.base v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" accesskey="U">Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="datatypes.html"
+                                  title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">datatypes</span></tt></a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="events.html"
+                                  title="next chapter"><tt class="docutils literal"><span class="pre">events</span></tt></a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/modules/event_queue.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pyogp.lib.base.event_queue">
+<h1><tt class="xref docutils literal"><span class="pre">event_queue</span></tt><a class="headerlink" href="#module-pyogp.lib.base.event_queue" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pyogp.lib.base.event_queue.EventQueueClient">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.event_queue.</tt><tt class="descname">EventQueueClient</tt><big>(</big><em>capability=None</em>, <em>settings=None</em>, <em>message_handler=None</em>, <em>host=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.event_queue.EventQueueClient" title="Permalink to this definition">¶</a></dt>
+<dd><p>handles an event queue of either an agent domain or a simulator</p>
+<p>Initialize the event queue client class
+&gt;&gt;&gt; client = EventQueueClient()</p>
+<p>The event queue client requires an event queue capability
+&gt;&gt;&gt; from pyogp.lib.base.caps import Capability
+&gt;&gt;&gt; cap = Capability(&#8216;EventQueue&#8217;, <a class="reference external" href="http://localhost:12345/cap">http://localhost:12345/cap</a>)</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">event_queue</span> <span class="o">=</span> <span class="n">EventQueueClient</span><span class="p">(</span><span class="n">cap</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">event_queue</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Sample implementations: region.py
+Tests: tests/test_event_queue.py</p>
+<p>set up the event queue attributes</p>
+<dl class="method">
+<dt id="pyogp.lib.base.event_queue.EventQueueClient.start">
+<tt class="descname">start</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.event_queue.EventQueueClient.start" title="Permalink to this definition">¶</a></dt>
+<dd>spawns a coroutine connecting to the event queue on the target</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.event_queue.EventQueueClient.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.event_queue.EventQueueClient.stop" title="Permalink to this definition">¶</a></dt>
+<dd>trigger the event queue to stop communicating with the simulator</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="events.html" title="events"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="datatypes.html" title="datatypes"
+             >previous</a> |</li>
+        <li><a href="../index.html">pyogp.lib.base v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" >Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Pyogp team.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

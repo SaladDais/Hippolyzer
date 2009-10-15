@@ -1,0 +1,210 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>circuit &mdash; pyogp.lib.base v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="pyogp.lib.base v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Modules" href="../modules.html" />
+    <link rel="next" title="data_packer" href="data_packer.html" />
+    <link rel="prev" title="caps" href="caps.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="data_packer.html" title="data_packer"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="caps.html" title="caps"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pyogp.lib.base v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" accesskey="U">Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="caps.html"
+                                  title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">caps</span></tt></a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="data_packer.html"
+                                  title="next chapter"><tt class="docutils literal"><span class="pre">data_packer</span></tt></a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/modules/circuit.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pyogp.lib.base.message.circuit">
+<h1><tt class="xref docutils literal"><span class="pre">circuit</span></tt><a class="headerlink" href="#module-pyogp.lib.base.message.circuit" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pyogp.lib.base.message.circuit.CircuitManager">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.message.circuit.</tt><tt class="descname">CircuitManager</tt><a class="headerlink" href="#pyogp.lib.base.message.circuit.CircuitManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manages a collection of circuits and provides some higher-level
+functionality to do so.</p>
+<dl class="method">
+<dt id="pyogp.lib.base.message.circuit.CircuitManager.add_circuit">
+<tt class="descname">add_circuit</tt><big>(</big><em>host</em>, <em>packet_in_id</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.message.circuit.CircuitManager.add_circuit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.message.circuit.CircuitManager.get_circuit">
+<tt class="descname">get_circuit</tt><big>(</big><em>host</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.message.circuit.CircuitManager.get_circuit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.message.circuit.CircuitManager.get_unacked_circuits">
+<tt class="descname">get_unacked_circuits</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.message.circuit.CircuitManager.get_unacked_circuits" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.message.circuit.CircuitManager.is_circuit_alive">
+<tt class="descname">is_circuit_alive</tt><big>(</big><em>host</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.message.circuit.CircuitManager.is_circuit_alive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.message.circuit.CircuitManager.remove_circuit_data">
+<tt class="descname">remove_circuit_data</tt><big>(</big><em>host</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.message.circuit.CircuitManager.remove_circuit_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.message.circuit.PackFlags">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.message.circuit.</tt><tt class="descname">PackFlags</tt><a class="headerlink" href="#pyogp.lib.base.message.circuit.PackFlags" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.message.circuit.Host">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.message.circuit.</tt><tt class="descname">Host</tt><big>(</big><em>context</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.message.circuit.Host" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="pyogp.lib.base.message.circuit.Host.is_ok">
+<tt class="descname">is_ok</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.message.circuit.Host.is_ok" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.message.circuit.Host.set_host_by_name">
+<tt class="descname">set_host_by_name</tt><big>(</big><em>hostname</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.message.circuit.Host.set_host_by_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.message.circuit.Circuit">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.message.circuit.</tt><tt class="descname">Circuit</tt><big>(</big><em>host</em>, <em>pack_in_id</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.message.circuit.Circuit" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is used to keep track of a given circuit. It keeps statistics
+as well as circuit information.</p>
+<dl class="method">
+<dt id="pyogp.lib.base.message.circuit.Circuit.ack_reliable_packet">
+<tt class="descname">ack_reliable_packet</tt><big>(</big><em>packet_id</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.message.circuit.Circuit.ack_reliable_packet" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.message.circuit.Circuit.add_reliable_packet">
+<tt class="descname">add_reliable_packet</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.message.circuit.Circuit.add_reliable_packet" title="Permalink to this definition">¶</a></dt>
+<dd>add a packet that we want to be acked
+(want an incoming ack)</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.message.circuit.Circuit.collect_ack">
+<tt class="descname">collect_ack</tt><big>(</big><em>packet_id</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.message.circuit.Circuit.collect_ack" title="Permalink to this definition">¶</a></dt>
+<dd>set a packet_id that this circuit needs to eventually ack
+(need to send ack out)</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.message.circuit.Circuit.handle_packet">
+<tt class="descname">handle_packet</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.message.circuit.Circuit.handle_packet" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.message.circuit.Circuit.next_packet_id">
+<tt class="descname">next_packet_id</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.message.circuit.Circuit.next_packet_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.message.circuit.Circuit.prepare_packet">
+<tt class="descname">prepare_packet</tt><big>(</big><em>packet</em>, <em>flag=0</em>, <em>retries=0</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.message.circuit.Circuit.prepare_packet" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="data_packer.html" title="data_packer"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="caps.html" title="caps"
+             >previous</a> |</li>
+        <li><a href="../index.html">pyogp.lib.base v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" >Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Pyogp team.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

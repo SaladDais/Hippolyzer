@@ -1,0 +1,216 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>datatypes &mdash; pyogp.lib.base v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="pyogp.lib.base v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Modules" href="../modules.html" />
+    <link rel="next" title="event_queue" href="event_queue.html" />
+    <link rel="prev" title="data_unpacker" href="data_unpacker.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="event_queue.html" title="event_queue"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="data_unpacker.html" title="data_unpacker"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pyogp.lib.base v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" accesskey="U">Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="data_unpacker.html"
+                                  title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">data_unpacker</span></tt></a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="event_queue.html"
+                                  title="next chapter"><tt class="docutils literal"><span class="pre">event_queue</span></tt></a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/modules/datatypes.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pyogp.lib.base.datatypes">
+<h1><tt class="xref docutils literal"><span class="pre">datatypes</span></tt><a class="headerlink" href="#module-pyogp.lib.base.datatypes" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pyogp.lib.base.datatypes.Quaternion">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.datatypes.</tt><tt class="descname">Quaternion</tt><big>(</big><em>bytes=None</em>, <em>offset=0</em>, <em>length=4</em>, <em>X=0.0</em>, <em>Y=0.0</em>, <em>Z=0.0</em>, <em>W=0.0</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.Quaternion" title="Permalink to this definition">¶</a></dt>
+<dd><p>represents a quaternion as a tuple</p>
+<dl class="method">
+<dt id="pyogp.lib.base.datatypes.Quaternion.copy">
+<tt class="descname">copy</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.Quaternion.copy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.datatypes.Quaternion.data">
+<tt class="descname">data</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.Quaternion.data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.datatypes.Quaternion.get_bytes">
+<tt class="descname">get_bytes</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.Quaternion.get_bytes" title="Permalink to this definition">¶</a></dt>
+<dd>get bytes</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.datatypes.Quaternion.unpack_from_bytes">
+<tt class="descname">unpack_from_bytes</tt><big>(</big><em>bytes</em>, <em>offset</em>, <em>length=4</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.Quaternion.unpack_from_bytes" title="Permalink to this definition">¶</a></dt>
+<dd>unpack floats from binary</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.datatypes.Vector3">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.datatypes.</tt><tt class="descname">Vector3</tt><big>(</big><em>bytes=None</em>, <em>offset=0</em>, <em>X=0.0</em>, <em>Y=0.0</em>, <em>Z=0.0</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.Vector3" title="Permalink to this definition">¶</a></dt>
+<dd><p>represents a vector as a tuple</p>
+<dl class="method">
+<dt id="pyogp.lib.base.datatypes.Vector3.copy">
+<tt class="descname">copy</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.Vector3.copy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.datatypes.Vector3.data">
+<tt class="descname">data</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.Vector3.data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="pyogp.lib.base.datatypes.Vector3.dist_squared">
+<em class="property">
+static </em><tt class="descname">dist_squared</tt><big>(</big><em>a</em>, <em>b</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.Vector3.dist_squared" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.datatypes.Vector3.get_bytes">
+<tt class="descname">get_bytes</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.Vector3.get_bytes" title="Permalink to this definition">¶</a></dt>
+<dd>get bytes</dd></dl>
+
+<dl class="staticmethod">
+<dt id="pyogp.lib.base.datatypes.Vector3.parse">
+<em class="property">
+static </em><tt class="descname">parse</tt><big>(</big><em>s</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.Vector3.parse" title="Permalink to this definition">¶</a></dt>
+<dd>Parse a string of the form &#8216;&lt;x, y, z&gt;&#8217; or &#8216;x, y, z&#8217; and return a Vector3.
+Will raise a ValueError</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.datatypes.Vector3.unpack_from_bytes">
+<tt class="descname">unpack_from_bytes</tt><big>(</big><em>bytes</em>, <em>offset</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.Vector3.unpack_from_bytes" title="Permalink to this definition">¶</a></dt>
+<dd>unpack floats from binary</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.datatypes.UUID">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.datatypes.</tt><tt class="descname">UUID</tt><big>(</big><em>string='00000000-0000-0000-0000-000000000000'</em>, <em>bytes=None</em>, <em>offset=0</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.UUID" title="Permalink to this definition">¶</a></dt>
+<dd><p>represents a uuid as, well, a uuid</p>
+<p>inbound LLUUID data from packets is already UUID(), they are 
+already the same &#8216;datatype&#8217;</p>
+<dl class="method">
+<dt id="pyogp.lib.base.datatypes.UUID.copy">
+<tt class="descname">copy</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.UUID.copy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.datatypes.UUID.data">
+<tt class="descname">data</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.UUID.data" title="Permalink to this definition">¶</a></dt>
+<dd>represent a uuid as, well, a uuid</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.datatypes.UUID.get_bytes">
+<tt class="descname">get_bytes</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.UUID.get_bytes" title="Permalink to this definition">¶</a></dt>
+<dd>get bytes</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.datatypes.UUID.random">
+<tt class="descname">random</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.UUID.random" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.datatypes.UUID.unpack_from_bytes">
+<tt class="descname">unpack_from_bytes</tt><big>(</big><em>bytes</em>, <em>offset</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.datatypes.UUID.unpack_from_bytes" title="Permalink to this definition">¶</a></dt>
+<dd>unpack uuid from binary</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="event_queue.html" title="event_queue"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="data_unpacker.html" title="data_unpacker"
+             >previous</a> |</li>
+        <li><a href="../index.html">pyogp.lib.base v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" >Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Pyogp team.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

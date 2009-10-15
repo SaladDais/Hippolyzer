@@ -1,0 +1,160 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>message_manager &mdash; pyogp.lib.base v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="pyogp.lib.base v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Modules" href="../modules.html" />
+    <link rel="next" title="msgtypes" href="msgtypes.html" />
+    <link rel="prev" title="message_handler" href="message_handler.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="msgtypes.html" title="msgtypes"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="message_handler.html" title="message_handler"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pyogp.lib.base v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" accesskey="U">Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="message_handler.html"
+                                  title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">message_handler</span></tt></a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="msgtypes.html"
+                                  title="next chapter"><tt class="docutils literal"><span class="pre">msgtypes</span></tt></a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/modules/message_manager.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pyogp.lib.base.message_manager">
+<h1><tt class="xref docutils literal"><span class="pre">message_manager</span></tt><a class="headerlink" href="#module-pyogp.lib.base.message_manager" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pyogp.lib.base.message_manager.MessageManager">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.message_manager.</tt><tt class="descname">MessageManager</tt><big>(</big><em>host</em>, <em>message_handler=None</em>, <em>capabilities={}</em>, <em>settings=None</em>, <em>start_monitors=False</em>, <em>message_template=None</em>, <em>message_xml=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.message_manager.MessageManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>This object serves as a consolidation point for all messaging related
+functionality in the base/message directory.</p>
+<p>Initialize the MessageManager, applying custom settings and dedicated 
+message_handler if needed</p>
+<dl class="method">
+<dt id="pyogp.lib.base.message_manager.MessageManager.enqueue_message">
+<tt class="descname">enqueue_message</tt><big>(</big><em>message</em>, <em>reliable=False</em>, <em>now=False</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.message_manager.MessageManager.enqueue_message" title="Permalink to this definition">¶</a></dt>
+<dd>enqueues a Message() in the outgoing_queue</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.message_manager.MessageManager.monitor_outgoing_queue">
+<tt class="descname">monitor_outgoing_queue</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.message_manager.MessageManager.monitor_outgoing_queue" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.message_manager.MessageManager.new_message">
+<tt class="descname">new_message</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.message_manager.MessageManager.new_message" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.message_manager.MessageManager.send_message">
+<tt class="descname">send_message</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.message_manager.MessageManager.send_message" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.message_manager.MessageManager.send_udp_message">
+<tt class="descname">send_udp_message</tt><big>(</big><em>packet</em>, <em>reliable=False</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.message_manager.MessageManager.send_udp_message" title="Permalink to this definition">¶</a></dt>
+<dd>Immediately sends an udp message to host</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.message_manager.MessageManager.start_monitors">
+<tt class="descname">start_monitors</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.message_manager.MessageManager.start_monitors" title="Permalink to this definition">¶</a></dt>
+<dd>spawn queue monitoring coroutines</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.message_manager.MessageManager.stop_monitors">
+<tt class="descname">stop_monitors</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.message_manager.MessageManager.stop_monitors" title="Permalink to this definition">¶</a></dt>
+<dd>stops monitoring coroutines</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="msgtypes.html" title="msgtypes"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="message_handler.html" title="message_handler"
+             >previous</a> |</li>
+        <li><a href="../index.html">pyogp.lib.base v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" >Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Pyogp team.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

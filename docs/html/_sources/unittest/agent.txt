@@ -1,0 +1,55 @@
+agent
+=====
+
+
+.. module:: pyogp.lib.base.tests.agent
+
+This is a doctest, the content here is verbatim from the source file at pyogp.lib.base.tests.agent.txt.
+
+
+"""
+Contributors can be viewed at:
+http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/trunk/CONTRIBUTORS.txt 
+
+$LicenseInfo:firstyear=2008&license=apachev2$
+
+Copyright 2009, Linden Research, Inc.
+
+Licensed under the Apache License, Version 2.0.
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+or in 
+    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/LICENSE.txt
+
+$/LicenseInfo$
+"""
+
+Agent
+~~~~~
+
+The 'agent' login case
+~~~~~~~~~~~~~~~~~~~~~~
+
+First, initialize the agent
+
+    >>> from pyogp.lib.base.agent import Agent
+    >>> client = Agent()
+
+For testing, we need to set up the loginhandler and the loginuri
+
+    >>> loginuri = 'http://localhost:12345/login.cgi'
+
+Setup test: import of the mock network client handler
+
+    >>> from pyogp.lib.base.tests.mock_xmlrpc import MockXMLRPC
+    >>> from pyogp.lib.base.tests.base import MockXMLRPCLogin
+    >>> loginhandler = MockXMLRPC(MockXMLRPCLogin(), loginuri)
+
+Now let's log it in
+
+    >>> client.login('http://localhost:12345/login.cgi', 'firstname', 'lastname', 'password', start_location = 'start_location', handler = loginhandler, connect_region = False)
+
+Evaluate the login response
+
+    >>> client.login_response
+    {'region_y': '256', 'region_x': '256', 'first_name': '"first"', 'secure_session_id': '00000000-0000-0000-0000-000000000000', 'sim_ip': '127.0.0.1', 'agent_access': 'M', 'circuit_code': '600000000', 'look_at': '[r0.9963859999999999939,r-0.084939700000000006863,r0]', 'session_id': '00000000-0000-0000-0000-000000000000', 'udp_blacklist': 'EnableSimulator,TeleportFinish,CrossedRegion', 'seed_capability': 'https://somesim:12043/cap/00000000-0000-0000-0000-000000000000', 'agent_id': '00000000-0000-0000-0000-000000000000', 'last_name': 'last', 'inventory_host': 'someinvhost', 'start_location': 'last', 'sim_port': '13001', 'message': 'message', 'login': 'true', 'seconds_since_epoch': '1234567890'}

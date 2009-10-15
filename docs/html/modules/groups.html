@@ -1,0 +1,282 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>groups &mdash; Pyogp v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Pyogp v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Modules" href="../modules.html" />
+    <link rel="next" title="helpers" href="helpers.html" />
+    <link rel="prev" title="factory" href="factory.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="helpers.html" title="helpers"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="factory.html" title="factory"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" accesskey="U">Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="factory.html"
+                                  title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">factory</span></tt></a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="helpers.html"
+                                  title="next chapter"><tt class="docutils literal"><span class="pre">helpers</span></tt></a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/modules/groups.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pyogp.lib.base.groups">
+<h1><tt class="xref docutils literal"><span class="pre">groups</span></tt><a class="headerlink" href="#module-pyogp.lib.base.groups" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pyogp.lib.base.groups.MockChatInterface">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.groups.</tt><tt class="descname">MockChatInterface</tt><big>(</big><em>agent</em>, <em>chat_handler</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.MockChatInterface" title="Permalink to this definition">¶</a></dt>
+<dd><p>a super simple chat interface for testing group chat in a console</p>
+<dl class="method">
+<dt id="pyogp.lib.base.groups.MockChatInterface.data_watcher">
+<tt class="descname">data_watcher</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.MockChatInterface.data_watcher" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.MockChatInterface.get_and_send_input">
+<tt class="descname">get_and_send_input</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.MockChatInterface.get_and_send_input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.MockChatInterface.start">
+<tt class="descname">start</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.MockChatInterface.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.groups.GroupManager">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.groups.</tt><tt class="descname">GroupManager</tt><big>(</big><em>agent</em>, <em>settings=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>a storage bin for groups</p>
+<p>also, a functional area for group creation operations</p>
+<p>initialize the group manager</p>
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.activate_group">
+<tt class="descname">activate_group</tt><big>(</big><em>group_id</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.activate_group" title="Permalink to this definition">¶</a></dt>
+<dd>set a particular group as active</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.create_group">
+<tt class="descname">create_group</tt><big>(</big><em>AgentID=None</em>, <em>SessionID=None</em>, <em>Name=None</em>, <em>Charter=''</em>, <em>ShowInList=True</em>, <em>InsigniaID=00000000-0000-0000-0000-000000000000</em>, <em>MembershipFee=0</em>, <em>OpenEnrollment=False</em>, <em>AllowPublish=False</em>, <em>MaturePublish=False</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.create_group" title="Permalink to this definition">¶</a></dt>
+<dd><p>sends a message to the agent&#8217;s current region requesting to create a group</p>
+<p>enables a callback (which should be unsubscribed from once we get a response)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.enable_callbacks">
+<tt class="descname">enable_callbacks</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.enable_callbacks" title="Permalink to this definition">¶</a></dt>
+<dd>enables the callback handlers for this GroupManager</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.get_group">
+<tt class="descname">get_group</tt><big>(</big><em>GroupID=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.get_group" title="Permalink to this definition">¶</a></dt>
+<dd>searches the store and returns group if stored, None otherwise</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.handle_group_chat">
+<tt class="descname">handle_group_chat</tt><big>(</big><em>message</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.handle_group_chat" title="Permalink to this definition">¶</a></dt>
+<dd>process a ChatterBoxInvitation_Message instance</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.join_group">
+<tt class="descname">join_group</tt><big>(</big><em>group_id</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.join_group" title="Permalink to this definition">¶</a></dt>
+<dd>sends a JoinGroupRequest packet for the specified uuid</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.onAgentGroupDataUpdate">
+<tt class="descname">onAgentGroupDataUpdate</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.onAgentGroupDataUpdate" title="Permalink to this definition">¶</a></dt>
+<dd>deal with the data that comes in over the event queue</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.onChatterBoxInvitation_Message">
+<tt class="descname">onChatterBoxInvitation_Message</tt><big>(</big><em>message</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.onChatterBoxInvitation_Message" title="Permalink to this definition">¶</a></dt>
+<dd>handle a group chat message from the event queue</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.onChatterBoxSessionAgentListUpdates">
+<tt class="descname">onChatterBoxSessionAgentListUpdates</tt><big>(</big><em>message</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.onChatterBoxSessionAgentListUpdates" title="Permalink to this definition">¶</a></dt>
+<dd>parse teh response to a request to join a group chat and propagate data out</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.onChatterBoxSessionEventReply">
+<tt class="descname">onChatterBoxSessionEventReply</tt><big>(</big><em>message</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.onChatterBoxSessionEventReply" title="Permalink to this definition">¶</a></dt>
+<dd>handle a response from the simulator re: a message we sent to a group chat</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.onChatterBoxSessionStartReply">
+<tt class="descname">onChatterBoxSessionStartReply</tt><big>(</big><em>message</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.onChatterBoxSessionStartReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.onCreateGroupReply">
+<tt class="descname">onCreateGroupReply</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.onCreateGroupReply" title="Permalink to this definition">¶</a></dt>
+<dd>when we get a CreateGroupReply packet, log Success, and if True, request the group details. remove the callback in any case</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.onJoinGroupReply">
+<tt class="descname">onJoinGroupReply</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.onJoinGroupReply" title="Permalink to this definition">¶</a></dt>
+<dd>the simulator tells us if joining a group was a success.</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.send_ActivateGroup">
+<tt class="descname">send_ActivateGroup</tt><big>(</big><em>agent_id</em>, <em>session_id</em>, <em>group_id</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.send_ActivateGroup" title="Permalink to this definition">¶</a></dt>
+<dd>sends an ActivateGroup message to the host simulator</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.send_JoinGroupRequest">
+<tt class="descname">send_JoinGroupRequest</tt><big>(</big><em>agent_id</em>, <em>session_id</em>, <em>group_id</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.send_JoinGroupRequest" title="Permalink to this definition">¶</a></dt>
+<dd>sends a JoinGroupRequest message to the hsot simulator</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.store_group">
+<tt class="descname">store_group</tt><big>(</big><em>_group</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.store_group" title="Permalink to this definition">¶</a></dt>
+<dd>append to or replace a group in self.group_store</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.update_group">
+<tt class="descname">update_group</tt><big>(</big><em>group_data</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.update_group" title="Permalink to this definition">¶</a></dt>
+<dd>accepts a dictionary of group data and creates/updates a group</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.update_group_by_name">
+<tt class="descname">update_group_by_name</tt><big>(</big><em>group_data</em>, <em>name</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.update_group_by_name" title="Permalink to this definition">¶</a></dt>
+<dd>accepts a dictionary of group data and creates/updates a group</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.GroupManager.update_group_by_session_id">
+<tt class="descname">update_group_by_session_id</tt><big>(</big><em>group_data</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.GroupManager.update_group_by_session_id" title="Permalink to this definition">¶</a></dt>
+<dd>accepts a dictionary of group data and creates/updates a group</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.groups.Group">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.groups.</tt><tt class="descname">Group</tt><big>(</big><em>AcceptNotices=None</em>, <em>GroupPowers=None</em>, <em>GroupID=None</em>, <em>GroupName=None</em>, <em>ListInProfile=None</em>, <em>Contribution=None</em>, <em>GroupInsigniaID=None</em>, <em>agent=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.Group" title="Permalink to this definition">¶</a></dt>
+<dd><p>representation of a group</p>
+<dl class="method">
+<dt id="pyogp.lib.base.groups.Group.activate_group">
+<tt class="descname">activate_group</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.Group.activate_group" title="Permalink to this definition">¶</a></dt>
+<dd>set this group as active</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.Group.chat">
+<tt class="descname">chat</tt><big>(</big><em>Message=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.Group.chat" title="Permalink to this definition">¶</a></dt>
+<dd><p>sends an instant message to another avatar</p>
+<p>wraps send_ImprovedInstantMessage with some handy defaults</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.Group.handle_inbound_chat">
+<tt class="descname">handle_inbound_chat</tt><big>(</big><em>message</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.Group.handle_inbound_chat" title="Permalink to this definition">¶</a></dt>
+<dd>parses an incoming chat message from a group</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.Group.request_join_group_chat">
+<tt class="descname">request_join_group_chat</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.Group.request_join_group_chat" title="Permalink to this definition">¶</a></dt>
+<dd>sends an ImprovedInstantMessage packet with the atributes necessary to join a group chat</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.Group.send_ActivateGroup">
+<tt class="descname">send_ActivateGroup</tt><big>(</big><em>agent_id</em>, <em>session_id</em>, <em>group_id</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.Group.send_ActivateGroup" title="Permalink to this definition">¶</a></dt>
+<dd>send an ActivateGroup message to the host simulator</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.groups.Group.update_properties">
+<tt class="descname">update_properties</tt><big>(</big><em>properties</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.groups.Group.update_properties" title="Permalink to this definition">¶</a></dt>
+<dd>takes a dictionary of attribute:value and makes it so</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="helpers.html" title="helpers"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="factory.html" title="factory"
+             >previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" >Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Pyogp team.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

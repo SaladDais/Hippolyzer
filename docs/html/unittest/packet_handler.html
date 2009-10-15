@@ -1,0 +1,160 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>packet_handler &mdash; Pyogp v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Pyogp v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Unit Tests" href="../unittest.html" />
+    <link rel="next" title="packet_test" href="packet_test.html" />
+    <link rel="prev" title="network_test" href="network_test.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="packet_test.html" title="packet_test"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="network_test.html" title="network_test"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../unittest.html" accesskey="U">Unit Tests</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">packet_handler</a><ul>
+<li><a class="reference external" href="#packethandler">PacketHandler</a></li>
+<li><a class="reference external" href="#the-basic-packet-handling-event-callbackcase">The basic packet handling event/callbackcase</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="network_test.html"
+                                  title="previous chapter">network_test</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="packet_test.html"
+                                  title="next chapter"><tt class="docutils literal"><span class="pre">packet_test</span></tt></a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/unittest/packet_handler.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pyogp.lib.base.tests.packet_handler">
+<h1>packet_handler<a class="headerlink" href="#module-pyogp.lib.base.tests.packet_handler" title="Permalink to this headline">¶</a></h1>
+<p>This is a doctest, the content here is verbatim from the source file at pyogp.lib.base.tests.packet_handler.txt.</p>
+<div class="section" id="packethandler">
+<h2>PacketHandler<a class="headerlink" href="#packethandler" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="the-basic-packet-handling-event-callbackcase">
+<h2>The basic packet handling event/callbackcase<a class="headerlink" href="#the-basic-packet-handling-event-callbackcase" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>First, initialize the packet handler</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.message.packethandler</span> <span class="kn">import</span> <span class="n">PacketHandler</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">packet_handler</span> <span class="o">=</span> <span class="n">PacketHandler</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd>
+<dt>How about a mock callback handler</dt>
+<dd><div class="first highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">callback</span><span class="p">(</span><span class="n">packet</span><span class="p">):</span> <span class="k">print</span> <span class="n">packet</span>
+</pre></div>
+</div>
+<div class="last highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">onStartPingCheck_received</span> <span class="o">=</span> <span class="n">packet_handler</span><span class="o">.</span><span class="n">_register</span><span class="p">(</span><span class="s">&quot;StartPingCheck&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onStartPingCheck_received</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+<dt>Stage a packet</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyogp.lib.base.message.packets</span> <span class="kn">import</span> <span class="n">StartPingCheckPacket</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">packet</span> <span class="o">=</span> <span class="n">StartPingCheckPacket</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Fire the event, it returns a packet
+Unpossible to include this in the test, the memory ref keeps changing
+But, you get the idea...</p>
+<blockquote>
+event_data = packet_handler._handle(packet)
+&lt;pyogp.lib.base.message.packets.StartPingCheckPacket object at 0x14da450&gt;</blockquote>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="packet_test.html" title="packet_test"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="network_test.html" title="network_test"
+             >previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../unittest.html" >Unit Tests</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Pyogp team.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.1.
+    </div>
+  </body>
+</html>

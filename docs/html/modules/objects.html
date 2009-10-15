@@ -1,0 +1,389 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>objects &mdash; Pyogp v0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Pyogp v0.1 documentation" href="../index.html" />
+    <link rel="up" title="Modules" href="../modules.html" />
+    <link rel="next" title="parcel" href="parcel.html" />
+    <link rel="prev" title="net" href="net.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="parcel.html" title="parcel"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="net.html" title="net"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" accesskey="U">Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="net.html"
+                                  title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">net</span></tt></a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="parcel.html"
+                                  title="next chapter"><tt class="docutils literal"><span class="pre">parcel</span></tt></a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/modules/objects.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pyogp.lib.base.objects">
+<h1><tt class="xref docutils literal"><span class="pre">objects</span></tt><a class="headerlink" href="#module-pyogp.lib.base.objects" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pyogp.lib.base.objects.Object">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.objects.</tt><tt class="descname">Object</tt><big>(</big><em>LocalID=None</em>, <em>State=None</em>, <em>FullID=None</em>, <em>CRC=None</em>, <em>PCode=None</em>, <em>Material=None</em>, <em>ClickAction=None</em>, <em>Scale=None</em>, <em>ObjectData=None</em>, <em>ParentID=None</em>, <em>UpdateFlags=None</em>, <em>PathCurve=None</em>, <em>ProfileCurve=None</em>, <em>PathBegin=None</em>, <em>PathEnd=None</em>, <em>PathScaleX=None</em>, <em>PathScaleY=None</em>, <em>PathShearX=None</em>, <em>PathShearY=None</em>, <em>PathTwist=None</em>, <em>PathTwistBegin=None</em>, <em>PathRadiusOffset=None</em>, <em>PathTaperX=None</em>, <em>PathTaperY=None</em>, <em>PathRevolutions=None</em>, <em>PathSkew=None</em>, <em>ProfileBegin=None</em>, <em>ProfileEnd=None</em>, <em>ProfileHollow=None</em>, <em>TextureEntry=None</em>, <em>TextureAnim=None</em>, <em>NameValue=None</em>, <em>Data=None</em>, <em>Text=None</em>, <em>TextColor=None</em>, <em>MediaURL=None</em>, <em>PSBlock=None</em>, <em>ExtraParams=None</em>, <em>Sound=None</em>, <em>OwnerID=None</em>, <em>Gain=None</em>, <em>Flags=None</em>, <em>Radius=None</em>, <em>JointType=None</em>, <em>JointPivot=None</em>, <em>JointAxisOrAnchor=None</em>, <em>FootCollisionPlane=None</em>, <em>Position=None</em>, <em>Velocity=None</em>, <em>Acceleration=None</em>, <em>Rotation=None</em>, <em>AngularVelocity=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object" title="Permalink to this definition">¶</a></dt>
+<dd><p>represents an Object</p>
+<p>Initialize the Object class instance
+&gt;&gt;&gt; object = Object()</p>
+<p>Sample implementations: objects.py
+Tests: tests/test_objects.py</p>
+<p>set up the object attributes</p>
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.derez">
+<tt class="descname">derez</tt><big>(</big><em>agent</em>, <em>destination</em>, <em>destinationID</em>, <em>transactionID</em>, <em>GroupID</em>, <em>PacketCount=1</em>, <em>PacketNumber=0</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.derez" title="Permalink to this definition">¶</a></dt>
+<dd>derez an object, specifying the destination</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.deselect">
+<tt class="descname">deselect</tt><big>(</big><em>agent</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.deselect" title="Permalink to this definition">¶</a></dt>
+<dd>deselect an object</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.select">
+<tt class="descname">select</tt><big>(</big><em>agent</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.select" title="Permalink to this definition">¶</a></dt>
+<dd>select an object</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.send_DerezObject">
+<tt class="descname">send_DerezObject</tt><big>(</big><em>agent</em>, <em>AgentID</em>, <em>SessionID</em>, <em>GroupID</em>, <em>Destination</em>, <em>DestinationID</em>, <em>TransactionID</em>, <em>PacketCount</em>, <em>PacketNumber</em>, <em>ObjectLocalID</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.send_DerezObject" title="Permalink to this definition">¶</a></dt>
+<dd>send a DerezObject message to the host simulator</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.send_ObjectDescription">
+<tt class="descname">send_ObjectDescription</tt><big>(</big><em>agent</em>, <em>AgentID</em>, <em>SessionID</em>, <em>LocalID_Description_map</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.send_ObjectDescription" title="Permalink to this definition">¶</a></dt>
+<dd><p>send on ObjectDescription message to the host simulator</p>
+<p>expects LocalID_Description_map = {1:[LocalID, Description]}</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.send_ObjectDeselect">
+<tt class="descname">send_ObjectDeselect</tt><big>(</big><em>agent</em>, <em>AgentID</em>, <em>SessionID</em>, <em>ObjectLocalIDs</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.send_ObjectDeselect" title="Permalink to this definition">¶</a></dt>
+<dd><p>send an ObjectDeselect message to the agent&#8217;s host simulator</p>
+<p>expects a list of ObjectLocalIDs</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.send_ObjectName">
+<tt class="descname">send_ObjectName</tt><big>(</big><em>agent</em>, <em>AgentID</em>, <em>SessionID</em>, <em>LocalID_Name_map</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.send_ObjectName" title="Permalink to this definition">¶</a></dt>
+<dd><p>send on ObjectName message to the host simulator</p>
+<p>expects LocalID_Name_map = {1:[LocalID, Name]}</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.send_ObjectPermissions">
+<tt class="descname">send_ObjectPermissions</tt><big>(</big><em>agent</em>, <em>AgentID</em>, <em>SessionID</em>, <em>Field</em>, <em>Set</em>, <em>Mask</em>, <em>Override</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.send_ObjectPermissions" title="Permalink to this definition">¶</a></dt>
+<dd>send an ObjectPermissions message to the host simulator</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.send_ObjectSelect">
+<tt class="descname">send_ObjectSelect</tt><big>(</big><em>agent</em>, <em>AgentID</em>, <em>SessionID</em>, <em>ObjectLocalIDs</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.send_ObjectSelect" title="Permalink to this definition">¶</a></dt>
+<dd><p>send an ObjectSelect message to the agent&#8217;s host simulator</p>
+<p>expects a list of ObjectLocalIDs</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.set_object_copy_mod_permissions">
+<tt class="descname">set_object_copy_mod_permissions</tt><big>(</big><em>agent</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.set_object_copy_mod_permissions" title="Permalink to this definition">¶</a></dt>
+<dd>Set Next Owner Permissions to Copy/Mod
+This is a common permission set for attachements.</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.set_object_copy_only_permissions">
+<tt class="descname">set_object_copy_only_permissions</tt><big>(</big><em>agent</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.set_object_copy_only_permissions" title="Permalink to this definition">¶</a></dt>
+<dd>Set Next Owner Permissions to Copy Only</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.set_object_copy_transfer_permissions">
+<tt class="descname">set_object_copy_transfer_permissions</tt><big>(</big><em>agent</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.set_object_copy_transfer_permissions" title="Permalink to this definition">¶</a></dt>
+<dd>Set Next Owner Permissions to Copy/Transfer</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.set_object_description">
+<tt class="descname">set_object_description</tt><big>(</big><em>agent</em>, <em>Description</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.set_object_description" title="Permalink to this definition">¶</a></dt>
+<dd>update the description of an objects</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.set_object_full_permissions">
+<tt class="descname">set_object_full_permissions</tt><big>(</big><em>agent</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.set_object_full_permissions" title="Permalink to this definition">¶</a></dt>
+<dd>Set Next Owner Permissions Copy, Modify, Transfer 
+This is also called &#8216;full permissions&#8217;.</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.set_object_mod_transfer_permissions">
+<tt class="descname">set_object_mod_transfer_permissions</tt><big>(</big><em>agent</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.set_object_mod_transfer_permissions" title="Permalink to this definition">¶</a></dt>
+<dd>Set Next Owner Permissions to Mod/Transfer
+This is a common permission set for clothing.</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.set_object_name">
+<tt class="descname">set_object_name</tt><big>(</big><em>agent</em>, <em>Name</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.set_object_name" title="Permalink to this definition">¶</a></dt>
+<dd>update the name of an object</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.set_object_transfer_only_permissions">
+<tt class="descname">set_object_transfer_only_permissions</tt><big>(</big><em>agent</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.set_object_transfer_only_permissions" title="Permalink to this definition">¶</a></dt>
+<dd>Set Next Owner Permissions to Transfer Only
+This is the most restrictive set of permissions allowed.</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.take">
+<tt class="descname">take</tt><big>(</big><em>agent</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.take" title="Permalink to this definition">¶</a></dt>
+<dd>take object into inventory</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.Object.update_object_permissions">
+<tt class="descname">update_object_permissions</tt><big>(</big><em>agent</em>, <em>Field</em>, <em>Set</em>, <em>Mask</em>, <em>Override=False</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.Object.update_object_permissions" title="Permalink to this definition">¶</a></dt>
+<dd><p>update permissions for a list of objects</p>
+<p>This will update a specific bit to a specific value.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyogp.lib.base.objects.ObjectManager">
+<em class="property">
+class </em><tt class="descclassname">pyogp.lib.base.objects.</tt><tt class="descname">ObjectManager</tt><big>(</big><em>agent=None</em>, <em>region=None</em>, <em>settings=None</em>, <em>message_handler=None</em>, <em>events_handler=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>is an Object Manager</p>
+<p>Initialize the event queue client class
+&gt;&gt;&gt; objects = ObjectManager()</p>
+<p>Sample implementations: region.py
+Tests: tests/test_objects.py</p>
+<p>set up the object manager</p>
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.create_default_box">
+<tt class="descname">create_default_box</tt><big>(</big><em>GroupID=00000000-0000-0000-0000-000000000000</em>, <em>relative_position=(1</em>, <em>0</em>, <em>0)</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.create_default_box" title="Permalink to this definition">¶</a></dt>
+<dd>creates the default box, defaulting as 1m to the east, with an option GroupID to set the prim to</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.enable_callbacks">
+<tt class="descname">enable_callbacks</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.enable_callbacks" title="Permalink to this definition">¶</a></dt>
+<dd>enables the callback handlers for this ObjectManager</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.find_objects_by_name">
+<tt class="descname">find_objects_by_name</tt><big>(</big><em>Name</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.find_objects_by_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>searches the store for known objects by name</p>
+<p>returns a list of all such known objects</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.find_objects_within_radius">
+<tt class="descname">find_objects_within_radius</tt><big>(</big><em>radius</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.find_objects_within_radius" title="Permalink to this definition">¶</a></dt>
+<dd>returns objects nearby. returns a list of objects</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.get_avatar_from_store">
+<tt class="descname">get_avatar_from_store</tt><big>(</big><em>LocalID=None</em>, <em>FullID=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.get_avatar_from_store" title="Permalink to this definition">¶</a></dt>
+<dd>searches the store and returns object if stored, None otherwise</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.get_object_from_store">
+<tt class="descname">get_object_from_store</tt><big>(</big><em>LocalID=None</em>, <em>FullID=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.get_object_from_store" title="Permalink to this definition">¶</a></dt>
+<dd>searches the store and returns object if stored, None otherwise</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.kill_stored_avatar">
+<tt class="descname">kill_stored_avatar</tt><big>(</big><em>ID</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.kill_stored_avatar" title="Permalink to this definition">¶</a></dt>
+<dd>removes a stored avatar (Object() instance) from our list</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.kill_stored_object">
+<tt class="descname">kill_stored_object</tt><big>(</big><em>ID</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.kill_stored_object" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.my_objects">
+<tt class="descname">my_objects</tt><big>(</big><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.my_objects" title="Permalink to this definition">¶</a></dt>
+<dd>returns a list of known objects where the calling client is the owner</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.object_add">
+<tt class="descname">object_add</tt><big>(</big><em>AgentID</em>, <em>SessionID</em>, <em>PCode</em>, <em>Material</em>, <em>AddFlags</em>, <em>PathCurve</em>, <em>ProfileCurve</em>, <em>PathBegin</em>, <em>PathEnd</em>, <em>PathScaleX</em>, <em>PathScaleY</em>, <em>PathShearX</em>, <em>PathShearY</em>, <em>PathTwist</em>, <em>PathTwistBegin</em>, <em>PathRadiusOffset</em>, <em>PathTaperX</em>, <em>PathTaperY</em>, <em>PathRevolutions</em>, <em>PathSkew</em>, <em>ProfileBegin</em>, <em>ProfileEnd</em>, <em>ProfileHollow</em>, <em>BypassRaycast</em>, <em>RayStart</em>, <em>RayEnd</em>, <em>RayTargetID</em>, <em>RayEndIsIntersection</em>, <em>Scale</em>, <em>Rotation</em>, <em>State</em>, <em>GroupID=00000000-0000-0000-0000-000000000000</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.object_add" title="Permalink to this definition">¶</a></dt>
+<dd><p>ObjectAdd - create new object in the world
+Simulator will assign ID and send message back to signal
+object actually created.</p>
+<p>AddFlags (see also ObjectUpdate)
+0x01 - use physics
+0x02 - create selected</p>
+<p>GroupID defaults to (No group active)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.onKillObject">
+<tt class="descname">onKillObject</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.onKillObject" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.onObjectProperties">
+<tt class="descname">onObjectProperties</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.onObjectProperties" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.onObjectUpdate">
+<tt class="descname">onObjectUpdate</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.onObjectUpdate" title="Permalink to this definition">¶</a></dt>
+<dd>populates an Object instance and adds it to the ObjectManager() store</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.onObjectUpdateCached">
+<tt class="descname">onObjectUpdateCached</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.onObjectUpdateCached" title="Permalink to this definition">¶</a></dt>
+<dd>borrowing from libomv, we&#8217;ll request object data for all data coming in via ObjectUpdateCached</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.onObjectUpdateCompressed">
+<tt class="descname">onObjectUpdateCompressed</tt><big>(</big><em>packet</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.onObjectUpdateCompressed" title="Permalink to this definition">¶</a></dt>
+<dd>handles an ObjectUpdateCompressed message from a simulator</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.process_multiple_object_updates">
+<tt class="descname">process_multiple_object_updates</tt><big>(</big><em>objects</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.process_multiple_object_updates" title="Permalink to this definition">¶</a></dt>
+<dd>process a list of object updates</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.process_object_update">
+<tt class="descname">process_object_update</tt><big>(</big><em>_object</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.process_object_update" title="Permalink to this definition">¶</a></dt>
+<dd>append to or replace an object in self.objects</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.remove_object_from_store">
+<tt class="descname">remove_object_from_store</tt><big>(</big><em>ID=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.remove_object_from_store" title="Permalink to this definition">¶</a></dt>
+<dd>handles removing a stored object representation</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.request_object_update">
+<tt class="descname">request_object_update</tt><big>(</big><em>AgentID</em>, <em>SessionID</em>, <em>ID_CacheMissType_list=None</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.request_object_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>requests object updates from the simulator</p>
+<p>accepts a list of (ID, CacheMissType)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.send_RezScript">
+<tt class="descname">send_RezScript</tt><big>(</big><em>agent</em>, <em>prim</em>, <em>item_id=00000000-0000-0000-0000-000000000000</em>, <em>Enabled=True</em>, <em>GroupID=00000000-0000-0000-0000-000000000000</em>, <em>BaseMask=2147483647</em>, <em>OwnerMask=2147483647</em>, <em>GroupMask=0</em>, <em>EveryoneMask=0</em>, <em>NextOwnerMask=0</em>, <em>GroupOwned=False</em>, <em>Type=10</em>, <em>InvType=10</em>, <em>Flags=0</em>, <em>SaleType=0</em>, <em>SalePrice=0</em>, <em>Name='New Script'</em>, <em>Description='Created by PyOGP'</em>, <em>CreationDate=0</em>, <em>CRC=0</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.send_RezScript" title="Permalink to this definition">¶</a></dt>
+<dd>sends a RezScript message to the sim, not providing a item_id will
+rez the default script otherwise the script with ItemID item_id will be rezzed
+to prim</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.store_avatar">
+<tt class="descname">store_avatar</tt><big>(</big><em>_objectdata</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.store_avatar" title="Permalink to this definition">¶</a></dt>
+<dd>store a representation of an avatar (Object() instance) that has been transformed from data off the wire</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.store_object">
+<tt class="descname">store_object</tt><big>(</big><em>_object</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.store_object" title="Permalink to this definition">¶</a></dt>
+<dd>store a representation of an object that has been transformed from data off the wire</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.update_multiple_objects_properties">
+<tt class="descname">update_multiple_objects_properties</tt><big>(</big><em>object_list</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.update_multiple_objects_properties" title="Permalink to this definition">¶</a></dt>
+<dd>update the attributes of objects</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.update_object_properties">
+<tt class="descname">update_object_properties</tt><big>(</big><em>object_properties</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.update_object_properties" title="Permalink to this definition">¶</a></dt>
+<dd><p>update the attributes of an object</p>
+<p>If the object is known, we update the properties. 
+If not, we create a new object</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyogp.lib.base.objects.ObjectManager.update_prim_properties">
+<tt class="descname">update_prim_properties</tt><big>(</big><em>prim_properties</em><big>)</big><a class="headerlink" href="#pyogp.lib.base.objects.ObjectManager.update_prim_properties" title="Permalink to this definition">¶</a></dt>
+<dd>handles an object update and updates or adds to internal representation</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="parcel.html" title="parcel"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="net.html" title="net"
+             >previous</a> |</li>
+        <li><a href="../index.html">Pyogp v0.1 documentation</a> &raquo;</li>
+          <li><a href="../modules.html" >Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Pyogp team.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>
