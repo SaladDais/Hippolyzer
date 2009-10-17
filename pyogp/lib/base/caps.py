@@ -126,13 +126,11 @@ class Capability(object):
 
         return self._response_handler(response)
 
-    def POST_FILE(self, file_name, custom_headers={}):
-        """ Opens file at file_name and posts contents to this cap. """
-        headers = {"Content-type" : "application/octet-stream"}
-        fd = open(file_name)
-        payload = fd.read()
-        fd.close
-
+    def POST_CUSTOM(self, headers, payload):
+        """
+        call this capability with custom header and payload, useful for posting
+        non-LLSD data such as LSLs or notecards 
+        """
         try:
             response = self.restclient.POST(self.public_url,
                                             payload, headers=headers)
@@ -151,7 +149,7 @@ class Capability(object):
         content_type_charset = response.headers['Content-Type']
         content_type = content_type_charset.split(";")[0] # remove the charset part
 
-        pattern = re.compile('<\?xml\sversion="1.0"\s\?><llsd>.*?</llsd>')
+        pattern = re.compile('<\?xml\sversion="1.0"\s\?><llsd>.*?</llsd>.*')
         # ToDo: write a generic serializer/deserializer
         if (content_type == 'application/llsd+xml') or \
                (content_type == 'application/xml') or \
