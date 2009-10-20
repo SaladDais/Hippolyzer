@@ -28,6 +28,8 @@ from udpserializer import UDPMessageSerializer
 from udpdeserializer import UDPMessageDeserializer
 from data_unpacker import DataUnpacker
 from message import Message, Block
+from pyogp.lib.base.message.message_dot_xml import MessageDotXML
+
 from pyogp.lib.base.network.net import NetUDPClient
 from pyogp.lib.base import exc
 from pyogp.lib.base.settings import Settings
@@ -40,7 +42,7 @@ logger = getLogger('message.udpdispatcher')
 class UDPDispatcher(object):
     #implements(IUDPDispatcher)
 
-    def __init__(self, udp_client = None, settings = None, message_handler = None, message_template = None):
+    def __init__(self, udp_client = None, settings = None, message_handler = None, message_template = None, message_xml = None):
         #holds the details of the message, or how the messages should be sent,
         #built, and read
 
@@ -79,6 +81,11 @@ class UDPDispatcher(object):
                 log.warning("%s parameter is expected to be a filehandle, it is a %s. \
                         Using the embedded message_template.msg" % (message_template, type(message_template)))
                 self.message_template = None
+
+        if not message_xml:
+            self.message_xml = MessageDotXML()
+        else:
+            self.message_xml = message_xml
 
         self.helpers = Helpers()
 

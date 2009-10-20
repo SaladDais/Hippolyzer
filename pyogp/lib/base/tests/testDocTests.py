@@ -33,8 +33,6 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTest(
             doctest.DocFileSuite(
-                "agent.txt",
-                "login.txt",
                 "caps.txt",
                 "message_handler.txt",
                 package="pyogp.lib.base.tests",

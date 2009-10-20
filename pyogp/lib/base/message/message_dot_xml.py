@@ -50,5 +50,13 @@ class MessageDotXML(object):
         self.maxQueuedEvents = self.parsed_llsd['maxQueuedEvents']
         self.messageBans = self.parsed_llsd['messageBans']
 
+    def validate_udp_msg(self, msg_name):
+        """ checks whether a message is allowed over UDP or not """
 
-
+        if self.messages.has_key(msg_name):
+            if self.messages[msg_name]['flavor'] == 'template':
+                return True
+            else:
+                return False
+        else:
+            return True

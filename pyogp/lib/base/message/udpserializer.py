@@ -18,12 +18,16 @@ $/LicenseInfo$
 
 #standard libs
 import struct
+from logging import getLogger
 
 # pygop
 from msgtypes import MsgType, MsgBlockType, EndianType
 from data_packer import DataPacker
 from template_dict import TemplateDictionary
 from pyogp.lib.base import exc
+from pyogp.lib.base.message.message_dot_xml import MessageDotXML
+
+logger = getLogger('message.udpserializer') 
 
 class UDPMessageSerializer(object):
     """ an adpater for serializing a IUDPMessage into the UDP message format
@@ -32,13 +36,18 @@ class UDPMessageSerializer(object):
         that data in data structure form. A serializer should be used on
         the message produced by this so that it can be sent over a network. """
 
-    def __init__(self, message_template = None):
+    def __init__(self, message_template = None, message_xml = None):
         """initialize the adapter"""
         self.context = None	# the UDPMessage
 
         self.template_dict = TemplateDictionary(message_template)
         self.current_template = None
         self.packer = DataPacker()
+
+        if not message_xml:
+            self.message_xml = MessageDotXML()
+        else:
+            self.message_xml = message_xml
 
     def set_current_template(self):
         """ establish the template for the current packet """
@@ -52,6 +61,11 @@ class UDPMessageSerializer(object):
         self.context = context
 
         self.set_current_template()
+
+        # validate whether we are allowed to receive this message over udp
+        if not self.message_xml.validate_udp_msg(self.current_template.name):
+            logger.warning("Sending '%s' over UDP, which is deprecated. Discarding." % (self.current_template.name))
+            return None
 
         #doesn't build in the header flags, sequence number, or data offset
         msg_buffer = ''

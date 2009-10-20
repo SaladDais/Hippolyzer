@@ -28,6 +28,7 @@ from template import MsgData, MsgBlockData, MsgVariableData
 from msgtypes import MsgType, MsgBlockType, MsgFrequency, PacketLayout, EndianType, PackFlags, sizeof
 from data_unpacker import DataUnpacker
 from message import Message
+from pyogp.lib.base.message.message_dot_xml import MessageDotXML
 
 from pyogp.lib.base import exc
 
@@ -35,7 +36,7 @@ logger = getLogger('message.udpdeserializer')
 
 class UDPMessageDeserializer(object):
 
-    def __init__(self, message_handler = None, settings = None, message_template = None):
+    def __init__(self, message_handler = None, settings = None, message_template = None, message_xml = None):
 
         self.context = None
         self.unpacker = DataUnpacker()
@@ -50,6 +51,11 @@ class UDPMessageDeserializer(object):
             self.settings = settings
         else:
             self.settings = Settings()
+
+        if not message_xml:
+            self.message_xml = MessageDotXML()
+        else:
+            self.message_xml = message_xml
 
         # we can skip parsing all the data in a packet if we know it's not being handled
         # allow the packet_handler to be passed in
@@ -108,6 +114,11 @@ class UDPMessageDeserializer(object):
             # go ahead an merge the acks back in in order for the decode to work
             # or to get the send_flags for acks
             msg_buff = msg_buff + ''.join(temp_acks)
+
+            # validate whether we are allowed to receive this message over udp
+            if not self.message_xml.validate_udp_msg(self.current_template.name):
+                logger.warning("Received '%s' over UDP, when it should come over the event queue. Discarding." % (self.current_template.name))
+                return None
 
             # if the packet is being handled, or if have have disabled deferred packet parsing, handle it!
             if self.message_handler.is_message_handled(self.current_template.name) or not self.settings.ENABLE_DEFERRED_PACKET_PARSING:
