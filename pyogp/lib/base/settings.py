@@ -32,6 +32,7 @@ class Settings(object):
 
         # toggle handling udp packets
         self.HANDLE_PACKETS = True
+        self.HANDLE_OUTGOING_PACKETS = False
 
         #~~~~~~~~~~~~~~~~~~
         # Logging behaviors
