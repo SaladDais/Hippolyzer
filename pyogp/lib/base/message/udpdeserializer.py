@@ -339,7 +339,9 @@ class UDPMessageDeserializer(object):
                                                               variable.type, \
                                                               decode_pos, \
                                                               var_size=var_size)
-
+                    #HACK 2: some unpacked_data of type variable needs to treated as binary instead of as string  
+                    if variable.type == MsgType.MVT_VARIABLE and variable.name != 'Data':
+                        unpacked_data = unpacked_data.rstrip('\x00')
                     var_data = MsgVariableData(variable.name, unpacked_data, variable.type)
                     self.current_block.add_variable(var_data)
                     decode_pos += var_size
