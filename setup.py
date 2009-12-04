@@ -19,14 +19,13 @@ $/LicenseInfo$
 """
 
 from setuptools import setup, find_packages
-import os
 
 version = '0.1'
 
 setup(name='pyogp.lib.base',
      version=version,
      description="basic pyogp library package",
-     long_description="skipping",
+     long_description=open('README.txt').read(),
      # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
      classifiers=[
        "Programming Language :: Python",
@@ -37,12 +36,9 @@ setup(name='pyogp.lib.base',
      author_email='pyogp@lists.lindenlab.com',
      url='http://wiki.secondlife.com/wiki/Pyogp',
      license='Apache2',
-     #packages=find_packages(exclude=['ez_setup']),
-     packages=['pyogp.lib.base'],
-     package_dir={'pyogp.lib.base': 'pyogp/lib/base'},
+     packages=find_packages(exclude=['ez_setup']),
      package_data={'pyogp.lib.base': ['message/data/message_template.msg', 'message/data/message.xml']},
-     #namespace_packages=['pyogp', 'pyogp.lib'],
-     include_package_data=False,
+     namespace_packages=['pyogp', 'pyogp.lib'],
      zip_safe=False,
      install_requires=[
          'setuptools',
