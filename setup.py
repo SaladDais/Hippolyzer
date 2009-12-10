@@ -48,7 +48,7 @@ setup(name='pyogp.lib.base',
          'indra.base',
          'WebOb',
          'wsgiref',
-         'eventlet==0.8.14'
+         'eventlet'
 
      ]
      )
