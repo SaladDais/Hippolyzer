@@ -170,7 +170,7 @@ class MessageManager(object):
         """
         logger.debug('Spawning region UDP connection')
         while self._is_running:
-            api.sleep(0)
+            api.sleep(2)
             msg_buf, msg_size = self.udp_dispatcher.udp_client.receive_packet(self.udp_dispatcher.socket)
             recv_packet = self.udp_dispatcher.receive_check(self.udp_dispatcher.udp_client.get_sender(),
                                                             msg_buf, 
