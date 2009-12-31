@@ -34,6 +34,9 @@ class Settings(object):
         self.HANDLE_PACKETS = True
         self.HANDLE_OUTGOING_PACKETS = False
 
+        # toggle parsing all/handled packets
+        self.ENABLE_DEFERRED_PACKET_PARSING = True
+
         #~~~~~~~~~~~~~~~~~~
         # Logging behaviors
         #~~~~~~~~~~~~~~~~~~
