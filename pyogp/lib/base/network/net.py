@@ -18,8 +18,11 @@ $/LicenseInfo$
 
 # std python libs
 import socket
+from logging import getLogger
 
 from pyogp.lib.base.message.circuit import Host
+
+logger = getLogger('net.net')
 
 #returns true if packet was sent successfully
 class NetUDPClient(object):
@@ -32,12 +35,14 @@ class NetUDPClient(object):
 
     def send_packet(self, sock, send_buffer, host):
         #print "Sending to " + str(host.ip) + ":" + str(host.port) + ":" + send_buffer
+        #logger.debug("In send_packet")
         if send_buffer == None:
             raise Exception("No data specified")
 
         bytes = sock.sendto(send_buffer, (host.ip, host.port))
 
     def receive_packet(self, sock):
+        #logger.debug("in receive packet")
         buf = 10000
         try:
             data, addr = sock.recvfrom(buf)
@@ -47,6 +52,7 @@ class NetUDPClient(object):
         #print self.sender
         self.sender.ip = addr[0]
         self.sender.port = addr[1]
+        #logger.debug("leaving receive packet")
         return data, len(data)
 
     def start_udp_connection(self):

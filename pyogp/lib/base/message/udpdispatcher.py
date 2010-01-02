@@ -162,7 +162,8 @@ class UDPDispatcher(object):
                     host_string = ' (%s)' % (host)
                 else:
                     host_string = ''
-                logger.debug('Received packet%s : %s (%s)%s' % (host_string, recv_packet.name, recv_packet.packet_id, hex_string))
+                if not self.settings.PROXY_LOGGING:
+                    logger.debug('Received packet%s : %s (%s)%s' % (host_string, recv_packet.name, recv_packet.packet_id, hex_string))
 
             if self.settings.HANDLE_PACKETS:
                 self.message_handler.handle(recv_packet)

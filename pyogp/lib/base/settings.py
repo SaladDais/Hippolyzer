@@ -54,6 +54,7 @@ class Settings(object):
         self.LOG_SKIPPED_PACKETS = True
         self.ENABLE_HOST_LOGGING = True
         self.LOG_COROUTINE_SPAWNS = True
+        self.PROXY_LOGGING = False
 
         # allow disabling logging of certain packets
         self.DISABLE_SPAMMERS = True

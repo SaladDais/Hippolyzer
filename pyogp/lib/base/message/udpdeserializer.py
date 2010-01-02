@@ -132,7 +132,11 @@ class UDPMessageDeserializer(object):
 
             else:
 
-                if self.settings.LOG_VERBOSE and self.settings.ENABLE_UDP_LOGGING and self.settings.LOG_SKIPPED_PACKETS: logger.debug('Received packet : %s (Skipping)' % (self.current_template.name))
+                if self.settings.LOG_VERBOSE \
+                and self.settings.ENABLE_UDP_LOGGING \
+                and self.settings.LOG_SKIPPED_PACKETS \
+                and not self.settings.PROXY_LOGGING:
+                    logger.debug('Received packet : %s (Skipping)' % (self.current_template.name))
 
         return None
 
