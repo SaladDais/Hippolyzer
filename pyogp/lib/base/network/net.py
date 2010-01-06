@@ -42,7 +42,6 @@ class NetUDPClient(object):
         bytes = sock.sendto(send_buffer, (host.ip, host.port))
 
     def receive_packet(self, sock):
-        #logger.debug("in receive packet")
         buf = 10000
         try:
             data, addr = sock.recvfrom(buf)
@@ -52,7 +51,6 @@ class NetUDPClient(object):
         #print self.sender
         self.sender.ip = addr[0]
         self.sender.port = addr[1]
-        #logger.debug("leaving receive packet")
         return data, len(data)
 
     def start_udp_connection(self):

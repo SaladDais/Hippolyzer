@@ -17,9 +17,10 @@ $/LicenseInfo$
 """
 
 # standard python libs
-import struct
-import binascii
 import array
+import binascii
+import struct
+import traceback
 
 # pyogp
 from pyogp.lib.base.exc import *
@@ -69,12 +70,16 @@ class DataUnpacker(object):
 
             unpack = unpack_tup[1]
             if callable(unpack):
-                return unpack(endian, data, var_size)
+                try:
+                    return unpack(endian, data, var_size)
+                except struct.error, error:
+                    traceback.print_exc()
+                    raise DataUnpackingError(data, error)
             else:
                 try:
                     return struct.unpack(endian + unpack, data)[0]
                 except struct.error, error:
-                    #print error
+                    traceback.print_exc()
                     raise DataUnpackingError(data, error)
 
         return None

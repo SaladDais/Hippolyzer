@@ -43,6 +43,7 @@ class UDPProxy(UDPDispatcher):
     
         self.target_host = Host((sim_ip, sim_port))
         self.local_host = None
+        self.viewer_address = None
 
         self.target_udp_client = self.udp_client # region facing
         self.target_socket = self.socket # already spun up as part of the parent UDPDispatcher class instance
@@ -59,17 +60,9 @@ class UDPProxy(UDPDispatcher):
 
         self.local_host = Host((self.hostname, viewer_facing_port)) # populate this convenience reference
 
-        logger.debug("Bound proxy for region %s to %s" % (self.target_host, self.target_socket.getsockname()))
-        logger.debug("Bound proxy for viewer (%s) to %s" % (self.local_host, self.proxy_socket.getsockname()))
-
-        '''
-        logger.debug("Initialized the UDPProxy for %s, located at %s" % (
-                        self.target_host, 
-                        self.local_host))
-
-        for item in self.settings.__dict__:
-            logger.debug("Setting %s = %s" % (item, self.settings.__dict__[item]))
-        '''
+        #logger.debug("Bound proxy for region %s to %s" % (self.target_host, self.target_socket.getsockname()))
+        #logger.debug("Bound proxy for viewer (%s) to %s" % (self.local_host, self.proxy_socket.getsockname()))
+        logger.info("Initialized the UDPProxy for %s" % (self.target_host))
 
     def start_proxy(self):
 
@@ -93,57 +86,52 @@ class UDPProxy(UDPDispatcher):
         self.proxy_socket_is_locked = False
 
         while self._is_running:
-            if self.proxy_socket_is_locked:
-                msg_buf, msg_size = self.proxy_udp_client.receive_packet(self.proxy_socket)
 
-                if msg_size > 0:
+            msg_buf, msg_size = self.proxy_udp_client.receive_packet(self.proxy_socket)
+        
+            if not self.viewer_address:
+                self.viewer_address = self.proxy_udp_client.get_sender()
+
+            if msg_size > 0:
+                try:
                     recv_packet = self.receive_check(self.proxy_udp_client.get_sender(),
                                                                     msg_buf, 
                                                                     msg_size)
 
-                    logger.debug("Sending message:%s ID:%s" % (recv_packet.name, recv_packet.packet_id))
-                
-                    '''
-                    logger.debug("Proxying from viewer writing to %s to %s via %s! Data: len(%s)" % (
-                                    self.proxy_socket.getsockname(), 
-                                    self.target_host,
-                                    self.target_socket.getsockname(), 
-                                    len(msg_buf)))
-                    '''
-                
-                    self.target_udp_client.send_packet(self.target_socket, 
-                                                        msg_buf, 
-                                                        self.target_host)
+                    logger.info("Sending message:%s ID:%s" % (recv_packet.name, recv_packet.packet_id))
+                    logger.debug(recv_packet) # ToDo: make this optionally llsd logging once that's in
+                except Exception, error:
+                    logger.error("Problem handling viewer to sim proxy: %s." % (error))
+                    traceback.print_exc()
+        
+                self.target_udp_client.send_packet(self.target_socket, 
+                                                    msg_buf, 
+                                                    self.target_host)
 
+                
             api.sleep(0)
 
     def _receive_sim_to_viewer(self):
 
         while self._is_running:
 
-            self.proxy_socket_is_locked = True
-
             msg_buf, msg_size = self.target_udp_client.receive_packet(self.target_socket)
 
             if msg_size > 0:
-                recv_packet = self.receive_check(self.target_udp_client.get_sender(),
+                try:
+                    recv_packet = self.receive_check(self.target_udp_client.get_sender(),
                                                                 msg_buf, 
                                                                 msg_size)
 
-                logger.debug("Receiving message:%s ID:%s" % (recv_packet.name, recv_packet.packet_id))
-
-                '''
-                logger.debug("Proxing from %s to viewer listening on %s via %s! Data: len(%s)" % (
-                                self.target_host, 
-                                self.proxy_socket.getsockname(),
-                                self.target_socket.getsockname(),
-                                len(msg_buf)))
-                '''
-                
+                    logger.info("Receiving message:%s ID:%s" % (recv_packet.name, recv_packet.packet_id))
+                    logger.debug(recv_packet) # ToDo: make this optionally llsd logging once that's in
+                except Exception, error:
+                    logger.warning("Problem trying to handle sim to viewer proxy : %s" % (error))
+                    traceback.print_exc()
+            
                 self.proxy_udp_client.send_packet(self.proxy_socket,
                                                     msg_buf,
-                                                    self.local_host)
+                                                    self.viewer_address)
 
-            api.sleep(2)
-            
-            self.proxy_socket_is_locked = False
+                
+            api.sleep(0)

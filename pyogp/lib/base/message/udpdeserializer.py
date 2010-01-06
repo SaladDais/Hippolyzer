@@ -79,7 +79,7 @@ class UDPMessageDeserializer(object):
 
         if ord(msg_buff[0]) & PackFlags.LL_ACK_FLAG:
             num_acks = ord(msg_buff[msg_len-1])
-            logger.debug("Decoding packet with acks: %d", num_acks)
+            #logger.debug("Decoding packet with acks: %d", num_acks)
             ack_length = 1 + sizeof(MsgType.MVT_U32) * num_acks
             temp_acks = msg_buff[-ack_length:]
             msg_buff = msg_buff[:-ack_length]
@@ -127,7 +127,7 @@ class UDPMessageDeserializer(object):
                     return self.__decode_data(msg_buff)
                 except exc.DataUnpackingError, error:
                     #logger.warning("Error parsing packet due to: %s" % (error))
-                    raise exc.MessageDeserializationError("packet parsing", error)
+                    raise exc.MessageDeserializationError(self.current_template.name, error)
                     return None
 
             else:
@@ -339,10 +339,14 @@ class UDPMessageDeserializer(object):
                         print var_size
                         logger.warning("ERROR: trying to read %s from a buffer of len %s in %s" % (str(decode_pos + var_size), str(len(data)), packet.name))
                         return None
-                    unpacked_data = self.unpacker.unpack_data(data, \
-                                                              variable.type, \
-                                                              decode_pos, \
-                                                              var_size=var_size)
+                    try:
+                        unpacked_data = self.unpacker.unpack_data(data, \
+                                                                variable.type, \
+                                                                decode_pos, \
+                                                                var_size=var_size)
+                    except Exception, e:
+                        logger.error("Problem parsing data in %s for %s:%s. Parameters were: Len(data):%s Type:%s decode_pos:%s var_size:%s" % (packet.name, block.name, variable.name, len(data), variable.type, decode_pos, var_size))
+                        raise
                     #HACK 2: some unpacked_data of type variable needs to treated as binary instead of as string  
                     if variable.type == MsgType.MVT_VARIABLE and variable.name != 'Data':
                         unpacked_data = unpacked_data.rstrip('\x00')

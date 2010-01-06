@@ -15,6 +15,7 @@ or in
 
 $/LicenseInfo$
 """
+from binascii import hexlify
 
 from template import MsgData, MsgBlockData, MsgVariableData
 from msgtypes import PackFlags
@@ -133,7 +134,10 @@ class Message(MessageBase):
 
                         for avar in somevars.var_list:
                             zvar = somevars.get_variable(avar)
-                            string += "%s%s%s:%s%s\n" % (delim, delim, zvar.name, delim, zvar)
+                            try:
+                                string += "%s%s%s:%s%s\n" % (delim, delim, zvar.name, delim, hexlify(zvar.data))
+                            except TypeError:
+                                string += "%s%s%s:%s%s\n" % (delim, delim, zvar.name, delim, zvar.data)
 
         return string
 
