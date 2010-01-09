@@ -19,7 +19,6 @@ $/LicenseInfo$
 # standard
 import re
 import BaseHTTPServer
-import md5
 
 # related
 from llbase import llsd
