@@ -23,7 +23,7 @@ import struct
 import math
 
 # related
-from indra.base import llsd
+from llbase import llsd
 from eventlet import api
 
 # pyogp

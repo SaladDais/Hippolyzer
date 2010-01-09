@@ -7,7 +7,7 @@ Dependencies
 ============
 uuid
 elementtree
-indra.base
+llbase
 WebOb
 wsgiref
 eventlet==0.8.14

@@ -45,8 +45,8 @@ setup(name='pyogp.lib.base',
          # -*- Extra requirements: -*-
          'uuid',
          'elementtree',
-         'indra.base',
-         'WebOb',
+         'llbase',
+         'WebOb==0.8',
          'wsgiref',
          'eventlet'
 

@@ -20,7 +20,7 @@ $/LicenseInfo$
 import unittest, doctest
 
 #third party
-from indra.base import llsd
+from llbase import llsd
 
 #local libraries
 from pyogp.lib.base.message.llsd_builder import LLSDMessageBuilder

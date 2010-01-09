@@ -20,7 +20,7 @@ $/LicenseInfo$
 from logging import getLogger
 
 # related
-from indra.base import llsd
+from llbase import llsd
 
 # pyogp
 from pyogp.lib.base.settings import Settings

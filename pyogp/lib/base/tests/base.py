@@ -22,7 +22,7 @@ import BaseHTTPServer
 import md5
 
 # related
-from indra.base import llsd
+from llbase import llsd
 from webob import Request, Response
 
 #PW = "$1$"+md5.new("secret").hexdigest()
