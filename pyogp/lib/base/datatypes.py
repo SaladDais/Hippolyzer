@@ -142,12 +142,12 @@ class Quaternion(object):
 
         #if length == 4:
         # the above logic failed, the viewer was sending e.g. AgentUpdate:BodyRotation as 12 bytes (XYZ)
-        # perhaps length is not needed?
-        if len(bytes) == 16:
-            logger.debug("X:%s Y:%s Z:%s len(bytes):%s" % (self.X, self.Y, self.Z, len(bytes)))
+        # moved this to a try:except
+        try:
+            #logger.debug("X:%s Y:%s Z:%s len(bytes):%s" % (self.X, self.Y, self.Z, len(bytes)))
             self.W = struct.unpack("<f", bytes[offset+12:offset+16])[0]
 
-        else:
+        except:
             # Unpack from vector3 
             t = 1.0 - (self.X*self.X + self.Y*self.Y + self.Z*self.Z)
             if t > 0:

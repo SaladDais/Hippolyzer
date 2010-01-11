@@ -15,8 +15,14 @@ or in
 
 $/LicenseInfo$
 """
+
+# standard
 from binascii import hexlify
 
+#related
+from llbase import llsd
+
+# pyogp
 from template import MsgData, MsgBlockData, MsgVariableData
 from msgtypes import PackFlags
 
@@ -77,12 +83,9 @@ class Variable(MsgVariableData):
         super(Variable, self).__init__(name, data, var_type)
 
 class Message(MessageBase):
-    """ an active message """
+    """ a pyogp represention of a Second Life message """
 
     def __init__(self, name, *args):
-
-        #self.name = context.name
-        #self.name = name
 
         super(MessageBase, self).__init__(name)
         self.parse_blocks(args)
@@ -115,6 +118,59 @@ class Message(MessageBase):
     def get_var(self, block, variable):
 
         return self.blocks[block].vars[variable]
+
+    def from_dict_params(self, data):
+        """ build this instance from a dict """
+        pass
+
+    def to_dict(self):
+        """ an dict representation of a message """
+
+        # todo: make this properly honor datatypes
+        # Named datatypes need to better represent themselves
+        base_repr = {'body': {}, 'message': ''}
+
+        base_repr['message'] = self.name
+        
+        for block in self.blocks:
+            for _vars in self.blocks[block]:
+                new_vars = {}
+
+                for avar in _vars.var_list:
+                    this_var = _vars.get_variable(avar)
+                    new_vars[this_var.name] = this_var.data
+ 
+            if block in base_repr['body']:
+                base_repr['body'][block].append(new_vars)
+            else: 
+                base_repr['body'][block] = [new_vars]
+
+        return base_repr
+
+    def from_llsd_params(self, data):
+        """ build this instance from llsd """
+        pass
+
+    def to_llsd(self):
+        """ an llsd representation of a message """
+
+        # broken!!! e.g.
+        '''
+        2010-01-09 01:47:16,482       client_proxy.lib.udpproxy     : INFO     Sending message:AgentUpdate to Host: '216.82.49.231:12035'. ID:86
+        2010-01-09 01:47:16,482       client_proxy.lib.udpproxy     : ERROR    Problem handling viewer to sim proxy: invalid type.
+        Traceback (most recent call last):
+          File "/Users/enus/sandbox/lib/python2.6/site-packages/pyogp.apps-0.1dev-py2.6.egg/pyogp/apps/proxy/lib/udpproxy.py", line 111, in _send_viewer_to_sim
+            logger.debug(recv_packet.as_llsd()) # ToDo: make this optionally llsd logging once that's in
+          File "/Users/enus/sandbox/lib/python2.6/site-packages/pyogp.lib.base-0.1dev-py2.6.egg/pyogp/lib/base/message/message.py", line 158, in as_llsd
+            return llsd.format_xml(self.as_dict())
+          File "build/bdist.macosx-10.6-universal/egg/llbase/llsd.py", line 353, in format_xml
+            return _g_xml_formatter.format(something)
+          File "build/bdist.macosx-10.6-universal/egg/llbase/llsd.py", line 334, in format
+            return cllsd.llsd_to_xml(something)
+        TypeError: invalid type
+        '''
+        
+        return llsd.format_xml(self.as_dict())
 
     def data(self):
         """ a string representation of a packet """

@@ -38,12 +38,12 @@ class TestHelpers(unittest.TestCase):
 
     def test_ListLLSDSerializer(self):
 
-        input_data = ['ChatSessionRequest', 0]
+        input_data = ['ChatSessionRequest', 1]
 
         serializer = ListLLSDSerializer(input_data)
 
         self.assertEquals(input_data, serializer.context)
-        self.assertEquals('<?xml version="1.0" ?><llsd><array><string>ChatSessionRequest</string><integer>0</integer></array></llsd>', serializer.serialize())
+        self.assertEquals('<?xml version="1.0" ?><llsd><array><string>ChatSessionRequest</string><integer>1</integer></array></llsd>', serializer.serialize())
 
     def test_DictLLSDSerializer(self):
 
