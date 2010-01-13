@@ -190,10 +190,12 @@ class Message(MessageBase):
 
                         for avar in somevars.var_list:
                             zvar = somevars.get_variable(avar)
-                            try:
-                                string += "%s%s%s:%s%s\n" % (delim, delim, zvar.name, delim, hexlify(zvar.data))
-                            except TypeError:
-                                string += "%s%s%s:%s%s\n" % (delim, delim, zvar.name, delim, zvar.data)
+                            # strings were being displayed as numbers, ToDo: make this such that it displays hex in place of binary
+                            #try:
+                            #    string += "%s%s%s:%s%s\n" % (delim, delim, zvar.name, delim, hexlify(zvar.data))
+                            #except TypeError:
+                            #    string += "%s%s%s:%s%s\n" % (delim, delim, zvar.name, delim, zvar.data)
+                            string += "%s%s%s:%s%s\n" % (delim, delim, zvar.name, delim, zvar)
 
         return string
 
