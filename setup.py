@@ -37,7 +37,7 @@ setup(name='pyogp.lib.base',
      url='http://wiki.secondlife.com/wiki/Pyogp',
      license='Apache2',
      packages=find_packages(exclude=['ez_setup']),
-     package_data={'pyogp.lib.base': ['message/data/message_template.msg', 'message/data/message.xml']},
+     package_data={'pyogp.lib.base': ['message/data/message_template.msg', 'message/data/message.xml', 'tests/doctests/*.*']},
      namespace_packages=['pyogp', 'pyogp.lib'],
      zip_safe=False,
      install_requires=[

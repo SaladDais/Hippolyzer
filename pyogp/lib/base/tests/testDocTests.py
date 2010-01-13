@@ -35,7 +35,7 @@ def test_suite():
             doctest.DocFileSuite(
                 "caps.txt",
                 "message_handler.txt",
-                package="pyogp.lib.base.tests",
+                package="pyogp.lib.base.tests.doctests",
                 setUp = setUp,
                 tearDown = tearDown,
                 optionflags=optionflags,
