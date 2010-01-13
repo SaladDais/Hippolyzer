@@ -100,7 +100,7 @@ class TestMessageManager(unittest.TestCase):
     def test_custom_message_template_count(self):
 
         message_manager = MessageManager(self.host,
-                                            message_template = open(os.path.join(os.path.dirname(__file__), 'mock_message_template.msg')))
+                                            message_template = open(os.path.join(os.path.dirname(__file__), 'test_resources', 'mock_message_template.msg')))
 
         # the custom message_template.msg should pass all the way through, and should have 210 messages
         self.assertEquals(len(message_manager.udp_dispatcher.udp_deserializer.template_dict.template_list), 210)
@@ -108,7 +108,7 @@ class TestMessageManager(unittest.TestCase):
     def test_embedded_message_template_count(self):
 
         message_manager = MessageManager(self.host,
-                                            message_template = open(os.path.join(os.path.dirname(__file__), 'mock_message_template.msg')))
+                                            message_template = open(os.path.join(os.path.dirname(__file__), 'test_resources', 'mock_message_template.msg')))
 
         # the message_template.msg should default to the embedded instance
         # and should have > 470 messages
@@ -117,7 +117,7 @@ class TestMessageManager(unittest.TestCase):
     def test_custom_message_xml(self):
 
         message_manager = MessageManager(self.host,
-                                            message_xml = open(os.path.join(os.path.dirname(__file__), 'mock_message.xml')))
+                                            message_xml = open(os.path.join(os.path.dirname(__file__), 'test_resources', 'mock_message.xml')))
 
         # the custom message.xml should be used
         self.assertEquals(message_manager.message_xml.__dict__, {'messageBans': {'untrusted': {}, 'trusted': {}}, 'messages': {'PacketAck': {'flavor': 'template', 'trusted-sender': False}}, 'serverDefaults': {'simulator': 'template'}, 'parsed_llsd': {'serverDefaults': {'simulator': 'template'}, 'messages': {'PacketAck': {'flavor': 'template', 'trusted-sender': False}}, 'capBans': {'MapLayer': False, 'UploadBakedTexture': True}, 'maxQueuedEvents': 100, 'messageBans': {'untrusted': {}, 'trusted': {}}}, 'maxQueuedEvents': 100, 'raw_llsd': '<?xml version="1.0"?>\n<llsd>\n    <map>\n\t\t  <key>serverDefaults</key>\n            <!--\n\t\t\t\t    a map of server names to default message transport\n\t\t\t\t-->\n\t\t  <map>\n\t\t\t\t<key>simulator</key>\n\t\t\t\t<string>template</string>\n\n\n\t\t  </map>\n\t\t  <key>messages</key>\n            <!--\n\t\t\t\t    a map of individual message names that override defaults\n\t\t\t\t-->\n\t\t  <map>\n\t\t\t\t<!--\n\t\t\t\t\tCircuit related messages\n\t\t\t\t-->\n\t\t\t\t<key>PacketAck</key>\n\t\t\t\t<map>\n\t\t\t\t\t<key>flavor</key>\n\t\t\t\t\t<string>template</string>\n\t\t\t\t\t<key>trusted-sender</key>\n\t\t\t\t\t<boolean>false</boolean>\n\t\t\t\t</map>\n\n\t\t  </map>\n  \t  \t<key>capBans</key>\n    \t<map>\n\t\t\t<key>MapLayer</key>\n\t\t\t<boolean>false</boolean>\n\n\t\t\t<key>UploadBakedTexture</key>\n\t\t\t<boolean>true</boolean>\n\t\t</map>\n\n\t\t<key>messageBans</key>\n\t\t<map>\n\t\t\t<key>trusted</key>\n\t\t\t<map>\n\t\t\t</map>\n\t\t\n\t\t\t<key>untrusted</key>\n\t\t\t<map>\n\t\t\t</map>\n\t\t</map>\n\n\t\t<key>maxQueuedEvents</key>\n\t\t<integer>100</integer>\n    </map>\n</llsd>\n', 'capBans': {'MapLayer': False, 'UploadBakedTexture': True}})
