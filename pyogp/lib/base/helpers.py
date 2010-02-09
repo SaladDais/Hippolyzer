@@ -299,8 +299,11 @@ class Wait(object):
 
         while self.enabled and now - start < self.duration:
 
-            api.sleep()
-            now = time.time()
+            try:
+                api.sleep()
+                now = time.time()
+            except AssertionError:
+                pass
 
         return True
 

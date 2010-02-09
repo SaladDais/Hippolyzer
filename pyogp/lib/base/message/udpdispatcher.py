@@ -235,6 +235,9 @@ class UDPDispatcher(object):
 
             return send_buffer
 
+        except AssertionError:
+            pass
+
         except Exception, error:
             logger.warning("Error trying to serialize the following packet: %s" % (packet))
             traceback.print_exc()

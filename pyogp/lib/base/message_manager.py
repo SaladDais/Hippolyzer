@@ -124,7 +124,7 @@ class MessageManager(object):
 
         api.spawn(self._udp_dispatcher)
 
-        if self.event_queue != None:
+        if self.event_queue != None and self.settings.ENABLE_REGION_EVENT_QUEUE:
             logger.debug('Spawning region event queue connection')
             api.spawn(self.event_queue.start)
 
