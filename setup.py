@@ -50,6 +50,7 @@ setup(name='pyogp.lib.base',
          'elementtree',
          'llbase',
          'WebOb==0.8',
-         'wsgiref'
-     ]
+         'wsgiref',
+         'eventlet'
+]
      )
