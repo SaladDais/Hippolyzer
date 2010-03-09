@@ -60,6 +60,9 @@ class Settings(object):
         self.DISABLE_SPAMMERS = True
         self.UDP_SPAMMERS = ['PacketAck', 'AgentUpdate']
 
+        # toggle handling a region's event queue
+	self.ENABLE_REGION_EVENT_QUEUE = True
+
         # how many seconds to wait between polling
         # a region's event queue
         self.REGION_EVENT_QUEUE_POLL_INTERVAL = 1
