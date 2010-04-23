@@ -52,6 +52,7 @@ setup(name='pyogp.lib.base',
          'llbase',
          'WebOb==0.8',
          'wsgiref',
-         'eventlet'
+         'eventlet',
+         'pyOpenssl'
 ]
      )
