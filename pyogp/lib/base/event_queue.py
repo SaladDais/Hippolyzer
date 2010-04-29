@@ -51,6 +51,8 @@ class EventQueueClient(object):
     >>> event_queue = EventQueueClient(cap)
     >>> event_queue.start()
     True
+    
+    >>> event_queue.stop()
 
     Sample implementations: region.py
     Tests: tests/test_event_queue.py
