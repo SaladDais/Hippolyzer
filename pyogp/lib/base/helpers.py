@@ -247,7 +247,7 @@ class LLSDDeserializer(object):
     >>> llsd = deserializer.deserialize_string('barfoo') 
     Traceback (most recent call last):
     ...
-    DeserializationFailed: deserialization failed for 'barfoo', reason: 'binary notation not yet supported'
+    DeserializationFailed: deserialization failed for 'barfoo', reason: 'random horrible binary format not supported'
 
 
     """

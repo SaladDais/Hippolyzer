@@ -46,10 +46,11 @@ class EventQueueClient(object):
 
     The event queue client requires an event queue capability
     >>> from pyogp.lib.base.caps import Capability
-    >>> cap = Capability('EventQueue', 'http://localhost:12345/cap')
+    >>> cap = Capability('EventQueueGet', 'http://localhost:12345/cap')
 
     >>> event_queue = EventQueueClient(cap)
     >>> event_queue.start()
+    True
 
     Sample implementations: region.py
     Tests: tests/test_event_queue.py
