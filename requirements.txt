@@ -52,7 +52,7 @@ prompt-toolkit==3.0.18
 protobuf==3.14.0
 ptpython==3.0.17
 publicsuffix2==2.20191221
-py==1.8.1
+py==1.10.0
 pyasn1==0.4.8
 pycparser==2.20
 Pygments==2.8.1
