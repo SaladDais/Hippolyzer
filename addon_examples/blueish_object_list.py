@@ -18,7 +18,7 @@ from hippolyzer.lib.base.message.message import Block
 from hippolyzer.lib.base.objects import Object
 from hippolyzer.lib.base.ui_helpers import loadUi
 from hippolyzer.lib.proxy.addons import AddonManager
-from hippolyzer.lib.proxy.addon_utils import BaseAddon
+from hippolyzer.lib.proxy.addon_utils import BaseAddon, SessionProperty
 from hippolyzer.lib.proxy.commands import handle_command
 from hippolyzer.lib.proxy.packets import Direction
 from hippolyzer.lib.proxy.message import ProxiedMessage
@@ -51,10 +51,7 @@ def _is_object_blueish(obj: Object):
 
 
 class BlueishObjectListGUIAddon(BaseAddon):
-    def __init__(self):
-        # Instance attribute because we only expect one to exist at a time,
-        # and it should never persist.
-        self.blueish_model: Optional[BlueishObjectModel] = None
+    blueish_model: Optional[BlueishObjectModel] = SessionProperty(None)
 
     # Cancel the coroutine associated with this command if the region, session or addon
     # changes for any reason. Only one allowed at once across all sessions.
