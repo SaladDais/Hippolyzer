@@ -75,7 +75,7 @@ class MeshUploadInterceptingAddon(BaseAddon):
     # Above, but for the local asset IDs
     local_mesh_asset_ids: List[UUID] = SessionProperty(list)
 
-    def handle_init(self, session_manager):
+    def handle_init(self, session_manager: SessionManager):
         # Other plugins can add to this list to apply transforms to mesh
         # whenever it's uploaded.
         self.remangle_local_mesh(session_manager)
@@ -84,6 +84,9 @@ class MeshUploadInterceptingAddon(BaseAddon):
     async def set_local_mesh_target(self, session: Session, region: ProxiedRegion):
         """Set the currently selected object as the target for local mesh"""
         parent_object = region.objects.lookup_localid(session.selected.object_local)
+        if not parent_object:
+            show_message("Nothing selected")
+            return
         linkset_objects = [parent_object] + parent_object.Children
 
         old_locals = self.local_mesh_target_locals
@@ -208,12 +211,14 @@ class MeshUploadInterceptingAddon(BaseAddon):
                     }
                 )
                 show_message("Applying local mesh")
+            # Even if we're not in local mesh mode, we want the upload cost for
+            # our mangled mesh
             elif self.mesh_manglers:
                 flow.request.content = llsd.format_xml(payload)
                 show_message("Mangled upload cost request")
         elif cap_data.cap_name == "NewFileAgentInventoryUploader":
             # Don't bother looking at this if we have no manglers
-            if self.mesh_manglers:
+            if not self.mesh_manglers:
                 return
             # Depending on what asset is being uploaded the body may not even be LLSD.
             if not flow.request.content or b"mesh_list" not in flow.request.content:
