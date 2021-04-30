@@ -303,6 +303,10 @@ If you are a viewer developer, please put them in a viewer.
 
 [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html). If you have a good reason why, I might dual license.
 
+This package [includes portions of the Second Life(TM) Viewer Artwork](https://github.com/SaladDais/Hippolyzer/tree/master/hippolyzer/lib/proxy/data),
+Copyright (C) 2008 Linden Research, Inc.  The viewer artwork is licensed under the Creative Commons
+Attribution-Share Alike 3.0 License.
+
 ## For Client Developers
 
 This section is mostly useful if you're developing a new SL-compatible client from scratch. Clients based
