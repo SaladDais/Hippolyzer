@@ -1,23 +1,27 @@
 
 """
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/trunk/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
 Copyright 2009, Linden Research, Inc.
+  See NOTICE.md for previous contributors
+Copyright 2021, Salad Dais
+All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0.
-You may obtain a copy of the License at:
-    http://www.apache.org/licenses/LICENSE-2.0
-or in 
-    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/LICENSE.txt
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 3 of the License, or (at your option) any later version.
 
-$/LicenseInfo$
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program; if not, write to the Free Software Foundation,
+Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
 import os
 
-msg_tmpl = open(os.path.join(os.path.dirname(__file__),'message_template.msg'))
-msg_details = open(os.path.join(os.path.dirname(__file__),'message.xml')).read()
-
+msg_tmpl = open(os.path.join(os.path.dirname(__file__), 'message_template.msg'))
+with open(os.path.join(os.path.dirname(__file__), 'message.xml'), "rb") as _f:
+    msg_details = _f.read()

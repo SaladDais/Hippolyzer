@@ -1,33 +1,36 @@
 
 """
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/trunk/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
 Copyright 2009, Linden Research, Inc.
+  See NOTICE.md for previous contributors
+Copyright 2021, Salad Dais
+All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0.
-You may obtain a copy of the License at:
-    http://www.apache.org/licenses/LICENSE-2.0
-or in 
-    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/LICENSE.txt
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 3 of the License, or (at your option) any later version.
 
-$/LicenseInfo$
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program; if not, write to the Free Software Foundation,
+Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
-
-#standard libraries
-import unittest, doctest
+import unittest
+from binascii import unhexlify
 from uuid import UUID
 
-#local libraries
-from pyogp.lib.base.settings import Settings
-from pyogp.lib.base.message.msgtypes import MsgType
-from pyogp.lib.base.message.message import Message, Block
-from pyogp.lib.base.message.udpdeserializer import UDPMessageDeserializer
-from pyogp.lib.base.message.udpserializer import UDPMessageSerializer
+from hippolyzer.lib.base.datatypes import Vector3
+from hippolyzer.lib.base.message.data_packer import TemplateDataPacker
+from hippolyzer.lib.base.message.msgtypes import MsgType
+from hippolyzer.lib.base.settings import Settings
+from hippolyzer.lib.base.message.message import Message, Block
+from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
+from hippolyzer.lib.base.message.udpserializer import UDPMessageSerializer
 
-#from indra.base.lluuid import UUID
 
 class TestDeserializer(unittest.TestCase):
 
@@ -37,38 +40,52 @@ class TestDeserializer(unittest.TestCase):
     def setUp(self):
         self.settings = Settings()
         self.settings.ENABLE_DEFERRED_PACKET_PARSING = False
+        self.deserializer = UDPMessageDeserializer(settings=self.settings)
 
     def test_deserialize(self):
-        message = '\xff\xff\xff\xfb' + '\x03' + \
-                  '\x01\x00\x00\x00' + '\x02\x00\x00\x00' + '\x03\x00\x00\x00'
-        message = '\x00' + '\x00\x00\x00\x01' +'\x00' + message
-        deserializer = UDPMessageDeserializer(settings = self.settings)
-        packet = deserializer.deserialize(message)
+        body = b'\xff\xff\xff\xfb' + b'\x03' + \
+               b'\x01\x00\x00\x00' + b'\x02\x00\x00\x00' + b'\x03\x00\x00\x00'
+        message = b'\x00' + b'\x00\x00\x00\x01' + b'\x00' + body
+        packet = self.deserializer.deserialize(message)
 
         assert packet.name == 'PacketAck', 'Incorrect deserialization'
-
 
     def test_chat(self):
         msg = Message('ChatFromViewer',
                       Block('AgentData', AgentID=UUID('550e8400-e29b-41d4-a716-446655440000'),
                             SessionID=UUID('550e8400-e29b-41d4-a716-446655440000')),
-                       Block('ChatData', Message='Hi Locklainn Tester', Type=1, Channel=0))
+                      Block('ChatData', Message='Hi Locklainn Tester', Type=1, Channel=0))
         serializer = UDPMessageSerializer()
         packed_data = serializer.serialize(msg)
 
-        deserializer = UDPMessageDeserializer(settings = self.settings)
-        packet = deserializer.deserialize(packed_data)
+        packet = self.deserializer.deserialize(packed_data)
         data = packet.blocks
-        assert data['ChatData'][0].vars['Message'].data == 'Hi Locklainn Tester',\
-               'Message for chat is incorrect'
+        self.assertEqual(data['ChatData'][0].vars['Message'], 'Hi Locklainn Tester')
 
+    def test_simple_zero_coding(self):
+        val = b"\x01\x00\x01\x01"
+        decoded = self.deserializer.zero_code_expand(val)
+        self.assertEqual(b"\x01\x00\x01", decoded)
 
+    def test_wrap_zero_coding(self):
+        val = b"\x01\x00\x00\x02\x01"
+        decoded = self.deserializer.zero_code_expand(val)
+        self.assertEqual(b"\x01" + (b"\x00" * 256) + b"\x00\x00\x01", decoded)
 
-def test_suite():
-    from unittest import TestSuite, makeSuite
-    suite = TestSuite()
-    suite.addTest(makeSuite(TestDeserializer))
-    return suite
+    def test_double_wrap_zero_coding(self):
+        val = b"\x01\x00\x00\x00\x02\x01"
+        decoded = self.deserializer.zero_code_expand(val)
+        self.assertEqual(b"\x01" + (b"\x00" * 256 * 2) + b"\x00\x00\x01", decoded)
 
+    def test_trailing_zero(self):
+        val = b"\x00"
+        decoded = self.deserializer.zero_code_expand(val)
+        self.assertEqual(val, decoded)
 
-
+    def test_vector3_from_bytes(self):
+        # test the 72 byte ObjectUpdate.ObjectData.ObjectData case
+        hex_string = '00000000000000000000803f6666da41660000432fffff422233e34100000000000000000000000000000000000000' \
+                     '000000000000000000000000000e33de3c000000000000000000000000'
+        position = TemplateDataPacker.unpack(unhexlify(hex_string)[16:16+12], MsgType.MVT_LLVector3)
+        self.assertEqual(position, (128.00155639648438, 127.99840545654297, 28.399967193603516))
+        self.assertIsInstance(position, Vector3)

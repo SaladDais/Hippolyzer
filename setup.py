@@ -1,58 +1,73 @@
 """
-@file setup.py
-@date 2008-09-16
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/CONTRIBUTORS.txt
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
 Copyright 2008, Linden Research, Inc.
+  See NOTICE.md for previous contributors
+Copyright 2021, Salad Dais
+All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 3 of the License, or (at your option) any later version.
 
-http://www.apache.org/licenses/LICENSE-2.0
-or in
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/LICENSE.txt
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
 
-$/LicenseInfo$
+You should have received a copy of the GNU Lesser General Public License
+along with this program; if not, write to the Free Software Foundation,
+Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
-from setuptools import setup, find_packages
+from os import path
+
+from setuptools import setup
+
+here = path.abspath(path.dirname(__file__))
 
 version = '0.1'
 
-setup(name='pyogp.lib.base',
-     version=version,
-     description="basic pyogp library package",
-     long_description=open('README.txt').read(),
-     # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
-     classifiers=[
-       "Programming Language :: Python",
-       "Topic :: Software Development :: Libraries :: Python Modules",
-       ],
-     keywords='pyogp login awg virtualworlds',
-     author='Pyogp collective',
-     author_email='pyogp@lists.lindenlab.com',
-     url='http://wiki.secondlife.com/wiki/Pyogp',
-     license='Apache2',
-     packages=find_packages(exclude=['ez_setup']),
-     package_data={'pyogp.lib.base': ['message/data/message_template.msg', 
-                                        'message/data/message.xml', 
-                                        'network/tests/*.txt',
-                                        'tests/doctests/*.*',
-                                        'tests/test_resources/*.*']},
-     namespace_packages=['pyogp', 'pyogp.lib'],
-     zip_safe=False,
-     install_requires=[
-         'setuptools',
-         # -*- Extra requirements: -*-
-         'uuid',
-         'elementtree',
-         'llbase',
-         'WebOb==0.8',
-         'wsgiref',
-         'eventlet',
-         'pyOpenssl'
-]
-     )
+with open(path.join(here, 'README.md')) as readme_fh:
+    readme = readme_fh.read()
+
+setup(
+    name='hippolyzer',
+    version=version,
+    description="Analysis tools for SL-compatible virtual worlds",
+    long_description=readme,
+    long_description_content_type="text/markdown",
+    classifiers=[
+        "Programming Language :: Python",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+    ],
+    author='Salad Dais',
+    license='LGPLv3',
+    packages=["hippolyzer.lib.base", "hippolyzer.lib.proxy"],
+    package_data={
+        'hippolyzer.lib.base': [
+            'message/data/message_template.msg',
+            'message/data/message.xml',
+            'network/tests/*.txt',
+            'network/data/ca-bundle.crt',
+            'tests/doctests/*.*',
+            'tests/test_resources/*.*'
+        ],
+        'hippolyzer.lib.proxy': [
+            'data/*',
+        ],
+    },
+    namespace_packages=['hippolyzer', 'hippolyzer.lib'],
+    zip_safe=False,
+    python_requires='>=3.8',
+    install_requires=[
+        'setuptools',
+        'llbase>=1.2.5',
+        'defusedxml',
+        'mitmproxy',
+        'qasync',
+        'aiohttp',
+        'pyside2',
+        'recordclass',
+        'lazy-object-proxy',
+    ],
+)

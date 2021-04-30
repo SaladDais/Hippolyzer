@@ -1,106 +1,119 @@
-
 """
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/trunk/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
 Copyright 2009, Linden Research, Inc.
+  See NOTICE.md for previous contributors
+Copyright 2021, Salad Dais
+All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0.
-You may obtain a copy of the License at:
-    http://www.apache.org/licenses/LICENSE-2.0
-or in 
-    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/LICENSE.txt
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 3 of the License, or (at your option) any later version.
 
-$/LicenseInfo$
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program; if not, write to the Free Software Foundation,
+Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
-# standrad python libraries
+import socket
 import struct
+from typing import *
 
-# pyogp
-from pyogp.lib.base.datatypes import UUID, Vector3, Quaternion
-
-# pyogp messaging
-from msgtypes import MsgType, EndianType
-from pyogp.lib.base.helpers import Helpers
-
-class DataPacker(object):
-    def __init__(self):
-        self.packer = {}
-        self.packer[MsgType.MVT_FIXED]          = ('>',self.__pack_string)  #:DE 23oct2008 added handler for MVT_FIXED
-        self.packer[MsgType.MVT_VARIABLE]       = ('>',self.__pack_string)
-        self.packer[MsgType.MVT_S8]             = ('>','b')
-        self.packer[MsgType.MVT_U8]             = ('>','B')
-        self.packer[MsgType.MVT_BOOL]           = ('>','B')
-        self.packer[MsgType.MVT_LLUUID]         = ('>',self.__pack_uuid)
-        self.packer[MsgType.MVT_IP_ADDR]        = ('>',self.__pack_string)
-        self.packer[MsgType.MVT_IP_PORT]        = ('>','H')
-        self.packer[MsgType.MVT_U16]            = ('<','H')
-        self.packer[MsgType.MVT_U32]            = ('<','I')
-        self.packer[MsgType.MVT_U64]            = ('<','Q')
-        self.packer[MsgType.MVT_S16]            = ('<','h')
-        self.packer[MsgType.MVT_S32]            = ('<','i')
-        self.packer[MsgType.MVT_S64]            = ('<','q')
-        self.packer[MsgType.MVT_F32]            = ('<','f')
-        self.packer[MsgType.MVT_F64]            = ('<','d')
-        self.packer[MsgType.MVT_LLVector3]      = ('<',self.__pack_vector3)
-        self.packer[MsgType.MVT_LLVector3d]     = ('<',self.__pack_vector3d)
-        self.packer[MsgType.MVT_LLVector4]      = ('<',self.__pack_vector4)
-        self.packer[MsgType.MVT_LLQuaternion]   = ('<',self.__pack_quat)
-
-    def pack_data(self, data, data_type, endian_type=EndianType.NONE):
-        if data_type in self.packer:
-            endian, pack = self.packer[data_type]
-
-            #override endian            
-            if endian_type != EndianType.NONE:
-                endian = endian_type
-
-            if callable(pack):
-                return pack(endian, data)
-            else:
-                return struct.pack(endian + pack, data)
-
-        return None
-
-    def __pack_tuple(self, endian, tup, tp):
-        size = len(tup)
-        return struct.pack(endian + str(size) + tp, *tup)
-
-    def __pack_vector3(self, endian, vec):        
-        if isinstance(vec, Vector3):
-            vec = vec() # convert to tuple
-        return self.__pack_tuple(endian, vec, 'f')
-
-    def __pack_vector3d(self, endian, vec):
-        return self.__pack_tuple(endian, vec, 'd')
-
-    def __pack_vector4(self, endian, vec):
-        return self.__pack_tuple(endian, vec, 'f')
-
-    def __pack_quat(self, endian, quat):
-        if isinstance(quat, Quaternion):
-            quat = quat() # convert to tuple
-        vec = Helpers.pack_quaternion_to_vector3(quat)
-        return self.__pack_tuple(endian, vec, 'f')
-
-    def __pack_uuid(self, endian, uuid):
-
-        if isinstance(uuid, UUID):
-            return uuid.get_bytes()
-        else:
-            return uuid.bytes
-
-    def __pack_string(self, endian, pack_string):
-        """Return the string UTF-8 encoded and null terminated."""
-        if pack_string == None:
-            return '\x00'
-        elif isinstance(pack_string,unicode):
-            return pack_string.encode('utf-8') + '\x00'
-        else:
-            return pack_string + '\x00'
+from hippolyzer.lib.base.datatypes import *
+from hippolyzer.lib.base.message.msgtypes import MsgType
 
 
+PACKER = Callable[[Any], bytes]
+UNPACKER = Callable[[bytes], Any]
+SPEC = Tuple[UNPACKER, PACKER]
 
+
+def _pack_string(pack_string):
+    """Return the string UTF-8 encoded and null terminated."""
+    if pack_string is None:
+        return b''
+    elif isinstance(pack_string, str):
+        return pack_string.encode('utf-8') + b'\x00'
+    else:
+        return bytes(pack_string)
+
+
+def _make_struct_spec(struct_fmt: str) -> SPEC:
+    struct_obj = struct.Struct(struct_fmt)
+    return (lambda x: struct_obj.unpack(x)[0]), struct_obj.pack
+
+
+def _make_tuplecoord_spec(typ: Type[TupleCoord], struct_fmt: str,
+                          needed_elems: Optional[int] = None) -> SPEC:
+    struct_obj = struct.Struct(struct_fmt)
+    if needed_elems is None:
+        # Number of elems needed matches the number in the coord type
+        def _packer(x):
+            return struct_obj.pack(*x)
+    else:
+        # Special case, we only want to pack some of the components.
+        # Mostly for Quaternion since we don't actually need to send W.
+        def _packer(x):
+            if isinstance(x, TupleCoord):
+                x = x.data()
+            return struct_obj.pack(*x[:needed_elems])
+    return lambda x: typ(*struct_obj.unpack(x)), _packer
+
+
+def _unpack_specs(cls):
+    cls.UNPACKERS = {k: v[0] for (k, v) in cls.SPECS.items()}
+    cls.PACKERS = {k: v[1] for (k, v) in cls.SPECS.items()}
+    return cls
+
+
+@_unpack_specs
+class TemplateDataPacker:
+    SPECS: Dict[MsgType, SPEC] = {
+        MsgType.MVT_FIXED: (bytes, _pack_string),
+        MsgType.MVT_VARIABLE: (bytes, _pack_string),
+        MsgType.MVT_S8: _make_struct_spec('b'),
+        MsgType.MVT_U8: _make_struct_spec('B'),
+        MsgType.MVT_BOOL: _make_struct_spec('B'),
+        MsgType.MVT_LLUUID: (lambda x: UUID(bytes=bytes(x)), lambda x: x.bytes),
+        MsgType.MVT_IP_ADDR: (socket.inet_ntoa, socket.inet_aton),
+        MsgType.MVT_IP_PORT: _make_struct_spec('!H'),
+        MsgType.MVT_U16: _make_struct_spec('<H'),
+        MsgType.MVT_U32: _make_struct_spec('<I'),
+        MsgType.MVT_U64: _make_struct_spec('<Q'),
+        MsgType.MVT_S16: _make_struct_spec('<h'),
+        MsgType.MVT_S32: _make_struct_spec('<i'),
+        MsgType.MVT_S64: _make_struct_spec('<q'),
+        MsgType.MVT_F32: _make_struct_spec('<f'),
+        MsgType.MVT_F64: _make_struct_spec('<d'),
+        MsgType.MVT_LLVector3: _make_tuplecoord_spec(Vector3, "<3f"),
+        MsgType.MVT_LLVector3d: _make_tuplecoord_spec(Vector3, "<3d"),
+        MsgType.MVT_LLVector4: _make_tuplecoord_spec(Vector4, "<4f"),
+        MsgType.MVT_LLQuaternion: _make_tuplecoord_spec(Quaternion, "<3f", needed_elems=3)
+    }
+    UNPACKERS: Dict[MsgType, UNPACKER] = {}
+    PACKERS: Dict[MsgType, PACKER] = {}
+
+    @classmethod
+    def unpack(cls, data, data_type):
+        return cls.UNPACKERS[data_type](data)
+
+    @classmethod
+    def pack(cls, data, data_type):
+        return cls.PACKERS[data_type](data)
+
+
+@_unpack_specs
+class LLSDDataPacker(TemplateDataPacker):
+    # Some template var types aren't directly representable in LLSD, so they
+    # get encoded to binary fields.
+    SPECS = {
+        MsgType.MVT_IP_ADDR: (socket.inet_ntoa, socket.inet_aton),
+        # LLSD ints are technically bound to S32 range.
+        MsgType.MVT_U32: _make_struct_spec('!I'),
+        MsgType.MVT_U64: _make_struct_spec('!Q'),
+        MsgType.MVT_S64: _make_struct_spec('!q'),
+    }

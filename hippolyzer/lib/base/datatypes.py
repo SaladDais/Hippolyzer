@@ -1,252 +1,310 @@
-
 """
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/trunk/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
 Copyright 2009, Linden Research, Inc.
+  See NOTICE.md for previous contributors
+Copyright 2021, Salad Dais
+All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0.
-You may obtain a copy of the License at:
-    http://www.apache.org/licenses/LICENSE-2.0
-or in 
-    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/LICENSE.txt
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 3 of the License, or (at your option) any later version.
 
-$/LicenseInfo$
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program; if not, write to the Free Software Foundation,
+Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
-
-# standard python libs
+import ast
+import enum
+import hashlib
 from logging import getLogger
 import uuid
-import struct
 import math
+from typing import *
 
-# pyogp
-from pyogp.lib.base.exc import DataParsingError
+import recordclass
 
-# pyogp messaging
+logger = getLogger('hippolyzer.lib.base.datatypes')
 
-# initialize logging
-logger = getLogger('pyogp.lib.base.datatypes')
 
-class Vector3(object):
-    """ represents a vector as a tuple"""
+class _IterableStub:
+    """Only to help type system realize TupleCoords are iterable"""
+    __iter__: Callable
 
-    def __init__(self, bytes = None, offset = 0, X = 0.0, Y = 0.0, Z = 0.0):
 
-        if bytes != None:
+class TupleCoord(recordclass.datatuple, _IterableStub):  # type: ignore
+    __options__ = {
+        "fast_new": False,
+    }
 
-            self.unpack_from_bytes(bytes, offset)
+    def __init__(self, *args):
+        pass
 
-        else:
+    @classmethod
+    def parse(cls, s):
+        s = s.replace('<', '(').replace('>', ')')
+        return cls(*ast.literal_eval(s))
 
-            if type(X) != float: 
-                self.X = float(X)
-            else:
-                self.X = X
-            if type(Y) != float:
-                self.Y = float(Y)
-            else:
-                self.Y = Y
-            if type(Z) != float:
-                self.Z = float(Z)
-            else:
-                self.Z = Z
+    def data(self, wanted_components=None) -> tuple:
+        raise NotImplementedError()
 
-    def unpack_from_bytes(self, bytes, offset):
-        """ unpack floats from binary """
+    def __copy__(self):
+        return self.__class__(*self)
 
-        # unpack from binary as Little Endian
-        self.X = struct.unpack("<f", bytes[offset:offset+4])[0]
-        self.Y = struct.unpack("<f", bytes[offset+4:offset+8])[0]
-        self.Z = struct.unpack("<f", bytes[offset+8:offset+12])[0]
+    def __abs__(self):
+        return self.__class__(*(abs(x) for x in self))
 
-    def get_bytes(self):
-        """ get bytes """
+    def __add__(self, other):
+        return self.__class__(*(x + y for x, y in zip(self, other)))
 
-        return struct.pack("<3f", self.X, self.Y, self.Z)
+    def __sub__(self, other):
+        return self.__class__(*(x - y for x, y in zip(self, other)))
 
-    def data(self):
+    def __mul__(self, other):
+        if isinstance(other, (float, int)):
+            other = (other,) * len(self)
+        return self.__class__(*(x * y for x, y in zip(self, other)))
 
-        return ((self.X, self.Y, self.Z))
+    def __truediv__(self, other):
+        if isinstance(other, (float, int)):
+            other = (other,) * len(self)
+        return self.__class__(*(x / y for x, y in zip(self, other)))
 
-    def copy(self):
-        return Vector3( X = self.X, Y = self.Y, Z = self.Z )
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return other == self.data()
+        return other.data() == self.data()
+
+    def __gt__(self, other):
+        return all(x > y for x, y in zip(self, other))
+
+    def __lt__(self, other):
+        return all(x < y for x, y in zip(self, other))
+
+    def __ge__(self, other):
+        return all(x >= y for x, y in zip(self, other))
+
+    def __le__(self, other):
+        return all(x <= y for x, y in zip(self, other))
 
     def __repr__(self):
-        """ represent a vector as a string """
+        return f"{self.__class__.__name__}{tuple(self)!r}"
 
-        return '<%s, %s, %s>' % (self.X, self.Y, self.Z)
+    def __str__(self):
+        return f"<{repr(tuple(self))[1:-1]}>"
 
-    def __call__(self):
-        """ represent a vector as a tuple """
+    def interpolate(self, lower, upper):
+        # assumes each component is 0.0<->1.0
+        # Should be replaced for classes where linterp makes no sense
+        return self.__class__(
+            *((l * (1. - t) + u * t) for l, u, t in zip(lower, upper, self))
+        )
 
-        return ((self.X, self.Y, self.Z))
+    def within_domain(self, lower, upper):
+        # each component will be 0.0<->1.0
+        return self.__class__(
+            *(((t - l) / (u - l)) for l, u, t in zip(lower, upper, self))
+        )
 
+
+class Vector3(TupleCoord):
+    """ represents a vector as a tuple"""
+
+    X: float = 0.0
+    Y: float = 0.0
+    Z: float = 0.0
+
+    def __init__(self, X=0.0, Y=0.0, Z=0.0):
+        super().__init__()
+        self.X = float(X)
+        self.Y = float(Y)
+        self.Z = float(Z)
+
+    def data(self, wanted_components=None):
+        return self.X, self.Y, self.Z
+
+    def rotated(self, rot: "Quaternion") -> "Vector3":
+        rw = -rot.X * self.X - rot.Y * self.Y - rot.Z * self.Z
+        rx = rot.W * self.X + rot.Y * self.Z - rot.Z * self.Y
+        ry = rot.W * self.Y + rot.Z * self.X - rot.X * self.Z
+        rz = rot.W * self.Z + rot.X * self.Y - rot.Y * self.X
+
+        return Vector3(
+            X=-rw * rot.X + rx * rot.W - ry * rot.Z + rz * rot.Y,
+            Y=-rw * rot.Y + ry * rot.W - rz * rot.X + rx * rot.Z,
+            Z=-rw * rot.Z + rz * rot.W - rx * rot.Y + ry * rot.X,
+        )
+
+    @staticmethod
     def dist_squared(a, b):
         x = a.X - b.X
         y = a.Y - b.Y
         z = a.Z - b.Z
-        return x*x + y*y + z*z
-    dist_squared = staticmethod(dist_squared)
+        return x * x + y * y + z * z
 
-    @staticmethod
-    def parse(s):
-        """Parse a string of the form '<x, y, z>' or 'x, y, z' and return a Vector3.
-        Will raise a ValueError
-        """
-        s = s.replace('<', '').replace('>', '')
-        dims = s.split(',')
-        if len(dims) != 3:
-            raise ValueError("Expected 3 values in string")
+    @classmethod
+    def dist(cls, a, b):
+        return math.sqrt(cls.dist_squared(a, b))
 
-        x, y, z = [float(d.strip()) for d in dims]
-        return Vector3(X=x, Y=y, Z=z)
 
-class Quaternion(object):
+class Vector2(TupleCoord):
+    X: float = 0.0
+    Y: float = 0.0
+
+    def __init__(self, X=0.0, Y=0.0):
+        super().__init__()
+        self.X = float(X)
+        self.Y = float(Y)
+
+    def data(self, wanted_components=None):
+        return self.X, self.Y
+
+
+class Vector4(TupleCoord):
+    X: float = 0.0
+    Y: float = 0.0
+    Z: float = 0.0
+    W: float = 0.0
+
+    def __init__(self, X=0.0, Y=0.0, Z=0.0, W=0.0):
+        super().__init__()
+        self.X = float(X)
+        self.Y = float(Y)
+        self.Z = float(Z)
+        self.W = float(W)
+
+    def data(self, wanted_components=None):
+        return self.X, self.Y, self.Z, self.W
+
+
+class Quaternion(TupleCoord):
     """ represents a quaternion as a tuple"""
+    X: float = 0.0
+    Y: float = 0.0
+    Z: float = 0.0
+    W: float = 1.0
 
-    def __init__(self, bytes = None, offset = 0, length = 4, X = 0.0, Y = 0.0, Z = 0.0, W = 0.0):
+    def __init__(self, X=0.0, Y=0.0, Z=0.0, W=None):
+        super().__init__()
+        self.X = float(X)
+        self.Y = float(Y)
+        self.Z = float(Z)
 
-        if bytes != None:
-
-            self.unpack_from_bytes(bytes, offset, length)
-
-        else:
-
-            if type(X) != float:
-                self.X = float(X)
-            else:
-                self.X = X
-            if type(Y) != float:
-                self.Y = float(Y)
-            else:
-                self.Y = Y            
-            if type(Z) != float: 
-                self.Z = float(Z)
-            else:
-                self.Z = Z
-            if type(W) != float: 
-                self.W = float(W)
-            else:
-                self.W = W
-
-    def unpack_from_bytes(self, bytes, offset, length=4):
-        """ unpack floats from binary """
-
-        # unpack from binary as Little Endian
-        self.X = struct.unpack("<f", bytes[offset:offset+4])[0]
-        self.Y = struct.unpack("<f", bytes[offset+4:offset+8])[0]
-        self.Z = struct.unpack("<f", bytes[offset+8:offset+12])[0]
-
-        #if length == 4:
-        # the above logic failed, the viewer was sending e.g. AgentUpdate:BodyRotation as 12 bytes (XYZ)
-        # moved this to a try:except
-        try:
-            #logger.debug("X:%s Y:%s Z:%s len(bytes):%s" % (self.X, self.Y, self.Z, len(bytes)))
-            self.W = struct.unpack("<f", bytes[offset+12:offset+16])[0]
-
-        except:
-            # Unpack from vector3 
-            t = 1.0 - (self.X*self.X + self.Y*self.Y + self.Z*self.Z)
+        # Unpack from vector3
+        if W is None:
+            t = 1.0 - (X * X + Y * Y + Z * Z)
             if t > 0:
                 self.W = math.sqrt(t)
             else:
                 # Avoid sqrt(-episilon)
-                self.W = 0           
+                self.W = 0.0
+        else:
+            self.W = float(W)
 
-    def get_bytes(self):
-        """ get bytes """
+    def __mul__(self, other):
+        if isinstance(other, Quaternion):
+            return Quaternion(
+                other.W * self.X + other.X * self.W + other.Y * self.Z - other.Z * self.Y,
+                other.W * self.Y + other.Y * self.W + other.Z * self.X - other.X * self.Z,
+                other.W * self.Z + other.Z * self.W + other.X * self.Y - other.Y * self.X,
+                other.W * self.W - other.X * self.X - other.Y * self.Y - other.Z * self.Z
+            )
+        return super().__mul__(other)
 
-        return struct.pack("<4f", self.X, self.Y, self.Z, self.W)
+    @classmethod
+    def from_euler(cls, roll, pitch, yaw, degrees=False):
+        if degrees:
+            roll *= math.pi / 180
+            pitch *= math.pi / 180
+            yaw *= math.pi / 180
 
-    def data(self):
+        cy = math.cos(yaw * 0.5)
+        sy = math.sin(yaw * 0.5)
+        cr = math.cos(roll * 0.5)
+        sr = math.sin(roll * 0.5)
+        cp = math.cos(pitch * 0.5)
+        sp = math.sin(pitch * 0.5)
 
-        return ((self.X, self.Y, self.Z, self.W))
+        w = cy * cr * cp + sy * sr * sp
+        x = cy * sr * cp - sy * cr * sp
+        y = cy * cr * sp + sy * sr * cp
+        z = sy * cr * cp - cy * sr * sp
 
-    def copy(self):
-        return Quaternion(X=self.X, Y=self.Y, Z=self.Z, W=self.W)
+        return cls(X=x, Y=y, Z=z, W=w)
 
-    def __repr__(self):
-        """ represent a quaternion as a string """
+    def data(self, wanted_components=None):
+        if wanted_components == 3:
+            return self.X, self.Y, self.Z
+        return self.X, self.Y, self.Z, self.W
 
-        return str((self.X, self.Y, self.Z, self.W))
 
-    def __call__(self):
-        """ represent a quaternion as a tuple """
+class UUID(uuid.UUID):
+    _NULL_UUID_STR = '00000000-0000-0000-0000-000000000000'
+    __slots__ = ()
 
-        return ((self.X, self.Y, self.Z, self.W))
+    def __init__(self, val: Union[uuid.UUID, str, None] = None, bytes=None, int=None):
+        if isinstance(val, uuid.UUID):
+            val = str(val)
+        if val is None and bytes is None and int is None:
+            val = self._NULL_UUID_STR
+        super().__init__(hex=val, bytes=bytes, int=int)
 
-class UUID(object):
-    """ represents a uuid as, well, a uuid 
+    @classmethod
+    def random(cls):
+        return cls(uuid.uuid4())
 
-    inbound LLUUID data from packets is already UUID(), they are 
-    already the same 'datatype'
+    @classmethod
+    def combine(cls, first: "UUID", other: "UUID"):
+        h = hashlib.new("md5")
+        h.update(first.bytes)
+        h.update(other.bytes)
+        return UUID(bytes=h.digest())
+
+    def __xor__(self, other: "UUID"):
+        return self.__class__(int=self.int ^ other.int)
+
+
+class JankStringyBytes(bytes):
     """
+    Treat bytes as UTF8 if used in string context
 
-    def __init__(self, string = '00000000-0000-0000-0000-000000000000', bytes = None, offset = 0):
+    Sinful, but necessary evil for now since templates don't specify what's
+    binary and what's a string.
+    """
+    __slots__ = ()
 
-        if bytes != None:
-
-            self.unpack_from_bytes(bytes, offset)
-
-        else:
-
-            self.uuid = uuid.UUID(string)
-
-    def random(self):
-
-        if str(self.uuid) == '00000000-0000-0000-0000-000000000000':
-            self.uuid = uuid.uuid4()
-            return self.uuid
-
-        else:
-            logger.warning("Attempted to overwrite a stored uuid %s with a random, that is a bad idea..." % (str(self.uuid)))
-
-    def unpack_from_bytes(self, bytes, offset):
-        """ unpack uuid from binary """
-
-        # unpack from binary
-        self.uuid = uuid.UUID(bytes = bytes[offset:offset+16])
-
-    def get_bytes(self):
-        """ get bytes """
-
-        return str(self.uuid.bytes)
-
-    def data(self):
-        """ represent a uuid as, well, a uuid """
-
-        return self.uuid
-
-    def copy(self):
-        return UUID(string=str(self.uuid))
-
-    def __repr__(self):
-        """ represent a uuid as a string """
-
-        return str(self.uuid)
-
-    def __call__(self):
-        """ represent a uuid as, well, a uuid """
-
-        return self.uuid
-
+    def __str__(self):
+        return self.rstrip(b"\x00").decode("utf8", errors="replace")
 
     def __eq__(self, other):
-        if hasattr(other,'uuid'):
-            return self.uuid == other.uuid
-        else:
-            return False
+        if isinstance(other, str):
+            return str(self) == other
+        return super().__eq__(other)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 
-    def __xor__(self, arg):
-        """ the xor of two UUIDs """
-        temp = self.uuid.int ^ arg.uuid.int
-        result = uuid.UUID(int = temp)
-        return UUID(result.__str__())
+class RawBytes(bytes):
+    __slots__ = ()
+    pass
 
 
+class StringEnum(str, enum.Enum):
+    def __str__(self):
+        return self.value
 
 
+class TaggedUnion(recordclass.datatuple):  # type: ignore
+    tag: Any
+    value: Any
+
+
+__all__ = [
+    "Vector3", "Vector4", "Vector2", "Quaternion", "TupleCoord",
+    "UUID", "RawBytes", "StringEnum", "JankStringyBytes", "TaggedUnion"
+]

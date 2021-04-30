@@ -1,5 +1,0 @@
-:mod:`build_packet_templates`
-=============================
-
-.. automodule:: pyogp.lib.base.utilities.build_packet_templates
-

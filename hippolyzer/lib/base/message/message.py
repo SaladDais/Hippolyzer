@@ -1,209 +1,358 @@
-
 """
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/trunk/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
 Copyright 2009, Linden Research, Inc.
+  See NOTICE.md for previous contributors
+Copyright 2021, Salad Dais
+All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0.
-You may obtain a copy of the License at:
-    http://www.apache.org/licenses/LICENSE-2.0
-or in 
-    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/LICENSE.txt
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 3 of the License, or (at your option) any later version.
 
-$/LicenseInfo$
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program; if not, write to the Free Software Foundation,
+Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
-# standard
-from binascii import hexlify
+import copy
+import enum
+import itertools
+from typing import *
 
-#related
-from llbase import llsd
+from .. import serialization as se
+from ..datatypes import *
+from .msgtypes import PacketFlags
 
-# pyogp
-from template import MsgData, MsgBlockData, MsgVariableData
-from msgtypes import PackFlags
 
-# NOTE: right now there is no checking with the template
+BLOCK_DICT = Dict[str, "MsgBlockList"]
+VAR_TYPE = Union[TupleCoord, bytes, str, float, int, Tuple, UUID]
 
-# reference message_template.msg for the proper schema for messages
 
-class MessageBase(MsgData):
-    """ 
-    base representation of a message name, blocks, and variables.
-    MessageBase expects a name, and args consisting of Block() instances 
-    (which takes a name and kwargs)
-    """
-
-    def __init__(self, name, *args):
-
-        super(Message, self).__init__(name)        
-        self.parse_blocks(args)
-
-    def parse_blocks(self, block_list):
-        """ parse the Block() instances in the args """
-
-        #can have a list of blocks if it is multiple or variable
-        for block in block_list:
-            if type(block) == list:
-                for bl in block:
-                    self.add_block(bl)                                
-            else:
-                self.add_block(block)                                
-
-class Block(MsgBlockData):
+class Block:
     """ 
     base representation of a block
     Block expects a name, and kwargs for variables (var_name = value)
     """
+    __slots__ = ('name', 'size', 'vars', 'message_name', '_ser_cache', 'fill_missing',)
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, /, fill_missing=False, **kwargs):
+        self.name = name
+        self.size = 0
+        self.message_name: Optional[str] = None
+        self.vars: Dict[str, VAR_TYPE] = {}
+        self._ser_cache: Dict[str, Any] = {}
+        self.fill_missing = fill_missing
+        for var_name, val in kwargs.items():
+            self[var_name] = val
 
-        super(Block, self).__init__(name)
-        self.__parse_vars(kwargs)
+    def get_variable(self, var_name):
+        return self.vars.get(var_name)
 
-    def __parse_vars(self, var_list):
-        """ parse the Variable() instances in the args"""
+    def __contains__(self, item):
+        return item in self.vars
 
-        for variable_name in var_list:
-            variable_data = var_list[variable_name]
-            variable = Variable(variable_name, variable_data)
-            self.add_variable(variable)
+    def __getitem__(self, name):
+        return self.vars[name]
 
-class Variable(MsgVariableData):
-    """ base representation of a Variable (purely a convenience alias of MsgVariableData)
+    def __setitem__(self, key, value):
+        # These don't pickle well since they're likely to get hot-reloaded
+        if isinstance(value, (enum.IntEnum, enum.IntFlag)):
+            value = int(value)
 
-    Variable expects a name, and data
-    """
+        self.vars[key] = value
+        # Invalidate the serialization cache if we manually changed the value
+        if key in self._ser_cache:
+            self._ser_cache.pop(key)
 
-    def __init__(self, name, data, var_type = None):
+    def get_serializer(self, var_name) -> se.BaseSubfieldSerializer:
+        serializer_key = (self.message_name, self.name, var_name)
+        serializer = se.SUBFIELD_SERIALIZERS.get(serializer_key)
+        if not serializer:
+            raise KeyError(f"No serializer for {serializer_key!r}")
+        return serializer
 
-        super(Variable, self).__init__(name, data, var_type)
+    def deserialize_var(self, var_name, make_copy=True):
+        """
+        Deserialize a var, using a cached version if available
 
-class Message(MessageBase):
-    """ a pyogp represention of a Second Life message """
+        Does a deepcopy() of the value from the cache by default, so
+        callers don't accidentally mutate the cached version. Allows
+        opting out as otherwise deepcopy() can dominate runtime if
+        you don't expect mutations.
+        """
+        if var_name in self._ser_cache:
+            val = self._ser_cache[var_name]
+            return copy.deepcopy(val) if make_copy else val
+        serializer = self.get_serializer(var_name)
+        deser = serializer.deserialize(self, self[var_name], pod=False)
+        self._ser_cache[var_name] = deser
+        return copy.deepcopy(deser) if make_copy else deser
 
-    def __init__(self, name, *args):
+    def serialize_var(self, var_name, val):
+        serializer = self.get_serializer(var_name)
+        serialized = serializer.serialize(self, val)
+        self[var_name] = serialized
+        self._ser_cache[var_name] = val
 
-        super(MessageBase, self).__init__(name)
-        self.parse_blocks(args)
+    def invalidate_caches(self):
+        self._ser_cache.clear()
 
-        self.original_args = args
+    def items(self):
+        return self.vars.items()
 
-        self.send_flags         = PackFlags.LL_NONE
-        self.packet_id          = 0 # aka, sequence number
-        self.event_queue_id     = 0 # aka, event queue id
+    def finalize(self):
+        # Stupid hack around the fact that blocks don't know how to
+        # invoke field-specific serializers until they're added to a message.
+        # Can do `Block("FooBlock", Baz_={"someserializedval": 1})` to set
+        # "Baz" to a serialized val without having to first construct a message.
+        for name in tuple(self.vars.keys()):
+            if not name.endswith("_"):
+                continue
+            val = self.vars.pop(name)
+            self.serialize_var(name.rstrip("_"), val)
 
-        #self.message_data       = context
-        #self.blocks = {}
-        self.acks               = [] #may change
-        self.num_acks           = 0
+    def repr(self, pretty=False):
+        block_vars = {}
+        if pretty:
+            if not self.message_name:
+                raise ValueError("Can't give pretty representation of block outside a message")
+            for key in tuple(self.vars.keys()):
+                try:
+                    self.get_serializer(key)
+                except KeyError:
+                    block_vars[key] = repr(self.vars[key])
+                    continue
+                # We have a serializer, include the pretty output in the repr,
+                # using the _ suffix so the builder knows it needs to be serialized.
+                deserialized = self.deserialize_var(key)
+                type_name = type(deserialized).__name__
+                # TODO: replace __repr__ for these in a context manager so nested
+                #  Enums / Flags get handled correctly as well. The point of the
+                #  pretty repr() is to make messages directly paste-able into code.
+                if isinstance(deserialized, enum.IntEnum):
+                    deserialized = f"{type_name}.{deserialized.name}"
+                elif isinstance(deserialized, enum.IntFlag):
+                    # Make an ORed together version of the flags based on the POD version
+                    flags = se.flags_to_pod(type(deserialized), deserialized)
+                    flags = " | ".join(
+                        (f"{type_name}.{v}" if isinstance(v, str) else str(v))
+                        for v in flags
+                    )
+                    deserialized = f"({flags})"
+                else:
+                    deserialized = repr(deserialized)
+                block_vars[f"{key}_"] = deserialized
+        else:
+            block_vars = self.vars
 
-        self.trusted            = False
-        self.reliable           = False
-        self.resent             = False
+        kws = ", ".join((f"{k}={v if pretty else repr(v)}" for k, v in block_vars.items()))
+        if kws:
+            kws = ", " + kws
+        return f"{self.__class__.__name__}({self.name!r}{kws})"
 
-        self.socket             = 0
-        self.retries            = 1 #by default
-        self.host               = None
-        self.expiration_time    = 0
+    def __repr__(self):
+        return self.repr()
 
-    def add_ack(self, packet_id):
 
-        self.acks.append(packet_id)
-        self.num_acks += 1
+class MsgBlockList(List["Block"]):
+    __slots__ = ()
 
-    def get_var(self, block, variable):
+    def __getitem__(self, item) -> Union["Block", VAR_TYPE]:
+        if isinstance(item, str):
+            return super().__getitem__(0)[item]
+        return super().__getitem__(item)
 
-        return self.blocks[block].vars[variable]
+    def __setitem__(self, item: Union[str, int, slice], val):
+        if isinstance(item, str):
+            self[0][item] = val
+        else:
+            super().__setitem__(item, val)
 
-    def from_dict_params(self, data):
-        """ build this instance from a dict """
-        pass
+
+class Message:
+    __slots__ = ("name", "send_flags", "_packet_id", "acks", "body_boundaries", "queued",
+                 "offset", "raw_extra", "raw_body", "deserializer", "_blocks", "finalized")
+
+    def __init__(self, name, *args, packet_id=None, flags=0, acks=None):
+        self.name = name
+        self.send_flags = flags
+        self._packet_id: Optional[int] = packet_id  # aka, sequence number
+
+        self.acks = acks if acks is not None else tuple()
+        self.body_boundaries = (-1, -1)
+        self.offset = 0
+        self.raw_extra = b""
+        # For lazy deserialization
+        self.raw_body = None
+        self.deserializer = None
+        # should be set once a packet is sent / dropped to prevent accidental
+        # re-sending or re-dropping
+        self.finalized = False
+        # Whether message is owned by the queue or should be sent immediately
+        self.queued: bool = False
+        self._blocks: BLOCK_DICT = {}
+
+        self.add_blocks(args)
+
+    @property
+    def packet_id(self) -> Optional[int]:
+        return self._packet_id
+
+    @packet_id.setter
+    def packet_id(self, val: Optional[int]):
+        self._packet_id = val
+        # Changing packet ID clears the finalized flag
+        self.finalized = False
+
+    def add_blocks(self, block_list):
+        # can have a list of blocks if it is multiple or variable
+        for block in block_list:
+            if type(block) == list:
+                for bl in block:
+                    self.add_block(bl)
+            else:
+                self.add_block(block)
+
+    @property
+    def extra(self) -> bytes:
+        return self.raw_extra
+
+    @extra.setter
+    def extra(self, val: bytes):
+        # Make sure this message is fully parsed if it wasn't already,
+        # changing `.extra` requires re-serializing the message body.
+        self.ensure_parsed()
+        self.raw_extra = val
+        self.offset = len(val)
+
+    @property
+    def blocks(self) -> BLOCK_DICT:
+        self.ensure_parsed()
+        return self._blocks
+
+    @blocks.setter
+    def blocks(self, val: BLOCK_DICT):
+        self._blocks = val
+
+        # block list was clobbered, so we don't care about any unparsed data
+        self.raw_body = None
+        self.deserializer = None
+
+    def create_block_list(self, block_name: str):
+        # There's a slight semantic difference between a missing block list
+        # and a present block list with 0 length. This helps us distinguish.
+        if block_name not in self.blocks:
+            self.blocks[block_name] = MsgBlockList()
+
+    def add_block(self, block: Block):
+        self.create_block_list(block.name)
+
+        self.blocks[block.name].append(block)
+        block.message_name = self.name
+        block.finalize()
+
+    def get_block(self, block_name: str, default=None, /) -> Optional[Block]:
+        return self.blocks.get(block_name, default)
+
+    @property
+    def reliable(self):
+        # int() because otherwise this causes an alloc
+        return self.send_flags & int(PacketFlags.RELIABLE)
+
+    @property
+    def has_acks(self):
+        return self.send_flags & int(PacketFlags.ACK)
+
+    @property
+    def zerocoded(self):
+        return self.send_flags & int(PacketFlags.ZEROCODED)
+
+    @property
+    def resent(self):
+        return self.send_flags & int(PacketFlags.RESENT)
+
+    def ensure_parsed(self):
+        # This is a little magic, think about whether we want this.
+        if self.raw_body and self.deserializer():
+            self.deserializer().parse_message_body(self)
 
     def to_dict(self):
-        """ an dict representation of a message """
+        """ A dict representation of a message.
 
-        # todo: make this properly honor datatypes
-        # Named datatypes need to better represent themselves
-        base_repr = {'body': {}, 'message': ''}
+        This is the form used for templated messages sent via EQ.
+        """
+        self.ensure_parsed()
+        base_repr = {'message': self.name, 'body': {}}
 
-        base_repr['message'] = self.name
-        
-        for block in self.blocks:
-            for _vars in self.blocks[block]:
+        for block_type in self.blocks:
+            dict_blocks = base_repr['body'].setdefault(block_type, [])
+            for block in self.blocks[block_type]:
                 new_vars = {}
-
-                for avar in _vars.var_list:
-                    this_var = _vars.get_variable(avar)
-                    new_vars[this_var.name] = this_var.data
- 
-            if block in base_repr['body']:
-                base_repr['body'][block].append(new_vars)
-            else: 
-                base_repr['body'][block] = [new_vars]
+                for var_name, val in block.items():
+                    new_vars[var_name] = val
+                dict_blocks.append(new_vars)
 
         return base_repr
 
-    def from_llsd_params(self, data):
-        """ build this instance from llsd """
-        pass
+    @classmethod
+    def from_dict(cls, dict_val):
+        msg = cls(dict_val['message'])
+        for block_type, blocks in dict_val['body'].items():
+            msg.create_block_list(block_type)
+            for block in blocks:
+                msg.add_block(Block(block_type, **block))
+        return msg
 
-    def to_llsd(self):
-        """ an llsd representation of a message """
+    def invalidate_caches(self):
+        for blocks in self.blocks.values():
+            for block in blocks:
+                block.invalidate_caches()
 
-        # broken!!! e.g.
-        '''
-        2010-01-09 01:47:16,482       client_proxy.lib.udpproxy     : INFO     Sending message:AgentUpdate to Host: '216.82.49.231:12035'. ID:86
-        2010-01-09 01:47:16,482       client_proxy.lib.udpproxy     : ERROR    Problem handling viewer to sim proxy: invalid type.
-        Traceback (most recent call last):
-          File "/Users/enus/sandbox/lib/python2.6/site-packages/pyogp.apps-0.1dev-py2.6.egg/pyogp/apps/proxy/lib/udpproxy.py", line 111, in _send_viewer_to_sim
-            logger.debug(recv_packet.as_llsd()) # ToDo: make this optionally llsd logging once that's in
-          File "/Users/enus/sandbox/lib/python2.6/site-packages/pyogp.lib.base-0.1dev-py2.6.egg/pyogp/lib/base/message/message.py", line 158, in as_llsd
-            return llsd.format_xml(self.as_dict())
-          File "build/bdist.macosx-10.6-universal/egg/llbase/llsd.py", line 353, in format_xml
-            return _g_xml_formatter.format(something)
-          File "build/bdist.macosx-10.6-universal/egg/llbase/llsd.py", line 334, in format
-            return cllsd.llsd_to_xml(something)
-        TypeError: invalid type
-        '''
-        
-        return llsd.format_xml(self.as_dict())
+    def __getitem__(self, item):
+        return self.blocks[item]
 
-    def data(self):
-        """ a string representation of a packet """
+    def __setitem__(self, key: str, value):
+        if not isinstance(value, (list, tuple)):
+            value = (value,)
+        if not isinstance(value, MsgBlockList):
+            value = MsgBlockList(value)
+        self.blocks[key] = value
 
-        string = ''
-        delim = '    '
+    def __contains__(self, item):
+        return item in self.blocks
 
-        for k in self.__dict__:
+    def _args_repr(self, pretty=False):
+        sep = ",\n  "
+        block_reprs = sep.join(x.repr(pretty=pretty) for x in itertools.chain(*self.blocks.values()))
+        if block_reprs:
+            block_reprs = sep + block_reprs
+        return f"{self.name!r}{block_reprs}"
 
-            if k == 'name':
-                string += '\nName: %s\n' % (self.name)
-            if k == 'blocks':
+    def repr(self, pretty=False):
+        self.ensure_parsed()
+        return f"{self.__class__.__name__}({self._args_repr(pretty=pretty)})"
 
-                for ablock in self.blocks:
-                    string += "%sBlock Name:%s%s\n" % (delim, delim, ablock)
-                    for somevars in self.blocks[ablock]:
+    def take(self):
+        message_copy = copy.deepcopy(self)
 
-                        for avar in somevars.var_list:
-                            zvar = somevars.get_variable(avar)
-                            # strings were being displayed as numbers, ToDo: make this such that it displays hex in place of binary
-                            #try:
-                            #    string += "%s%s%s:%s%s\n" % (delim, delim, zvar.name, delim, hexlify(zvar.data))
-                            #except TypeError:
-                            #    string += "%s%s%s:%s%s\n" % (delim, delim, zvar.name, delim, zvar.data)
-                            string += "%s%s%s:%s%s\n" % (delim, delim, zvar.name, delim, zvar)
+        # Set the queued flag so the original will be dropped and acks will be sent
+        self.queued = True
 
-        return string
+        # Original was dropped so let's make sure we have clean acks and packet id
+        message_copy.acks = tuple()
+        message_copy.send_flags &= ~PacketFlags.ACK
+        message_copy.packet_id = None
+        return message_copy
 
     def __repr__(self):
-        """ a string representation of a packet """
+        return self.repr()
 
-        return self.data()
-
-
-
-
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+        return self.to_dict() == other.to_dict()

@@ -1,0 +1,10 @@
+#use glob syntax
+syntax: glob
+
+*.pyc
+build/*
+*.egg-info
+dist/*
+.doctrees
+docs/html/*
+.coverage

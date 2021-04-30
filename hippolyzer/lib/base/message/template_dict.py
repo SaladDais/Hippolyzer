@@ -1,45 +1,44 @@
-
 """
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/trunk/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
 Copyright 2009, Linden Research, Inc.
+  See NOTICE.md for previous contributors
+Copyright 2021, Salad Dais
+All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0.
-You may obtain a copy of the License at:
-    http://www.apache.org/licenses/LICENSE-2.0
-or in 
-    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/LICENSE.txt
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 3 of the License, or (at your option) any later version.
 
-$/LicenseInfo$
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program; if not, write to the Free Software Foundation,
+Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+import struct
+import typing
 
-from msgtypes import MsgFrequency
-from data import msg_tmpl, msg_details
-from template_parser import MessageTemplateParser
-from data_packer import DataPacker
-from msgtypes import MsgType, EndianType
+from .msgtypes import MsgFrequency
+from .data import msg_tmpl
+from .template import MessageTemplate
+from .template_parser import MessageTemplateParser
 
-from pyogp.lib.base import exc
 
-class TemplateDictionary(object):
+class TemplateDictionary:
     """the dictionary with all known templates"""
 
-    def __init__(self, template_list=None, message_template = None):
-
-        if template_list == None:
-
-            if message_template == None:
+    def __init__(self, template_list=None, message_template=None):
+        if template_list is None:
+            if message_template is None:
                 parser = MessageTemplateParser(msg_tmpl)
             else:
                 parser = MessageTemplateParser(message_template)
-
             template_list = parser.message_templates
-            template_dict = TemplateDictionary(template_list)
-            # adding below so we can check how many packets we can parse easily len(self.template_list)
-            self.template_list = template_list
+
+        self.template_list: typing.List[MessageTemplate] = template_list
 
         # maps name to template
         self.message_templates = {}
@@ -51,16 +50,13 @@ class TemplateDictionary(object):
         self.build_message_ids()
 
     def get_template_list(self):
-        names = []
-        for i in self.template_list:
-            names.append(i.name)
-        return names
+        return [t.name for t in self.template_list]
 
     def build_dictionaries(self, template_list):
         for template in template_list:
             self.message_templates[template.name] = template
 
-            #do a mapping of type to a string for easier reference
+            # do a mapping of type to a string for easier reference
             frequency_str = ''
             if template.frequency == MsgFrequency.FIXED_FREQUENCY_MESSAGE:
                 frequency_str = "Fixed"
@@ -71,46 +67,35 @@ class TemplateDictionary(object):
             elif template.frequency == MsgFrequency.HIGH_FREQUENCY_MESSAGE:
                 frequency_str = "High"
 
-            self.message_dict[(frequency_str, \
+            self.message_dict[(frequency_str,
                                template.msg_num)] = template
 
     def build_message_ids(self):
-        packer = DataPacker()
-        for template in self.message_templates.values():
+        for template in list(self.message_templates.values()):
             frequency = template.frequency
-            if frequency == MsgFrequency.FIXED_FREQUENCY_MESSAGE:   
-                #have to do this because Fixed messages are stored as a long in the template
-                template.msg_num_hex = '\xff\xff\xff' + \
-                                       packer.pack_data(template.msg_num, \
-                                                        MsgType.MVT_U8)
+            num_bytes = None
+            if frequency == MsgFrequency.FIXED_FREQUENCY_MESSAGE:
+                # have to do this because Fixed messages are stored as a long in the template
+                num_bytes = b'\xff\xff\xff' + struct.pack("B", template.msg_num)
             elif frequency == MsgFrequency.LOW_FREQUENCY_MESSAGE:
-                template.msg_num_hex = '\xff\xff' + \
-                                packer.pack_data(template.msg_num, \
-                                                 MsgType.MVT_U16, \
-                                                 EndianType.BIG)
+                num_bytes = b'\xff\xff' + struct.pack("!H", template.msg_num)
             elif frequency == MsgFrequency.MEDIUM_FREQUENCY_MESSAGE:
-                template.msg_num_hex = '\xff' + \
-                                packer.pack_data(template.msg_num, \
-                                                 MsgType.MVT_U8, \
-                                                 EndianType.BIG)
+                num_bytes = b'\xff' + struct.pack("B", template.msg_num)
             elif frequency == MsgFrequency.HIGH_FREQUENCY_MESSAGE:
-                template.msg_num_hex = packer.pack_data(template.msg_num, \
-                                                         MsgType.MVT_U8, \
-                                                         EndianType.BIG)
+                num_bytes = struct.pack("B", template.msg_num)
+            template.msg_freq_num_bytes = num_bytes
 
-    def get_template(self, template_name):
-        if template_name in self.message_templates:
-            return self.message_templates[template_name]
+    def get_template_by_name(self, template_name) -> typing.Optional[MessageTemplate]:
+        return self.message_templates.get(template_name)
 
-        return None
+    def get_template_by_pair(self, frequency, num) -> typing.Optional[MessageTemplate]:
+        return self.message_dict.get((frequency, num))
 
-    def get_template_by_pair(self, frequency, num):
-        if (frequency, num) in self.message_dict:
-            return self.message_dict[(frequency, num)]
+    def __getitem__(self, name):
+        return self.get_template_by_name(name)
 
-        return None
+    def __contains__(self, item):
+        return item in self.message_templates
 
-    def __getitem__(self, i):
-        return self.get_template(i)
-
-
+    def __iter__(self):
+        return iter(self.template_list)

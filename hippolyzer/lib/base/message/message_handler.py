@@ -1,111 +1,144 @@
-
 """
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/trunk/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
 Copyright 2009, Linden Research, Inc.
+  See NOTICE.md for previous contributors
+Copyright 2021, Salad Dais
+All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0.
-You may obtain a copy of the License at:
-    http://www.apache.org/licenses/LICENSE-2.0
-or in 
-    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/LICENSE.txt
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 3 of the License, or (at your option) any later version.
 
-$/LicenseInfo$
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program; if not, write to the Free Software Foundation,
+Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
-# standard python libs
-from logging import getLogger
+import asyncio
+import contextlib
+import logging
+from typing import *
 
-# pyogp
-from pyogp.lib.base.events import Event
-from pyogp.lib.base.settings import Settings
+from hippolyzer.lib.base.events import Event
 
-# initialize logging
-logger = getLogger('...message.message_handler')
+LOG = logging.getLogger(__name__)
+_T = TypeVar("_T")
+MESSAGE_HANDLER = Callable[[_T], Any]
+PREDICATE = Callable[[_T], bool]
+MESSAGE_NAMES = Union[str, Iterable[str]]
 
-class MessageHandler(object):
-    """ general class handling individual messages """
 
-    def __init__(self, settings = None):
-        """ i do nothing """
+class MessageHandler(Generic[_T]):
+    def __init__(self):
+        self.handlers: Dict[str, Event] = {}
 
-        # allow the settings to be passed in
-        # otherwise, grab the defaults
-        if settings != None:
-            self.settings = settings
-        else:
-            from pyogp.lib.base.settings import Settings
-            self.settings = Settings()
+    def register(self, message_name: str) -> Event:
+        LOG.debug('Creating a monitor for %s' % message_name)
+        return self.handlers.setdefault(message_name, Event())
 
-        self.handlers = {}
+    def subscribe(self, message_name: str, handler: MESSAGE_HANDLER) -> Event:
+        notifier = self.register(message_name)
+        notifier.subscribe(handler)
+        return notifier
 
-    def register(self, message_name):
+    def _subscribe_all(self, message_names: MESSAGE_NAMES, handler: MESSAGE_HANDLER,
+                       predicate: Optional[PREDICATE] = None) -> List[Event]:
+        if isinstance(message_names, str):
+            message_names = (message_names,)
+        notifiers = [self.register(name) for name in message_names]
+        for n in notifiers:
+            n.subscribe(handler, predicate=predicate)
+        return notifiers
 
-        if self.settings.LOG_VERBOSE: logger.debug('Creating a monitor for %s' % (message_name))
-
-        return self.handlers.setdefault(message_name, MessageHandledNotifier(message_name, self.settings))
-
-    def is_message_handled(self, message_name):
-        """ if the message is being monitored, return True, otherwise, return False 
-
-        this can allow us to skip parsing inbound messages if no one is watching a particular one
+    @contextlib.contextmanager
+    def subscribe_async(self, message_names: MESSAGE_NAMES, take: bool = True,
+                        predicate: Optional[PREDICATE] = None) -> ContextManager[Callable[[], Awaitable[_T]]]:
         """
+        Subscribe to a set of message matching predicate while within a block
+
+        Defaults to taking the message out of the usual flow, and any matching messages will
+        not be automatically be forwarded through to the client, allowing the subscriber coroutine
+        time to modify or drop the message. Taken messages must be manually sent to the client by
+        subscribers if desired.
+
+        If a subscriber is just an observer that will never drop or modify a message, take=False
+        may be used and messages will be sent as usual.
+        """
+        msg_queue = asyncio.Queue()
+
+        def _handler_wrapper(message: _T):
+            # Consider this message owned by one of the async handlers, drop it
+            if take:
+                message = message.take()
+            msg_queue.put_nowait(message)
+
+        notifiers = self._subscribe_all(message_names, _handler_wrapper, predicate=predicate)
 
         try:
+            yield msg_queue.get
+        finally:
+            for n in notifiers:
+                n.unsubscribe(_handler_wrapper)
 
-            handler = self.handlers[message_name]
-            return True
+    def wait_for(self, message_names: MESSAGE_NAMES,
+                 predicate: Optional[PREDICATE] = None, timeout=None, take=True) -> Awaitable[_T]:
+        """
+        Wait for a single instance one of message_names matching predicate
 
-        except KeyError:
+        Any packets matching predicate will be considered owned by the caller and will be
+        automatically dropped unless `take=False`. This should not be used if waiting for a
+        sequence of packets, since multiple packets may come in after the future has already
+        been marked completed, causing some to be missed.
+        """
+        if isinstance(message_names, str):
+            message_names = (message_names,)
+        notifiers = [self.register(name) for name in message_names]
 
-            return False
+        fut = asyncio.get_event_loop().create_future()
+        timeout_task = None
 
-    def handle(self, message):
-        """ essentially a case statement to pass messages to event notifiers in the form of self attributes """
+        async def _canceller():
+            await asyncio.sleep(timeout)
+            fut.set_exception(asyncio.exceptions.TimeoutError("Timed out waiting for packet"))
+            for n in notifiers:
+                n.unsubscribe(_handler)
 
-        try:
+        if timeout:
+            timeout_task = asyncio.create_task(_canceller())
 
-            handler = self.handlers[message.name]
+        def _handler(message: _T):
+            if timeout_task:
+                timeout_task.cancel()
+            # Whatever was awaiting this future now owns this message
+            if take:
+                message = message.take()
+            fut.set_result(message)
+            # Make sure to unregister this handler for all message types
+            for n in notifiers:
+                n.unsubscribe(_handler)
 
-            # Handle the message if we have subscribers
-            # Conveniently, this will also enable verbose message logging
-            if len(handler) > 0:
-                if self.settings.LOG_VERBOSE and not (self.settings.UDP_SPAMMERS and self.settings.DISABLE_SPAMMERS): logger.debug('Handling message : %s' % (message.name))
+        for notifier in notifiers:
+            notifier.subscribe(_handler, predicate=predicate)
+        return fut
 
-                handler(message)
+    def is_handled(self, message_name: str):
+        return message_name in self.handlers
 
-        except KeyError:
-            #logger.info("Received an unhandled message: %s" % (message.name))
-            pass
+    def handle(self, message: _T):
+        self._handle_type(message.name, message)
+        # Always try to call wildcard handlers
+        self._handle_type('*', message)
 
-class MessageHandledNotifier(object):
-    """ pseudo subclassing the Event class to treat the message like an event """
+    def _handle_type(self, name: str, message: _T):
+        handler = self.handlers.get(name)
+        if not handler:
+            return
 
-    def __init__(self, message_name, settings):
-        self.event = Event()
-        self.message_name = message_name
-        self.settings = settings
-
-    def subscribe(self, *args, **kwdargs):
-        self.event.subscribe(*args, **kwdargs)
-
-    def received(self, message):
-
-        self.event(message)
-
-    def unsubscribe(self, *args, **kwdargs):
-        self.event.unsubscribe(*args, **kwdargs)
-
-        if self.settings.LOG_VERBOSE: logger.debug("Removed the monitor for %s by %s" % (args, kwdargs))
-
-    def __len__(self):
-
-        return len(self.event)
-
-    __call__ = received
-
-
-
+        if len(handler) > 0:
+            LOG.debug('Handling message : %s' % name)
+            handler(message)

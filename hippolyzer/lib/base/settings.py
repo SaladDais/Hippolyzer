@@ -1,24 +1,27 @@
-
 """
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/trunk/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
 Copyright 2009, Linden Research, Inc.
+  See NOTICE.md for previous contributors
+Copyright 2021, Salad Dais
+All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0.
-You may obtain a copy of the License at:
-    http://www.apache.org/licenses/LICENSE-2.0
-or in 
-    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/LICENSE.txt
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 3 of the License, or (at your option) any later version.
 
-$/LicenseInfo$
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program; if not, write to the Free Software Foundation,
+Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
-class Settings(object):
 
-    def __init__(self, quiet_logging = False, spammy_logging = False, log_tests = True):
+class Settings:
+    def __init__(self, quiet_logging=False, spammy_logging=False, log_tests=True):
         """ some lovely configurable settings 
 
         These are applied application wide, and can be
@@ -37,9 +40,9 @@ class Settings(object):
         # toggle parsing all/handled packets
         self.ENABLE_DEFERRED_PACKET_PARSING = True
 
-        #~~~~~~~~~~~~~~~~~~
+        # ~~~~~~~~~~~~~~~~~~
         # Logging behaviors
-        #~~~~~~~~~~~~~~~~~~
+        # ~~~~~~~~~~~~~~~~~~
         # being a test tool, and an immature one at that,
         # enable fine granularity in the logging, but
         # make sure we can tone it down as well
@@ -61,12 +64,12 @@ class Settings(object):
         self.UDP_SPAMMERS = ['PacketAck', 'AgentUpdate']
 
         # toggle handling a region's event queue
-	self.ENABLE_REGION_EVENT_QUEUE = True
+        self.ENABLE_REGION_EVENT_QUEUE = True
 
         # how many seconds to wait between polling
         # a region's event queue
         self.REGION_EVENT_QUEUE_POLL_INTERVAL = 1
-        
+
         if self.spammy_logging:
             self.ENABLE_BYTES_TO_HEX_LOGGING = True
             self.ENABLE_CAPS_LLSD_LOGGING = True
@@ -86,14 +89,11 @@ class Settings(object):
             self.LOG_COROUTINE_SPAWNS = False
             self.DISABLE_SPAMMERS = True
 
-        #~~~~~~~~~~~~~~~~~~~~~~
+        # ~~~~~~~~~~~~~~~~~~~~~~
         # Test related settings
-        #~~~~~~~~~~~~~~~~~~~~~~
+        # ~~~~~~~~~~~~~~~~~~~~~~
 
         if log_tests:
             self.ENABLE_LOGGING_IN_TESTS = True
         else:
             self.ENABLE_LOGGING_IN_TESTS = False
-
-        
-

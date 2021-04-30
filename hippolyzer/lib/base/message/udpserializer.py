@@ -1,171 +1,180 @@
-
 """
-Contributors can be viewed at:
-http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/trunk/CONTRIBUTORS.txt 
-
-$LicenseInfo:firstyear=2008&license=apachev2$
-
 Copyright 2009, Linden Research, Inc.
+  See NOTICE.md for previous contributors
+Copyright 2021, Salad Dais
+All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0.
-You may obtain a copy of the License at:
-    http://www.apache.org/licenses/LICENSE-2.0
-or in 
-    http://svn.secondlife.com/svn/linden/projects/2008/pyogp/lib/base/LICENSE.txt
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 3 of the License, or (at your option) any later version.
 
-$/LicenseInfo$
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program; if not, write to the Free Software Foundation,
+Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
-
-#standard libs
-import struct
+import copy
+from typing import *
 from logging import getLogger
 
-# pygop
-from msgtypes import MsgType, MsgBlockType, EndianType
-from data_packer import DataPacker
-from template_dict import TemplateDictionary
-from pyogp.lib.base import exc
-from pyogp.lib.base.message.message_dot_xml import MessageDotXML
+from .data_packer import TemplateDataPacker
+from .message import Message, MsgBlockList
+from .msgtypes import MsgType, MsgBlockType
+from .template import MessageTemplateVariable, MessageTemplateBlock
+from .template_dict import TemplateDictionary
+from hippolyzer.lib.base import exc
+from hippolyzer.lib.base import serialization as se
+from hippolyzer.lib.base.datatypes import RawBytes
 
-logger = getLogger('message.udpserializer') 
+logger = getLogger('message.udpserializer')
 
-class UDPMessageSerializer(object):
-    """ an adpater for serializing a IUDPMessage into the UDP message format
 
-        This class builds messages at its high level, that is, keeping
-        that data in data structure form. A serializer should be used on
-        the message produced by this so that it can be sent over a network. """
+class UDPMessageSerializer:
+    DEFAULT_TEMPLATE = TemplateDictionary(None)
 
-    def __init__(self, message_template = None, message_xml = None):
-        """initialize the adapter"""
-        self.context = None	# the UDPMessage
-
-        self.template_dict = TemplateDictionary(message_template)
-        self.current_template = None
-        self.packer = DataPacker()
-
-        if not message_xml:
-            self.message_xml = MessageDotXML()
+    def __init__(self, message_template=None):
+        if message_template is not None:
+            self.template_dict = TemplateDictionary(message_template=message_template)
         else:
-            self.message_xml = message_xml
+            self.template_dict = self.DEFAULT_TEMPLATE
 
-    def set_current_template(self):
-        """ establish the template for the current packet """
+    def serialize(self, msg: Message):
+        current_template = self.template_dict.get_template_by_name(msg.name)
+        if current_template is None:
+            raise exc.MessageSerializationError("message name", "invalid message name")
 
-        self.current_template = self.template_dict.get_template(self.context.name)
+        # Header and trailers are all big-endian
+        writer = se.BufferWriter("!")
+        writer.write(se.U8, msg.send_flags)
+        # Should already have a packet ID by this point
+        # But treat it as "0" if not.
+        writer.write(se.U32, msg.packet_id or 0)
+        # pack in the offset to the data past the extra data.
+        writer.write(se.U8, len(msg.extra))
 
-    def serialize(self, context):
-        """ Builds the message by serializing the data. Creates a packet ready
-            to be sent. """
+        # Pull this off `msg` for thread-safety
+        raw_body = msg.raw_body
+        if raw_body is not None:
+            # This is a deserialized message we never parsed the body of,
+            # Just shove the raw body back in.
+            writer.write_bytes(raw_body)
+        else:
+            # Everything in the body we need to serialize ourselves is little-endian
+            # Note that msg_num is _not_ little-endian, but we don't need to pack the
+            # frequency and message number. The template stores it because it doesn't
+            # change per template.
+            body_writer = se.BufferWriter("<")
+            body_writer.write_bytes(current_template.msg_freq_num_bytes)
+            body_writer.write_bytes(msg.extra)
 
-        self.context = context
+            # We're going to pop off keys as we go, so shallow copy the dict.
+            blocks = copy.copy(msg.blocks)
 
-        self.set_current_template()
+            missing_block = None
+            # Iterate based on the order of the blocks in the message template
+            for tmpl_block in current_template.blocks:
+                block_list = blocks.pop(tmpl_block.name, None)
+                # An expected block was missing entirely. trailing single blocks are routinely
+                # omitted by SL. Not an error unless another block containing data follows it.
+                # Keep track.
+                if block_list is None:
+                    missing_block = tmpl_block.name
+                    logger.debug("No block %s, bailing out" % tmpl_block.name)
+                    continue
+                # Had a missing block before, but we found one later in the template?
+                elif missing_block:
+                    raise ValueError(f"Unexpected {tmpl_block.name} block after missing {missing_block}")
+                self._serialize_block(body_writer, tmpl_block, block_list)
+            if blocks:
+                raise KeyError(f"Unexpected {tuple(blocks.keys())!r} blocks in {msg.name}")
 
-        # validate whether we are allowed to receive this message over udp
-        if not self.message_xml.validate_udp_msg(self.current_template.name):
-            logger.warning("Sending '%s' over UDP, which is deprecated. Discarding." % (self.current_template.name))
-            return None
+            msg_body = body_writer.buffer
+            if msg.zerocoded:
+                msg_body = self.zero_code_compress(msg_body)
+            writer.write_bytes(msg_body)
 
-        #doesn't build in the header flags, sequence number, or data offset
-        msg_buffer = ''
-        bytes = 0
+        if msg.has_acks:
+            # ACKs are always written in reverse order
+            for ack in reversed(msg.acks):
+                writer.write(se.U32, ack)
+            writer.write(se.U8, len(msg.acks))
+        return writer.copy_buffer()
 
-        #put the flags in the begining of the data. NOTE: for 1 byte, endian doesn't matter
-        msg_buffer += self.packer.pack_data(self.context.send_flags, MsgType.MVT_U8)
-
-        #set packet ID
-        msg_buffer += self.packer.pack_data(self.context.packet_id, \
-                                                  MsgType.MVT_S32, \
-                                                  endian_type=EndianType.BIG)
-
-        #pack in the offset to the data. NOTE: for 1 byte, endian doesn't matter
-        msg_buffer += self.packer.pack_data(0, MsgType.MVT_U8)
-
-        if self.current_template == None:
-            return None
-
-        #don't need to pack the frequency and message number. The template
-        #stores it because it doesn't change per template.
-        pack_freq_num = self.current_template.msg_num_hex
-        msg_buffer += pack_freq_num
-        bytes += len(pack_freq_num)
-
-        #message_data = self.context.message_data
-
-        for block in self.current_template.get_blocks():
-            packed_block, block_size = self.build_block(block, context)
-            msg_buffer += packed_block
-            bytes += block_size
-
-        if self.current_template.name == 'RegionHandshakeReply':
-            # testing a hack to let RegionHandshakeReply get parsed
-            msg_buffer += struct.pack(">I", 0)
-
-        self.message_buffer = msg_buffer
-
-        return msg_buffer
-
-    def build_block(self, template_block, message_data):
-        block_buffer = ''
-        bytes = 0
-
-        #the MsgData blocks is a list of lists
-        #each block in the list is a block_list because you can have more than
-        #one block for any given name
-        block_list = message_data.get_block(template_block.name)
+    def _serialize_block(self, writer: se.BufferWriter, tmpl_block: MessageTemplateBlock,
+                         block_list: MsgBlockList):
         block_count = len(block_list)
+        # Multiple block type means there is a static number of blocks
+        if tmpl_block.block_type == MsgBlockType.MBT_MULTIPLE:
+            if tmpl_block.number != block_count:
+                raise exc.MessageSerializationError(tmpl_block.name, "multiple block len mismatch")
 
-        #multiple block type means there is a static number of these blocks
-        #that make up this message, with the number stored in the template
-        #don't need to add it to the buffer, because the message handlers that
-        #receieve this know how many to read automatically
-        if template_block.block_type == MsgBlockType.MBT_MULTIPLE:
-            if template_block.number != block_count:
-                raise exc.MessageSerializationError(template_block.name, "block data mismatch")
-
-        #variable means the block variables can repeat, so we have to
-        #mark how many blocks there are of this type that repeat, stored in
-        #the data
-        if template_block.block_type == MsgBlockType.MBT_VARIABLE:
-            block_buffer += struct.pack('>B', block_count)
-            bytes += 1            
+        # variable means the block variables can repeat, with a count prefix
+        if tmpl_block.block_type == MsgBlockType.MBT_VARIABLE:
+            writer.write(se.U8, block_count)
 
         for block in block_list:
+            for template_var in tmpl_block.variables:
+                var_data = block.vars.get(template_var.name)
+                self._serialize_var(writer, var_data, template_var, block.fill_missing)
 
-            for v in template_block.get_variables(): #message_block.get_variables():
-                #this mapping has to occur to make sure the data is written in correct order
-                variable = block.get_variable(v.name)
-                var_size  = v.size
-                var_data  = variable.data
+    def _serialize_var(self, writer: se.BufferWriter, var_data: Any,
+                       template_var: MessageTemplateVariable, fill_missing: bool):
+        if var_data is None:
+            # Blocks can be set to automatically fill missing variables with
+            # a reasonable default
+            if fill_missing:
+                var_type = template_var.type
+                # Variable-length var, just leave it empty.
+                if var_type.size == -1:
+                    var_data = b""
+                else:
+                    var_data = RawBytes(b"\x00" * var_type.size)
+            else:
+                raise exc.MessageSerializationError(template_var.name, "variable value is not set")
 
-                data = self.packer.pack_data(var_data, v.type)
+        if isinstance(var_data, RawBytes):
+            # RawBytes may be specified for any variable type, and is assumed to
+            # include the prefixed little-endian length field, if applicable.
+            writer.write_bytes(var_data)
+            return
 
-                if variable == None:
-                    raise exc.MessageSerializationError(variable.name, "variable value is not set")
+        packed_var = TemplateDataPacker.pack(var_data, template_var.type)
 
+        # if its a VARIABLE type, we have to write in the size of the data
+        if template_var.type == MsgType.MVT_VARIABLE:
+            writer.write(se.UINT_BY_BYTES[template_var.size], len(packed_var))
+        writer.write_bytes(packed_var)
 
-                #if its a VARIABLE type, we have to write in the size of the data
-                if v.type == MsgType.MVT_VARIABLE:
-                    #data_size = template_block.get_variable(variable.name).size
-                    if var_size == 1:
-                        block_buffer += self.packer.pack_data(len(data), MsgType.MVT_U8)
-                        #block_buffer += struct.pack('>B', var_size)
-                    elif var_size == 2:
-                        block_buffer += self.packer.pack_data(len(data), MsgType.MVT_U16)
-                        #block_buffer += struct.pack('>H', var_size)
-                    elif var_size == 4:
-                        block_buffer += self.packer.pack_data(len(data), MsgType.MVT_U32)
-                        #block_buffer += struct.pack('>I', var_size)
-                    else:
-                        raise exc.MessageSerializationError("variable size", "unrecognized variable size")
+    @staticmethod
+    def zero_code_compress(data: bytes):
+        compressed_buff = bytearray()
+        zero_count = 0
 
-                    bytes += var_size
+        def _terminate_zeros():
+            nonlocal zero_count
+            if zero_count:
+                compressed_buff.append(zero_count)
+                zero_count = 0
 
-                block_buffer += data
-                bytes += len(data)
+        for char in data:
+            if char == 0x00:
+                zero_count += 1
+                if zero_count == 1:
+                    compressed_buff.append(0x00)
+                # Terminate zeros before we need to use the wrap case,
+                # the official encoder doesn't use it and it isn't handled
+                # correctly on any decoder other than LL's.
+                elif zero_count == 255:
+                    _terminate_zeros()
+            else:
+                _terminate_zeros()
+                compressed_buff.append(char)
 
-        return block_buffer, bytes
+        _terminate_zeros()
 
-
-
+        return compressed_buff
