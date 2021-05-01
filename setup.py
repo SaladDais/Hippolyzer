@@ -21,7 +21,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from os import path
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 here = path.abspath(path.dirname(__file__))
 
@@ -53,7 +53,7 @@ setup(
     author_email='SaladDais@users.noreply.github.com',
     url='https://github.com/SaladDais/Hippolyzer/',
     license='LGPLv3',
-    packages=['hippolyzer'],
+    packages=find_packages(include=["hippolyzer", "hippolyzer.*"]),
     package_data={
         'hippolyzer': [
             'lib/base/message/data/message_template.msg',
