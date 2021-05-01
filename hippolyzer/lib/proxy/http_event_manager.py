@@ -66,8 +66,9 @@ class MITMProxyEventManager:
                         self._handle_request(flow)
                         # A response was injected early in the cycle, we won't get a response
                         # callback from mitmproxy so just log it now.
-                        if flow.response_injected:
-                            self.session_manager.message_logger.log_http_response(flow)
+                        message_logger = self.session_manager.message_logger
+                        if message_logger and flow.response_injected:
+                            message_logger.log_http_response(flow)
                     elif event_type == "response":
                         self._handle_response(flow)
                     else:
