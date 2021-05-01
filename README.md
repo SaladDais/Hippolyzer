@@ -43,20 +43,20 @@ the [Alchemy](https://github.com/AlchemyViewer/Alchemy) viewer.
 
 ### Proxy Setup
 
-* Run the proxy with `python hippolyzer/apps/proxy_gui.py <addon_paths...>`
-* * For example, `python hippolyzer/apps/proxy_gui.py addon_examples/bezoscape.py`
-* * Addons can also be loaded through the `File -> Manage Addons` menu
-* * Addons are hot-reloaded scripts that can inspect, modify, and drop messages as 
-    they pass through the proxy. Some examples are provided in [`addon_examples`](https://github.com/SaladDais/Hippolyzer/tree/master/addon_examples)
+* Run the proxy with `hippolyzer-gui`
+* * Addons can be loaded through the `File -> Manage Addons` menu or on the command-line like
+    `hippolyzer-gui addon_examples/bezoscape.py`
+* * If you want the command-line version, run `hippolyzer-cli`
 * Install the proxy's HTTPS certificate by going to `File -> Install HTTPS Certs`
-* * You can also install it with `python hippolyzer/apps/proxy.py --setup-ca <path to your viewer settings dir>`.
+* * You can also install it with `hippolyzer-cli --setup-ca <path to your viewer settings dir>`.
     On Linux that would be `~/.firestorm_x64/` if you're using Firestorm.
-* * This can be sidestepped by disabling certificate validation in viewer debug settings, but is not recommended.
+* * Certificate validation can be disabled entirely through viewer debug setting `NoVerifySSLCert`,
+    but is not recommended.
 * Start the viewer and configure it to use `127.0.0.1:9061` as a SOCKS proxy and `127.0.0.1:9062` as
   an HTTP proxy. You **must** select the option in the viewer to use the HTTP proxy for all HTTP
   traffic, or logins will fail.
-* If you want to reduce HTTP proxy lag you _can_ have asset requests bypass the HTTP proxy by setting the
-  `no_proxy` env var appropriately. For ex. `no_proxy="asset-cdn.glb.agni.lindenlab.com" ./firestorm` or
+* Optionally, If you want to reduce HTTP proxy lag you can have asset requests bypass the HTTP proxy by setting
+  the `no_proxy` env var appropriately. For ex. `no_proxy="asset-cdn.glb.agni.lindenlab.com" ./firestorm` or
   `setx /m "no_proxy" "asset-cdn.glb.agni.lindenlab.com"` on Windows.
 * Log in!
 
