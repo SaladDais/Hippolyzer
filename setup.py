@@ -56,6 +56,10 @@ setup(
     packages=find_packages(include=["hippolyzer", "hippolyzer.*"]),
     package_data={
         'hippolyzer': [
+            'apps/message_builder.ui',
+            'apps/proxy_mainwindow.ui',
+            'apps/filter_dialog.ui',
+            'apps/addon_dialog.ui',
             'lib/base/message/data/message_template.msg',
             'lib/base/message/data/message.xml',
             'lib/base/network/data/ca-bundle.crt',
