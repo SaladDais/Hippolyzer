@@ -68,21 +68,31 @@ setup(
         'console_scripts': [
             "hippolyzer-gui = hippolyzer.apps.proxy_gui:gui_main",
             "hippolyzer-cli = hippolyzer.apps.proxy:main",
-        ]
+        ],
     },
     zip_safe=False,
     python_requires='>=3.8',
     install_requires=[
-        'setuptools',
         'llbase>=1.2.5',
         'defusedxml',
-        'aiohttp',
+        'aiohttp<4.0.0',
         'recordclass',
         'lazy-object-proxy',
+        'arpeggio',
+        # requests breaks with newer idna
+        'idna<3,>=2.5',
         # 7.x will be a major change.
         'mitmproxy<7.0.0',
+        # For REPLs
+        'ptpython<4.0',
+        # JP2 codec
+        'Glymur<1.0',
+        'numpy<2.0',
         # These could be in extras_require if you don't want a GUI.
         'pyside2',
         'qasync',
+    ],
+    tests_require=[
+        "pytest",
     ],
 )
