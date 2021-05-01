@@ -73,9 +73,11 @@ class AddonManager:
     _SUBPROCESS: bool = False
     _REPL_TASK: Optional[asyncio.Task] = None
     _HOT_RELOADING_STACK: Set[str] = set()
+    _SWALLOW_ADDON_EXCEPTIONS: bool = True
 
     @classmethod
-    def init(cls, addon_script_paths, session_manager, addon_objects=None, subprocess=False):
+    def init(cls, addon_script_paths, session_manager, addon_objects=None, subprocess=False,
+             swallow_addon_exceptions=True):
         addon_objects = addon_objects or []
         cls.BASE_ADDON_SPECS.clear()
         cls.FRESH_ADDON_MODULES.clear()
@@ -85,6 +87,7 @@ class AddonManager:
         # Are we a child process from `multiprocessing`?
         cls._SUBPROCESS = subprocess
         cls._HOT_RELOADING_STACK.clear()
+        cls._SWALLOW_ADDON_EXCEPTIONS = swallow_addon_exceptions
         for path in addon_script_paths:
             # defer reloading until we've collected them all
             cls.load_addon_from_path(path, reload=False)
@@ -369,6 +372,8 @@ class AddonManager:
             return hook_func(*args, **kwargs)
         except:
             logging.exception("Exploded in %r's %s hook" % (addon, hook_name))
+            if not cls._SWALLOW_ADDON_EXCEPTIONS:
+                raise
 
     @classmethod
     def _show_message(cls, text: str, session: Optional[Session] = None):
@@ -377,7 +382,8 @@ class AddonManager:
         try:
             show_message(text, session=session)
         except:
-            pass
+            if not cls._SWALLOW_ADDON_EXCEPTIONS:
+                raise
 
     @classmethod
     def _show_error(cls, text: str, session: Optional[Session] = None):
@@ -389,13 +395,15 @@ class AddonManager:
         cls._reload_addons()
         if message.name == "ChatFromViewer" and "ChatData" in message:
             if message["ChatData"]["Channel"] == cls.COMMAND_CHANNEL:
+                region.circuit.drop_message(message)
                 with addon_ctx.push(session, region):
                     try:
                         cls._handle_command(session, region, message["ChatData"]["Message"])
                     except Exception as e:
                         LOG.exception(f'Failed while handling command {message["ChatData"]["Message"]}')
                         cls._show_message(str(e), session)
-                    region.circuit.drop_message(message)
+                        if not cls._SWALLOW_ADDON_EXCEPTIONS:
+                            raise
                     return True
         if message.name == "ChatFromSimulator" and "ChatData" in message:
             chat: str = message["ChatData"]["Message"]
@@ -416,6 +424,8 @@ class AddonManager:
                         return True
                 except:
                     LOG.exception(f"Failed while handling command {chat!r}")
+                    if not cls._SWALLOW_ADDON_EXCEPTIONS:
+                        raise
 
         with addon_ctx.push(session, region):
             return cls._call_all_addon_hooks("handle_lludp_message", session, region, message)

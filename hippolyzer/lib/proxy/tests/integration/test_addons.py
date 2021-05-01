@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from hippolyzer.lib.base.message.message import Block
 from hippolyzer.lib.proxy import addon_ctx
-from hippolyzer.lib.proxy.addon_utils import BaseAddon, SessionProperty
+from hippolyzer.lib.proxy.addon_utils import (
+    BaseAddon,
+    SessionProperty,
+    send_chat,
+    show_message,
+)
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.commands import handle_command
 from hippolyzer.lib.proxy.message import ProxiedMessage
@@ -20,13 +25,18 @@ class MockAddon(BaseAddon):
     async def foobar(self, _session: Session, _region: ProxiedRegion, bar: str):
         self.bazquux = bar
         self.another = bar
+        send_chat(bar)
+        show_message(bar)
 
 
 class AddonIntegrationTests(BaseIntegrationTest):
     def setUp(self) -> None:
         super().setUp()
         self.addon = MockAddon()
-        AddonManager.init([], self.session_manager, [self.addon])
+        AddonManager.init([], self.session_manager, [self.addon], swallow_addon_exceptions=False)
+
+    def tearDown(self) -> None:
+        AddonManager.shutdown()
 
     def _fake_command(self, command: str) -> None:
         msg = ProxiedMessage(
@@ -63,3 +73,6 @@ class AddonIntegrationTests(BaseIntegrationTest):
                 _something = self.addon.bazquux
             # This has a default
             self.assertEqual(self.addon.another, "default")
+        # Should have sent out the two injected packets for inbound and outbound chat
+        # But not the original chatfromviewer from our command.
+        self.assertEqual(len(self.transport.packets), 2)
