@@ -8,3 +8,4 @@ dist/*
 .doctrees
 docs/html/*
 .coverage
+.eggs
