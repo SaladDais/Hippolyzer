@@ -93,7 +93,7 @@ setup(
         'Glymur<1.0',
         'numpy<2.0',
         # These could be in extras_require if you don't want a GUI.
-        'pyside2',
+        'pyside2<6.0',
         'qasync',
     ],
     tests_require=[
