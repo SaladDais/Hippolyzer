@@ -27,10 +27,10 @@ with low-level SL details. See the [Local Animation addon example](https://githu
   a self-contained Python install with the appropriate version.
 * [Create a clean Python 3 virtualenv](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/#creating-a-virtual-environment)
   with `python -mvenv <virtualenv_dir>`
-* Activate the virtualenv by `source`ing the appropriate activation script
+* Activate the virtualenv by running the appropriate activation script
 * * Under Linux this would be something like `source <virtualenv_dir>/bin/activate`
-* (Recommended) install known-good dependencies with `pip install -r requirements.txt`
-* Run `pip install -e .` to install an editable version
+* * Under Windows it's `<virtualenv_dir>\Scripts\activate.bat`
+* Run `pip install hippolyzer`, or run `pip install -e .` in a cloned repo to install an editable version
 
 ## Proxy
 
