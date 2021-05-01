@@ -19,7 +19,7 @@ and the internal mesh format.
 It's quick and easy to bash together a script that does something useful if you're familiar
 with low-level SL details. See the [Local Animation addon example](https://github.com/SaladDais/Hippolyzer/blob/master/addon_examples/local_anim.py).
 
-![Screenshot of proxy GUI](static/screenshot.png)
+![Screenshot of proxy GUI](https://github.com/SaladDais/Hippolyzer/blob/master/static/screenshot.png?raw=true)
 
 ## Setup
 * Python 3.8 or above is **required**. If you're unable to upgrade your system Python package due to
@@ -60,7 +60,7 @@ the [Alchemy](https://github.com/AlchemyViewer/Alchemy) viewer.
   `setx /m "no_proxy" "asset-cdn.glb.agni.lindenlab.com"` on Windows.
 * Log in!
 
-![Proxy config in firestorm](static/proxy_config.png)
+![Proxy config in firestorm](https://github.com/SaladDais/Hippolyzer/blob/master/static/proxy_config.png?raw=true)
 
 ### Filtering
 
