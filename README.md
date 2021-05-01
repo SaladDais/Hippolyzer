@@ -30,7 +30,7 @@ with low-level SL details. See the [Local Animation addon example](https://githu
 * Activate the virtualenv by `source`ing the appropriate activation script
 * * Under Linux this would be something like `source <virtualenv_dir>/bin/activate`
 * (Recommended) install known-good dependencies with `pip install -r requirements.txt`
-* Run `python setup.py develop`
+* Run `pip install -e .` to install an editable version
 
 ## Proxy
 

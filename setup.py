@@ -37,37 +37,52 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     classifiers=[
-        "Programming Language :: Python",
+        "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+        "Operating System :: MacOS",
+        "Operating System :: POSIX",
+        "Operating System :: Microsoft :: Windows",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: Implementation :: CPython",
+        "Topic :: System :: Networking :: Monitoring",
         "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Software Development :: Testing",
     ],
     author='Salad Dais',
+    author_email='SaladDais@users.noreply.github.com',
+    url='https://github.com/SaladDais/Hippolyzer/',
     license='LGPLv3',
-    packages=["hippolyzer.lib.base", "hippolyzer.lib.proxy"],
+    packages=['hippolyzer'],
     package_data={
-        'hippolyzer.lib.base': [
-            'message/data/message_template.msg',
-            'message/data/message.xml',
-            'network/tests/*.txt',
-            'network/data/ca-bundle.crt',
-            'tests/doctests/*.*',
-            'tests/test_resources/*.*'
-        ],
-        'hippolyzer.lib.proxy': [
-            'data/*',
+        'hippolyzer': [
+            'lib/base/message/data/message_template.msg',
+            'lib/base/message/data/message.xml',
+            'lib/base/network/data/ca-bundle.crt',
+            'lib/proxy/data/static_data.db2',
+            'lib/proxy/data/static_index.db2',
+            'lib/proxy/data/LICENSE-artwork.txt',
         ],
     },
-    namespace_packages=['hippolyzer', 'hippolyzer.lib'],
+    entry_points={
+        'console_scripts': [
+            "hippolyzer-gui = hippolyzer.apps.proxy_gui:gui_main",
+            "hippolyzer-cli = hippolyzer.apps.proxy:main",
+        ]
+    },
     zip_safe=False,
     python_requires='>=3.8',
     install_requires=[
         'setuptools',
         'llbase>=1.2.5',
         'defusedxml',
-        'mitmproxy',
-        'qasync',
         'aiohttp',
-        'pyside2',
         'recordclass',
         'lazy-object-proxy',
+        # 7.x will be a major change.
+        'mitmproxy<7.0.0',
+        # These could be in extras_require if you don't want a GUI.
+        'pyside2',
+        'qasync',
     ],
 )
