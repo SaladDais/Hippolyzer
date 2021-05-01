@@ -3,7 +3,7 @@ import unittest
 from hippolyzer.lib.proxy.commands import handle_command, Parameter
 
 
-class TestCommandHandler:
+class ExampleCommandHandler:
     def __init__(self):
         self.bar = None
         self.baz = None
@@ -31,7 +31,7 @@ class TestCommandHandler:
 
 class TestCommandHandlers(unittest.IsolatedAsyncioTestCase):
     def setUp(self) -> None:
-        self.handler = TestCommandHandler()
+        self.handler = ExampleCommandHandler()
 
     async def test_foo(self):
         await self.handler.foo(None, None, "foozy 1")
