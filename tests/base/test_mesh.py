@@ -10,7 +10,7 @@ class TestMesh(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         # Use a rigged cube SLM from the upload process as a test file
-        slm_file = pkg_resources.resource_filename("hippolyzer.lib.base", "tests/test_resources/testslm.slm")
+        slm_file = pkg_resources.resource_filename(__name__, "test_resources/testslm.slm")
         with open(slm_file, "rb") as f:
             cls.slm_bytes = f.read()
 

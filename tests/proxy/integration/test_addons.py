@@ -14,7 +14,8 @@ from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.packets import Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
-from hippolyzer.lib.proxy.tests.integration import BaseIntegrationTest
+
+from . import BaseIntegrationTest
 
 
 class MockAddon(BaseAddon):
