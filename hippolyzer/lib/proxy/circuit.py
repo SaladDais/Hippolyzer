@@ -172,8 +172,8 @@ class ProxiedCircuit:
 
 class InjectionTracker:
     # TODO: WARNING! DOESN'T DEAL WITH PACKET ID WRAPAROUND WHATSOEVER!
-    # Circuits that last for hundreds of hours can be expected to break.
-    # Maybe just kill circuit when that happens to prevent silent wonkiness.
+    #  Circuits that last for hundreds of hours can be expected to break.
+    #  Maybe just kill circuit when that happens to prevent silent wonkiness.
     def __init__(self, last_seen_id=0, maxlen=10000):
         self._packet_id_base = last_seen_id
         self._injection_base = 0

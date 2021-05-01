@@ -101,7 +101,7 @@ class IPCInterceptionAddon:
             logging.debug(entry.msg)
         elif entry.level in ("alert", "info"):
             # TODO: All mitmproxy infos are basically debugs, should
-            # probably give these dedicated loggers
+            #  probably give these dedicated loggers
             logging.debug(entry.msg)
         elif entry.level == "warn":
             logging.warning(entry.msg)

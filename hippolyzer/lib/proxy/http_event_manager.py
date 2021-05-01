@@ -74,7 +74,7 @@ class MITMProxyEventManager:
                     else:
                         raise Exception(f"Unknown mitmproxy event type {event_type}")
                 finally:
-                    # Someone has taken this request out of the regular callback flow,
+                    # If someone has taken this request out of the regular callback flow,
                     # they'll manually send a callback at some later time.
                     if not flow.taken:
                         self.to_proxy_queue.put(("callback", flow.id, flow.get_state()))
