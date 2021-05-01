@@ -236,15 +236,8 @@ class AddonManager:
             cls._HOT_RELOADING_STACK.remove(imported_file)
 
     @classmethod
-    def _update_env(cls):
-        # If we're using multiprocessing spawn()ing then we need a way to tell
-        # our spawned process what modules to load before it tries to parse the
-        # payload that gets passed over the pipe. env vars are one of the few ways
-        # we can do that. If we don't do this, multiprocessing will choke if we
-        # ask it to run a function that lives in an addon module it hasn't loaded.
-        # Even if we wanted to use fork()ing which doesn't require this, Windows
-        # and OS X have no choice and have to use spawn().
-        os.environ["HIPPO_ADDON_PATHS"] = ';'.join(s.origin for s in cls.BASE_ADDON_SPECS)
+    def get_loaded_script_paths(cls):
+        return [s.origin for s in cls.BASE_ADDON_SPECS]
 
     @classmethod
     def _reload_addons(cls, raise_exceptions=False):
@@ -281,7 +274,6 @@ class AddonManager:
                 cls._unload_module(old_mod)
 
                 new_addons[spec.name] = mod
-                cls._update_env()
 
                 # Make sure module initialization happens after any pending task cancellations
                 # due to module unloading.
@@ -302,7 +294,6 @@ class AddonManager:
                     cls.BASE_ADDON_SPECS.remove(spec)
                 if load_exception is None:
                     load_exception = e
-        cls._update_env()
         cls.FRESH_ADDON_MODULES.update(new_addons)
         # if the reload was initialized by a user, let them know that a load failed.
         if raise_exceptions and load_exception is not None:

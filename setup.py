@@ -64,10 +64,12 @@ setup(
             'lib/proxy/data/LICENSE-artwork.txt',
         ],
     },
-    scripts=[
-        "bin/hippolyzer-gui",
-        "bin/hippolyzer-cli",
-    ],
+    entry_points={
+        'console_scripts': {
+            'hippolyzer-gui = hippolyzer.apps.proxy_gui:gui_main',
+            'hippolyzer-cli = hippolyzer.apps.proxy:main'
+        }
+    },
     zip_safe=False,
     python_requires='>=3.8',
     install_requires=[

@@ -5,7 +5,6 @@ import multiprocessing
 import os
 import sys
 import time
-import warnings
 from typing import Optional
 
 import mitmproxy.exceptions
@@ -92,8 +91,8 @@ def run_http_proxy_process(proxy_host, http_proxy_port, flow_context: HTTPFlowCo
     mitm_loop.run_forever()
 
 
-def main(extra_addons: Optional[list] = None, extra_addon_paths: Optional[list] = None,
-         session_manager=None, proxy_host=None):
+def start_proxy(extra_addons: Optional[list] = None, extra_addon_paths: Optional[list] = None,
+                session_manager=None, proxy_host=None):
     extra_addons = extra_addons or []
     extra_addon_paths = extra_addon_paths or []
     extra_addons.append(SelectionManagerAddon())
@@ -183,22 +182,6 @@ def _windows_timeout_killer(pid: int):
     os.kill(pid, 9)
 
 
-def mp_main():
-    # entrypoint for processes launched by multiprocessing
-    warnings.simplefilter("ignore")
-    scripts = os.environ.get('HIPPO_ADDON_PATHS', None)
-    if not scripts:
-        return
-    scripts = scripts.split(';')
-    AddonManager.init(scripts, session_manager=None, subprocess=True)
-
-
-if __name__ == "__main__":
-    # For cross-platform consistency, since we don't need to spawn many
-    # processes. This also allows you to do weird things like spin up
-    # a tkinter UI in your addon if you feel like it, without it conflicting
-    # with Qt.
-    multiprocessing.set_start_method('spawn')
-    main()
-elif __name__ == "__mp_main__":
-    mp_main()
+def main():
+    multiprocessing.set_start_method("spawn")
+    start_proxy()

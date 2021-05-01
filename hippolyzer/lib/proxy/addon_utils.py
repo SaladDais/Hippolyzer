@@ -1,7 +1,10 @@
 import abc
 import copy
 import dataclasses
+import multiprocessing
+import pickle
 import secrets
+import warnings
 from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID, Vector3
@@ -252,3 +255,33 @@ class GlobalProperty(BaseAddonProperty[_T, SessionManager]):
     """
     def _get_context_obj(self) -> SessionManager:
         return AddonManager.SESSION_MANAGER
+
+
+class AddonProcess(multiprocessing.Process, multiprocessing.process.BaseProcess):
+    """
+    Wrapper for multiprocessing targets defined in dynamically loaded addons
+
+    multiprocessing will unpickle target and args before any user code has run in its
+    spawned process. If target is in a dynamically loaded module (like an addon) the
+    unpickle will throw and starting the process will fail. We wrap the original target
+    in a function that imports the scripts for any loaded addons before attempting to
+    unpickle the inner target function reference.
+
+    Does not work with args or kwargs of types defined in dynamically loaded modules.
+    Doing so would require special-casing of multiprocessing's objects. Event, Queue,
+    and others cannot be pickled normally.
+    """
+    def __init__(self, group=None, target=None, name=None, args=(), kwargs=None,
+                 *, daemon=None):
+        kwargs = kwargs or {}
+        pickled_target = pickle.dumps(target, protocol=pickle.HIGHEST_PROTOCOL)
+        script_paths = AddonManager.get_loaded_script_paths()
+        super().__init__(group=group, target=self._target_wrapper, name=name,
+                         args=(pickled_target, script_paths) + args, kwargs=kwargs, daemon=daemon)
+
+    @staticmethod
+    def _target_wrapper(pickled_target: bytes, script_paths: Sequence[str], *args, **kwargs):
+        warnings.simplefilter("ignore")
+        AddonManager.init(script_paths, session_manager=None, subprocess=True)
+        target = pickle.loads(pickled_target)
+        return target(*args, **kwargs)

@@ -27,7 +27,7 @@ from mitmproxy.http import HTTPFlow
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.jp2_utils import BufferedJp2k
 from hippolyzer.lib.base.multiprocessing_utils import ParentProcessWatcher
-from hippolyzer.lib.proxy.addon_utils import AssetAliasTracker, BaseAddon, GlobalProperty
+from hippolyzer.lib.proxy.addon_utils import AssetAliasTracker, BaseAddon, GlobalProperty, AddonProcess
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.region import ProxiedRegion
@@ -56,7 +56,9 @@ class MonochromeAddon(BaseAddon):
     def handle_init(self, session_manager: SessionManager):
         to_proxy_queue = session_manager.flow_context.to_proxy_queue
         for _ in range(self.NUM_CONSUMERS):
-            multiprocessing.Process(
+            # We must use AddonProcess rather than multiprocessing.Process because our
+            # target function is in a dynamically loaded addon. See AddonProcess' docstring.
+            AddonProcess(
                 target=_process_image_queue,
                 args=(self.mono_addon_shutdown_signal, self.image_resp_queue, to_proxy_queue),
                 daemon=True,

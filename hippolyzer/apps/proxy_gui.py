@@ -29,7 +29,7 @@ from hippolyzer.apps.model import (
     bytes_unescape,
     bytes_escape,
 )
-from hippolyzer.apps.proxy import main, mp_main
+from hippolyzer.apps.proxy import start_proxy
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.llsd_msg_serializer import LLSDMessageSerializer
@@ -804,14 +804,8 @@ def gui_main():
     http_host = None
     if remote_access:
         http_host = "0.0.0.0"
-    main(
+    start_proxy(
         session_manager=window.sessionManager,
         extra_addon_paths=window.getAddonList(),
         proxy_host=http_host,
     )
-
-
-if __name__ == "__main__":
-    gui_main()
-elif __name__ == "__mp_main__":
-    mp_main()
