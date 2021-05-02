@@ -69,14 +69,6 @@ class MessageLogModel(QtCore.QAbstractTableModel, FilteringMessageLogger):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
             return MessageLogHeader(col).name
 
-    def clear(self):
-        self.beginResetModel()
-        self._filtered_entries.clear()
-        while not self._queued_entries.empty():
-            self._queued_entries.get(block=False)
-        self._raw_entries.clear()
-        self.endResetModel()
-
 
 class RegionListModel(QtCore.QAbstractListModel):
     def __init__(self, parent, session_manager):
