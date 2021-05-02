@@ -3,28 +3,27 @@ import ast
 import typing
 
 from arpeggio import Optional, ZeroOrMore, EOF, \
-    ParserPython, PTNodeVisitor, visit_parse_tree
-from arpeggio import RegExMatch as _
+    ParserPython, PTNodeVisitor, visit_parse_tree, RegExMatch
 
 
 def literal():
     return [
         # Nightmare. str or bytes literal.
         # https://stackoverflow.com/questions/14366401/#comment79795017_14366904
-        _(r'''b?(\"\"\"|\'\'\'|\"|\')((?<!\\)(\\\\)*\\\1|.)*?\1'''),
-        _(r'\d+(\.\d+)?'),
+        RegExMatch(r'''b?(\"\"\"|\'\'\'|\"|\')((?<!\\)(\\\\)*\\\1|.)*?\1'''),
+        RegExMatch(r'\d+(\.\d+)?'),
         "None",
         "True",
         "False",
         # vector3 (tuple)
-        _(r'\(\s*\d+(\.\d+)?\s*,\s*\d+(\.\d+)?\s*,\s*\d+(\.\d+)?\s*\)'),
+        RegExMatch(r'\(\s*\d+(\.\d+)?\s*,\s*\d+(\.\d+)?\s*,\s*\d+(\.\d+)?\s*\)'),
         # vector4 (tuple)
-        _(r'\(\s*\d+(\.\d+)?\s*,\s*\d+(\.\d+)?\s*,\s*\d+(\.\d+)?\s*,\s*\d+(\.\d+)?\s*\)'),
+        RegExMatch(r'\(\s*\d+(\.\d+)?\s*,\s*\d+(\.\d+)?\s*,\s*\d+(\.\d+)?\s*,\s*\d+(\.\d+)?\s*\)'),
     ]
 
 
 def identifier():
-    return _(r'[a-zA-Z*]([a-zA-Z0-9*]+)?')
+    return RegExMatch(r'[a-zA-Z*]([a-zA-Z0-9*]+)?')
 
 
 def field_specifier():
@@ -134,23 +133,23 @@ class LiteralValue:
 
 
 class MessageFilterVisitor(PTNodeVisitor):
-    def visit_identifier(self, node, children):
+    def visit_identifier(self, node, _children):
         return str(node.value)
 
-    def visit_field_specifier(self, node, children):
+    def visit_field_specifier(self, _node, children):
         return children
 
-    def visit_literal(self, node, children):
+    def visit_literal(self, node, _children):
         return LiteralValue(ast.literal_eval(node.value))
 
-    def visit_meta_field_specifier(self, node, children):
+    def visit_meta_field_specifier(self, _node, children):
         return MetaFieldSpecifier(children[0])
 
-    def visit_unary_field_specifier(self, node, children):
+    def visit_unary_field_specifier(self, _node, children):
         # Looks like a bare field specifier with no operator
         return MessageFilterNode(tuple(children), None, None)
 
-    def visit_unary_expression(self, node, children):
+    def visit_unary_expression(self, _node, children):
         if len(children) == 1:
             if isinstance(children[0], BaseFilterNode):
                 return children[0]
@@ -162,10 +161,10 @@ class MessageFilterVisitor(PTNodeVisitor):
         else:
             raise ValueError(f"Unrecognized unary prefix {children[0]}")
 
-    def visit_binary_expression(self, node, children):
+    def visit_binary_expression(self, _node, children):
         return MessageFilterNode(tuple(children[0]), children[1], children[2])
 
-    def visit_expression(self, node, children):
+    def visit_expression(self, _node, children):
         if self.debug:
             print("Expression {}".format(children))
         if len(children) > 1:

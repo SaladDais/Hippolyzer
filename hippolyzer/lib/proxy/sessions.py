@@ -12,11 +12,8 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.proxy.http_asset_repo import HTTPAssetRepo
 from hippolyzer.lib.proxy.http_proxy import HTTPFlowContext, is_asset_server_cap_name, SerializedCapData
+from hippolyzer.lib.proxy.message_logger import BaseMessageLogger
 from hippolyzer.lib.proxy.region import ProxiedRegion, CapType
-
-if TYPE_CHECKING:
-    from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-    from hippolyzer.lib.proxy.message import ProxiedMessage
 
 
 class Session:
@@ -142,17 +139,6 @@ class Session:
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.id)
-
-
-class BaseMessageLogger:
-    def log_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
-        pass
-
-    def log_http_response(self, flow: HippoHTTPFlow):
-        pass
-
-    def log_eq_event(self, session: Session, region: ProxiedRegion, event: dict):
-        pass
 
 
 class SessionManager:

@@ -5,8 +5,8 @@ from hippolyzer.lib.base.message.message import Block
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.settings import Settings
 from hippolyzer.lib.proxy.message import ProxiedMessage as Message
-from hippolyzer.apps.model import LLUDPMessageLogEntry
-from hippolyzer.apps.message_filter import compile_filter
+from hippolyzer.lib.proxy.message_logger import LLUDPMessageLogEntry
+from hippolyzer.lib.proxy.message_filter import compile_filter
 
 
 OBJECT_UPDATE = b'\xc0\x00\x00\x00Q\x00\x0c\x00\x01\xea\x03\x00\x02\xe6\x03\x00\x01\xbe\xff\x01\x06\xbc\x8e\x0b\x00' \
@@ -17,7 +17,7 @@ OBJECT_UPDATE = b'\xc0\x00\x00\x00Q\x00\x0c\x00\x01\xea\x03\x00\x02\xe6\x03\x00\
                 b'\x00\x02d&\x00\x03\x0e\x00\x01\x0e\x00\x01\x19\x00\x01\x80\x00\x01\x80\x00\x01\x80\x00\x01\x80\x00' \
                 b'\x01\x80\x00\x01\x80\x91\x11\xd2^/\x12\x8f\x81U\xa7@:x\xb3\x0e-\x00\x10\x03\x01\x00\x03\x1e%n\xa2' \
                 b'\xff\xc5\xe0\x83\x00\x01\x06\x00\x01\r\r\x01\x00\x11\x0e\xdc\x9b\x83\x98\x9aJv\xac\xc3\xdb\xbf7Ta' \
-                b'\x88\x00" '
+                b'\x88\x00"'
 
 
 class MessageFilterTests(unittest.TestCase):

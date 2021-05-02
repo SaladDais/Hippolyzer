@@ -14,7 +14,7 @@ from hippolyzer.lib.proxy.message import ProxiedMessage
 
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.region import ProxiedRegion
-    from hippolyzer.lib.proxy.sessions import BaseMessageLogger
+    from hippolyzer.lib.proxy.message_logger import BaseMessageLogger
 
 
 class ProxiedCircuit:

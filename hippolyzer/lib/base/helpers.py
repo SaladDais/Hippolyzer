@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import functools
+import re
 import weakref
 from pprint import PrettyPrinter
 from typing import *
@@ -121,3 +122,14 @@ def proxify(obj: Union[Callable[[], _T], weakref.ReferenceType, _T]) -> _T:
     if obj is not None and not isinstance(obj, weakref.ProxyTypes):
         return weakref.proxy(obj)
     return obj
+
+
+def bytes_unescape(val: bytes) -> bytes:
+    # Only in CPython. bytes -> bytes with escape decoding.
+    # https://stackoverflow.com/a/23151714
+    return codecs.escape_decode(val)[0]  # type: ignore
+
+
+def bytes_escape(val: bytes) -> bytes:
+    # Try to keep newlines as-is
+    return re.sub(rb"(?<!\\)\\n", b"\n", codecs.escape_encode(val)[0])  # type: ignore

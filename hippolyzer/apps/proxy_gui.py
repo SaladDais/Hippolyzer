@@ -20,18 +20,11 @@ import multidict
 from qasync import QEventLoop
 from PySide2 import QtCore, QtWidgets, QtGui
 
-from hippolyzer.apps.model import (
-    AbstractMessageLogEntry,
-    LLUDPMessageLogEntry,
-    MessageLogModel,
-    MessageLogHeader,
-    RegionListModel,
-    bytes_unescape,
-    bytes_escape,
-)
+from hippolyzer.apps.model import MessageLogModel, MessageLogHeader, RegionListModel
 from hippolyzer.apps.proxy import start_proxy
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.helpers import bytes_unescape, bytes_escape
 from hippolyzer.lib.base.message.llsd_msg_serializer import LLSDMessageSerializer
 from hippolyzer.lib.base.message.message import Block
 from hippolyzer.lib.base.message.msgtypes import MsgType
@@ -44,6 +37,7 @@ from hippolyzer.lib.proxy.caps_client import CapsClient
 from hippolyzer.lib.proxy.http_proxy import create_proxy_master, HTTPFlowContext
 from hippolyzer.lib.proxy.packets import Direction
 from hippolyzer.lib.proxy.message import ProxiedMessage, VerbatimHumanVal, proxy_eval
+from hippolyzer.lib.proxy.message_logger import LLUDPMessageLogEntry, AbstractMessageLogEntry
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session, SessionManager
 from hippolyzer.lib.proxy.templates import CAP_TEMPLATES
@@ -242,10 +236,10 @@ class ProxyGUI(QtWidgets.QMainWindow):
             filter_str = self.lineEditFilter.text()
         else:
             self.lineEditFilter.setText(filter_str)
-        self.model.setFilter(filter_str)
+        self.model.set_filter(filter_str)
 
     def _setPaused(self, checked):
-        self.model.setPaused(checked)
+        self.model.set_paused(checked)
 
     def _messageSelected(self, selected, _deselected):
         indexes = selected.indexes()
@@ -796,7 +790,7 @@ def gui_main():
     window = ProxyGUI()
     timer = QtCore.QTimer(app)
     timer.timeout.connect(window.sessionManager.checkRegions)
-    timer.timeout.connect(window.model.appendQueuedEntries)
+    timer.timeout.connect(window.model.append_queued_entries)
     timer.start(100)
     signal.signal(signal.SIGINT, lambda *args: QtWidgets.QApplication.quit())
     window.show()
