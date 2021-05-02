@@ -277,13 +277,8 @@ class AddonManager:
 
                 # Make sure module initialization happens after any pending task cancellations
                 # due to module unloading.
-                def _init_soon():
-                    cls._call_module_hooks(mod, "handle_init", cls.SESSION_MANAGER)
-                    if not cls._SUBPROCESS:
-                        for session in cls.SESSION_MANAGER.sessions:
-                            with addon_ctx.push(new_session=session):
-                                cls._call_module_hooks(mod, "handle_session_init", session)
-                asyncio.get_event_loop().call_soon(_init_soon)
+
+                asyncio.get_event_loop().call_soon(cls._init_module, mod)
             except Exception as e:
                 if had_mod:
                     logging.exception("Exploded trying to reload addon %s" % spec.name)
@@ -298,6 +293,14 @@ class AddonManager:
         # if the reload was initialized by a user, let them know that a load failed.
         if raise_exceptions and load_exception is not None:
             raise load_exception
+
+    @classmethod
+    def _init_module(cls, mod: ModuleType):
+        cls._call_module_hooks(mod, "handle_init", cls.SESSION_MANAGER)
+        if not cls._SUBPROCESS:
+            for session in cls.SESSION_MANAGER.sessions:
+                with addon_ctx.push(new_session=session):
+                    cls._call_module_hooks(mod, "handle_session_init", session)
 
     @classmethod
     def _unload_module(cls, old_mod: ModuleType):
