@@ -22,6 +22,8 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import os
 
-msg_tmpl = open(os.path.join(os.path.dirname(__file__), 'message_template.msg'))
-with open(os.path.join(os.path.dirname(__file__), 'message.xml'), "rb") as _f:
+from hippolyzer.lib.base.helpers import get_resource_filename
+
+msg_tmpl = open(get_resource_filename("lib/base/message/data/message_template.msg"))
+with open(get_resource_filename("lib/base/message/data/message.xml"), "rb") as _f:
     msg_details = _f.read()

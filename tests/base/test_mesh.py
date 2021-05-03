@@ -1,8 +1,10 @@
-import pkg_resources
+import os
 import unittest
 
 from hippolyzer.lib.base.mesh import LLMeshSerializer, MeshAsset
 import hippolyzer.lib.base.serialization as se
+
+BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 class TestMesh(unittest.TestCase):
@@ -10,7 +12,7 @@ class TestMesh(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         # Use a rigged cube SLM from the upload process as a test file
-        slm_file = pkg_resources.resource_filename(__name__, "test_resources/testslm.slm")
+        slm_file = os.path.join(BASE_PATH, "test_resources", "testslm.slm")
         with open(slm_file, "rb") as f:
             cls.slm_bytes = f.read()
 

@@ -8,7 +8,6 @@ import json
 import logging
 import pathlib
 import multiprocessing
-import os
 import re
 import signal
 import socket
@@ -24,7 +23,7 @@ from hippolyzer.apps.model import MessageLogModel, MessageLogHeader, RegionListM
 from hippolyzer.apps.proxy import start_proxy
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
-from hippolyzer.lib.base.helpers import bytes_unescape, bytes_escape
+from hippolyzer.lib.base.helpers import bytes_unescape, bytes_escape, get_resource_filename
 from hippolyzer.lib.base.message.llsd_msg_serializer import LLSDMessageSerializer
 from hippolyzer.lib.base.message.message import Block
 from hippolyzer.lib.base.message.msgtypes import MsgType
@@ -44,11 +43,10 @@ from hippolyzer.lib.proxy.templates import CAP_TEMPLATES
 
 LOG = logging.getLogger(__name__)
 
-BASE_PATH = os.path.dirname(os.path.abspath(__file__))
-MAIN_WINDOW_UI_PATH = os.path.join(BASE_PATH, "proxy_mainwindow.ui")
-MESSAGE_BUILDER_UI_PATH = os.path.join(BASE_PATH, "message_builder.ui")
-ADDON_DIALOG_UI_PATH = os.path.join(BASE_PATH, "addon_dialog.ui")
-FILTER_DIALOG_UI_PATH = os.path.join(BASE_PATH, "filter_dialog.ui")
+MAIN_WINDOW_UI_PATH = get_resource_filename("apps/proxy_mainwindow.ui")
+MESSAGE_BUILDER_UI_PATH = get_resource_filename("apps/message_builder.ui")
+ADDON_DIALOG_UI_PATH = get_resource_filename("apps/addon_dialog.ui")
+FILTER_DIALOG_UI_PATH = get_resource_filename("apps/filter_dialog.ui")
 
 
 def show_error_message(error_msg, parent=None):

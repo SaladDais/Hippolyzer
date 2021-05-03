@@ -5,7 +5,6 @@ import multiprocessing
 import os
 import re
 import sys
-import pkg_resources
 import queue
 import typing
 import uuid
@@ -20,6 +19,7 @@ from mitmproxy.addons import core, clientplayback
 from mitmproxy.http import HTTPFlow
 import OpenSSL
 
+from hippolyzer.lib.base.helpers import get_resource_filename
 from hippolyzer.lib.base.multiprocessing_utils import ParentProcessWatcher
 
 orig_sethostflags = OpenSSL.SSL._lib.X509_VERIFY_PARAM_set_hostflags  # noqa
@@ -230,7 +230,7 @@ def create_proxy_master(host, port, flow_context: HTTPFlowContext):  # pragma: n
         os.path.join(opts.confdir, "config.yml"),
     )
     # Use SL's CA bundle so LL's CA certs won't cause verification errors
-    ca_bundle = pkg_resources.resource_filename("hippolyzer.lib.base", "network/data/ca-bundle.crt")
+    ca_bundle = get_resource_filename("lib/base/network/data/ca-bundle.crt")
     opts.update(
         ssl_verify_upstream_trusted_ca=ca_bundle,
         listen_host=host,

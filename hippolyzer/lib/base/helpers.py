@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import functools
+import pkg_resources
 import re
 import weakref
 from pprint import PrettyPrinter
@@ -133,3 +134,7 @@ def bytes_unescape(val: bytes) -> bytes:
 def bytes_escape(val: bytes) -> bytes:
     # Try to keep newlines as-is
     return re.sub(rb"(?<!\\)\\n", b"\n", codecs.escape_encode(val)[0])  # type: ignore
+
+
+def get_resource_filename(resource_filename: str):
+    return pkg_resources.resource_filename("hippolyzer", resource_filename)
