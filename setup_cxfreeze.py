@@ -50,8 +50,8 @@ TO_DELETE = [
 BASE_DIR = Path(__file__).parent.absolute()
 
 
-class CleanseCXFreezeCommand(Command):
-    description = "Get rid of unwanted files pulled in by cx_Freeze"
+class FinalizeCXFreezeCommand(Command):
+    description = "Prepare cx_Freeze build dirs for zipping"
     user_options = []
 
     def initialize_options(self) -> None:
@@ -70,6 +70,9 @@ class CleanseCXFreezeCommand(Command):
                         os.unlink(cleanse_path)
                     except:
                         pass
+                # Must have been generated with pip-licenses before. Many dependencies
+                # require their license to be distributed with their binaries.
+                shutil.copy(BASE_DIR / "lib_licenses.txt", path / "lib_licenses.txt")
 
 
 class BuildZipArchiveCommand(Command):
@@ -120,7 +123,7 @@ setup(
     options=options,
     executables=executables,
     cmdclass={
-        "cleanse_cxfreeze": CleanseCXFreezeCommand,
+        "finalize_cxfreeze": FinalizeCXFreezeCommand,
         "build_zip": BuildZipArchiveCommand,
     }
 )

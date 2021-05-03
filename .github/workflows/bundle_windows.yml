@@ -35,7 +35,9 @@ jobs:
     - name: Bundle with cx_Freeze
       run: |
         python setup_cxfreeze.py build_exe
-        python setup_cxfreeze.py cleanse_cxfreeze
+        pip install pip-licenses
+        pip-licenses --format=plain-vertical --with-license-file --no-license-path --output-file=lib_licenses.txt
+        python setup_cxfreeze.py finalize_cxfreeze
         python setup_cxfreeze.py build_zip
 
     - name: Upload the artifact
