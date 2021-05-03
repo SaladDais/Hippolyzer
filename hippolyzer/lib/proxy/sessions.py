@@ -12,8 +12,10 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.proxy.http_asset_repo import HTTPAssetRepo
 from hippolyzer.lib.proxy.http_proxy import HTTPFlowContext, is_asset_server_cap_name, SerializedCapData
-from hippolyzer.lib.proxy.message_logger import BaseMessageLogger
 from hippolyzer.lib.proxy.region import ProxiedRegion, CapType
+
+if TYPE_CHECKING:
+    from hippolyzer.lib.proxy.message_logger import BaseMessageLogger
 
 
 class Session:

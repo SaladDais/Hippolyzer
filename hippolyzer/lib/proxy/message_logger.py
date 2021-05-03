@@ -16,11 +16,12 @@ from hippolyzer.lib.base import serialization as se, llsd
 from hippolyzer.lib.base.datatypes import TaggedUnion, UUID, TupleCoord
 from hippolyzer.lib.base.helpers import bytes_escape
 from hippolyzer.lib.proxy.message_filter import MetaFieldSpecifier, compile_filter, BaseFilterNode, MessageFilterNode
+from hippolyzer.lib.proxy.region import CapType
 
 if typing.TYPE_CHECKING:
     from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
     from hippolyzer.lib.proxy.message import ProxiedMessage
-    from hippolyzer.lib.proxy.region import ProxiedRegion, CapType
+    from hippolyzer.lib.proxy.region import ProxiedRegion
     from hippolyzer.lib.proxy.sessions import Session
 
 LOG = logging.getLogger(__name__)
