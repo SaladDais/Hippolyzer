@@ -144,6 +144,7 @@ def start_proxy(extra_addons: Optional[list] = None, extra_addon_paths: Optional
 
     # Everything in memory at this point should stay
     gc.freeze()
+    gc.set_threshold(5000, 50, 10)
 
     # Serve requests until Ctrl+C is pressed
     print(f"SOCKS and HTTP proxies running on {proxy_host}")
