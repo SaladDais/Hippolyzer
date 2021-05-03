@@ -1,0 +1,11 @@
+coverage:
+  precision: 1
+  round: down
+  range: "50...80"
+  status:
+    project:
+      default:
+        # Do not fail PRs if the code coverage drops.
+        target: 0%
+        threshold: null
+        base: auto
