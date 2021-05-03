@@ -7,5 +7,5 @@ coverage:
       default:
         # Do not fail PRs if the code coverage drops.
         target: 0%
-        threshold: null
+        threshold: 100%
         base: auto
