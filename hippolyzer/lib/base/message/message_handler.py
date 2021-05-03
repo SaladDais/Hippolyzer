@@ -80,11 +80,10 @@ class MessageHandler(Generic[_T]):
         notifiers = self._subscribe_all(message_names, _handler_wrapper, predicate=predicate)
 
         async def _get_wrapper():
-            try:
-                return await msg_queue.get()
-            finally:
-                # Consumption is completion
-                msg_queue.task_done()
+            msg = await msg_queue.get()
+            # Consumption is completion
+            msg_queue.task_done()
+            return msg
 
         try:
             yield _get_wrapper
