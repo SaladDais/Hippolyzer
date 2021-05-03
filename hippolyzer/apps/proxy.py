@@ -186,3 +186,8 @@ def _windows_timeout_killer(pid: int):
 def main():
     multiprocessing.set_start_method("spawn")
     start_proxy()
+
+
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
+    main()

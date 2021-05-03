@@ -802,3 +802,8 @@ def gui_main():
         extra_addon_paths=window.getAddonList(),
         proxy_host=http_host,
     )
+
+
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
+    gui_main()
