@@ -1,5 +1,7 @@
 # Hippolyzer
 
+![Python Test Status](https://github.com/SaladDais/Hippolyzer/workflows/Run%20Python%20Tests/badge.svg) [![codecov](https://codecov.io/gh/SaladDais/Hippolyzer/branch/master/graph/badge.svg?token=HCTFA4RAXX)](https://codecov.io/gh/SaladDais/Hippolyzer)
+
 [Hippolyzer](http://wiki.secondlife.com/wiki/Hippo) is a fork of Linden Lab's abandoned
 [PyOGP library](http://wiki.secondlife.com/wiki/PyOGP)
 targeting modern Python 3, with a focus on debugging issues in Second Life-compatible
