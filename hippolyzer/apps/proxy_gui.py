@@ -790,7 +790,6 @@ def gui_main():
     window = ProxyGUI()
     timer = QtCore.QTimer(app)
     timer.timeout.connect(window.sessionManager.checkRegions)
-    timer.timeout.connect(window.model.append_queued_entries)
     timer.start(100)
     signal.signal(signal.SIGINT, lambda *args: QtWidgets.QApplication.quit())
     window.show()

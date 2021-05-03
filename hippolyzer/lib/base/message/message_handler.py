@@ -79,8 +79,15 @@ class MessageHandler(Generic[_T]):
 
         notifiers = self._subscribe_all(message_names, _handler_wrapper, predicate=predicate)
 
+        async def _get_wrapper():
+            try:
+                return await msg_queue.get()
+            finally:
+                # Consumption is completion
+                msg_queue.task_done()
+
         try:
-            yield msg_queue.get
+            yield _get_wrapper
         finally:
             for n in notifiers:
                 n.unsubscribe(_handler_wrapper)

@@ -13,6 +13,7 @@ from hippolyzer.lib.base.objects import Object
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.message import ProxiedMessage
+from hippolyzer.lib.proxy.message_logger import FilteringMessageLogger
 from hippolyzer.lib.proxy.packets import ProxiedUDPPacket, Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
@@ -33,6 +34,12 @@ class MockAddon(BaseAddon):
     def handle_object_updated(self, session: Session, region: ProxiedRegion,
                               obj: Object, updated_props: Set[str]):
         self.events.append(("object_update", session.id, region.circuit_addr, obj.LocalID))
+
+
+class SimpleMessageLogger(FilteringMessageLogger):
+    @property
+    def entries(self):
+        return self._filtered_entries
 
 
 class LLUDPIntegrationTests(BaseIntegrationTest):
@@ -169,3 +176,14 @@ class LLUDPIntegrationTests(BaseIntegrationTest):
         obj = self.session.regions[0].objects.lookup_localid(1234)
         self.assertIsInstance(obj.TextureEntry, lazy_object_proxy.Proxy)
         self.assertEqual(obj.TextureEntry.Textures[None], UUID("89556747-24cb-43ed-920b-47caed15465f"))
+
+    async def test_message_logger(self):
+        message_logger = SimpleMessageLogger()
+        self.session_manager.message_logger = message_logger
+        self._setup_circuit()
+        obj_update = self._make_objectupdate_compressed(1234)
+        self.protocol.datagram_received(obj_update, self.region_addr)
+        await self._wait_drained()
+        entries = message_logger.entries
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0].name, "ObjectUpdateCompressed")
