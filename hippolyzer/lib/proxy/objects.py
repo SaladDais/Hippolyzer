@@ -192,6 +192,7 @@ class ObjectManager:
             "State": block.deserialize_var("State", make_copy=False),
             **block.deserialize_var("ObjectData", make_copy=False).value,
         }
+        object_data["LocalID"] = object_data.pop("ID")
         # Empty == not updated
         if not object_data["TextureEntry"]:
             object_data.pop("TextureEntry")
@@ -211,7 +212,7 @@ class ObjectManager:
         for block in packet['ObjectData']:
             object_data = self._normalize_object_update(block)
 
-            seen_locals.append(object_data["ID"])
+            seen_locals.append(object_data["LocalID"])
             obj = self.lookup_fullid(object_data["FullID"])
             if obj:
                 self._update_existing_object(obj, object_data)
@@ -226,6 +227,7 @@ class ObjectManager:
             **dict(block.items()),
             "TextureEntry": block.deserialize_var("TextureEntry", make_copy=False),
         }
+        object_data["LocalID"] = object_data.pop("ID")
         object_data.pop("Data")
         # Empty == not updated
         if object_data["TextureEntry"] is None:
@@ -236,19 +238,19 @@ class ObjectManager:
         seen_locals = []
         for block in packet['ObjectData']:
             object_data = self._normalize_terse_object_update(block)
-            obj = self.lookup_localid(object_data["ID"])
+            obj = self.lookup_localid(object_data["LocalID"])
             # Can only update existing object with this message
             if obj:
                 # Need the Object as context because decoding state requires PCode.
                 state_deserializer = ObjectStateSerializer.deserialize
                 object_data["State"] = state_deserializer(ctx_obj=obj, val=object_data["State"])
 
-            seen_locals.append(object_data["ID"])
+            seen_locals.append(object_data["LocalID"])
             if obj:
                 self._update_existing_object(obj, object_data)
             else:
-                self.missing_locals.add(object_data["ID"])
-                LOG.debug(f"Received terse update for unknown object {object_data['ID']}")
+                self.missing_locals.add(object_data["LocalID"])
+                LOG.debug(f"Received terse update for unknown object {object_data['LocalID']}")
 
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
@@ -288,6 +290,7 @@ class ObjectManager:
             "PSBlock": ps_block.value,
             # Parent flag not set means explicitly un-parented
             "ParentID": compressed.pop("ParentID", None) or 0,
+            "LocalID": compressed.pop("ID"),
             **compressed,
             **dict(block.items()),
             "UpdateFlags": block.deserialize_var("UpdateFlags", make_copy=False),
@@ -304,8 +307,8 @@ class ObjectManager:
         seen_locals = []
         for block in packet['ObjectData']:
             object_data = self._normalize_object_update_compressed(block)
-            obj = self.lookup_localid(object_data["ID"])
-            seen_locals.append(object_data["ID"])
+            obj = self.lookup_localid(object_data["LocalID"])
+            seen_locals.append(object_data["LocalID"])
             if obj:
                 self._update_existing_object(obj, object_data)
             else:

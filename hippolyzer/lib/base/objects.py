@@ -18,108 +18,113 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program; if not, write to the Free Software Foundation,
 Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import annotations
 
 from typing import *
 
 import lazy_object_proxy
+import recordclass
 
-from hippolyzer.lib.base.datatypes import Vector3, Quaternion, Vector4
+from hippolyzer.lib.base.datatypes import Vector3, Quaternion, Vector4, UUID
 
 
-class Object:
-    """ represents an Object
+class Object(recordclass.datatuple):  # type: ignore
+    __options__ = {
+        "fast_new": False,
+        "use_weakref": True,
+    }
+    __weakref__: Any
 
-    Initialize the Object class instance
-    >>> obj = Object()
-    """
+    LocalID: Optional[int] = None
+    State: Optional[int] = None
+    FullID: Optional[UUID] = None
+    CRC: Optional[int] = None
+    PCode: Optional[int] = None
+    Material: Optional[int] = None
+    ClickAction: Optional[int] = None
+    Scale: Optional[Vector3] = None
+    ParentID: Optional[int] = None
+    # Actually contains a weakref proxy
+    Parent: Optional[Object] = None
+    UpdateFlags: Optional[int] = None
+    PathCurve: Optional[int] = None
+    ProfileCurve: Optional[int] = None
+    PathBegin: Optional[int] = None
+    PathEnd: Optional[int] = None
+    PathScaleX: Optional[int] = None
+    PathScaleY: Optional[int] = None
+    PathShearX: Optional[int] = None
+    PathShearY: Optional[int] = None
+    PathTwist: Optional[int] = None
+    PathTwistBegin: Optional[int] = None
+    PathRadiusOffset: Optional[int] = None
+    PathTaperX: Optional[int] = None
+    PathTaperY: Optional[int] = None
+    PathRevolutions: Optional[int] = None
+    PathSkew: Optional[int] = None
+    ProfileBegin: Optional[int] = None
+    ProfileEnd: Optional[int] = None
+    ProfileHollow: Optional[int] = None
+    TextureEntry: Optional[Any] = None
+    TextureAnim: Optional[Any] = None
+    NameValue: Optional[Any] = None
+    Data: Optional[Any] = None
+    Text: Optional[str] = None
+    TextColor: Optional[bytes] = None
+    MediaURL: Optional[Any] = None
+    PSBlock: Optional[Any] = None
+    ExtraParams: Optional[Any] = None
+    Sound: Optional[UUID] = None
+    OwnerID: Optional[UUID] = None
+    SoundGain: Optional[float] = None
+    SoundFlags: Optional[int] = None
+    SoundRadius: Optional[float] = None
+    JointType: Optional[int] = None
+    JointPivot: Optional[int] = None
+    JointAxisOrAnchor: Optional[int] = None
+    TreeSpecies: Optional[int] = None
+    ScratchPad: Optional[bytes] = None
+    ObjectCosts: Optional[Dict] = None
+    ChildIDs: Optional[List[int]] = None
+    # Same as parent, contains weakref proxies.
+    Children: Optional[List[Object]] = None
 
-    __slots__ = (
-        "LocalID",
-        "State",
-        "FullID",
-        "CRC",
-        "PCode",
-        "Material",
-        "ClickAction",
-        "Scale",
-        "ParentID",
-        "UpdateFlags",
-        "PathCurve",
-        "ProfileCurve",
-        "PathBegin",
-        "PathEnd",
-        "PathScaleX",
-        "PathScaleY",
-        "PathShearX",
-        "PathShearY",
-        "PathTwist",
-        "PathTwistBegin",
-        "PathRadiusOffset",
-        "PathTaperX",
-        "PathTaperY",
-        "PathRevolutions",
-        "PathSkew",
-        "ProfileBegin",
-        "ProfileEnd",
-        "ProfileHollow",
-        "TextureEntry",
-        "TextureAnim",
-        "NameValue",
-        "Data",
-        "Text",
-        "TextColor",
-        "MediaURL",
-        "PSBlock",
-        "ExtraParams",
-        "Sound",
-        "OwnerID",
-        "SoundGain",
-        "SoundFlags",
-        "SoundRadius",
-        "JointType",
-        "JointPivot",
-        "JointAxisOrAnchor",
-        "TreeSpecies",
-        "ObjectCosts",
-        "FootCollisionPlane",
-        "Position",
-        "Velocity",
-        "Acceleration",
-        "Rotation",
-        "AngularVelocity",
-        "CreatorID",
-        "GroupID",
-        "CreationDate",
-        "BaseMask",
-        "OwnerMask",
-        "GroupMask",
-        "EveryoneMask",
-        "NextOwnerMask",
-        "OwnershipCost",
-        "SaleType",
-        "SalePrice",
-        "AggregatePerms",
-        "AggregatePermTextures",
-        "AggregatePermTexturesOwner",
-        "Category",
-        "InventorySerial",
-        "ItemID",
-        "FolderID",
-        "FromTaskID",
-        "LastOwnerID",
-        "Name",
-        "Description",
-        "TouchName",
-        "SitName",
-        "TextureID",
-        "ChildIDs",
-        "Children",
-        "Parent",
-        "ScratchPad",
-        "__weakref__",
-    )
+    FootCollisionPlane: Optional[Vector4] = None
+    Position: Optional[Vector3] = None
+    Velocity: Optional[Vector3] = None
+    Acceleration: Optional[Vector3] = None
+    Rotation: Optional[Quaternion] = None
+    AngularVelocity: Optional[Vector3] = None
 
-    def __init__(self, *, ID=None, LocalID=None, State=None, FullID=None, CRC=None, PCode=None, Material=None,
+    # from ObjectProperties
+    CreatorID: Optional[UUID] = None
+    GroupID: Optional[UUID] = None
+    CreationDate: Optional[int] = None
+    BaseMask: Optional[int] = None
+    OwnerMask: Optional[int] = None
+    GroupMask: Optional[int] = None
+    EveryoneMask: Optional[int] = None
+    NextOwnerMask: Optional[int] = None
+    OwnershipCost: Optional[int] = None
+    # TaxRate
+    SaleType: Optional[int] = None
+    SalePrice: Optional[int] = None
+    AggregatePerms: Optional[int] = None
+    AggregatePermTextures: Optional[int] = None
+    AggregatePermTexturesOwner: Optional[int] = None
+    Category: Optional[int] = None
+    InventorySerial: Optional[int] = None
+    ItemID: Optional[UUID] = None
+    FolderID: Optional[UUID] = None
+    FromTaskID: Optional[UUID] = None
+    LastOwnerID: Optional[UUID] = None
+    Name: Optional[str] = None
+    Description: Optional[str] = None
+    TouchName: Optional[str] = None
+    SitName: Optional[str] = None
+    TextureID: Optional[Any] = None
+
+    def __init__(self, *, LocalID=None, State=None, FullID=None, CRC=None, PCode=None, Material=None,
                  ClickAction=None, Scale=None, ParentID=None, UpdateFlags=None, PathCurve=None, ProfileCurve=None,
                  PathBegin=None, PathEnd=None, PathScaleX=None, PathScaleY=None, PathShearX=None, PathShearY=None,
                  PathTwist=None, PathTwistBegin=None, PathRadiusOffset=None, PathTaperX=None, PathTaperY=None,
@@ -131,7 +136,7 @@ class Object:
                  AngularVelocity=None, TreeSpecies=None, ObjectCosts=None, ScratchPad=None):
         """ set up the object attributes """
 
-        self.LocalID = LocalID or ID  # U32
+        self.LocalID = LocalID  # U32
         self.State = State  # U8
         self.FullID = FullID  # LLUUID
         self.CRC = CRC  # U32 // TEMPORARY HACK FOR JAMES
@@ -258,8 +263,4 @@ class Object:
         return updated_properties
 
     def to_dict(self):
-        return {
-            x: getattr(self, x) for x in dir(self)
-            if not isinstance(getattr(self.__class__, x, None), property) and
-            not callable(getattr(self, x)) and not x.startswith("_")
-        }
+        return recordclass.asdict(self)
