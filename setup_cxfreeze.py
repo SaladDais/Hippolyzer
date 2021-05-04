@@ -46,37 +46,21 @@ TO_DELETE = [
     "lib/yarl/python39.dll",
 ]
 
+COPY_TO_ZIP = [
+    "LICENSE.txt",
+    "README.md",
+    "NOTICE.md",
+    # Must have been generated with pip-licenses before. Many dependencies
+    # require their license to be distributed with their binaries.
+    "lib_licenses.txt",
+]
+
 
 BASE_DIR = Path(__file__).parent.absolute()
 
 
 class FinalizeCXFreezeCommand(Command):
-    description = "Prepare cx_Freeze build dirs for zipping"
-    user_options = []
-
-    def initialize_options(self) -> None:
-        pass
-
-    def finalize_options(self) -> None:
-        pass
-
-    def run(self):
-        for path in (BASE_DIR / "build").iterdir():
-            if path.name.startswith("exe.") and path.is_dir():
-                for cleanse_suffix in TO_DELETE:
-                    cleanse_path = path / cleanse_suffix
-                    shutil.rmtree(cleanse_path, ignore_errors=True)
-                    try:
-                        os.unlink(cleanse_path)
-                    except:
-                        pass
-                # Must have been generated with pip-licenses before. Many dependencies
-                # require their license to be distributed with their binaries.
-                shutil.copy(BASE_DIR / "lib_licenses.txt", path / "lib_licenses.txt")
-
-
-class BuildZipArchiveCommand(Command):
-    description = "Make a distributable zip from an EXE build"
+    description = "Prepare cx_Freeze build dirs and create a zip"
     user_options = []
 
     def initialize_options(self) -> None:
@@ -89,7 +73,16 @@ class BuildZipArchiveCommand(Command):
         (BASE_DIR / "dist").mkdir(exist_ok=True)
         for path in (BASE_DIR / "build").iterdir():
             if path.name.startswith("exe.") and path.is_dir():
-                zip_path = BASE_DIR / "dist" / (path.name + ".zip")
+                for cleanse_suffix in TO_DELETE:
+                    cleanse_path = path / cleanse_suffix
+                    shutil.rmtree(cleanse_path, ignore_errors=True)
+                    try:
+                        os.unlink(cleanse_path)
+                    except:
+                        pass
+                for to_copy in COPY_TO_ZIP:
+                    shutil.copy(BASE_DIR / to_copy, path / to_copy)
+                zip_path = BASE_DIR / "dist" / path.name
                 shutil.make_archive(zip_path, "zip", path)
 
 
@@ -118,12 +111,11 @@ executables = [
 
 setup(
     name="hippolyzer_gui",
-    version="0.1",
+    version="0.3.2",
     description="Hippolyzer GUI",
     options=options,
     executables=executables,
     cmdclass={
         "finalize_cxfreeze": FinalizeCXFreezeCommand,
-        "build_zip": BuildZipArchiveCommand,
     }
 )

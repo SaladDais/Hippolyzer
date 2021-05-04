@@ -24,6 +24,9 @@ with low-level SL details. See the [Local Animation addon example](https://githu
 ![Screenshot of proxy GUI](https://github.com/SaladDais/Hippolyzer/blob/master/static/screenshot.png?raw=true)
 
 ## Setup
+
+### From Source
+
 * Python 3.8 or above is **required**. If you're unable to upgrade your system Python package due to
   being on a stable distro, you can use [pyenv](https://github.com/pyenv/pyenv) to create
   a self-contained Python install with the appropriate version.
@@ -33,6 +36,11 @@ with low-level SL details. See the [Local Animation addon example](https://githu
 * * Under Linux this would be something like `source <virtualenv_dir>/bin/activate`
 * * Under Windows it's `<virtualenv_dir>\Scripts\activate.bat`
 * Run `pip install hippolyzer`, or run `pip install -e .` in a cloned repo to install an editable version
+
+### Binary Windows Builds
+
+Binary Windows builds are available on the [Releases page](https://github.com/SaladDais/Hippolyzer/releases/).
+I don't extensively test these, building from source is recommended.
 
 ## Proxy
 
