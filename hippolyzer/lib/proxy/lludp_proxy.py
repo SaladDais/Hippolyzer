@@ -129,12 +129,13 @@ class InterceptingLLUDPProxyProtocol(BaseLLUDPProxyProtocol):
             LOG.exception("Failed in region message handler")
 
         message_logger = self.session_manager.message_logger
-        if message_logger:
-            message_logger.log_lludp_message(self.session, region, message)
 
         handled = AddonManager.handle_lludp_message(
             self.session, region, message
         )
+
+        if message_logger:
+            message_logger.log_lludp_message(self.session, region, message)
 
         if handled:
             return

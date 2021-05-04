@@ -1703,7 +1703,7 @@ class BaseSubfieldSerializer(abc.ABC):
         """Guess at which template a val might correspond to"""
         if dataclasses.is_dataclass(val):
             val = dataclasses.asdict(val)  # noqa
-        if isinstance(val, bytes):
+        if isinstance(val, (bytes, bytearray)):
             template_checker = cls._template_sizes_match
         elif isinstance(val, dict):
             template_checker = cls._template_keys_match
