@@ -291,8 +291,6 @@ If you are a viewer developer, please put them in a viewer.
 
 ## Potential Changes
 
-* Make package-able for PyPI
-* GitHub action to build binary packages and pull together licenses bundle
 * AISv3 wrapper?
 * Higher level wrappers for common things? I don't really need these, so only if people want to write them.
 * Highlight matched portion of message in log view, if applicable
