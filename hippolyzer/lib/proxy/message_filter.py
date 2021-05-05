@@ -62,9 +62,12 @@ def message_filter():
     return expression, EOF
 
 
+MATCH_RESULT = typing.Union[bool, typing.Tuple]
+
+
 class BaseFilterNode(abc.ABC):
     @abc.abstractmethod
-    def match(self, msg) -> bool:
+    def match(self, msg) -> MATCH_RESULT:
         raise NotImplementedError()
 
     @property
@@ -94,17 +97,17 @@ class BinaryFilterNode(BaseFilterNode, abc.ABC):
 
 
 class UnaryNotFilterNode(UnaryFilterNode):
-    def match(self, msg) -> bool:
+    def match(self, msg) -> MATCH_RESULT:
         return not self.node.match(msg)
 
 
 class OrFilterNode(BinaryFilterNode):
-    def match(self, msg) -> bool:
+    def match(self, msg) -> MATCH_RESULT:
         return self.left_node.match(msg) or self.right_node.match(msg)
 
 
 class AndFilterNode(BinaryFilterNode):
-    def match(self, msg) -> bool:
+    def match(self, msg) -> MATCH_RESULT:
         return self.left_node.match(msg) and self.right_node.match(msg)
 
 
@@ -114,7 +117,7 @@ class MessageFilterNode(BaseFilterNode):
         self.operator = operator
         self.value = value
 
-    def match(self, msg) -> bool:
+    def match(self, msg) -> MATCH_RESULT:
         return msg.matches(self)
 
     @property

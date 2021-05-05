@@ -586,15 +586,19 @@ class LLUDPMessageLogEntry(AbstractMessageLogEntry):
         for block_name in message.blocks:
             if not fnmatch.fnmatchcase(block_name, matcher.selector[1]):
                 continue
-            for block in message[block_name]:
+            for block_num, block in enumerate(message[block_name]):
                 for var_name in block.vars.keys():
                     if not fnmatch.fnmatchcase(var_name, matcher.selector[2]):
                         continue
+                    # So we know where the match happened
+                    span_key = (message.name, block_name, block_num, var_name)
                     if selector_len == 3:
+                        # We're just matching on the var existing, not having any particular value
                         if matcher.value is None:
-                            return True
+                            return span_key
                         if self._val_matches(matcher.operator, block[var_name], matcher.value):
-                            return True
+                            return span_key
+                    # Need to invoke a special unpacker
                     elif selector_len == 4:
                         try:
                             deserialized = block.deserialize_var(var_name)
@@ -608,9 +612,9 @@ class LLUDPMessageLogEntry(AbstractMessageLogEntry):
                         for key in deserialized.keys():
                             if fnmatch.fnmatchcase(str(key), matcher.selector[3]):
                                 if matcher.value is None:
-                                    return True
+                                    return span_key
                                 if self._val_matches(matcher.operator, deserialized[key], matcher.value):
-                                    return True
+                                    return span_key
 
         return False
 

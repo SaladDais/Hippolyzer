@@ -5,6 +5,7 @@ import logging
 import math
 import os
 import re
+import typing
 import uuid
 from typing import *
 
@@ -71,6 +72,14 @@ def proxy_eval(eval_str: str, globals_=None, locals_=None):
     )
 
 
+TextSpan = Tuple[int, int]
+SpanDict = Dict[Tuple[Union[str, int], ...], TextSpan]
+
+
+class SpannedString(str):
+    spans: SpanDict = {}
+
+
 class ProxiedMessage(Message):
     __slots__ = ("meta", "injected", "dropped", "direction")
 
@@ -83,9 +92,10 @@ class ProxiedMessage(Message):
         _maybe_reload_templates()
 
     def to_human_string(self, replacements=None, beautify=False,
-                        template: Optional[MessageTemplate] = None):
+                        template: Optional[MessageTemplate] = None) -> SpannedString:
         replacements = replacements or {}
         _maybe_reload_templates()
+        spans: SpanDict = {}
         string = ""
         if self.direction is not None:
             string += f'{self.direction.name} '
@@ -101,11 +111,17 @@ class ProxiedMessage(Message):
             block_suffix = ""
             if template and template.get_block(block_name).block_type == MsgBlockType.MBT_VARIABLE:
                 block_suffix = '  # Variable'
-            for block in block_list:
+            for block_num, block in enumerate(block_list):
                 string += f"[{block_name}]{block_suffix}\n"
                 for var_name, val in block.items():
+                    start_len = len(string)
                     string += self._format_var(block, var_name, val, replacements, beautify)
-        return string
+                    end_len = len(string)
+                    # Store the spans for each var so we can highlight specific matches
+                    spans[(self.name, block_name, block_num, var_name)] = (start_len, end_len)
+        spanned = SpannedString(string)
+        spanned.spans = spans
+        return spanned
 
     def _format_var(self, block, var_name, var_val, replacements, beautify=False):
         string = ""

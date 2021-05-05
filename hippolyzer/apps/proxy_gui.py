@@ -35,7 +35,7 @@ from hippolyzer.lib.proxy.ca_utils import setup_ca_everywhere
 from hippolyzer.lib.proxy.caps_client import CapsClient
 from hippolyzer.lib.proxy.http_proxy import create_proxy_master, HTTPFlowContext
 from hippolyzer.lib.proxy.packets import Direction
-from hippolyzer.lib.proxy.message import ProxiedMessage, VerbatimHumanVal, proxy_eval
+from hippolyzer.lib.proxy.message import ProxiedMessage, VerbatimHumanVal, proxy_eval, SpannedString
 from hippolyzer.lib.proxy.message_logger import LLUDPMessageLogEntry, AbstractMessageLogEntry
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session, SessionManager
@@ -161,6 +161,8 @@ class ProxyGUI(QtWidgets.QMainWindow):
                      "ViewerAsset GetTexture SetAlwaysRun GetDisplayNames MapImageService MapItemReply".split(" ")
     DEFAULT_FILTER = f"!({' || '.join(ignored for ignored in DEFAULT_IGNORE)})"
 
+    textRequest: QtWidgets.QTextEdit
+
     def __init__(self):
         super().__init__()
         loadUi(MAIN_WINDOW_UI_PATH, self)
@@ -263,6 +265,12 @@ class ProxyGUI(QtWidgets.QMainWindow):
             beautify=self.checkBeautify.isChecked(),
             replacements=self.buildReplacements(entry.session, entry.region),
         )
+        highlight_range = None
+        if isinstance(req, SpannedString):
+            match_result = self.model.filter.match(entry)
+            # Match result was a tuple indicating what matched
+            if isinstance(match_result, tuple):
+                highlight_range = req.spans.get(match_result)
         resp = entry.response(beautify=self.checkBeautify.isChecked())
         self.textRequest.setPlainText(req)
         if resp:
@@ -270,6 +278,13 @@ class ProxyGUI(QtWidgets.QMainWindow):
             self.textResponse.setPlainText(resp)
         else:
             self.textResponse.hide()
+
+        if highlight_range:
+            cursor = self.textRequest.textCursor()
+            cursor.setPosition(highlight_range[0], QtGui.QTextCursor.KeepAnchor)
+            highlight_format = QtGui.QTextBlockFormat()
+            highlight_format.setBackground(QtCore.Qt.yellow)
+            cursor.setBlockFormat(highlight_format)
 
     def beforeInsert(self):
         vbar = self.tableView.verticalScrollBar()

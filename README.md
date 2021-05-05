@@ -301,8 +301,6 @@ If you are a viewer developer, please put them in a viewer.
 
 * AISv3 wrapper?
 * Higher level wrappers for common things? I don't really need these, so only if people want to write them.
-* Highlight matched portion of message in log view, if applicable
-* * Remember deep filters and return a map of them, have message formatter return text ranges?
 * Move things out of `templates.py`, right now most binary serialization stuff lives there
   because it's more convenient for me to hot-reload.
 * Ability to add menus?
