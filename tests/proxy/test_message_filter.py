@@ -1,13 +1,17 @@
 import unittest
 
+from mitmproxy.test import tflow, tutils
+
 from hippolyzer.lib.base.datatypes import Vector3
 from hippolyzer.lib.base.message.message import Block
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.settings import Settings
+from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
+from hippolyzer.lib.proxy.http_proxy import SerializedCapData
 from hippolyzer.lib.proxy.message import ProxiedMessage as Message
-from hippolyzer.lib.proxy.message_logger import LLUDPMessageLogEntry
+from hippolyzer.lib.proxy.message_logger import LLUDPMessageLogEntry, HTTPMessageLogEntry
 from hippolyzer.lib.proxy.message_filter import compile_filter
-
+from hippolyzer.lib.proxy.sessions import SessionManager
 
 OBJECT_UPDATE = b'\xc0\x00\x00\x00Q\x00\x0c\x00\x01\xea\x03\x00\x02\xe6\x03\x00\x01\xbe\xff\x01\x06\xbc\x8e\x0b\x00' \
                 b'\x01i\x94\x8cjM"\x1bf\xec\xe4\xac1c\x93\xcbKW\x89\x98\x01\t\x03\x00\x01Q@\x88>Q@\x88>Q@\x88><\xa2D' \
@@ -104,6 +108,17 @@ class MessageFilterTests(unittest.TestCase):
         entry = LLUDPMessageLogEntry(update_msg, None, None)
         self.assertTrue(self._filter_matches("ObjectUpdate.ObjectData.ObjectData.Position > (88, 41, 25)", entry))
         self.assertTrue(self._filter_matches("ObjectUpdate.ObjectData.ObjectData.Position < (90, 43, 27)", entry))
+
+    def test_http_flow(self):
+        session_manager = SessionManager()
+        fake_flow = tflow.tflow(req=tutils.treq(), resp=tutils.tresp())
+        fake_flow.metadata["cap_data_ser"] = SerializedCapData(
+            cap_name="FakeCap",
+        )
+        flow = HippoHTTPFlow.from_state(fake_flow.get_state(), session_manager)
+        entry = HTTPMessageLogEntry(flow)
+        self.assertTrue(self._filter_matches("FakeCap", entry))
+        self.assertFalse(self._filter_matches("NotFakeCap", entry))
 
 
 if __name__ == "__main__":
