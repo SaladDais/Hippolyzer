@@ -126,8 +126,6 @@ class TestMessage(unittest.TestCase):
     def test_partial_decode_pickle(self):
         msg = self.deserial.deserialize(self.serial.serialize(self.chat_msg))
         self.assertEqual(msg.deserializer(), self.deserial)
-        # Have to remove the weak ref so we can pickle
-        msg.deserializer = None
         msg = pickle.loads(pickle.dumps(msg, protocol=pickle.HIGHEST_PROTOCOL))
 
         # We should still have the raw body at this point
