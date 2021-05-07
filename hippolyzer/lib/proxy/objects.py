@@ -156,6 +156,12 @@ class ObjectManager:
                     del old_parent.Children[idx]
                 else:
                     # Something is very broken if this happens
+                    # TODO: This seems to be triggered on attachments of avatars that left and re-entered
+                    #  the sim. This gets triggered because the LocalID of the existing object gets changed
+                    #  inside the handler because the object is looked up by FullID (which doesn't change
+                    #  when a prim leaves the sim.) Need to figure out the correct behaviour for this case.
+                    #  This was being masked before because the mutation of the `LocalID` was ignored inside
+                    #  `Object.update_properties()` as the field was `ID`, not `LocalID`.
                     LOG.warning(f"Changing parent of {obj.LocalID}, but old parent didn't correctly adopt, "
                                 f"was {'' if removed else 'not '}in orphan list")
             else:
