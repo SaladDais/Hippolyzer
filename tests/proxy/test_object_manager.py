@@ -12,6 +12,7 @@ from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.objects import ObjectManager
 from hippolyzer.lib.proxy.message import ProxiedMessage as Message
+from hippolyzer.lib.proxy.templates import PCode
 
 
 class MockRegion:
@@ -43,9 +44,11 @@ class ObjectManagerTests(unittest.TestCase):
         self.object_addon = ObjectTrackingAddon()
         AddonManager.init([], None, [self.object_addon])
 
-    def _create_object_update(self, local_id=None, full_id=None, parent_id=None, pos=None, rot=None) -> Message:
+    def _create_object_update(self, local_id=None, full_id=None, parent_id=None, pos=None, rot=None,
+                              pcode=None) -> Message:
         pos = pos if pos is not None else (1.0, 2.0, 3.0)
         rot = rot if rot is not None else (0.0, 0.0, 0.0, 1.0)
+        pcode = pcode if pcode is not None else 9
         msg = Message(
             "ObjectUpdate",
             Block("RegionData", RegionHandle=123, TimeDilation=123),
@@ -53,7 +56,7 @@ class ObjectManagerTests(unittest.TestCase):
                 "ObjectData",
                 ID=local_id if local_id is not None else random.getrandbits(32),
                 FullID=full_id if full_id else UUID.random(),
-                PCode=9,
+                PCode=pcode,
                 Scale=Vector3(0.5, 0.5, 0.5),
                 UpdateFlags=268568894,
                 PathCurve=16,
@@ -85,8 +88,9 @@ class ObjectManagerTests(unittest.TestCase):
         # Run through (de)serializer to fill in any missing vars
         return self.deserializer.deserialize(self.serializer.serialize(msg))
 
-    def _create_object(self, local_id=None, full_id=None, parent_id=None, pos=None, rot=None) -> Object:
-        msg = self._create_object_update(local_id=local_id, full_id=full_id, parent_id=parent_id, pos=pos, rot=rot)
+    def _create_object(self, local_id=None, full_id=None, parent_id=None, pos=None, rot=None, pcode=None) -> Object:
+        msg = self._create_object_update(
+            local_id=local_id, full_id=full_id, parent_id=parent_id, pos=pos, rot=rot, pcode=pcode)
         self.message_handler.handle(msg)
         return self.object_manager.lookup_fullid(msg["ObjectData"]["FullID"])
 
@@ -122,14 +126,33 @@ class ObjectManagerTests(unittest.TestCase):
         self.assertEqual(set(), self.object_manager.missing_locals)
         self.assertSequenceEqual([child.LocalID], parent.ChildIDs)
 
-    def test_killing_parent_orphans_children(self):
-        child = self._create_object(local_id=2, parent_id=1)
+    def test_killing_parent_kills_children(self):
+        _child = self._create_object(local_id=2, parent_id=1)
         parent = self._create_object(local_id=1)
         # This should orphan the child again
         self._kill_object(parent)
         parent = self._create_object(local_id=1)
-        # Did we pick the orphan back up?
-        self.assertSequenceEqual([child.LocalID], parent.ChildIDs)
+        # We should not have picked up any children
+        self.assertSequenceEqual([], parent.ChildIDs)
+
+    def test_hierarchy_killed(self):
+        _child = self._create_object(local_id=3, parent_id=2)
+        _other_child = self._create_object(local_id=4, parent_id=2)
+        _parent = self._create_object(local_id=2, parent_id=1)
+        grandparent = self._create_object(local_id=1)
+        # KillObject implicitly kills all known descendents at that point
+        self._kill_object(grandparent)
+        self.assertEqual(0, len(self.object_manager))
+
+    def test_hierarchy_avatar_not_killed(self):
+        _child = self._create_object(local_id=3, parent_id=2)
+        _parent = self._create_object(local_id=2, parent_id=1, pcode=PCode.AVATAR)
+        grandparent = self._create_object(local_id=1)
+        # KillObject should only "unsit" child avatars (does this require an ObjectUpdate
+        # or is ParentID=0 implied?)
+        self._kill_object(grandparent)
+        self.assertEqual(2, len(self.object_manager))
+        self.assertIsNotNone(self.object_manager.lookup_localid(2))
 
     def test_attachment_orphan_parent_tracking(self):
         """
@@ -140,15 +163,6 @@ class ObjectManagerTests(unittest.TestCase):
         """
         child = self._create_object(local_id=3, parent_id=2)
         parent = self._create_object(local_id=2, parent_id=1)
-        self.assertSequenceEqual([child.LocalID], parent.ChildIDs)
-
-    def test_killing_attachment_parent_orphans_children(self):
-        child = self._create_object(local_id=3, parent_id=2)
-        parent = self._create_object(local_id=2, parent_id=1)
-        # This should orphan the child again
-        self._kill_object(parent)
-        parent = self._create_object(local_id=2, parent_id=1)
-        # Did we pick the orphan back up?
         self.assertSequenceEqual([child.LocalID], parent.ChildIDs)
 
     def test_unparenting_succeeds(self):

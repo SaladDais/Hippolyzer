@@ -44,8 +44,8 @@ class OrphanManager:
             del self._orphans[parent_id]
         return removed
 
-    def collect_orphans(self, parent: Object) -> typing.Sequence[int]:
-        return self._orphans.pop(parent.LocalID, [])
+    def collect_orphans(self, parent_localid: int) -> typing.Sequence[int]:
+        return self._orphans.pop(parent_localid, [])
 
     def track_orphan(self, obj: Object):
         self.track_orphan_by_id(obj.LocalID, obj.ParentID)
@@ -60,7 +60,11 @@ OBJECT_OR_LOCAL = typing.Union[Object, int]
 
 
 class ObjectManager:
-    """Object manager for a specific region"""
+    """
+    Object manager for a specific region
+
+    TODO: does this model make sense given how region->region object handoff works?
+    """
 
     def __init__(self, region: ProxiedRegion):
         self._localid_lookup: typing.Dict[int, Object] = {}
@@ -86,6 +90,9 @@ class ObjectManager:
                                               self._handle_get_object_cost)
         message_handler.subscribe("KillObject",
                                   self._handle_kill_object)
+
+    def __len__(self):
+        return len(self._localid_lookup)
 
     @property
     def all_objects(self) -> typing.Iterable[Object]:
@@ -115,7 +122,7 @@ class ObjectManager:
         self._parent_object(obj)
 
         # Adopt any of our orphaned child objects.
-        for orphan_local in self._orphan_manager.collect_orphans(obj):
+        for orphan_local in self._orphan_manager.collect_orphans(obj.LocalID):
             child_obj = self.lookup_localid(orphan_local)
             # Shouldn't be any dead children in the orphanage
             assert child_obj is not None
@@ -131,9 +138,6 @@ class ObjectManager:
             assert child_obj is not None
             self._unparent_object(child_obj, child_obj.ParentID)
 
-        del self._localid_lookup[obj.LocalID]
-        del self._fullid_lookup[obj.FullID]
-
         # Place any remaining unkilled children in the orphanage
         for child_id in former_child_ids:
             self._orphan_manager.track_orphan_by_id(child_id, obj.LocalID)
@@ -142,6 +146,10 @@ class ObjectManager:
 
         # Make sure the parent knows we went away
         self._unparent_object(obj, obj.ParentID)
+
+        # Do this last in case we only have a weak reference
+        del self._fullid_lookup[obj.FullID]
+        del self._localid_lookup[obj.LocalID]
 
     def _parent_object(self, obj: Object, insert_at_head=False):
         if obj.ParentID:
@@ -186,15 +194,17 @@ class ObjectManager:
 
         actually_updated_props = set()
 
-        # This seems to be triggered on attachments of avatars that left and re-entered
-        # the sim. This gets triggered because the LocalID of the existing object gets changed
-        # inside the handler because the object is looked up by FullID (which doesn't change
-        # when a prim leaves the sim.) Need to figure out the correct behaviour for this case.
         if obj.LocalID != new_properties.get("LocalID", obj.LocalID):
             # Our LocalID changed, and we deal with linkages to other prims by
             # LocalID association. Break any links since our LocalID is changing.
+            # Could happen if we didn't mark an attachment prim dead and the parent agent
+            # came back into the sim. Attachment FullIDs do not change across TPs,
+            # LocalIDs do. This at least lets us partially recover from the bad state.
+            new_localid = new_properties["LocalID"]
+            LOG.warning(f"Got an update with new LocalID for {obj.FullID}, {obj.LocalID} != {new_localid}. "
+                        f"May have mishandled a KillObject for a prim that left and re-entered region.")
             self._untrack_object(obj)
-            obj.LocalID = new_properties["LocalID"]
+            obj.LocalID = new_localid
             self._track_object(obj, notify=False)
             actually_updated_props |= {"LocalID"}
 
@@ -369,15 +379,37 @@ class ObjectManager:
     def _handle_kill_object(self, packet: ProxiedMessage):
         seen_locals = []
         for block in packet["ObjectData"]:
-            obj = self.lookup_localid(block["ID"])
+            self._kill_object_by_local_id(block["ID"])
             seen_locals.append(block["ID"])
-            self.missing_locals -= {block["ID"]}
-            if obj:
-                AddonManager.handle_object_killed(self._region.session(), self._region, obj)
-                self._untrack_object(obj)
-            else:
-                logging.debug(f"Received {packet.name} for unknown {block['ID']}")
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
+
+    def _kill_object_by_local_id(self, local_id: int):
+        obj = self.lookup_localid(local_id)
+        self.missing_locals -= {local_id}
+        child_ids: Sequence[int]
+        if obj:
+            AddonManager.handle_object_killed(self._region.session(), self._region, obj)
+            child_ids = obj.ChildIDs
+        else:
+            LOG.debug(f"Tried to kill unknown object {local_id}")
+            # If it had any orphans, they need to die.
+            child_ids = self._orphan_manager.collect_orphans(local_id)
+
+        # KillObject implicitly kills descendents
+        # This may mutate child_ids, use the reversed iterator so we don't
+        # invalidate the iterator during removal.
+        for child_id in reversed(child_ids):
+            # indra special-cases avatar PCodes and doesn't mark them dead
+            # due to cascading kill. Is this correct? Do avatars require
+            # explicit kill?
+            child_obj = self.lookup_localid(child_id)
+            if child_obj and child_obj.PCode == PCode.AVATAR:
+                continue
+            self._kill_object_by_local_id(child_id)
+
+        # Have to do this last, since untracking will clear child IDs
+        if obj:
+            self._untrack_object(obj)
 
     def _handle_get_object_cost(self, flow: HippoHTTPFlow):
         parsed = llsd.parse_xml(flow.response.content)
