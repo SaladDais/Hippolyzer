@@ -39,6 +39,7 @@ class MeshAsset:
 # These TypedDicts describe the expected shape of the LLSD in the mesh
 # header and various segments. They're mainly for type hinting.
 class MeshHeaderDict(TypedDict, total=False):
+    """Header of the mesh file, includes offsets & sizes for segments' LLSD"""
     version: int
     creator: UUID
     date: dt.datetime
@@ -54,6 +55,7 @@ class MeshHeaderDict(TypedDict, total=False):
 
 
 class SegmentHeaderDict(TypedDict):
+    """Standard shape for segment references within the header"""
     offset: int
     size: int
 
@@ -73,6 +75,7 @@ class PhysicsHavokSegmentHeaderDict(PhysicsSegmentHeaderDict, total=False):
 
 
 class PhysicsCostDataHeaderDict(TypedDict, total=False):
+    """Cost of physical representation, populated by server"""
     decomposition: float
     decomposition_discounted_vertices: int
     decomposition_hulls: int
@@ -85,6 +88,7 @@ class PhysicsCostDataHeaderDict(TypedDict, total=False):
 
 
 class MeshSegmentDict(TypedDict, total=False):
+    """Dict of segments unpacked using the MeshHeaderDict"""
     high_lod: List[LODSegmentDict]
     medium_lod: List[LODSegmentDict]
     low_lod: List[LODSegmentDict]
@@ -96,6 +100,7 @@ class MeshSegmentDict(TypedDict, total=False):
 
 
 class LODSegmentDict(TypedDict, total=False):
+    """Represents a single entry within the material list of a LOD segment"""
     # Only present if True and no geometry
     NoGeometry: bool
     # -1.0 - 1.0
@@ -113,17 +118,22 @@ class LODSegmentDict(TypedDict, total=False):
 
 
 class DomainDict(TypedDict):
+    """Description of the real range for quantized coordinates"""
     # number of elems depends on what the domain is for, Vec2 or Vec3
     Max: List[float]
     Min: List[float]
 
 
 class VertexWeight(recordclass.datatuple):  # type: ignore
+    """Vertex weight for a specific joint on a specific vertex"""
+    # index of the joint within the joint_names list in the skin segment
     joint_idx: int
+    # 0.0 - 1.0
     weight: float
 
 
 class SkinSegmentDict(TypedDict, total=False):
+    """Rigging information"""
     joint_names: List[str]
     # model -> world transform matrix for model
     bind_shape_matrix: List[float]
@@ -137,14 +147,17 @@ class SkinSegmentDict(TypedDict, total=False):
 
 
 class PhysicsConvexSegmentDict(DomainDict, total=False):
+    """Data for convex hull collisions, populated by the client"""
+    # Min / Max domain vals are inline, unlike for LODs
     HullList: List[int]
-    # -1.0 - 1.0
+    # -1.0 - 1.0, dequantized from binary field of U16s
     Positions: List[Vector3]
-    # -1.0 - 1.0
+    # -1.0 - 1.0, dequantized from binary field of U16s
     BoundingVerts: List[Vector3]
 
 
 class PhysicsHavokSegmentDict(TypedDict, total=False):
+    """Cached data for Havok collisions, populated by sim and not used by client."""
     HullMassProps: MassPropsDict
     MOPP: MOPPDict
     MeshDecompMassProps: MassPropsDict
@@ -169,8 +182,11 @@ class MOPPDict(TypedDict, total=False):
 
 
 def positions_from_domain(positions: Iterable[TupleCoord], domain: DomainDict):
-    # Used for turning positions into their actual positions within the mesh / domain
-    # for ex: positions_from_domain(lod["Position"], lod["PositionDomain])
+    """
+    Used for turning positions into their actual positions within the mesh / domain
+
+    for ex: positions_from_domain(lod["Position"], lod["PositionDomain])
+    """
     lower = domain['Min']
     upper = domain['Max']
     return [
@@ -179,7 +195,7 @@ def positions_from_domain(positions: Iterable[TupleCoord], domain: DomainDict):
 
 
 def positions_to_domain(positions: Iterable[TupleCoord], domain: DomainDict):
-    # Used for turning positions into their actual positions within the mesh / domain
+    """Used for turning positions into their actual positions within the mesh / domain"""
     lower = domain['Min']
     upper = domain['Max']
     return [
@@ -187,7 +203,36 @@ def positions_to_domain(positions: Iterable[TupleCoord], domain: DomainDict):
     ]
 
 
+class VertexWeights(se.SerializableBase):
+    """Serializer for a list of joint weights on a single vertex"""
+    INFLUENCE_SER = se.QuantizedFloat(se.U16, 0.0, 1.0)
+    INFLUENCE_LIMIT = 4
+    INFLUENCE_TERM = 0xFF
+
+    @classmethod
+    def serialize(cls, vals, writer: se.BufferWriter, ctx=None):
+        if len(vals) > cls.INFLUENCE_LIMIT:
+            raise ValueError(f"{vals!r} is too long, can only have {cls.INFLUENCE_LIMIT} influences!")
+        for val in vals:
+            joint_idx, influence = val
+            writer.write(se.U8, joint_idx)
+            writer.write(cls.INFLUENCE_SER, influence, ctx=ctx)
+        if len(vals) != cls.INFLUENCE_LIMIT:
+            writer.write(se.U8, cls.INFLUENCE_TERM)
+
+    @classmethod
+    def deserialize(cls, reader: se.Reader, ctx=None):
+        influence_list = []
+        for _ in range(cls.INFLUENCE_LIMIT):
+            joint_idx = reader.read(se.U8)
+            if joint_idx == cls.INFLUENCE_TERM:
+                break
+            influence_list.append(VertexWeight(joint_idx, reader.read(cls.INFLUENCE_SER, ctx=ctx)))
+        return influence_list
+
+
 class SegmentSerializer:
+    """Serializer for binary fields within an LLSD object"""
     def __init__(self, templates):
         self._templates: Dict[str, se.SerializableBase] = templates
 
@@ -217,33 +262,6 @@ class SegmentSerializer:
         return new_segment
 
 
-class VertexWeights(se.SerializableBase):
-    INFLUENCE_SER = se.QuantizedFloat(se.U16, 0.0, 1.0)
-    INFLUENCE_LIMIT = 4
-    INFLUENCE_TERM = 0xFF
-
-    @classmethod
-    def serialize(cls, vals, writer: se.BufferWriter, ctx=None):
-        if len(vals) > cls.INFLUENCE_LIMIT:
-            raise ValueError(f"{vals!r} is too long, can only have {cls.INFLUENCE_LIMIT} influences!")
-        for val in vals:
-            joint_idx, influence = val
-            writer.write(se.U8, joint_idx)
-            writer.write(cls.INFLUENCE_SER, influence, ctx=ctx)
-        if len(vals) != cls.INFLUENCE_LIMIT:
-            writer.write(se.U8, cls.INFLUENCE_TERM)
-
-    @classmethod
-    def deserialize(cls, reader: se.Reader, ctx=None):
-        influence_list = []
-        for _ in range(cls.INFLUENCE_LIMIT):
-            joint_idx = reader.read(se.U8)
-            if joint_idx == cls.INFLUENCE_TERM:
-                break
-            influence_list.append(VertexWeight(joint_idx, reader.read(cls.INFLUENCE_SER, ctx=ctx)))
-        return influence_list
-
-
 LOD_SEGMENT_SERIALIZER = SegmentSerializer({
     # 16-bit indices to the verts making up the tri. Imposes a 16-bit
     # upper limit on verts in any given material in the mesh.
@@ -265,6 +283,7 @@ class LLMeshSerializer(se.SerializableBase):
     KNOWN_SEGMENTS = ("lowest_lod", "low_lod", "medium_lod", "high_lod",
                       "physics_mesh", "physics_convex", "skin", "physics_havok")
 
+    # Define unpackers for specific binary fields within the parsed LLSD segments
     SEGMENT_TEMPLATES: Dict[str, SegmentSerializer] = {
         "lowest_lod": LOD_SEGMENT_SERIALIZER,
         "low_lod": LOD_SEGMENT_SERIALIZER,
