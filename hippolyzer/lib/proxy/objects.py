@@ -106,7 +106,7 @@ class ObjectManager:
             return None
         return self.lookup_localid(local_id)
 
-    def _track_object(self, obj: Object):
+    def _track_object(self, obj: Object, notify: bool = True):
         self._localid_lookup[obj.LocalID] = obj
         self._fullid_lookup[obj.FullID] = obj.LocalID
         # If it was missing, it's not missing anymore.
@@ -121,7 +121,27 @@ class ObjectManager:
             assert child_obj is not None
             self._parent_object(child_obj)
 
-        self._notify_object_updated(obj, set(obj.to_dict().keys()))
+        if notify:
+            self._notify_object_updated(obj, set(obj.to_dict().keys()))
+
+    def _untrack_object(self, obj: Object):
+        former_child_ids = obj.ChildIDs[:]
+        for child_id in former_child_ids:
+            child_obj = self.lookup_localid(child_id)
+            assert child_obj is not None
+            self._unparent_object(child_obj, child_obj.ParentID)
+
+        del self._localid_lookup[obj.LocalID]
+        del self._fullid_lookup[obj.FullID]
+
+        # Place any remaining unkilled children in the orphanage
+        for child_id in former_child_ids:
+            self._orphan_manager.track_orphan_by_id(child_id, obj.LocalID)
+
+        assert not obj.ChildIDs
+
+        # Make sure the parent knows we went away
+        self._unparent_object(obj, obj.ParentID)
 
     def _parent_object(self, obj: Object, insert_at_head=False):
         if obj.ParentID:
@@ -156,12 +176,6 @@ class ObjectManager:
                     del old_parent.Children[idx]
                 else:
                     # Something is very broken if this happens
-                    # TODO: This seems to be triggered on attachments of avatars that left and re-entered
-                    #  the sim. This gets triggered because the LocalID of the existing object gets changed
-                    #  inside the handler because the object is looked up by FullID (which doesn't change
-                    #  when a prim leaves the sim.) Need to figure out the correct behaviour for this case.
-                    #  This was being masked before because the mutation of the `LocalID` was ignored inside
-                    #  `Object.update_properties()` as the field was `ID`, not `LocalID`.
                     LOG.warning(f"Changing parent of {obj.LocalID}, but old parent didn't correctly adopt, "
                                 f"was {'' if removed else 'not '}in orphan list")
             else:
@@ -169,9 +183,24 @@ class ObjectManager:
 
     def _update_existing_object(self, obj: Object, new_properties):
         new_parent_id = new_properties.get("ParentID", obj.ParentID)
+
+        actually_updated_props = set()
+
+        # This seems to be triggered on attachments of avatars that left and re-entered
+        # the sim. This gets triggered because the LocalID of the existing object gets changed
+        # inside the handler because the object is looked up by FullID (which doesn't change
+        # when a prim leaves the sim.) Need to figure out the correct behaviour for this case.
+        if obj.LocalID != new_properties.get("LocalID", obj.LocalID):
+            # Our LocalID changed, and we deal with linkages to other prims by
+            # LocalID association. Break any links since our LocalID is changing.
+            self._untrack_object(obj)
+            obj.LocalID = new_properties["LocalID"]
+            self._track_object(obj, notify=False)
+            actually_updated_props |= {"LocalID"}
+
         old_parent_id = obj.ParentID
 
-        actually_updated_props = obj.update_properties(new_properties)
+        actually_updated_props |= obj.update_properties(new_properties)
 
         if new_parent_id != old_parent_id:
             self._unparent_object(obj, old_parent_id)
@@ -345,24 +374,7 @@ class ObjectManager:
             self.missing_locals -= {block["ID"]}
             if obj:
                 AddonManager.handle_object_killed(self._region.session(), self._region, obj)
-
-                former_child_ids = obj.ChildIDs[:]
-                for child_id in former_child_ids:
-                    child_obj = self.lookup_localid(child_id)
-                    assert child_obj is not None
-                    self._unparent_object(child_obj, child_obj.ParentID)
-
-                del self._localid_lookup[obj.LocalID]
-                del self._fullid_lookup[obj.FullID]
-
-                # Place any remaining unkilled children in the orphanage
-                for child_id in former_child_ids:
-                    self._orphan_manager.track_orphan_by_id(child_id, obj.LocalID)
-
-                assert not obj.ChildIDs
-
-                # Make sure the parent knows we went away
-                self._unparent_object(obj, obj.ParentID)
+                self._untrack_object(obj)
             else:
                 logging.debug(f"Received {packet.name} for unknown {block['ID']}")
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
