@@ -18,6 +18,7 @@ from hippolyzer.lib.proxy.templates import PCode
 class MockRegion:
     def __init__(self, message_handler: MessageHandler):
         self.session = lambda: None
+        self.handle = 123
         self.message_handler = message_handler
         self.http_message_handler = MessageHandler()
 

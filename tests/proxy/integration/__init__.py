@@ -52,6 +52,7 @@ class BaseIntegrationTest(unittest.IsolatedAsyncioTestCase):
         self.session.open_circuit(self.client_addr, self.region_addr,
                                   self.protocol.transport)
         self.session.main_region = self.session.regions[-1]
+        self.session.main_region.handle = 0
 
     def _msg_to_datagram(self, msg: ProxiedMessage, src, dst, direction, socks_header=True):
         serialized = self.serializer.serialize(msg)

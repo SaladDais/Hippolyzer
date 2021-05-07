@@ -63,7 +63,15 @@ class ObjectManager:
     """
     Object manager for a specific region
 
-    TODO: does this model make sense given how region->region object handoff works?
+    TODO: This model does not make sense given how region->region object handoff works.
+     The ObjectManager has to notice when an ObjectUpdate for an object came from a
+     new region and update the associated region itself. It will not receive a KillObject
+     from the old region in the case of physical region crossings. Right now this means
+     physical objects or agents that physically cross a sim border get dangling object
+     references. This is not the case when they teleport, even across a small distance
+     to a neighbor, as that will send a KillObject in the old sim.
+     Needs to switch to one manager managing objects for a full session rather than one
+     manager per region.
     """
 
     def __init__(self, region: ProxiedRegion):
@@ -200,9 +208,10 @@ class ObjectManager:
             # Could happen if we didn't mark an attachment prim dead and the parent agent
             # came back into the sim. Attachment FullIDs do not change across TPs,
             # LocalIDs do. This at least lets us partially recover from the bad state.
+            # Currently known to happen due to physical region crossings, so only debug.
             new_localid = new_properties["LocalID"]
-            LOG.warning(f"Got an update with new LocalID for {obj.FullID}, {obj.LocalID} != {new_localid}. "
-                        f"May have mishandled a KillObject for a prim that left and re-entered region.")
+            LOG.debug(f"Got an update with new LocalID for {obj.FullID}, {obj.LocalID} != {new_localid}. "
+                      f"May have mishandled a KillObject for a prim that left and re-entered region.")
             self._untrack_object(obj)
             obj.LocalID = new_localid
             self._track_object(obj, notify=False)
@@ -352,8 +361,8 @@ class ObjectManager:
         seen_locals = []
         for block in packet['ObjectData']:
             object_data = self._normalize_object_update_compressed(block)
-            obj = self.lookup_localid(object_data["LocalID"])
             seen_locals.append(object_data["LocalID"])
+            obj = self.lookup_localid(object_data["LocalID"])
             if obj:
                 self._update_existing_object(obj, object_data)
             else:
