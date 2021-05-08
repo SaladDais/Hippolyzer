@@ -15,7 +15,8 @@ from defusedxml import minidom
 from hippolyzer.lib.base import serialization as se, llsd
 from hippolyzer.lib.base.datatypes import TaggedUnion, UUID, TupleCoord
 from hippolyzer.lib.base.helpers import bytes_escape
-from hippolyzer.lib.proxy.message_filter import MetaFieldSpecifier, compile_filter, BaseFilterNode, MessageFilterNode
+from hippolyzer.lib.proxy.message_filter import MetaFieldSpecifier, compile_filter, BaseFilterNode, MessageFilterNode, \
+    EnumFieldSpecifier
 from hippolyzer.lib.proxy.region import CapType
 
 if typing.TYPE_CHECKING:
@@ -254,6 +255,11 @@ class AbstractMessageLogEntry:
                     expected = expected()
                 else:
                     expected = str(expected)
+        elif isinstance(expected, EnumFieldSpecifier):
+            # Local import so we get a fresh copy of the templates module
+            from hippolyzer.lib.proxy import templates
+            enum_cls = getattr(templates, expected.enum_name)
+            expected = enum_cls[expected.field_name]
         elif expected is not None:
             # Unbox the expected value
             expected = expected.value
@@ -286,6 +292,8 @@ class AbstractMessageLogEntry:
             return val > expected
         elif operator == ">=":
             return val >= expected
+        elif operator == "&":
+            return val & expected
         else:
             raise ValueError(f"Unexpected operator {operator!r}")
 

@@ -11,6 +11,9 @@ def literal():
         # Nightmare. str or bytes literal.
         # https://stackoverflow.com/questions/14366401/#comment79795017_14366904
         RegExMatch(r'''b?(\"\"\"|\'\'\'|\"|\')((?<!\\)(\\\\)*\\\1|.)*?\1'''),
+        # base16
+        RegExMatch(r'0x\d+'),
+        # base10 int or float.
         RegExMatch(r'\d+(\.\d+)?'),
         "None",
         "True",
@@ -42,12 +45,16 @@ def meta_field_specifier():
     return "Meta", ".", identifier
 
 
+def enum_field_specifier():
+    return identifier, ".", identifier
+
+
 def compare_val():
-    return [literal, meta_field_specifier]
+    return [literal, meta_field_specifier, enum_field_specifier]
 
 
 def binary_expression():
-    return field_specifier, ["==", "!=", "^=", "$=", "~=", ">", ">=", "<", "<="], compare_val
+    return field_specifier, ["==", "!=", "^=", "$=", "~=", ">", ">=", "<", "<=", "&"], compare_val
 
 
 def term():
@@ -129,6 +136,11 @@ class MetaFieldSpecifier(str):
     pass
 
 
+class EnumFieldSpecifier(typing.NamedTuple):
+    enum_name: str
+    field_name: str
+
+
 class LiteralValue:
     """Only exists because we can't return `None` in a visitor, need to box it"""
     def __init__(self, value):
@@ -147,6 +159,9 @@ class MessageFilterVisitor(PTNodeVisitor):
 
     def visit_meta_field_specifier(self, _node, children):
         return MetaFieldSpecifier(children[0])
+
+    def visit_enum_field_specifier(self, _node, children):
+        return EnumFieldSpecifier(*children)
 
     def visit_unary_field_specifier(self, _node, children):
         # Looks like a bare field specifier with no operator

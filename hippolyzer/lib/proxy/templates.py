@@ -1283,8 +1283,8 @@ class ObjectUpdateExtraParamsSerializer(se.SimpleSubfieldSerializer):
     EMPTY_IS_NONE = True
 
 
-@se.enum_field_serializer("ObjectUpdate", "ObjectData", "Flags")
-class SoundFlags(enum.IntEnum):
+@se.flag_field_serializer("ObjectUpdate", "ObjectData", "Flags")
+class SoundFlags(enum.IntFlag):
     LOOP = 1 << 0
     SYNC_MASTER = 1 << 1
     SYNC_SLAVE = 1 << 2

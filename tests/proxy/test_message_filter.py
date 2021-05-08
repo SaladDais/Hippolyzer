@@ -50,8 +50,10 @@ class MessageFilterTests(unittest.TestCase):
     def test_equality(self):
         msg = LLUDPMessageLogEntry(Message("Foo", Block("Bar", Baz=1)), None, None)
         self.assertTrue(self._filter_matches("Foo.Bar.Baz == 1", msg))
+        self.assertTrue(self._filter_matches("Foo.Bar.Baz == 0x1", msg))
         msg.message["Bar"]["Baz"] = 2
         self.assertFalse(self._filter_matches("Foo.Bar.Baz == 1", msg))
+        self.assertFalse(self._filter_matches("Foo.Bar.Baz == 0x1", msg))
 
     def test_and(self):
         msg = LLUDPMessageLogEntry(Message("Foo", Block("Bar", Baz=1)), None, None)
@@ -98,6 +100,14 @@ class MessageFilterTests(unittest.TestCase):
         # Must be greater on all axes
         self.assertFalse(self._filter_matches("Foo.Bar.Baz < (0, 3, 0)", msg))
         self.assertTrue(self._filter_matches("Foo.Bar.Baz > (0, 0, 0)", msg))
+
+    def test_enum_specifier(self):
+        # 2 is the enum val for SculptType.TORUS
+        msg = LLUDPMessageLogEntry(Message("Foo", Block("Bar", Baz=2)), None, None)
+        self.assertTrue(self._filter_matches("Foo.Bar.Baz == SculptType.TORUS", msg))
+        # bitwise AND should work as well
+        self.assertTrue(self._filter_matches("Foo.Bar.Baz & SculptType.TORUS", msg))
+        self.assertFalse(self._filter_matches("Foo.Bar.Baz == SculptType.SPHERE", msg))
 
     def test_tagged_union_subfield(self):
         settings = Settings()
