@@ -119,6 +119,7 @@ class ProxiedMessage(Message):
                     end_len = len(string)
                     # Store the spans for each var so we can highlight specific matches
                     spans[(self.name, block_name, block_num, var_name)] = (start_len, end_len)
+                    string += "\n"
         spanned = SpannedString(string)
         spanned.spans = spans
         return spanned
@@ -145,7 +146,7 @@ class ProxiedMessage(Message):
                     if serializer.AS_HEX and isinstance(var_val, int):
                         var_data = hex(var_val)
                     if serializer.ORIG_INLINE:
-                        string += f" #{var_data}\n"
+                        string += f" #{var_data}"
                         return string
                     else:
                         string += "\n"
@@ -162,7 +163,7 @@ class ProxiedMessage(Message):
             if "CircuitCode" in var_name or ("Code" in var_name and "Circuit" in block.name):
                 if var_val == replacements.get("CIRCUIT_CODE"):
                     var_data = "[[CIRCUIT_CODE]]"
-        string += f"  {field_prefix}{var_name} = {var_data}\n"
+        string += f"  {field_prefix}{var_name} = {var_data}"
         return string
 
     @staticmethod

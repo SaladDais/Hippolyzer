@@ -271,20 +271,22 @@ class ProxyGUI(QtWidgets.QMainWindow):
             # Match result was a tuple indicating what matched
             if isinstance(match_result, tuple):
                 highlight_range = req.spans.get(match_result)
-        resp = entry.response(beautify=self.checkBeautify.isChecked())
+
         self.textRequest.setPlainText(req)
+        if highlight_range:
+            cursor = self.textRequest.textCursor()
+            cursor.setPosition(highlight_range[0], QtGui.QTextCursor.MoveAnchor)
+            cursor.setPosition(highlight_range[1], QtGui.QTextCursor.KeepAnchor)
+            highlight_format = QtGui.QTextBlockFormat()
+            highlight_format.setBackground(QtCore.Qt.yellow)
+            cursor.setBlockFormat(highlight_format)
+
+        resp = entry.response(beautify=self.checkBeautify.isChecked())
         if resp:
             self.textResponse.show()
             self.textResponse.setPlainText(resp)
         else:
             self.textResponse.hide()
-
-        if highlight_range:
-            cursor = self.textRequest.textCursor()
-            cursor.setPosition(highlight_range[0], QtGui.QTextCursor.KeepAnchor)
-            highlight_format = QtGui.QTextBlockFormat()
-            highlight_format.setBackground(QtCore.Qt.yellow)
-            cursor.setBlockFormat(highlight_format)
 
     def beforeInsert(self):
         vbar = self.tableView.verticalScrollBar()
