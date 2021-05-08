@@ -95,6 +95,9 @@ agent's session, you can do `(Meta.AgentID == None || Meta.AgentID == "d929385f-
 Vectors can also be compared. This will get any ObjectUpdate variant that occurs within a certain range:
 `(*ObjectUpdate*.ObjectData.*Data.Position > (110, 50, 100) && *ObjectUpdate*.ObjectData.*Data.Position < (115, 55, 105))`
 
+If you want to compare against an enum or a flag class in defined in `templates.py`, you can just specify its name:
+`ViewerEffect.Effect.Type == ViewerEffectType.EFFECT_BEAM`
+
 ### Logging
 
 Decoded messages are displayed in the log pane, clicking one will show the request and
