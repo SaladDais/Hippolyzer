@@ -26,7 +26,7 @@ def literal():
 
 
 def identifier():
-    return RegExMatch(r'[a-zA-Z*]([a-zA-Z0-9*]+)?')
+    return RegExMatch(r'[a-zA-Z*]([a-zA-Z0-9_*]+)?')
 
 
 def field_specifier():
