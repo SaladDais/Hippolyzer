@@ -1,3 +1,4 @@
+import itertools
 from pathlib import Path
 import shutil
 import sys
@@ -42,7 +43,8 @@ def _viewer_config_dir_iter():
     elif sys.platform == "darwin":
         paths = (Path.home() / "Library" / "Application Support").iterdir()
     elif sys.platform in ("win32", "msys", "cygwin"):
-        paths = (Path.home() / "AppData" / "Local").iterdir()
+        app_data = Path.home() / "AppData"
+        paths = itertools.chain((app_data / "Local").iterdir(), (app_data / "Roaming").iterdir())
     else:
         raise Exception("Unknown OS, can't locate viewer config dirs!")
 
