@@ -340,18 +340,18 @@ UDP proxy and an HTTP proxy.
 To have your client's traffic proxied through Hippolyzer the general flow is:
 
 * Open a TCP connection to Hippolyzer's SOCKS 5 proxy port
-* * This should be done once per logical user session, as Hippolyzer assumes a 1:1 mapping of SOCKS 
+* * This should be done once per logical user session, as Hippolyzer assumes a 1:1 mapping of SOCKS TCP 
     connections to SL sessions
 * Send a UDP associate command without authentication
 * The proxy will respond with a host / port pair that UDP messages may be sent through
-* At this point you will no longer need to use the TCP connection, but it must be kept 
+* At this point you will no longer need to use the TCP connection, but it must be kept
   alive until you want to break the UDP association
 * Whenever you send a UDP packet to a remote host, you'll need to instead send it to the host / port
   from the UDP associate response. A SOCKS 5 header must be prepended to the data indicating the ultimate destination
   of the packet
 * Any received UDP packets will also have a SOCKS 5 header indicating the real source IP and address
 * * When in doubt, check `socks_proxy.py`, `packets.py` and the SOCKS 5 RFC for more info on how to deal with SOCKS.
-* All HTTP requests must be sent through the Hippolyzer's HTTP proxy port. 
+* All HTTP requests must be sent through the Hippolyzer's HTTP proxy port.
 * * You may not need to do any extra plumbing to get this to work if your chosen HTTP client
     respects the `HTTP_PROXY` environment variable.
 * All HTTPS connections will be encrypted with the proxy's TLS key. You'll need to either add it to whatever

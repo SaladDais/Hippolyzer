@@ -33,7 +33,6 @@ def setup_ca_everywhere(mitmproxy_master):
             pass
         except PermissionError:
             pass
-
     return valid_paths
 
 
