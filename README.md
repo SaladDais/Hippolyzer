@@ -62,15 +62,26 @@ the [Alchemy](https://github.com/AlchemyViewer/Alchemy) viewer.
     On Linux that would be `~/.firestorm_x64/` if you're using Firestorm.
 * * Certificate validation can be disabled entirely through viewer debug setting `NoVerifySSLCert`,
     but is not recommended.
+
+#### Windows
+
+Windows viewers have broken SOCKS 5 proxy support. To work around that, you need to use a wrapper EXE that
+can make the viewer to correctly talk to Hippolyzer. Follow the instructions on https://github.com/SaladDais/WinHippoAutoProxy
+to start the viewer and run it through Hippolyzer.
+
+The proxy should _not_ be configured through the viewer's own preferences panel, it won't work correctly.
+
+#### OS X & Linux
+
+SOCKS 5 works correctly on these platforms, so you can just configure it through the
+`preferences -> network -> proxy settings` panel:
+
 * Start the viewer and configure it to use `127.0.0.1:9061` as a SOCKS proxy and `127.0.0.1:9062` as
   an HTTP proxy. You **must** select the option in the viewer to use the HTTP proxy for all HTTP
   traffic, or logins will fail.
 * Optionally, If you want to reduce HTTP proxy lag you can have asset requests bypass the HTTP proxy by setting
-  the `no_proxy` env var appropriately. For ex. `no_proxy="asset-cdn.glb.agni.lindenlab.com" ./firestorm` or
-  `setx /m "no_proxy" "asset-cdn.glb.agni.lindenlab.com"` on Windows.
+  the `no_proxy` env var appropriately. For ex. `no_proxy="asset-cdn.glb.agni.lindenlab.com" ./firestorm`.
 * Log in!
-
-![Proxy config in firestorm](https://github.com/SaladDais/Hippolyzer/blob/master/static/proxy_config.png?raw=true)
 
 ### Filtering
 
