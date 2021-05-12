@@ -122,6 +122,11 @@ class MITMProxyEventManager:
                     {
                         "Content-Type": "text/plain",
                         "Location": redir_url,
+                        # Need Connection: close because otherwise the viewer tries to pipeline.
+                        # This results in failing Range requests under mitmproxy that return garbage
+                        # data. Chances are there's weird interactions between HTTP/1.x pipelining and
+                        # range requests under mitmproxy that no other applications have hit.
+                        # Need to investigate other options (forced upgrade to HTTP/2?)
                         "Connection": "close",
                     }
                 )
