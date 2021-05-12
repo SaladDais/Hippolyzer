@@ -28,10 +28,13 @@ class ShieldAddon(BaseAddon):
             else:
                 expected_id = from_agent ^ session.agent_id
             msg_block["ID"] = expected_id
-        if message.name == "RequestXfer" and message["XferID"]["FilePath"] != XferFilePath.NONE:
-            show_message(f"Blocked suspicious {message.name} packet")
-            region.circuit.drop_message(message)
-            return True
+        if message.name == "RequestXfer":
+            xfer_block = message["XferID"][0]
+            # Don't allow Xfers for files, only assets
+            if xfer_block["FilePath"] != XferFilePath.NONE or xfer_block["Filename"].strip(b"\x00"):
+                show_message(f"Blocked suspicious {message.name} packet")
+                region.circuit.drop_message(message)
+                return True
 
 
 addons = [ShieldAddon()]
