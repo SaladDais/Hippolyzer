@@ -4,10 +4,9 @@ from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.packets import Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
-from hippolyzer.lib.proxy.templates import IMDialogType
+from hippolyzer.lib.proxy.templates import IMDialogType, XferFilePath
 
-SUSPICIOUS_PACKETS = {"RequestXfer", "TransferRequest", "UUIDNameRequest",
-                      "UUIDGroupNameRequest", "OpenCircuit"}
+SUSPICIOUS_PACKETS = {"TransferRequest", "UUIDNameRequest", "UUIDGroupNameRequest", "OpenCircuit"}
 REGULAR_IM_DIALOGS = (IMDialogType.TYPING_STOP, IMDialogType.TYPING_STOP, IMDialogType.NOTHING_SPECIAL)
 
 
@@ -29,6 +28,10 @@ class ShieldAddon(BaseAddon):
             else:
                 expected_id = from_agent ^ session.agent_id
             msg_block["ID"] = expected_id
+        if message.name == "RequestXfer" and message["XferID"]["FilePath"] != XferFilePath.NONE:
+            show_message(f"Blocked suspicious {message.name} packet")
+            region.circuit.drop_message(message)
+            return True
 
 
 addons = [ShieldAddon()]
