@@ -1,7 +1,8 @@
 """
 Outbound Xfer only.
 
-sim->viewer Xfer is only legitimately used for terrain so not worth implementing.
+TODO: sim->viewer RequestXfer is not implemented. It's still used for shape
+  and skin uploads, so it should be added.
 """
 from __future__ import annotations
 
@@ -141,5 +142,5 @@ class XferManager:
         ))
 
         xfer.chunks[packet_id.PacketID] = packet_data
-        if packet_id.IsEOF:
+        if packet_id.IsEOF and not xfer.done():
             xfer.mark_done()

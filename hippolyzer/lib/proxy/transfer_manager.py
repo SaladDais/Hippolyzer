@@ -136,7 +136,7 @@ class TransferManager:
         packet_id: int = transfer_block["Packet"]
         packet_data = transfer_block["Data"]
         transfer.chunks[packet_id] = packet_data
-        if transfer_block["Status"] == TransferStatus.DONE:
+        if transfer_block["Status"] == TransferStatus.DONE and not transfer.done():
             transfer.mark_done()
 
     def _handle_transfer_info(self, msg: ProxiedMessage, transfer: Transfer):
