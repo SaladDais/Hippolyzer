@@ -40,7 +40,7 @@ class Block:
     """
     __slots__ = ('name', 'size', 'vars', 'message_name', '_ser_cache', 'fill_missing',)
 
-    def __init__(self, name, /, fill_missing=False, **kwargs):
+    def __init__(self, name, *, /, fill_missing=False, **kwargs):
         self.name = name
         self.size = 0
         self.message_name: Optional[str] = None

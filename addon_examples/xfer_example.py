@@ -8,7 +8,7 @@ from hippolyzer.lib.proxy.commands import handle_command
 from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
-from hippolyzer.lib.proxy.templates import XferFilePath
+from hippolyzer.lib.proxy.templates import XferFilePath, AssetType
 
 
 class XferExampleAddon(BaseAddon):
