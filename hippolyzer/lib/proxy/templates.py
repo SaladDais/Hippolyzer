@@ -1568,6 +1568,29 @@ class RegionHandshakeReplyFlags(enum.IntFlag):
     SUPPORTS_SELF_APPEARANCE = 0x4  # inbound AvatarAppearance for self is ok
 
 
+@se.flag_field_serializer("TeleportStart", "Info", "TeleportFlags")
+@se.flag_field_serializer("TeleportProgress", "Info", "TeleportFlags")
+@se.flag_field_serializer("TeleportFinish", "Info", "TeleportFlags")
+@se.flag_field_serializer("TeleportLureRequest", "Info", "TeleportFlags")
+class TeleportFlags(enum.IntFlag):
+    SET_HOME_TO_TARGET = 1 << 0  # newbie leaving prelude (starter area)
+    SET_LAST_TO_TARGET = 1 << 1
+    VIA_LURE = 1 << 2
+    VIA_LANDMARK = 1 << 3
+    VIA_LOCATION = 1 << 4
+    VIA_HOME = 1 << 5
+    VIA_TELEHUB = 1 << 6
+    VIA_LOGIN = 1 << 7
+    VIA_GODLIKE_LURE = 1 << 8
+    GODLIKE = 1 << 9
+    NINE_ONE_ONE = 1 << 10  # What is this?
+    DISABLE_CANCEL = 1 << 11  # Used for llTeleportAgentHome()
+    VIA_REGION_ID = 1 << 12
+    IS_FLYING = 1 << 13
+    SHOW_RESET_HOME = 1 << 14
+    FORCE_REDIRECT = 1 << 15
+
+
 @se.http_serializer("RenderMaterials")
 class RenderMaterialsSerializer(se.BaseHTTPSerializer):
     @classmethod
