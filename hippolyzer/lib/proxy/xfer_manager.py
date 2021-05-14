@@ -158,7 +158,7 @@ class XferManager:
             transaction_id = UUID.random()
         xfer = Xfer()
         chunk_num = 0
-        # prepend the length expected length
+        # Prepend the expected length field to the first chunk
         data = TemplateDataPacker.pack(len(data), MsgType.MVT_S32) + data
         while data:
             xfer.chunks[chunk_num] = data[:1200]
