@@ -8,7 +8,7 @@ import weakref
 from typing import *
 
 from hippolyzer.lib.base import llsd
-from hippolyzer.lib.base.datatypes import UUID, TaggedUnion
+from hippolyzer.lib.base.datatypes import UUID, TaggedUnion, Vector3
 from hippolyzer.lib.base.helpers import proxify
 from hippolyzer.lib.base.message.message import Block
 from hippolyzer.lib.base.namevalue import NameValueCollection
@@ -77,6 +77,7 @@ class ObjectManager:
     def __init__(self, region: ProxiedRegion):
         self._localid_lookup: typing.Dict[int, Object] = {}
         self._fullid_lookup: typing.Dict[UUID, int] = {}
+        self._coarse_locations: typing.Dict[UUID, Vector3] = {}
         # Objects that we've seen references to but don't have data for
         self.missing_locals = set()
         self._region: ProxiedRegion = proxify(region)
@@ -86,6 +87,8 @@ class ObjectManager:
         message_handler.subscribe("ObjectUpdate", self._handle_object_update)
         message_handler.subscribe("ImprovedTerseObjectUpdate",
                                   self._handle_terse_object_update)
+        message_handler.subscribe("CoarseLocationUpdate",
+                                  self._handle_coarse_location_update)
         message_handler.subscribe("ObjectUpdateCompressed",
                                   self._handle_object_update_compressed)
         message_handler.subscribe("ObjectUpdateCached",
@@ -111,6 +114,16 @@ class ObjectManager:
         # This is only avatars within draw distance. Might be useful to have another
         # accessor for UUID + pos that's based on CoarseLocationUpdate.
         return (o for o in self.all_objects if o.PCode == PCode.AVATAR)
+
+    @property
+    def agent_positions(self) -> typing.Dict[UUID, Vector3]:
+        agent_positions: typing.Dict[UUID, Vector3] = {}
+        for agent_id, coarse_location in self._coarse_locations.items():
+            agent_positions[agent_id] = coarse_location
+            agent_obj = self.lookup_fullid(agent_id)
+            if agent_obj:
+                agent_positions[agent_id] = agent_obj.RegionPosition
+        return agent_positions
 
     def lookup_localid(self, localid) -> typing.Optional[Object]:
         return self._localid_lookup.get(localid, None)
@@ -308,6 +321,22 @@ class ObjectManager:
 
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
+    def _handle_coarse_location_update(self, packet: ProxiedMessage):
+        self._coarse_locations.clear()
+
+        coarse_locations: typing.Dict[UUID, Vector3] = {}
+        for agent_block, location_block in zip(packet["AgentData"], packet["Location"]):
+            coarse_locations[agent_block["AgentID"]] = Vector3(
+                location_block["X"],
+                location_block["Y"],
+                # The z-axis is multiplied by 4 to obtain true Z location
+                # The z-axis is also limited to 1020m in height
+                # http://wiki.secondlife.com/wiki/CoarseLocationUpdate
+                location_block["Z"] * 4
+            )
+
+        self._coarse_locations.update(coarse_locations)
+
     def _handle_object_update_cached(self, packet: ProxiedMessage):
         seen_locals = []
         for block in packet['ObjectData']:
@@ -438,6 +467,7 @@ class ObjectManager:
     def clear(self):
         self._localid_lookup.clear()
         self._fullid_lookup.clear()
+        self._coarse_locations.clear()
         self._orphan_manager.clear()
         self.missing_locals.clear()
 
