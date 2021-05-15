@@ -244,6 +244,42 @@ class ObjectManagerTests(unittest.TestCase):
         self.assertEqual(parent.RegionPosition, (0.0, 0.0, 0.0))
         self.assertEqual(child.RegionPosition, (1.0, 2.0, 0.0))
 
+    def test_avatar_locations(self):
+        agent1_id = UUID.random()
+        agent2_id = UUID.random()
+        self.message_handler.handle(Message(
+            "CoarseLocationUpdate",
+            Block("AgentData", AgentID=agent1_id),
+            Block("AgentData", AgentID=agent2_id),
+            Block("Location", X=1, Y=2, Z=3),
+            Block("Location", X=2, Y=3, Z=4),
+        ))
+        self.assertDictEqual(self.object_manager.avatar_positions, {
+            # CoarseLocation's Z axis is multiplied by 4
+            agent1_id: Vector3(1, 2, 12),
+            agent2_id: Vector3(2, 3, 16),
+        })
 
-if __name__ == "__main__":
-    unittest.main()
+        # Simulate an avatar sitting on an object
+        seat_object = self._create_object(pos=(0, 0, 3))
+        # If we have a real object pos it should override coarse pos
+        avatar_obj = self._create_object(full_id=agent1_id, pcode=PCode.AVATAR,
+                                         parent_id=seat_object.LocalID, pos=Vector3(0, 0, 2))
+        self.assertDictEqual(self.object_manager.avatar_positions, {
+            # Agent is seated, make sure this is region and not local pos
+            agent1_id: Vector3(0, 0, 5),
+            agent2_id: Vector3(2, 3, 16),
+        })
+
+        # If the object is killed and no coarse pos, it shouldn't be in the dict
+        # CoarseLocationUpdates are expected to be complete, so any agents missing
+        # are no longer in the sim.
+        self._kill_object(avatar_obj)
+        self.message_handler.handle(Message(
+            "CoarseLocationUpdate",
+            Block("AgentData", AgentID=agent2_id),
+            Block("Location", X=2, Y=3, Z=4),
+        ))
+        self.assertDictEqual(self.object_manager.avatar_positions, {
+            agent2_id: Vector3(2, 3, 16),
+        })

@@ -58,6 +58,8 @@ class OrphanManager:
 
 OBJECT_OR_LOCAL = typing.Union[Object, int]
 
+LOCATION_DICT = typing.Dict[UUID, Vector3]
+
 
 class ObjectManager:
     """
@@ -111,21 +113,24 @@ class ObjectManager:
 
     @property
     def all_avatars(self) -> typing.Iterable[Object]:
-        # This is only avatars within draw distance. Might be useful to have another
-        # accessor for UUID + pos that's based on CoarseLocationUpdate.
+        # TODO: this should return some sort of Avatar wrapper object that
+        #  has the position, name, and `Object` reference (if available) for
+        #  any known avatars. Should hook `GetDisplayName` and `UUIDNameReply`
+        #  at the session level for name lookup.
         return (o for o in self.all_objects if o.PCode == PCode.AVATAR)
 
     @property
-    def agent_positions(self) -> typing.Dict[UUID, Vector3]:
-        agent_positions: typing.Dict[UUID, Vector3] = {}
+    def avatar_positions(self) -> LOCATION_DICT:
+        avatar_positions: LOCATION_DICT = {}
         for agent_id, coarse_location in self._coarse_locations.items():
-            agent_positions[agent_id] = coarse_location
+            # Tag the position type so we can tell if a position may not be exact
+            avatar_positions[agent_id] = coarse_location
             agent_obj = self.lookup_fullid(agent_id)
             if agent_obj:
-                agent_positions[agent_id] = agent_obj.RegionPosition
-        return agent_positions
+                avatar_positions[agent_id] = agent_obj.RegionPosition
+        return avatar_positions
 
-    def lookup_localid(self, localid) -> typing.Optional[Object]:
+    def lookup_localid(self, localid: int) -> typing.Optional[Object]:
         return self._localid_lookup.get(localid, None)
 
     def lookup_fullid(self, fullid: UUID) -> typing.Optional[Object]:
