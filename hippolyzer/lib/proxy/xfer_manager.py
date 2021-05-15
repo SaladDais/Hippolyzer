@@ -1,16 +1,14 @@
 """
-Outbound Xfer only.
-
-TODO: sim->viewer RequestXfer is not implemented. It's still used for shape
-  and skin uploads, so it should be added.
+Managers for inbound and outbound xfer as well as the AssetUploadRequest flow
 """
 from __future__ import annotations
 
 import asyncio
+import enum
 import random
 from typing import *
 
-from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.datatypes import UUID, RawBytes
 from hippolyzer.lib.base.helpers import proxify
 from hippolyzer.lib.base.message.data_packer import TemplateDataPacker
 from hippolyzer.lib.base.message.message import Block
@@ -64,6 +62,11 @@ class Xfer:
 
     def __await__(self) -> Generator[Any, None, Xfer]:
         return self._future.__await__()
+
+
+class UploadStrategy(enum.IntEnum):
+    XFER = enum.auto()
+    ASSET_UPLOAD_REQUEST = enum.auto()
 
 
 class XferManager:
@@ -152,17 +155,33 @@ class XferManager:
             store_local: bool = False,
             temp_file: bool = False,
             transaction_id: Optional[UUID] = None,
-    ):
+            upload_strategy: Optional[UploadStrategy] = None,
+    ) -> asyncio.Future[UUID]:
         """Upload an asset through the Xfer upload path"""
         if not transaction_id:
             transaction_id = UUID.random()
-        xfer = Xfer()
-        chunk_num = 0
-        # Prepend the expected length field to the first chunk
-        data = TemplateDataPacker.pack(len(data), MsgType.MVT_S32) + data
-        while data:
-            xfer.chunks[chunk_num] = data[:1200]
-            data = data[1200:]
+
+        # Small amounts of data can be sent inline, decide based on size
+        if upload_strategy is None:
+            if len(data) >= 1150:
+                upload_strategy = UploadStrategy.XFER
+            else:
+                upload_strategy = UploadStrategy.ASSET_UPLOAD_REQUEST
+
+        xfer = None
+        inline_data = b''
+        if upload_strategy == UploadStrategy.XFER:
+            # Prepend the expected length field to the first chunk
+            if not isinstance(data, RawBytes):
+                data = TemplateDataPacker.pack(len(data), MsgType.MVT_S32) + data
+            xfer = Xfer()
+            chunk_num = 0
+            while data:
+                xfer.chunks[chunk_num] = data[:1150]
+                data = data[1150:]
+        else:
+            inline_data = data
+
         self._region.circuit.send_message(ProxiedMessage(
             "AssetUploadRequest",
             Block(
@@ -171,42 +190,43 @@ class XferManager:
                 Type=asset_type,
                 Tempfile=temp_file,
                 StoreLocal=store_local,
-                # Can shove in here for assets smaller than 1200 bytes, always
-                # use the long, Xfer path for now.
-                AssetData=b'',
+                AssetData=inline_data,
             )
         ))
         fut = asyncio.Future()
         asyncio.create_task(self._pump_asset_upload(xfer, transaction_id, fut))
         return fut
 
-    async def _pump_asset_upload(self, xfer: Xfer, transaction_id: UUID, fut: asyncio.Future):
+    async def _pump_asset_upload(self, xfer: Optional[Xfer], transaction_id: UUID, fut: asyncio.Future):
         message_handler = self._region.message_handler
         # We'll receive an Xfer request for the asset we're uploading.
         # asset ID is determined by hashing secure session ID with chosen transaction ID.
         asset_id: UUID = self._region.session().tid_to_assetid(transaction_id)
         try:
-            def request_predicate(request_msg: ProxiedMessage):
-                return request_msg["XferID"]["VFileID"] == asset_id
-            msg = await message_handler.wait_for(
-                'RequestXfer', predicate=request_predicate, timeout=5000)
-            xfer.xfer_id = msg["XferID"]["ID"]
+            # Only need to do this if we're using the xfer upload strategy, otherwise all the
+            # data was already sent in the AssetUploadRequest and we don't expect a RequestXfer.
+            if xfer is not None:
+                def request_predicate(request_msg: ProxiedMessage):
+                    return request_msg["XferID"]["VFileID"] == asset_id
+                msg = await message_handler.wait_for(
+                    'RequestXfer', predicate=request_predicate, timeout=5000)
+                xfer.xfer_id = msg["XferID"]["ID"]
 
-            packet_id = 0
-            # TODO: No resend yet. If it's lost, it's lost.
-            while xfer.chunks:
-                chunk = xfer.chunks.pop(packet_id)
-                # EOF if there are no chunks left
-                packet_val = XferPacket(PacketID=packet_id, IsEOF=not bool(xfer.chunks))
-                self._region.circuit.send_message(ProxiedMessage(
-                    "SendXferPacket",
-                    Block("XferID", ID=xfer.xfer_id, Packet_=packet_val),
-                    Block("DataPacket", Data=chunk),
-                ))
-                # Don't care about the value, just want to know it was confirmed.
-                await message_handler.wait_for(
-                    "ConfirmXferPacket", predicate=xfer.is_our_message, timeout=5000)
-                packet_id += 1
+                packet_id = 0
+                # TODO: No resend yet. If it's lost, it's lost.
+                while xfer.chunks:
+                    chunk = xfer.chunks.pop(packet_id)
+                    # EOF if there are no chunks left
+                    packet_val = XferPacket(PacketID=packet_id, IsEOF=not bool(xfer.chunks))
+                    self._region.circuit.send_message(ProxiedMessage(
+                        "SendXferPacket",
+                        Block("XferID", ID=xfer.xfer_id, Packet_=packet_val),
+                        Block("DataPacket", Data=chunk),
+                    ))
+                    # Don't care about the value, just want to know it was confirmed.
+                    await message_handler.wait_for(
+                        "ConfirmXferPacket", predicate=xfer.is_our_message, timeout=5000)
+                    packet_id += 1
 
             def complete_predicate(complete_msg: ProxiedMessage):
                 return complete_msg["AssetBlock"]["UUID"] == asset_id

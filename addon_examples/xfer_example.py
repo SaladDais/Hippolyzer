@@ -1,6 +1,7 @@
 """
 Example of how to request an Xfer
 """
+from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.legacy_inv import InventoryModel
 from hippolyzer.lib.base.message.message import Block
 from hippolyzer.lib.proxy.addon_utils import BaseAddon, show_message
@@ -8,7 +9,7 @@ from hippolyzer.lib.proxy.commands import handle_command
 from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
-from hippolyzer.lib.proxy.templates import XferFilePath, AssetType
+from hippolyzer.lib.proxy.templates import XferFilePath, AssetType, InventoryType, WearableType
 
 
 class XferExampleAddon(BaseAddon):
@@ -59,6 +60,62 @@ class XferExampleAddon(BaseAddon):
         inv_model = InventoryModel.from_bytes(xfer.reassemble_chunks())
         item_names = [item.name for item in inv_model.items.values()]
         show_message(item_names)
+
+    @handle_command()
+    async def eyes_for_you(self, session: Session, region: ProxiedRegion):
+        """Upload an eye bodypart and create an item for it"""
+        asset_data = f"""LLWearable version 22
+New Eyes
+
+\tpermissions 0
+\t{{
+\t\tbase_mask\t7fffffff
+\t\towner_mask\t7fffffff
+\t\tgroup_mask\t00000000
+\t\teveryone_mask\t00000000
+\t\tnext_owner_mask\t00082000
+\t\tcreator_id\t{session.agent_id}
+\t\towner_id\t{session.agent_id}
+\t\tlast_owner_id\t00000000-0000-0000-0000-000000000000
+\t\tgroup_id\t00000000-0000-0000-0000-000000000000
+\t}}
+\tsale_info\t0
+\t{{
+\t\tsale_type\tnot
+\t\tsale_price\t10
+\t}}
+type 3
+parameters 2
+98 0
+99 0
+textures 1
+3 89556747-24cb-43ed-920b-47caed15465f
+"""
+        # If we want to create an item containing the asset we need to know the transaction id
+        # used to create the asset.
+        transaction_id = UUID.random()
+        await region.xfer_manager.upload_asset(
+            AssetType.BODYPART,
+            data=asset_data,
+            transaction_id=transaction_id
+        )
+        region.circuit.send_message(ProxiedMessage(
+            'CreateInventoryItem',
+            Block('AgentData', AgentID=session.agent_id, SessionID=session.id),
+            Block(
+                'InventoryBlock',
+                CallbackID=0,
+                # Null folder ID will put it in the default folder for the type
+                FolderID=UUID(),
+                TransactionID=transaction_id,
+                NextOwnerMask=0x7fFFffFF,
+                Type=AssetType.BODYPART,
+                InvType=InventoryType.WEARABLE,
+                WearableType=WearableType.EYES,
+                Name='Eyes For You',
+                Description=b''
+            ),
+        ))
 
 
 addons = [XferExampleAddon()]
