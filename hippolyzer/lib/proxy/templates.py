@@ -8,7 +8,7 @@ from typing import *
 
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base import llsd
-from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.datatypes import UUID, IntEnum, IntFlag
 from hippolyzer.lib.base.namevalue import NameValuesSerializer
 
 try:
@@ -25,7 +25,7 @@ except:
 @se.enum_field_serializer("RezObject", "InventoryData", "Type")
 @se.enum_field_serializer("RezScript", "InventoryBlock", "Type")
 @se.enum_field_serializer("UpdateTaskInventory", "InventoryData", "Type")
-class AssetType(enum.IntEnum):
+class AssetType(IntEnum):
     TEXTURE = 0
     SOUND = 1
     CALLINGCARD = 2
@@ -103,7 +103,7 @@ class AssetType(enum.IntEnum):
 @se.enum_field_serializer("RezObject", "InventoryData", "InvType")
 @se.enum_field_serializer("RezScript", "InventoryBlock", "InvType")
 @se.enum_field_serializer("UpdateTaskInventory", "InventoryData", "InvType")
-class InventoryType(enum.IntEnum):
+class InventoryType(IntEnum):
     TEXTURE = 0
     SOUND = 1
     CALLINGCARD = 2
@@ -143,7 +143,7 @@ class InventoryType(enum.IntEnum):
 @se.enum_field_serializer("AgentIsNowWearing", "WearableData", "WearableType")
 @se.enum_field_serializer("AgentWearablesUpdate", "WearableData", "WearableType")
 @se.enum_field_serializer("CreateInventoryItem", "InventoryBlock", "WearableType")
-class WearableType(enum.IntEnum):
+class WearableType(IntEnum):
     SHAPE = 0
     SKIN = 1
     HAIR = 2
@@ -180,7 +180,7 @@ def _register_permissions_flags(message_name, block_name):
 @_register_permissions_flags("RezObject", "InventoryData")
 @_register_permissions_flags("RezScript", "InventoryBlock")
 @_register_permissions_flags("RezMultipleAttachmentsFromInv", "ObjectData")
-class Permissions(enum.IntFlag):
+class Permissions(IntFlag):
     TRANSFER = (1 << 13)
     MODIFY = (1 << 14)
     COPY = (1 << 15)
@@ -202,7 +202,7 @@ class Permissions(enum.IntFlag):
 @se.flag_field_serializer("RezObject", "InventoryData", "Flags")
 @se.flag_field_serializer("UpdateCreateInventoryItem", "InventoryData", "Flags")
 @se.flag_field_serializer("UpdateTaskInventory", "InventoryData", "Flags")
-class InventoryItemFlags(enum.IntFlag):
+class InventoryItemFlags(IntFlag):
     # The asset has only one reference in the system. If the
     # inventory item is deleted, or the assetid updated, then we
     # can remove the old reference.
@@ -233,7 +233,7 @@ class InventoryItemFlags(enum.IntFlag):
 
 
 @se.enum_field_serializer("ObjectPermissions", "ObjectData", "Field")
-class PermissionType(enum.IntEnum):
+class PermissionType(IntEnum):
     BASE = 0x01
     OWNER = 0x02
     GROUP = 0x04
@@ -242,7 +242,7 @@ class PermissionType(enum.IntEnum):
 
 
 @se.enum_field_serializer("TransferRequest", "TransferInfo", "SourceType")
-class TransferSourceType(enum.IntEnum):
+class TransferSourceType(IntEnum):
     UNKNOWN = 0
     FILE = enum.auto()
     ASSET = enum.auto()
@@ -250,7 +250,7 @@ class TransferSourceType(enum.IntEnum):
     SIM_ESTATE = enum.auto()
 
 
-class EstateAssetType(enum.IntEnum):
+class EstateAssetType(IntEnum):
     NONE = -1
     COVENANT = 0
 
@@ -308,14 +308,14 @@ class TransferParamsSerializer(se.EnumSwitchedSubfieldSerializer):
 @se.enum_field_serializer("TransferPacket", "TransferData", "ChannelType")
 @se.enum_field_serializer("TransferRequest", "TransferInfo", "ChannelType")
 @se.enum_field_serializer("TransferInfo", "TransferInfo", "ChannelType")
-class TransferChannelType(enum.IntEnum):
+class TransferChannelType(IntEnum):
     UNKNOWN = 0
     MISC = enum.auto()
     ASSET = enum.auto()
 
 
 @se.enum_field_serializer("TransferInfo", "TransferInfo", "TargetType")
-class TransferTargetType(enum.IntEnum):
+class TransferTargetType(IntEnum):
     UNKNOWN = 0
     FILE = enum.auto()
     VFILE = enum.auto()
@@ -323,7 +323,7 @@ class TransferTargetType(enum.IntEnum):
 
 @se.enum_field_serializer("TransferInfo", "TransferInfo", "Status")
 @se.enum_field_serializer("TransferPacket", "TransferData", "Status")
-class TransferStatus(enum.IntEnum):
+class TransferStatus(IntEnum):
     OK = 0
     DONE = 1
     SKIP = 2
@@ -380,7 +380,7 @@ class TransferInfoSerializer(se.BaseSubfieldSerializer):
 
 
 @se.enum_field_serializer("RequestXfer", "XferID", "FilePath")
-class XferFilePath(enum.IntEnum):
+class XferFilePath(IntEnum):
     NONE = 0
     USER_SETTINGS = 1
     APP_SETTINGS = 2
@@ -403,7 +403,7 @@ class XferFilePath(enum.IntEnum):
 
 
 @se.enum_field_serializer("AbortXfer", "XferID", "Result")
-class XferError(enum.IntEnum):
+class XferError(IntEnum):
     FILE_EMPTY = -44
     FILE_NOT_FOUND = -43
     CANNOT_OPEN_FILE = -42
@@ -423,7 +423,7 @@ class SendXferPacketIDSerializer(se.AdapterSubfieldSerializer):
 
 
 @se.enum_field_serializer("ViewerEffect", "Effect", "Type")
-class ViewerEffectType(enum.IntEnum):
+class ViewerEffectType(IntEnum):
     TEXT = 0
     ICON = enum.auto()
     CONNECTOR = enum.auto()
@@ -445,7 +445,7 @@ class ViewerEffectType(enum.IntEnum):
     EFFECT_BLOB = enum.auto()
 
 
-class LookAtTarget(enum.IntEnum):
+class LookAtTarget(IntEnum):
     NONE = 0
     IDLE = enum.auto()
     AUTO_LISTEN = enum.auto()
@@ -459,7 +459,7 @@ class LookAtTarget(enum.IntEnum):
     CLEAR = enum.auto()
 
 
-class PointAtTarget(enum.IntEnum):
+class PointAtTarget(IntEnum):
     NONE = 0
     SELECT = enum.auto()
     GRAB = enum.auto()
@@ -499,7 +499,7 @@ class ViewerEffectDataSerializer(se.EnumSwitchedSubfieldSerializer):
 
 @se.enum_field_serializer("MoneyTransferRequest", "MoneyData", "TransactionType")
 @se.enum_field_serializer("MoneyBalanceReply", "TransactionInfo", "TransactionType")
-class MoneyTransactionType(enum.IntEnum):
+class MoneyTransactionType(IntEnum):
     # _many_ of these codes haven't been used in decades.
     # Money transaction failure codes
     NULL = 0
@@ -561,7 +561,7 @@ class MoneyTransactionType(enum.IntEnum):
 
 
 @se.flag_field_serializer("MoneyTransferRequest", "MoneyData", "Flags")
-class MoneyTransactionFlags(enum.IntFlag):
+class MoneyTransactionFlags(IntFlag):
     SOURCE_GROUP = 1
     DEST_GROUP = 1 << 1
     OWNER_GROUP = 1 << 2
@@ -570,7 +570,7 @@ class MoneyTransactionFlags(enum.IntFlag):
 
 
 @se.enum_field_serializer("ImprovedInstantMessage", "MessageBlock", "Dialog")
-class IMDialogType(enum.IntEnum):
+class IMDialogType(IntEnum):
     NOTHING_SPECIAL = 0
     MESSAGEBOX = 1
     GROUP_INVITATION = 3
@@ -728,7 +728,7 @@ class ObjectUpdateDataSerializer(se.SimpleSubfieldSerializer):
 
 @se.enum_field_serializer("ObjectUpdate", "ObjectData", "PCode")
 @se.enum_field_serializer("ObjectAdd", "ObjectData", "PCode")
-class PCode(enum.IntEnum):
+class PCode(IntEnum):
     # Should actually be a bitmask, these are just some common ones.
     PRIMITIVE = 9
     AVATAR = 47
@@ -742,7 +742,7 @@ class PCode(enum.IntEnum):
 @se.flag_field_serializer("ObjectUpdateCompressed", "ObjectData", "UpdateFlags")
 @se.flag_field_serializer("ObjectUpdateCached", "ObjectData", "UpdateFlags")
 @se.flag_field_serializer("ObjectAdd", "ObjectData", "AddFlags")
-class ObjectUpdateFlags(enum.IntFlag):
+class ObjectUpdateFlags(IntFlag):
     USE_PHYSICS = 1 << 0
     CREATE_SELECTED = 1 << 1
     OBJECT_MODIFY = 1 << 2
@@ -796,7 +796,7 @@ class AttachmentStateAdapter(se.Adapter):
 
 
 @se.flag_field_serializer("AgentUpdate", "AgentData", "State")
-class AgentState(enum.IntFlag):
+class AgentState(IntFlag):
     TYPING = 1 << 3
     EDITING = 1 << 4
 
@@ -836,7 +836,7 @@ class ImprovedTerseObjectUpdateDataSerializer(se.SimpleSubfieldSerializer):
     })
 
 
-class ShineLevel(enum.IntEnum):
+class ShineLevel(IntEnum):
     OFF = 0
     LOW = 1
     MEDIUM = 2
@@ -854,7 +854,7 @@ class BasicMaterials:
 BUMP_SHINY_FULLBRIGHT = se.BitfieldDataclass(BasicMaterials, se.U8)
 
 
-class TexGen(enum.IntEnum):
+class TexGen(IntEnum):
     DEFAULT = 0
     PLANAR = 0x2
     # These are unused / not supported
@@ -1056,7 +1056,7 @@ class DPTextureEntrySubfieldSerializer(se.SimpleSubfieldSerializer):
     TEMPLATE = DATA_PACKER_TE_TEMPLATE
 
 
-class TextureAnimMode(enum.IntFlag):
+class TextureAnimMode(IntFlag):
     ON = 0x01
     LOOP = 0x02
     REVERSE = 0x04
@@ -1092,7 +1092,7 @@ class TextureIDListSerializer(se.SimpleSubfieldSerializer):
     TEMPLATE = se.Collection(None, se.UUID)
 
 
-class ParticleDataFlags(enum.IntFlag):
+class ParticleDataFlags(IntFlag):
     INTERP_COLOR = 0x001
     INTERP_SCALE = 0x002
     BOUNCE = 0x004
@@ -1108,12 +1108,12 @@ class ParticleDataFlags(enum.IntFlag):
     DATA_BLEND = 0x20000
 
 
-class ParticleFlags(enum.IntFlag):
+class ParticleFlags(IntFlag):
     OBJECT_RELATIVE = 0x1
     USE_NEW_ANGLE = 0x2
 
 
-class ParticleBlendFunc(enum.IntEnum):
+class ParticleBlendFunc(IntEnum):
     ONE = 0
     ZERO = 1
     DEST_COLOR = 2
@@ -1150,7 +1150,7 @@ PDATA_BLOCK_TEMPLATE = se.Template({
 })
 
 
-class PartPattern(enum.IntFlag):
+class PartPattern(IntFlag):
     NONE = 0
     DROP = 0x1
     EXPLODE = 0x2
@@ -1199,7 +1199,7 @@ class PSBlockSerializer(se.SimpleSubfieldSerializer):
 
 
 @se.enum_field_serializer("ObjectExtraParams", "ObjectData", "ParamType")
-class ExtraParamType(enum.IntEnum):
+class ExtraParamType(IntEnum):
     FLEXIBLE = 0x10
     LIGHT = 0x20
     SCULPT = 0x30
@@ -1209,11 +1209,11 @@ class ExtraParamType(enum.IntEnum):
     EXTENDED_MESH = 0x70
 
 
-class ExtendedMeshFlags(enum.IntFlag):
+class ExtendedMeshFlags(IntFlag):
     ANIMATED_MESH = 0x1
 
 
-class SculptType(enum.IntEnum):
+class SculptType(IntEnum):
     NONE = 0
     SPHERE = 1
     TORUS = 2
@@ -1284,7 +1284,7 @@ class ObjectUpdateExtraParamsSerializer(se.SimpleSubfieldSerializer):
 
 
 @se.flag_field_serializer("ObjectUpdate", "ObjectData", "Flags")
-class SoundFlags(enum.IntFlag):
+class SoundFlags(IntFlag):
     LOOP = 1 << 0
     SYNC_MASTER = 1 << 1
     SYNC_SLAVE = 1 << 2
@@ -1293,7 +1293,7 @@ class SoundFlags(enum.IntFlag):
     STOP = 1 << 5
 
 
-class CompressedFlags(enum.IntFlag):
+class CompressedFlags(IntFlag):
     SCRATCHPAD = 1
     TREE = 1 << 1
     TEXT = 1 << 2
@@ -1381,7 +1381,7 @@ class ObjectUpdateCompressedDataSerializer(se.SimpleSubfieldSerializer):
 
 
 @se.flag_field_serializer("MultipleObjectUpdate", "ObjectData", "Type")
-class MultipleObjectUpdateFlags(enum.IntFlag):
+class MultipleObjectUpdateFlags(IntFlag):
     POSITION = 0x01
     ROTATION = 0x02
     SCALE = 0x04
@@ -1401,7 +1401,7 @@ class MultipleObjectUpdateDataSerializer(se.FlagSwitchedSubfieldSerializer):
 
 @se.flag_field_serializer("AgentUpdate", "AgentData", "ControlFlags")
 @se.flag_field_serializer("ScriptControlChange", "Data", "Controls")
-class AgentControlFlags(enum.IntFlag):
+class AgentControlFlags(IntFlag):
     AT_POS = 1
     AT_NEG = 1 << 1
     LEFT_POS = 1 << 2
@@ -1437,14 +1437,14 @@ class AgentControlFlags(enum.IntFlag):
 
 
 @se.flag_field_serializer("AgentUpdate", "AgentData", "Flags")
-class AgentUpdateFlags(enum.IntFlag):
+class AgentUpdateFlags(IntFlag):
     HIDE_TITLE = 1
     CLIENT_AUTOPILOT = 1 << 1
 
 
 @se.enum_field_serializer("ChatFromViewer", "ChatData", "Type")
 @se.enum_field_serializer("ChatFromSimulator", "ChatData", "ChatType")
-class ChatType(enum.IntEnum):
+class ChatType(IntEnum):
     WHISPER = 0
     NORMAL = 1
     SHOUT = 2
@@ -1461,7 +1461,7 @@ class ChatType(enum.IntEnum):
 
 
 @se.enum_field_serializer("ChatFromSimulator", "ChatData", "SourceType")
-class ChatSourceType(enum.IntEnum):
+class ChatSourceType(IntEnum):
     SYSTEM = 0
     AGENT = 1
     OBJECT = 2
@@ -1479,7 +1479,7 @@ class NameValueSerializer(se.SimpleSubfieldSerializer):
 
 
 @se.enum_field_serializer("SetFollowCamProperties", "CameraProperty", "Type")
-class CameraPropertyType(enum.IntEnum):
+class CameraPropertyType(IntEnum):
     PITCH = 0
     FOCUS_OFFSET = enum.auto()
     FOCUS_OFFSET_X = enum.auto()
@@ -1506,7 +1506,7 @@ class CameraPropertyType(enum.IntEnum):
 
 
 @se.enum_field_serializer("DeRezObject", "AgentBlock", "Destination")
-class DeRezObjectDestination(enum.IntEnum):
+class DeRezObjectDestination(IntEnum):
     SAVE_INTO_AGENT_INVENTORY = 0  # deprecated, disabled
     ACQUIRE_TO_AGENT_INVENTORY = 1  # try to leave copy in world
     SAVE_INTO_TASK_INVENTORY = 2
@@ -1526,7 +1526,7 @@ class DeRezObjectDestination(enum.IntEnum):
 @se.flag_field_serializer("SimStats", "RegionInfo", "RegionFlagsExtended")
 @se.flag_field_serializer("RegionInfo", "RegionInfo", "RegionFlags")
 @se.flag_field_serializer("RegionInfo", "RegionInfo3", "RegionFlagsExtended")
-class RegionFlags(enum.IntFlag):
+class RegionFlags(IntFlag):
     ALLOW_DAMAGE = 1 << 0
     ALLOW_LANDMARK = 1 << 1
     ALLOW_SET_HOME = 1 << 2
@@ -1562,7 +1562,7 @@ class RegionFlags(enum.IntFlag):
 
 
 @se.flag_field_serializer("RegionHandshakeReply", "RegionInfo", "Flags")
-class RegionHandshakeReplyFlags(enum.IntFlag):
+class RegionHandshakeReplyFlags(IntFlag):
     VOCACHE_CULLING_ENABLED = 0x1  # ask sim to send all cacheable objects.
     VOCACHE_IS_EMPTY = 0x2  # the cache file is empty, no need to send cache probes.
     SUPPORTS_SELF_APPEARANCE = 0x4  # inbound AvatarAppearance for self is ok
@@ -1572,7 +1572,7 @@ class RegionHandshakeReplyFlags(enum.IntFlag):
 @se.flag_field_serializer("TeleportProgress", "Info", "TeleportFlags")
 @se.flag_field_serializer("TeleportFinish", "Info", "TeleportFlags")
 @se.flag_field_serializer("TeleportLureRequest", "Info", "TeleportFlags")
-class TeleportFlags(enum.IntFlag):
+class TeleportFlags(IntFlag):
     SET_HOME_TO_TARGET = 1 << 0  # newbie leaving prelude (starter area)
     SET_LAST_TO_TARGET = 1 << 1
     VIA_LURE = 1 << 2

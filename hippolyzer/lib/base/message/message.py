@@ -129,24 +129,7 @@ class Block:
                     continue
                 # We have a serializer, include the pretty output in the repr,
                 # using the _ suffix so the builder knows it needs to be serialized.
-                deserialized = self.deserialize_var(key)
-                type_name = type(deserialized).__name__
-                # TODO: replace __repr__ for these in a context manager so nested
-                #  Enums / Flags get handled correctly as well. The point of the
-                #  pretty repr() is to make messages directly paste-able into code.
-                if isinstance(deserialized, enum.IntEnum):
-                    deserialized = f"{type_name}.{deserialized.name}"
-                elif isinstance(deserialized, enum.IntFlag):
-                    # Make an ORed together version of the flags based on the POD version
-                    flags = se.flags_to_pod(type(deserialized), deserialized)
-                    flags = " | ".join(
-                        (f"{type_name}.{v}" if isinstance(v, str) else str(v))
-                        for v in flags
-                    )
-                    deserialized = f"({flags})"
-                else:
-                    deserialized = repr(deserialized)
-                block_vars[f"{key}_"] = deserialized
+                block_vars[f"{key}_"] = repr(self.deserialize_var(key))
         else:
             block_vars = self.vars
 

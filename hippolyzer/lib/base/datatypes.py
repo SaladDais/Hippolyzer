@@ -299,6 +299,32 @@ class StringEnum(str, enum.Enum):
         return self.value
 
 
+class IntEnum(enum.IntEnum):
+    # Give a special repr() that'll eval in a REPL.
+    def __repr__(self):
+        return f"{self.__class__.__name__}.{self.name}"
+
+
+class IntFlag(enum.IntFlag):
+    def __repr__(self):
+        # Make an ORed together version of the flags based on the POD version
+        flags = flags_to_pod(type(self), self)
+        flags = " | ".join(
+            (f"{self.__class__.__name__}.{v}" if isinstance(v, str) else str(v))
+            for v in flags
+        )
+        return f"({flags})"
+
+
+def flags_to_pod(flag_cls: Type[enum.IntFlag], val: int) -> Tuple[Union[str, int], ...]:
+    # Shove any bits not represented in the IntFlag into an int
+    left_over = val
+    for flag in iter(flag_cls):
+        left_over &= ~flag.value
+    extra = (int(left_over),) if left_over else ()
+    return tuple(flag.name for flag in iter(flag_cls) if val & flag.value) + extra
+
+
 class TaggedUnion(recordclass.datatuple):  # type: ignore
     tag: Any
     value: Any
@@ -306,5 +332,6 @@ class TaggedUnion(recordclass.datatuple):  # type: ignore
 
 __all__ = [
     "Vector3", "Vector4", "Vector2", "Quaternion", "TupleCoord",
-    "UUID", "RawBytes", "StringEnum", "JankStringyBytes", "TaggedUnion"
+    "UUID", "RawBytes", "StringEnum", "JankStringyBytes", "TaggedUnion",
+    "IntEnum", "IntFlag", "flags_to_pod"
 ]

@@ -5,7 +5,6 @@ import enum
 import math
 import struct
 import types
-import typing
 import weakref
 from io import SEEK_CUR, SEEK_SET, SEEK_END, RawIOBase, BufferedIOBase
 from typing import *
@@ -1092,15 +1091,6 @@ class IntEnum(Adapter):
         return lambda: self.enum_cls(0)
 
 
-def flags_to_pod(flag_cls: Type[enum.IntFlag], val: int) -> typing.Tuple[Union[str, int], ...]:
-    # Shove any bits not represented in the IntFlag into an int
-    left_over = val
-    for flag in iter(flag_cls):
-        left_over &= ~flag.value
-    extra = (int(left_over),) if left_over else ()
-    return tuple(flag.name for flag in iter(flag_cls) if val & flag.value) + extra
-
-
 class IntFlag(Adapter):
     def __init__(self, flag_cls: Type[enum.IntFlag],
                  flag_spec: Optional[SerializablePrimitive] = None):
@@ -1121,7 +1111,7 @@ class IntFlag(Adapter):
 
     def decode(self, val: Any, ctx: Optional[ParseContext], pod: bool = False) -> Any:
         if pod:
-            return flags_to_pod(self.flag_cls, val)
+            return dtypes.flags_to_pod(self.flag_cls, val)
         return self.flag_cls(val)
 
     def default_value(self) -> Any:
@@ -1642,7 +1632,9 @@ def subfield_serializer(msg_name, block_name, var_name):
 
 
 def enum_field_serializer(msg_name, block_name, var_name):
-    def f(orig_cls):
+    def f(orig_cls: Type[dtypes.IntEnum]):
+        if not issubclass(orig_cls, dtypes.IntEnum):
+            raise ValueError(f"{orig_cls} must be a subclass of Hippolyzer's IntEnum class")
         wrapper = subfield_serializer(msg_name, block_name, var_name)
         wrapper(IntEnumSubfieldSerializer(orig_cls))
         return orig_cls
@@ -1650,7 +1642,9 @@ def enum_field_serializer(msg_name, block_name, var_name):
 
 
 def flag_field_serializer(msg_name, block_name, var_name):
-    def f(orig_cls):
+    def f(orig_cls: Type[dtypes.IntFlag]):
+        if not issubclass(orig_cls, dtypes.IntFlag):
+            raise ValueError(f"{orig_cls!r} must be a subclass of Hippolyzer's IntFlag class")
         wrapper = subfield_serializer(msg_name, block_name, var_name)
         wrapper(IntFlagSubfieldSerializer(orig_cls))
         return orig_cls
