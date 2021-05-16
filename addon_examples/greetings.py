@@ -9,23 +9,22 @@ class GreetingAddon(BaseAddon):
     @handle_command()
     async def greetings(self, session: Session, region: ProxiedRegion):
         """Greet everyone around you"""
-        agent_obj = region.objects.lookup_fullid(session.agent_id)
-        if not agent_obj:
+        our_avatar = region.objects.lookup_avatar(session.agent_id)
+        if not our_avatar:
             show_message("Don't have an agent object?")
 
-        # Note that this will only have avatars closeish to your camera. The sim sends
-        # KillObjects for avatars that get too far away.
-        other_agents = [o for o in region.objects.all_avatars if o.FullID != agent_obj.FullID]
+        other_avatars = [o for o in region.objects.all_avatars if o.FullID != our_avatar.FullID]
 
-        if not other_agents:
-            show_message("No other agents?")
+        if not other_avatars:
+            show_message("No other avatars?")
 
-        for other_agent in other_agents:
-            dist = Vector3.dist(agent_obj.Position, other_agent.Position)
+        for other_avatar in other_avatars:
+            dist = Vector3.dist(our_avatar.RegionPosition, other_avatar.RegionPosition)
             if dist >= 19.0:
                 continue
-            nv = other_agent.NameValue.to_dict()
-            send_chat(f"Greetings, {nv['FirstName']} {nv['LastName']}!")
+            if other_avatar.Name is None:
+                continue
+            send_chat(f"Greetings, {other_avatar.Name}!")
 
 
 addons = [GreetingAddon()]

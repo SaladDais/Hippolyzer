@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import collections
 import copy
+import enum
 import logging
+import math
 import typing
 import weakref
 from typing import *
@@ -58,7 +60,46 @@ class OrphanManager:
 
 OBJECT_OR_LOCAL = typing.Union[Object, int]
 
-LOCATION_DICT = typing.Dict[UUID, Vector3]
+
+class LocationType(enum.IntEnum):
+    COARSE = enum.auto()
+    EXACT = enum.auto()
+
+
+class Avatar:
+    """Wrapper for an avatar known through ObjectUpdate or CoarseLocationUpdate"""
+    def __init__(
+            self,
+            full_id: UUID,
+            obj: Optional["Object"] = None,
+            coarse_location: Optional[Vector3] = None,
+            resolved_name: Optional[str] = None,
+    ):
+        self.FullID: UUID = full_id
+        self.Object: Optional["Object"] = obj
+        self._coarse_location = coarse_location
+        self._resolved_name = resolved_name
+
+    @property
+    def LocationType(self) -> "LocationType":
+        if self.Object:
+            return LocationType.EXACT
+        return LocationType.COARSE
+
+    @property
+    def RegionPosition(self) -> Vector3:
+        if self.Object:
+            return self.Object.RegionPosition
+        if self._coarse_location is not None:
+            return self._coarse_location
+        raise ValueError(f"Avatar {self.FullID} has no known position")
+
+    @property
+    def Name(self) -> Optional[str]:
+        if self.Object:
+            nv: Dict[str, str] = self.Object.NameValue.to_dict()
+            return f"{nv['FirstName']} {nv['LastName']}"
+        return self._resolved_name
 
 
 class ObjectManager:
@@ -112,23 +153,23 @@ class ObjectManager:
         return self._localid_lookup.values()
 
     @property
-    def all_avatars(self) -> typing.Iterable[Object]:
-        # TODO: this should return some sort of Avatar wrapper object that
-        #  has the position, name, and `Object` reference (if available) for
-        #  any known avatars. Should hook `GetDisplayName` and `UUIDNameReply`
-        #  at the session level for name lookup.
-        return (o for o in self.all_objects if o.PCode == PCode.AVATAR)
+    def all_avatars(self) -> typing.Iterable[Avatar]:
+        av_objects = {o.FullID: o for o in self.all_objects if o.PCode == PCode.AVATAR}
+        all_ids = set(av_objects.keys()) | self._coarse_locations.keys()
 
-    @property
-    def avatar_positions(self) -> LOCATION_DICT:
-        avatar_positions: LOCATION_DICT = {}
-        for agent_id, coarse_location in self._coarse_locations.items():
-            # Tag the position type so we can tell if a position may not be exact
-            avatar_positions[agent_id] = coarse_location
-            agent_obj = self.lookup_fullid(agent_id)
-            if agent_obj:
-                avatar_positions[agent_id] = agent_obj.RegionPosition
-        return avatar_positions
+        avatars: List[Avatar] = []
+        for av_id in all_ids:
+            av_obj = av_objects.get(av_id)
+            coarse_location = self._coarse_locations.get(av_id)
+            avatars.append(Avatar(
+                full_id=av_id,
+                coarse_location=coarse_location,
+                obj=av_obj,
+                # TODO: Should hook `GetDisplayName` and `UUIDNameReply`
+                #  at the session level for name lookup, have session-level name cache.
+                resolved_name=None,
+            ))
+        return avatars
 
     def lookup_localid(self, localid: int) -> typing.Optional[Object]:
         return self._localid_lookup.get(localid, None)
@@ -138,6 +179,12 @@ class ObjectManager:
         if local_id is None:
             return None
         return self.lookup_localid(local_id)
+
+    def lookup_avatar(self, fullid: UUID) -> typing.Optional[Avatar]:
+        for avatar in self.all_avatars:
+            if avatar.FullID == fullid:
+                return avatar
+        return None
 
     def _track_object(self, obj: Object, notify: bool = True):
         self._localid_lookup[obj.LocalID] = obj
@@ -331,13 +378,15 @@ class ObjectManager:
 
         coarse_locations: typing.Dict[UUID, Vector3] = {}
         for agent_block, location_block in zip(packet["AgentData"], packet["Location"]):
+            x, y, z = location_block["X"], location_block["Y"], location_block["Z"]
             coarse_locations[agent_block["AgentID"]] = Vector3(
-                location_block["X"],
-                location_block["Y"],
+                X=x,
+                Y=y,
                 # The z-axis is multiplied by 4 to obtain true Z location
                 # The z-axis is also limited to 1020m in height
+                # If z == 255 then the true Z is unknown.
                 # http://wiki.secondlife.com/wiki/CoarseLocationUpdate
-                location_block["Z"] * 4
+                Z=z * 4 if z != 255 else math.inf,
             )
 
         self._coarse_locations.update(coarse_locations)

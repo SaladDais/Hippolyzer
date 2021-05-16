@@ -1,3 +1,4 @@
+import math
 import random
 import unittest
 from typing import *
@@ -106,6 +107,9 @@ class ObjectManagerTests(unittest.TestCase):
 
     def _kill_object(self, obj: Object):
         self.message_handler.handle(self._create_kill_object(obj.LocalID))
+
+    def _get_avatar_positions(self) -> Dict[UUID, Vector3]:
+        return {av.FullID: av.RegionPosition for av in self.object_manager.all_avatars}
 
     def test_basic_tracking(self):
         """Does creating an object result in it being tracked?"""
@@ -254,7 +258,7 @@ class ObjectManagerTests(unittest.TestCase):
             Block("Location", X=1, Y=2, Z=3),
             Block("Location", X=2, Y=3, Z=4),
         ))
-        self.assertDictEqual(self.object_manager.avatar_positions, {
+        self.assertDictEqual(self._get_avatar_positions(), {
             # CoarseLocation's Z axis is multiplied by 4
             agent1_id: Vector3(1, 2, 12),
             agent2_id: Vector3(2, 3, 16),
@@ -265,7 +269,7 @@ class ObjectManagerTests(unittest.TestCase):
         # If we have a real object pos it should override coarse pos
         avatar_obj = self._create_object(full_id=agent1_id, pcode=PCode.AVATAR,
                                          parent_id=seat_object.LocalID, pos=Vector3(0, 0, 2))
-        self.assertDictEqual(self.object_manager.avatar_positions, {
+        self.assertDictEqual(self._get_avatar_positions(), {
             # Agent is seated, make sure this is region and not local pos
             agent1_id: Vector3(0, 0, 5),
             agent2_id: Vector3(2, 3, 16),
@@ -280,6 +284,16 @@ class ObjectManagerTests(unittest.TestCase):
             Block("AgentData", AgentID=agent2_id),
             Block("Location", X=2, Y=3, Z=4),
         ))
-        self.assertDictEqual(self.object_manager.avatar_positions, {
+        self.assertDictEqual(self._get_avatar_positions(), {
             agent2_id: Vector3(2, 3, 16),
+        })
+
+        # 255 on Z axis means we can't guess the real Z
+        self.message_handler.handle(Message(
+            "CoarseLocationUpdate",
+            Block("AgentData", AgentID=agent2_id),
+            Block("Location", X=2, Y=3, Z=math.inf),
+        ))
+        self.assertDictEqual(self._get_avatar_positions(), {
+            agent2_id: Vector3(2, 3, math.inf),
         })
