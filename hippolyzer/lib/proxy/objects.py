@@ -18,6 +18,7 @@ from hippolyzer.lib.base.objects import Object
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.message import ProxiedMessage
+from hippolyzer.lib.proxy.namecache import NameCache
 from hippolyzer.lib.proxy.templates import PCode, ObjectStateSerializer
 
 if TYPE_CHECKING:
@@ -125,6 +126,12 @@ class ObjectManager:
         self.missing_locals = set()
         self._region: ProxiedRegion = proxify(region)
         self._orphan_manager = OrphanManager()
+        name_cache = None
+        session = self._region.session()
+        if session:
+            name_cache = session.session_manager.name_cache
+        # Use a local namecache if we don't have a session manager
+        self.name_cache: Optional[NameCache] = name_cache or NameCache()
 
         message_handler = region.message_handler
         message_handler.subscribe("ObjectUpdate", self._handle_object_update)
@@ -161,13 +168,15 @@ class ObjectManager:
         for av_id in all_ids:
             av_obj = av_objects.get(av_id)
             coarse_location = self._coarse_locations.get(av_id)
+
+            resolved_name = None
+            if namecache_entry := self.name_cache.lookup(av_id):
+                resolved_name = f"{namecache_entry.FirstName} {namecache_entry.LastName}"
             avatars.append(Avatar(
                 full_id=av_id,
                 coarse_location=coarse_location,
                 obj=av_obj,
-                # TODO: Should hook `GetDisplayName` and `UUIDNameReply`
-                #  at the session level for name lookup, have session-level name cache.
-                resolved_name=None,
+                resolved_name=resolved_name,
             ))
         return avatars
 
@@ -202,7 +211,7 @@ class ObjectManager:
             self._parent_object(child_obj)
 
         if notify:
-            self._notify_object_updated(obj, set(obj.to_dict().keys()))
+            self._run_object_update_hooks(obj, set(obj.to_dict().keys()))
 
     def _untrack_object(self, obj: Object):
         former_child_ids = obj.ChildIDs[:]
@@ -293,7 +302,7 @@ class ObjectManager:
         # Common case where this may be falsy is if we get an ObjectUpdateCached
         # that didn't have a changed UpdateFlags field.
         if actually_updated_props:
-            self._notify_object_updated(obj, actually_updated_props)
+            self._run_object_update_hooks(obj, actually_updated_props)
 
     def _normalize_object_update(self, block: Block):
         object_data = {
@@ -513,9 +522,12 @@ class ObjectManager:
                 LOG.debug(f"Received ObjectCost for unknown {object_id}")
                 continue
             obj.ObjectCosts.update(object_costs)
-            self._notify_object_updated(obj, {"ObjectCosts"})
+            self._run_object_update_hooks(obj, {"ObjectCosts"})
 
-    def _notify_object_updated(self, obj: Object, updated_props: Set[str]):
+    def _run_object_update_hooks(self, obj: Object, updated_props: Set[str]):
+        if obj.PCode == PCode.AVATAR and "NameValue" in updated_props:
+            if obj.NameValue:
+                self.name_cache.update(obj.FullID, obj.NameValue.to_dict())
         AddonManager.handle_object_updated(self._region.session(), self._region, obj, updated_props)
 
     def clear(self):

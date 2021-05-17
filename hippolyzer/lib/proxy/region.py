@@ -14,6 +14,7 @@ from hippolyzer.lib.base.datatypes import Vector3
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.proxy.caps_client import CapsClient
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
+from hippolyzer.lib.proxy.namecache import NameCache
 from hippolyzer.lib.proxy.objects import ObjectManager
 from hippolyzer.lib.proxy.transfer_manager import TransferManager
 from hippolyzer.lib.proxy.xfer_manager import XferManager
@@ -60,6 +61,9 @@ class ProxiedRegion:
         self.transfer_manager = TransferManager(self)
         self.caps_client = CapsClient(self)
         self.objects = ObjectManager(self)
+        if session:
+            name_cache: NameCache = session.session_manager.name_cache
+            self.message_handler.subscribe("UUIDNameReply", name_cache.handle_uuid_name_reply)
 
     @property
     def name(self):

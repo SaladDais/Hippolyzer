@@ -47,10 +47,10 @@ class ObjectManagerTests(unittest.TestCase):
         AddonManager.init([], None, [self.object_addon])
 
     def _create_object_update(self, local_id=None, full_id=None, parent_id=None, pos=None, rot=None,
-                              pcode=None) -> Message:
+                              pcode=None, namevalue=None) -> Message:
         pos = pos if pos is not None else (1.0, 2.0, 3.0)
         rot = rot if rot is not None else (0.0, 0.0, 0.0, 1.0)
-        pcode = pcode if pcode is not None else 9
+        pcode = pcode if pcode is not None else PCode.PRIMITIVE
         msg = Message(
             "ObjectUpdate",
             Block("RegionData", RegionHandle=123, TimeDilation=123),
@@ -66,6 +66,7 @@ class ObjectManagerTests(unittest.TestCase):
                 ProfileCurve=1,
                 PathScaleX=100,
                 PathScaleY=100,
+                NameValue=namevalue,
                 TextureEntry=b'\x89UgG$\xcbC\xed\x92\x0bG\xca\xed\x15F_\x00\x00\x00\x00\x00\x00\x00\x00\x80?\x00\x00'
                              b'\x00\x80?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
                              b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
@@ -90,9 +91,11 @@ class ObjectManagerTests(unittest.TestCase):
         # Run through (de)serializer to fill in any missing vars
         return self.deserializer.deserialize(self.serializer.serialize(msg))
 
-    def _create_object(self, local_id=None, full_id=None, parent_id=None, pos=None, rot=None, pcode=None) -> Object:
+    def _create_object(self, local_id=None, full_id=None, parent_id=None, pos=None, rot=None,
+                       pcode=None, namevalue=None) -> Object:
         msg = self._create_object_update(
-            local_id=local_id, full_id=full_id, parent_id=parent_id, pos=pos, rot=rot, pcode=pcode)
+            local_id=local_id, full_id=full_id, parent_id=parent_id, pos=pos, rot=rot,
+            pcode=pcode, namevalue=namevalue)
         self.message_handler.handle(msg)
         return self.object_manager.lookup_fullid(msg["ObjectData"]["FullID"])
 
@@ -297,3 +300,16 @@ class ObjectManagerTests(unittest.TestCase):
         self.assertDictEqual(self._get_avatar_positions(), {
             agent2_id: Vector3(2, 3, math.inf),
         })
+
+    def test_name_cache(self):
+        # Receiving an update with a NameValue for an avatar should update NameCache
+        obj = self._create_object(
+            pcode=PCode.AVATAR,
+            namevalue=b'DisplayName STRING RW DS unicodename\n'
+                      b'FirstName STRING RW DS firstname\n'
+                      b'LastName STRING RW DS Resident\n'
+                      b'Title STRING RW DS foo',
+        )
+        self.assertEqual(self.object_manager.name_cache.lookup(obj.FullID).FirstName, "firstname")
+        av = self.object_manager.lookup_avatar(obj.FullID)
+        self.assertEqual(av.Name, "firstname Resident")

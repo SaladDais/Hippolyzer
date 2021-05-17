@@ -12,6 +12,7 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.proxy.http_asset_repo import HTTPAssetRepo
 from hippolyzer.lib.proxy.http_proxy import HTTPFlowContext, is_asset_server_cap_name, SerializedCapData
+from hippolyzer.lib.proxy.namecache import NameCache
 from hippolyzer.lib.proxy.region import ProxiedRegion, CapType
 
 if TYPE_CHECKING:
@@ -151,6 +152,7 @@ class SessionManager:
         self.asset_repo = HTTPAssetRepo()
         self.message_logger: Optional[BaseMessageLogger] = None
         self.addon_ctx: Dict[str, Any] = {}
+        self.name_cache = NameCache()
 
     def create_session(self, login_data) -> Session:
         session = Session.from_login_data(login_data, self)
