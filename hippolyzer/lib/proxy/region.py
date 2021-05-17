@@ -107,6 +107,9 @@ class ProxiedRegion:
         seed_id = self._caps["Seed"][1].split("/")[-1].encode("utf8")
         # Give it a unique domain tied to the current Seed URI
         parsed[1] = f"{name}-{hashlib.sha256(seed_id).hexdigest()[:16]}.hippo-proxy.localhost"
+        # Force the URL to HTTP, we're going to handle the request ourselves so it doesn't need
+        # to be secure. This should save on expensive TLS context setup for each req.
+        parsed[0] = "http"
         wrapper_url = urllib.parse.urlunsplit(parsed)
         self._caps.add(name + "ProxyWrapper", (CapType.WRAPPER, wrapper_url))
         return wrapper_url
