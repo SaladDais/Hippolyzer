@@ -1631,8 +1631,12 @@ def subfield_serializer(msg_name, block_name, var_name):
     return f
 
 
+_ENUM_TYPE = TypeVar("_ENUM_TYPE", bound=Type[dtypes.IntEnum])
+_FLAG_TYPE = TypeVar("_FLAG_TYPE", bound=Type[dtypes.IntFlag])
+
+
 def enum_field_serializer(msg_name, block_name, var_name):
-    def f(orig_cls: Type[dtypes.IntEnum]):
+    def f(orig_cls: _ENUM_TYPE) -> _ENUM_TYPE:
         if not issubclass(orig_cls, dtypes.IntEnum):
             raise ValueError(f"{orig_cls} must be a subclass of Hippolyzer's IntEnum class")
         wrapper = subfield_serializer(msg_name, block_name, var_name)
@@ -1642,7 +1646,7 @@ def enum_field_serializer(msg_name, block_name, var_name):
 
 
 def flag_field_serializer(msg_name, block_name, var_name):
-    def f(orig_cls: Type[dtypes.IntFlag]):
+    def f(orig_cls: _FLAG_TYPE) -> _FLAG_TYPE:
         if not issubclass(orig_cls, dtypes.IntFlag):
             raise ValueError(f"{orig_cls!r} must be a subclass of Hippolyzer's IntFlag class")
         wrapper = subfield_serializer(msg_name, block_name, var_name)
