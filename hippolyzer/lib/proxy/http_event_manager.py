@@ -51,35 +51,38 @@ class MITMProxyEventManager:
         self.llsd_message_serializer = LLSDMessageSerializer()
         self._asset_server_proxied = False
 
-    async def pump_proxy_events(self):
+    async def run(self):
         while not self.shutdown_signal.is_set():
             try:
-                try:
-                    event_type, flow_state = self.from_proxy_queue.get(False)
-                except queue.Empty:
-                    await asyncio.sleep(0.001)
-                    continue
-
-                flow = HippoHTTPFlow.from_state(flow_state, self.session_manager)
-                try:
-                    if event_type == "request":
-                        self._handle_request(flow)
-                        # A response was injected early in the cycle, we won't get a response
-                        # callback from mitmproxy so just log it now.
-                        message_logger = self.session_manager.message_logger
-                        if message_logger and flow.response_injected:
-                            message_logger.log_http_response(flow)
-                    elif event_type == "response":
-                        self._handle_response(flow)
-                    else:
-                        raise Exception(f"Unknown mitmproxy event type {event_type}")
-                finally:
-                    # If someone has taken this request out of the regular callback flow,
-                    # they'll manually send a callback at some later time.
-                    if not flow.taken:
-                        self.to_proxy_queue.put(("callback", flow.id, flow.get_state()))
+                await self.pump_proxy_event()
             except:
                 logging.exception("Exploded when handling parsed packets")
+
+    async def pump_proxy_event(self):
+        try:
+            event_type, flow_state = self.from_proxy_queue.get(False)
+        except queue.Empty:
+            await asyncio.sleep(0.001)
+            return
+
+        flow = HippoHTTPFlow.from_state(flow_state, self.session_manager)
+        try:
+            if event_type == "request":
+                self._handle_request(flow)
+                # A response was injected early in the cycle, we won't get a response
+                # callback from mitmproxy so just log it now.
+                message_logger = self.session_manager.message_logger
+                if message_logger and flow.response_injected:
+                    message_logger.log_http_response(flow)
+            elif event_type == "response":
+                self._handle_response(flow)
+            else:
+                raise Exception(f"Unknown mitmproxy event type {event_type}")
+        finally:
+            # If someone has taken this request out of the regular callback flow,
+            # they'll manually send a callback at some later time.
+            if not flow.taken:
+                self.to_proxy_queue.put(("callback", flow.id, flow.get_state()))
 
     def _handle_request(self, flow: HippoHTTPFlow):
         url = flow.request.url

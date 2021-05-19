@@ -136,7 +136,7 @@ def start_proxy(extra_addons: Optional[list] = None, extra_addon_paths: Optional
     async_server = loop.run_until_complete(coro)
 
     event_manager = MITMProxyEventManager(session_manager, flow_context)
-    loop.create_task(event_manager.pump_proxy_events())
+    loop.create_task(event_manager.run())
 
     addon_paths = sys.argv[1:]
     addon_paths.extend(extra_addon_paths)
