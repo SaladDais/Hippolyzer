@@ -41,9 +41,9 @@ class LLUDPIntegrationTests(BaseIntegrationTest):
 
     async def _pump_one_event(self):
         # If we don't yield then the new entry won't end up in the queue
-        await asyncio.sleep(0)
+        await asyncio.sleep(0.001)
         await self.http_event_manager.pump_proxy_event()
-        await asyncio.sleep(0)
+        await asyncio.sleep(0.001)
 
     async def test_http_flow_request(self):
         # mimic a request coming in from mitmproxy over the queue
