@@ -39,3 +39,37 @@ header: qvalue\r
 content-length: 7\r
 \r
 content""")
+
+    def test_binary_request_formatting(self):
+        req = tutils.treq(host="example.com", port=80)
+        resp = tutils.tresp()
+        fake_flow = tflow.tflow(req=req, resp=resp)
+        flow = HippoHTTPFlow.from_state(fake_flow.get_state(), self.session_manager)
+        # This should trigger the escaped body path without changing content-length
+        flow.request.content = b"c\x00ntent"
+        entry = HTTPMessageLogEntry(flow)
+        self.assertEqual(entry.request(beautify=True), """GET http://example.com/path HTTP/1.1\r
+header: qvalue\r
+content-length: 7\r
+X-Hippo-Escaped-Body: 1\r
+\r
+c\\x00ntent""")
+
+    def test_llsd_response_formatting(self):
+        req = tutils.treq(host="example.com", port=80)
+        resp = tutils.tresp()
+        fake_flow = tflow.tflow(req=req, resp=resp)
+        flow = HippoHTTPFlow.from_state(fake_flow.get_state(), self.session_manager)
+        # Half the time LLSD is sent with a random Content-Type and no PI indicating
+        # what flavor of LLSD it is. Make sure the sniffing works correctly.
+        flow.response.content = b"<llsd><integer>1</integer></llsd>"
+        entry = HTTPMessageLogEntry(flow)
+        self.assertEqual(entry.response(beautify=True), """HTTP/1.1 200 OK\r
+header-response: svalue\r
+content-length: 33\r
+\r
+<?xml version="1.0" ?>
+<llsd>
+<integer>1</integer>
+</llsd>
+""")
