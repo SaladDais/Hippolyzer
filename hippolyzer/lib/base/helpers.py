@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import codecs
 import functools
 import pkg_resources
 import re
