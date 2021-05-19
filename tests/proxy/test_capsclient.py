@@ -12,7 +12,7 @@ from hippolyzer.lib.proxy.sessions import SessionManager
 
 class TestCapsClient(unittest.IsolatedAsyncioTestCase):
     def setUp(self) -> None:
-        self.session = self.session = SessionManager().create_session({
+        self.session = SessionManager().create_session({
             "session_id": UUID.random(),
             "secure_session_id": UUID.random(),
             "agent_id": UUID.random(),
