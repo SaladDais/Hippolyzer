@@ -39,7 +39,5 @@ jobs:
         env_vars: OS,PYTHON
         name: codecov-umbrella
         fail_ci_if_error: false
-        # We don't care if coverage drops
-        continue-on-error: true
         path_to_write_report: ./coverage/codecov_report.txt
         verbose: false
