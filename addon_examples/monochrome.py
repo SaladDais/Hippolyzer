@@ -37,6 +37,22 @@ from hippolyzer.lib.proxy.templates import TextureEntry
 
 glymur.set_option('lib.num_threads', 4)
 
+# These should never be replaced, they're only used as aliases to tell the viewer
+# it should fetch the relevant texture from the appearance service
+BAKES_ON_MESH_TEXTURE_IDS = {UUID(x) for x in (
+    "5a9f4a74-30f2-821c-b88d-70499d3e7183",
+    "ae2de45c-d252-50b8-5c6e-19f39ce79317",
+    "24daea5f-0539-cfcf-047f-fbc40b2786ba",
+    "52cc6bb6-2ee5-e632-d3ad-50197b1dcb8a",
+    "43529ce8-7faa-ad92-165a-bc4078371687",
+    "09aac1fb-6bce-0bee-7d44-caac6dbb6c63",
+    "ff62763f-d60a-9855-890b-0c96f8f8cd98",
+    "8e915e25-31d1-cc95-ae08-d58a47488251",
+    "9742065b-19b5-297c-858a-29711d539043",
+    "03642e83-2bd1-4eb9-34b4-4c47ed586d2d",
+    "edd51b77-fc10-ce7a-4b3d-011dfc349e4f",
+)}
+
 
 def _modify_crc(crc_tweak: int, crc_val: int):
     return ctypes.c_uint32(crc_val ^ crc_tweak).value
@@ -137,6 +153,8 @@ class MonochromeAddon(BaseAddon):
         # and we don't want to change the canonical view.
         parsed_te = copy.deepcopy(parsed_te)
         for k, v in parsed_te.Textures.items():
+            if v in BAKES_ON_MESH_TEXTURE_IDS:
+                continue
             # Replace textures with their alias to bust the viewer cache
             parsed_te.Textures[k] = tracker.get_alias_uuid(v)
         for k, v in parsed_te.Color.items():
@@ -165,6 +183,8 @@ class MonochromeAddon(BaseAddon):
 
         orig_texture_id = self.mono_tracker.get_orig_uuid(UUID(texture_id))
         if not orig_texture_id:
+            return
+        if orig_texture_id in BAKES_ON_MESH_TEXTURE_IDS:
             return
 
         # The request was for a fake texture ID we created, rewrite the request to
