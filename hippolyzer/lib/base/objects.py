@@ -20,6 +20,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 from __future__ import annotations
 
+import dataclasses
 from typing import *
 
 import lazy_object_proxy
@@ -253,12 +254,17 @@ class Object(recordclass.datatuple):  # type: ignore
         updated_properties = set()
         for key, val in properties.items():
             if hasattr(self, key):
-                old_val = getattr(self, key, val)
+                old_val = getattr(self, key, dataclasses.MISSING)
                 # Don't check equality if we're using a lazy proxy,
                 # parsing is deferred until we actually use it.
-                is_proxy = isinstance(val, lazy_object_proxy.Proxy)
-                if is_proxy or old_val != val:
-                    updated_properties.add(key)
+                if isinstance(val, lazy_object_proxy.Proxy):
+                    # TODO: be smarter about this. Can we store the raw bytes and
+                    #  compare those if it's an unparsed object?
+                    if old_val is not val:
+                        updated_properties.add(key)
+                else:
+                    if old_val != val:
+                        updated_properties.add(key)
                 setattr(self, key, val)
         return updated_properties
 
