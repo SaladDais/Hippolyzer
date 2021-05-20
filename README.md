@@ -327,6 +327,19 @@ This package [includes portions of the Second Life(TM) Viewer Artwork](https://g
 Copyright (C) 2008 Linden Research, Inc.  The viewer artwork is licensed under the Creative Commons
 Attribution-Share Alike 3.0 License.
 
+## Contributing
+
+Ensure that any patches are clean with no unnecessary whitespace or formatting changes, and that you
+add new tests for any added functionality.
+
+## Philosophy
+
+With a few notable exceptions, Hippolyzer focuses mainly on decomposition of data, and doesn't
+provide many high-level abstractions for interpreting or manipulating that data. It's careful
+to only do lossless transforms on data that are just prettier representations of the data sent
+over the wire. Hippolyzer's goal is to help people understand how Second Life actually works,
+automatically employing abstractions that hide how SL works is counter to that goal.
+
 ## For Client Developers
 
 This section is mostly useful if you're developing a new SL-compatible client from scratch. Clients based
@@ -351,6 +364,8 @@ To have your client's traffic proxied through Hippolyzer the general flow is:
   of the packet
 * Any received UDP packets will also have a SOCKS 5 header indicating the real source IP and address
 * * When in doubt, check `socks_proxy.py`, `packets.py` and the SOCKS 5 RFC for more info on how to deal with SOCKS.
+* * <https://github.com/SaladDais/WinHippoAutoProxy/blob/master/winhippoautoproxy/socks5udphooker.cpp> is a simple
+    example that wraps around `recvfrom()` and `sendto()` and could be used as a starting point.
 * All HTTP requests must be sent through the Hippolyzer's HTTP proxy port.
 * * You may not need to do any extra plumbing to get this to work if your chosen HTTP client
     respects the `HTTP_PROXY` environment variable.
