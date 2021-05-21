@@ -23,6 +23,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-test.txt
+    - name: Run Flake8
+      run: |
+        flake8 .
     - name: Test with pytest
       # Tests are intentionally covered to detect broken tests.
       run: |
