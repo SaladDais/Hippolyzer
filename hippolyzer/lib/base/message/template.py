@@ -66,7 +66,7 @@ class MessageTemplateBlock:
         self.variables: typing.List[MessageTemplateVariable] = []
         self.variable_map: typing.Dict[str, MessageTemplateVariable] = {}
         self.name = name
-        self.block_type = 0
+        self.block_type: MsgBlockType = MsgBlockType.MBT_SINGLE
         self.number = 0
 
     def add_variable(self, var):

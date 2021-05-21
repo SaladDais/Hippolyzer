@@ -1603,7 +1603,7 @@ class BufferedLLSDBinaryParser(llsd.HippoLLSDBinaryParser):
                 byte = self._getc()[0]
             except IndexError:
                 byte = None
-        raise llsd.LLSDParseError("%s at byte %d: %s" % (message, self._index+offset, byte))
+        raise llsd.LLSDParseError("%s at byte %d: %s" % (message, self._index + offset, byte))
 
     def _getc(self, num=1):
         return self._buffer.read_bytes(num)

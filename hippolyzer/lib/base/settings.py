@@ -22,11 +22,11 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 class Settings:
     def __init__(self, quiet_logging=False, spammy_logging=False, log_tests=True):
-        """ some lovely configurable settings 
+        """ some lovely configurable settings
 
         These are applied application wide, and can be
         overridden at any time in a specific instance
-        
+
         quiet_logging overrides spammy_logging
         """
 

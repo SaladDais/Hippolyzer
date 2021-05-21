@@ -367,8 +367,8 @@ class HTTPMessageLogEntry(AbstractMessageLogEntry):
         cap_name = cap_data and cap_data.cap_name
         base_url = cap_name and cap_data.base_url
         temporary_cap = cap_data and cap_data.type == CapType.TEMPORARY
-        beautify_url = (beautify and base_url and cap_name and
-                        not temporary_cap and self.session and want_request)
+        beautify_url = (beautify and base_url and cap_name
+                        and not temporary_cap and self.session and want_request)
         if want_request:
             buf.write(message.method)
             buf.write(" ")

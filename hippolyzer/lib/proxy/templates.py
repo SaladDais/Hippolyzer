@@ -1238,10 +1238,10 @@ EXTRA_PARAM_TEMPLATES = {
         "UserForce": se.IfPresent(se.Vector3),
     }),
     ExtraParamType.LIGHT: se.Template({
-       "Color": Color4(),
-       "Radius": se.F32,
-       "Cutoff": se.F32,
-       "Falloff": se.F32,
+        "Color": Color4(),
+        "Radius": se.F32,
+        "Cutoff": se.F32,
+        "Falloff": se.F32,
     }),
     ExtraParamType.SCULPT: se.Template({
         "Texture": se.UUID,

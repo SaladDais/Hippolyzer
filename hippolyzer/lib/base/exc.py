@@ -347,7 +347,7 @@ class RegionCapNotAvailable(RegionDomainError):
 
 class RegionMessageError(RegionDomainError):
     """ an error raised when a region does not have a connection
-    over which it can send UDP messages 
+    over which it can send UDP messages
 
     accepts a region object as an attribute
 

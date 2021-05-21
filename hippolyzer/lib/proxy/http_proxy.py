@@ -249,9 +249,9 @@ def create_http_proxy(bind_host, port, flow_context: HTTPFlowContext):  # pragma
 
 def is_asset_server_cap_name(cap_name):
     return cap_name and (
-            cap_name.startswith("GetMesh") or
-            cap_name.startswith("GetTexture") or
-            cap_name.startswith("ViewerAsset")
+        cap_name.startswith("GetMesh")
+        or cap_name.startswith("GetTexture")
+        or cap_name.startswith("ViewerAsset")
     )
 
 

@@ -128,7 +128,7 @@ class TransferManager:
                 elif msg.name == "TransferAbort":
                     transfer.error_code = msg["TransferID"][0].deserialize_var("Result")
                     transfer.set_exception(
-                        ConnectionAbortedError(f"Unknown failure")
+                        ConnectionAbortedError("Unknown failure")
                     )
 
     def _handle_transfer_packet(self, msg: ProxiedMessage, transfer: Transfer):

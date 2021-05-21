@@ -179,7 +179,7 @@ def start_proxy(extra_addons: Optional[list] = None, extra_addon_paths: Optional
 
 def _windows_timeout_killer(pid: int):
     time.sleep(2.0)
-    print(f"Killing hanging event loop")
+    print("Killing hanging event loop")
     os.kill(pid, 9)
 
 

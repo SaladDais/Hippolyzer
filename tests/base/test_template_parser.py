@@ -39,11 +39,7 @@ class TestDictionary(unittest.TestCase):
         self.template_list = parser.message_templates
 
     def test_create_dictionary(self):
-        try:
-            _msg_dict = TemplateDictionary(None)
-            assert False, "Template dictionary fail case list==None not caught"
-        except:
-            assert True
+        TemplateDictionary(None)
 
     def test_get_packet(self):
         msg_dict = TemplateDictionary(self.template_list)
@@ -55,7 +51,7 @@ class TestDictionary(unittest.TestCase):
     def test_get_packet_pair(self):
         msg_dict = TemplateDictionary(self.template_list)
         packet = msg_dict.get_template_by_pair('Medium', 8)
-        assert packet.name == 'ConfirmEnableSimulator', "Frequency-Number pair resulting in incorrect packet"        
+        assert packet.name == 'ConfirmEnableSimulator', "Frequency-Number pair resulting in incorrect packet"
 
 
 class TestTemplates(unittest.TestCase):
@@ -69,11 +65,8 @@ class TestTemplates(unittest.TestCase):
         assert parser.message_templates is not None, "Parsing template file failed"
 
     def test_parser_fail(self):
-        try:
+        with self.assertRaises(Exception):
             _parser = MessageTemplateParser(None)
-            assert False, "Fail case TEMPLATE_FILE == NONE not caught"
-        except:
-            assert True
 
     def test_parser_version(self):
         version = self.parser.version
@@ -111,15 +104,15 @@ class TestTemplates(unittest.TestCase):
         block = self.msg_dict['OpenCircuit'].get_block('CircuitInfo')
         tp = block.block_type
         num = block.number
-        assert tp == MsgBlockType.MBT_SINGLE, "Expected:   Single   Returned: " + tp       
-        assert num == 0, "Expected:   0  Returned: " + str(num)               
+        assert tp == MsgBlockType.MBT_SINGLE, "Expected:   Single   Returned: " + tp
+        assert num == 0, "Expected:   0  Returned: " + str(num)
 
     def test_block_multiple(self):
         block = self.msg_dict['NeighborList'].get_block('NeighborBlock')
         tp = block.block_type
         num = block.number
         assert tp == MsgBlockType.MBT_MULTIPLE, "Expected:   Multiple   Returned: " + tp
-        assert num == 4, "Expected:   4  Returned: " + str(num)               
+        assert num == 4, "Expected:   4  Returned: " + str(num)
 
     def test_variable(self):
         variable = self.msg_dict['StartPingCheck'].get_block('PingID').get_variable('PingID')
@@ -153,7 +146,7 @@ class TestTemplates(unittest.TestCase):
         medium_count = 0
         high_count = 0
         fixed_count = 0
-        while True:            
+        while True:
             try:
                 line = next(lines)
             except StopIteration:

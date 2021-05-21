@@ -162,8 +162,8 @@ class UDPProxyProtocol(asyncio.DatagramProtocol):
             data = data[4:]
         elif address_type == 3:  # Domain name
             domain_length = data[0]
-            address = data[1:1+domain_length]
-            data = data[1+domain_length:]
+            address = data[1:1 + domain_length]
+            data = data[1 + domain_length:]
         else:
             logging.error("Don't understand addr type %d" % address_type)
             return None

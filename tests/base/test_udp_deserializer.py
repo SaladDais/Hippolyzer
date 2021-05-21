@@ -86,6 +86,6 @@ class TestDeserializer(unittest.TestCase):
         # test the 72 byte ObjectUpdate.ObjectData.ObjectData case
         hex_string = '00000000000000000000803f6666da41660000432fffff422233e34100000000000000000000000000000000000000' \
                      '000000000000000000000000000e33de3c000000000000000000000000'
-        position = TemplateDataPacker.unpack(unhexlify(hex_string)[16:16+12], MsgType.MVT_LLVector3)
+        position = TemplateDataPacker.unpack(unhexlify(hex_string)[16:16 + 12], MsgType.MVT_LLVector3)
         self.assertEqual(position, (128.00155639648438, 127.99840545654297, 28.399967193603516))
         self.assertIsInstance(position, Vector3)

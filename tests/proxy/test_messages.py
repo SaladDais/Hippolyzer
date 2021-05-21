@@ -294,10 +294,12 @@ class HumanReadableMessageTests(unittest.TestCase):
 
 class TestMessageSubfieldSerializers(unittest.TestCase):
     def setUp(self):
-        self.chat_msg = ProxiedMessage('ChatFromViewer',
-                      Block('AgentData', AgentID=UUID('550e8400-e29b-41d4-a716-446655440000'),
-                            SessionID=UUID('550e8400-e29b-41d4-a716-446655440000')),
-                      Block('ChatData', Message="Chatting\n", Type=1, Channel=0))
+        self.chat_msg = ProxiedMessage(
+            'ChatFromViewer',
+            Block('AgentData',
+                  AgentID=UUID('550e8400-e29b-41d4-a716-446655440000'),
+                  SessionID=UUID('550e8400-e29b-41d4-a716-446655440000')),
+            Block('ChatData', Message="Chatting\n", Type=1, Channel=0))
 
     def test_pretty_repr(self):
         expected_repr = r"""ProxiedMessage('ChatFromViewer',

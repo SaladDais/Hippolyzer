@@ -34,7 +34,7 @@ VAR_TYPE = Union[TupleCoord, bytes, str, float, int, Tuple, UUID]
 
 
 class Block:
-    """ 
+    """
     base representation of a block
     Block expects a name, and kwargs for variables (var_name = value)
     """

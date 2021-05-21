@@ -664,14 +664,13 @@ class NameValueSerializationTests(BaseSerializationTest):
             self.assertEqual(test.decode("utf8"), str(reader.read(NameValueSerializer())))
 
     def test_namevalues_stringify(self):
-        test_list = \
-                  b"Alpha STRING R S 'Twas brillig and the slighy toves/Did gyre and gimble in the wabe\n" + \
-                  b"Beta F32 R S 3.14159\n" + \
-                  b"Gamma S32 R S -12345\n" + \
-                  b"Delta VEC3 R S <1.2, -3.4, 5.6>\n" + \
-                  b"Epsilon U32 R S 12345\n" + \
-                  b"Zeta ASSET R S 041a8591-6f30-42f8-b9f7-7f281351f375\n" + \
-                  b"Eta U64 R S 9223372036854775807"
+        test_list = b"Alpha STRING R S 'Twas brillig and the slighy toves/Did gyre and gimble in the wabe\n" + \
+                    b"Beta F32 R S 3.14159\n" + \
+                    b"Gamma S32 R S -12345\n" + \
+                    b"Delta VEC3 R S <1.2, -3.4, 5.6>\n" + \
+                    b"Epsilon U32 R S 12345\n" + \
+                    b"Zeta ASSET R S 041a8591-6f30-42f8-b9f7-7f281351f375\n" + \
+                    b"Eta U64 R S 9223372036854775807"
 
         self.writer.clear()
         self.writer.write_bytes(test_list)

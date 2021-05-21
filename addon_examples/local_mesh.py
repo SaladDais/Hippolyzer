@@ -23,8 +23,7 @@ import ctypes
 import secrets
 from typing import *
 
-import mitmproxy
-from mitmproxy.http import HTTPFlow
+import mitmproxy.http
 
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import *
