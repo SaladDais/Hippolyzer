@@ -25,7 +25,7 @@ from setuptools import setup, find_packages
 
 here = path.abspath(path.dirname(__file__))
 
-version = '0.4.1'
+version = '0.5.0'
 
 with open(path.join(here, 'README.md')) as readme_fh:
     readme = readme_fh.read()
@@ -50,7 +50,7 @@ setup(
         "Topic :: Software Development :: Testing",
     ],
     author='Salad Dais',
-    author_email='SaladDais@users.noreply.github.com',
+    author_email='83434023+SaladDais@users.noreply.github.com',
     url='https://github.com/SaladDais/Hippolyzer/',
     license='LGPLv3',
     packages=find_packages(include=["hippolyzer", "hippolyzer.*"]),
