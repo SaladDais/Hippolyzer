@@ -1,5 +1,5 @@
 """
-Common format used by all bodyparts and linden clothing layers
+Body parts and linden clothing layers
 """
 
 from __future__ import annotations
@@ -9,9 +9,13 @@ import logging
 from io import StringIO
 from typing import *
 
+from xml.etree.ElementTree import parse as parse_etree
+
 from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.helpers import get_resource_filename
 from hippolyzer.lib.base.legacy_inv import InventorySaleInfo, InventoryPermissions
 from hippolyzer.lib.base.legacy_schema import SchemaBase, parse_schema_line, SchemaParsingError
+from hippolyzer.lib.base.templates import WearableType
 
 LOG = logging.getLogger(__name__)
 _T = TypeVar("_T")
@@ -20,9 +24,49 @@ WEARABLE_VERSION = "LLWearable version 22"
 
 
 @dataclasses.dataclass
+class VisualParam:
+    id: int
+    name: str
+    value_min: float
+    value_max: float
+    # These might be `None` if the param isn't meant to be directly edited
+    edit_group: Optional[str]
+    wearable: Optional[str]
+
+
+class VisualParams(List[VisualParam]):
+    def __init__(self):
+        super().__init__()
+        lad_path = get_resource_filename("lib/base/data/avatar_lad.xml")
+        with open(lad_path, "rb") as f:
+            doc = parse_etree(f)
+        for param in doc.findall(".//param"):
+            self.append(VisualParam(
+                id=int(param.attrib["id"]),
+                name=param.attrib["name"],
+                edit_group=param.get("edit_group"),
+                wearable=param.get("wearable"),
+                value_min=float(param.attrib["value_min"]),
+                value_max=float(param.attrib["value_max"]),
+            ))
+
+    def by_name(self, name: str) -> VisualParam:
+        return [x for x in self if x.name == name][0]
+
+    def by_edit_group(self, edit_group: str) -> List[VisualParam]:
+        return [x for x in self if x.edit_group == edit_group]
+
+    def by_wearable(self, wearable: str) -> List[VisualParam]:
+        return [x for x in self if x.wearable == wearable]
+
+
+VISUAL_PARAMS = VisualParams()
+
+
+@dataclasses.dataclass
 class Wearable(SchemaBase):
     name: str
-    wearable_type: int
+    wearable_type: WearableType
     permissions: InventoryPermissions
     sale_info: InventorySaleInfo
     # VisualParam ID -> val
@@ -67,7 +111,7 @@ class Wearable(SchemaBase):
         permissions = InventoryPermissions.from_reader(reader, read_header=True)
         sale_info = InventorySaleInfo.from_reader(reader, read_header=True)
 
-        wearable_type = int(cls._read_expected_key(reader, "type"))
+        wearable_type = WearableType(int(cls._read_expected_key(reader, "type")))
         num_params = int(cls._read_expected_key(reader, "parameters"))
         params = {}
         for _ in range(num_params):
@@ -95,7 +139,7 @@ class Wearable(SchemaBase):
         writer.write(f"{self.name}\n\n")
         self.permissions.to_writer(writer)
         self.sale_info.to_writer(writer)
-        writer.write(f"type {self.wearable_type}\n")
+        writer.write(f"type {int(self.wearable_type)}\n")
         writer.write(f"parameters {len(self.parameters)}\n")
         for param_id, param_val in self.parameters.items():
             writer.write(f"{param_id} {param_val}\n")

@@ -9,7 +9,7 @@ import urllib.parse
 import weakref
 import xmlrpc.client
 
-import defusedxml.cElementTree
+import defusedxml.ElementTree
 import defusedxml.xmlrpc
 import mitmproxy.http
 
@@ -24,7 +24,7 @@ from hippolyzer.lib.proxy.http_proxy import HTTPFlowContext
 
 def apply_security_monkeypatches():
     defusedxml.xmlrpc.monkey_patch()
-    llsd.fromstring = defusedxml.cElementTree.fromstring
+    llsd.fromstring = defusedxml.ElementTree.fromstring
 
 
 apply_security_monkeypatches()

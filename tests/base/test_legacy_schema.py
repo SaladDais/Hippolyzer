@@ -2,7 +2,7 @@ import unittest
 
 from hippolyzer.lib.base.datatypes import *
 from hippolyzer.lib.base.legacy_inv import InventoryModel
-from hippolyzer.lib.base.wearable import Wearable
+from hippolyzer.lib.base.wearables import Wearable, VISUAL_PARAMS
 
 SIMPLE_INV = """\tinv_object\t0
 \t{
@@ -180,3 +180,7 @@ class TestWearable(unittest.TestCase):
         wearable = Wearable.from_str(GIRL_NEXT_DOOR_SHAPE)
         new_wearable = Wearable.from_str(wearable.to_str())
         self.assertEqual(wearable, new_wearable)
+
+    def test_visual_params(self):
+        param = VISUAL_PARAMS.by_name("Eyelid_Inner_Corner_Up")
+        self.assertEqual(param.value_max, 1.2)

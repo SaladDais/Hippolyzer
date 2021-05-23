@@ -65,6 +65,8 @@ setup(
             'lib/base/network/data/ca-bundle.crt',
             'lib/base/data/static_data.db2',
             'lib/base/data/static_index.db2',
+            'lib/base/data/avatar_lad.xml',
+            'lib/base/data/avatar_skeleton.xml',
             'lib/base/data/LICENSE-artwork.txt',
         ],
     },

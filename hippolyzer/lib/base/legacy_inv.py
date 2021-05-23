@@ -69,15 +69,16 @@ class InventoryBase(SchemaBase):
 
     @classmethod
     def from_reader(cls, reader: StringIO, read_header=False) -> InventoryBase:
+        tok_iter = _yield_schema_tokens(reader)
         # Someone else hasn't already read the header for us
         if read_header:
-            schema_name, _ = next(_yield_schema_tokens(reader))
+            schema_name, _ = next(tok_iter)
             if schema_name != cls.SCHEMA_NAME:
                 raise ValueError(f"Expected schema name {schema_name!r} to be {cls.SCHEMA_NAME!r}")
 
         fields = cls._fields_dict()
         obj_dict = {}
-        for key, val in _yield_schema_tokens(reader):
+        for key, val in tok_iter:
             if key in fields:
                 field: dataclasses.Field = fields[key]
                 spec = field.metadata.get("spec")

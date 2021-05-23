@@ -3,11 +3,11 @@ import tempfile
 from io import BytesIO
 from typing import *
 
-import defusedxml.cElementTree
+import defusedxml.ElementTree
 from glymur import jp2box, Jp2k
 
 # Replace glymur's ElementTree with a safe one
-jp2box.ET = defusedxml.cElementTree
+jp2box.ET = defusedxml.ElementTree
 
 
 SL_DEFAULT_ENCODE = {
