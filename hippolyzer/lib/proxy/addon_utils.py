@@ -40,8 +40,13 @@ class AssetAliasTracker:
     def get_orig_uuid(self, val: UUID) -> Optional[UUID]:
         return self.rev_mapping.get(val)
 
-    def get_alias_uuid(self, val: UUID):
-        alias_id = self.alias_mapping.setdefault(val, UUID.random())
+    def get_alias_uuid(self, val: UUID, create: bool = True) -> Optional[UUID]:
+        if create:
+            alias_id = self.alias_mapping.setdefault(val, UUID.random())
+        else:
+            alias_id = self.alias_mapping.get(val)
+            if alias_id is None:
+                return None
         self.rev_mapping.setdefault(alias_id, val)
         return alias_id
 
