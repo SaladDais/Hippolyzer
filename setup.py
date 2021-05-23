@@ -63,9 +63,9 @@ setup(
             'lib/base/message/data/message_template.msg',
             'lib/base/message/data/message.xml',
             'lib/base/network/data/ca-bundle.crt',
-            'lib/proxy/data/static_data.db2',
-            'lib/proxy/data/static_index.db2',
-            'lib/proxy/data/LICENSE-artwork.txt',
+            'lib/base/data/static_data.db2',
+            'lib/base/data/static_index.db2',
+            'lib/base/data/LICENSE-artwork.txt',
         ],
     },
     entry_points={

@@ -16,7 +16,7 @@ from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session, SessionManager
-from hippolyzer.lib.proxy.vfs import STATIC_VFS
+from hippolyzer.lib.base.vfs import STATIC_VFS
 
 
 JOINT_REPLS = {

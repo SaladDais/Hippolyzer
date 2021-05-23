@@ -4,7 +4,7 @@ from typing import *
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.helpers import get_resource_filename
-from hippolyzer.lib.proxy.templates import AssetType
+from hippolyzer.lib.base.templates import AssetType
 
 
 @dataclasses.dataclass
@@ -63,5 +63,5 @@ class VFS:
         return self._data_fh.read(block.size)
 
 
-_static_path = get_resource_filename("lib/proxy/data/static_index.db2")
+_static_path = get_resource_filename("lib/base/data/static_index.db2")
 STATIC_VFS = VFS(_static_path)

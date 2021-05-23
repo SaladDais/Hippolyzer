@@ -1,7 +1,7 @@
 import unittest
 
 from hippolyzer.lib.base.datatypes import UUID
-from hippolyzer.lib.proxy.vfs import STATIC_VFS
+from hippolyzer.lib.base.vfs import STATIC_VFS
 
 
 class StaticVFSTest(unittest.TestCase):

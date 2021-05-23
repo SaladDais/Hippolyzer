@@ -113,7 +113,7 @@ If you want to compare against an enum or a flag class in defined in `templates.
 
 Decoded messages are displayed in the log pane, clicking one will show the request and
 response for HTTP messages, and a human-friendly form for UDP messages. Some messages and
-fields have [special packers defined](https://github.com/SaladDais/Hippolyzer/blob/master/hippolyzer/lib/proxy/templates.py)
+fields have [special packers defined](https://github.com/SaladDais/Hippolyzer/blob/master/hippolyzer/lib/base/templates.py)
 that will give a more human-readable form of enum or binary fields, with the original form beside or below it.
 
 For example, an `AgentUpdate` message may show up in the log pane like:
@@ -323,7 +323,7 @@ If you are a viewer developer, please put them in a viewer.
 
 [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html). If you have a good reason why, I might dual license.
 
-This package [includes portions of the Second Life(TM) Viewer Artwork](https://github.com/SaladDais/Hippolyzer/tree/master/hippolyzer/lib/proxy/data),
+This package [includes portions of the Second Life(TM) Viewer Artwork](https://github.com/SaladDais/Hippolyzer/tree/master/hippolyzer/lib/base/data),
 Copyright (C) 2008 Linden Research, Inc.  The viewer artwork is licensed under the Creative Commons
 Attribution-Share Alike 3.0 License.
 
