@@ -14,6 +14,7 @@ from hippolyzer.lib.base.message.data_packer import TemplateDataPacker
 from hippolyzer.lib.base.message.message import Block
 from hippolyzer.lib.base.message.msgtypes import MsgType
 from hippolyzer.lib.proxy.message import ProxiedMessage
+from hippolyzer.lib.proxy.packets import Direction
 from hippolyzer.lib.proxy.templates import XferPacket, XferFilePath, AssetType, XferError
 
 if TYPE_CHECKING:
@@ -23,13 +24,14 @@ _XFER_MESSAGES = {"AbortXfer", "ConfirmXferPacket", "RequestXfer", "SendXferPack
 
 
 class Xfer:
-    def __init__(self, xfer_id: Optional[int] = None):
+    def __init__(self, xfer_id: Optional[int] = None, direction: Direction = Direction.OUT):
         super().__init__()
         self.xfer_id: Optional[int] = xfer_id
         self.chunks: Dict[int, bytes] = {}
         self.expected_size: Optional[int] = None
         self.size_known = asyncio.Future()
         self.error_code: Union[int, XferError] = 0
+        self.direction: Direction = direction
         self._future: asyncio.Future[Xfer] = asyncio.Future()
 
     def reassemble_chunks(self) -> bytes:
@@ -81,6 +83,7 @@ class XferManager:
             vfile_type: Optional[Union[AssetType, int]] = None,
             use_big_packets: bool = False,
             delete_on_completion: bool = False,
+            direction: Direction = Direction.OUT,
     ) -> Xfer:
         xfer_id = xfer_id if xfer_id is not None else random.getrandbits(64)
         self._region.circuit.send_message(ProxiedMessage(
@@ -95,8 +98,9 @@ class XferManager:
                 VFileID=vfile_id or UUID(),
                 VFileType=vfile_type or AssetType.NONE,
             ),
+            direction=direction,
         ))
-        xfer = Xfer(xfer_id)
+        xfer = Xfer(xfer_id, direction=direction)
         asyncio.create_task(self._pump_xfer_replies(xfer))
         return xfer
 
@@ -142,6 +146,7 @@ class XferManager:
         self._region.circuit.send_message(ProxiedMessage(
             "ConfirmXferPacket",
             Block("XferID", ID=xfer.xfer_id, Packet=packet_id.PacketID),
+            direction=xfer.direction,
         ))
 
         xfer.chunks[packet_id.PacketID] = packet_data
