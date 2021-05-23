@@ -179,6 +179,7 @@ class XferManager:
             while data:
                 xfer.chunks[chunk_num] = data[:1150]
                 data = data[1150:]
+                chunk_num += 1
         else:
             inline_data = data
 
