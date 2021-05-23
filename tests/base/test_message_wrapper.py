@@ -222,3 +222,17 @@ class TestMessageHandlers(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(msg.queued)
         # Receiving the message unsubscribes
         self.assertEqual(len(foo_handlers), 0)
+
+    async def test_wait_for_take(self):
+        fut = self.message_handler.wait_for("Foo", timeout=0.001)
+        foo_handlers = self.message_handler.handlers['Foo']
+        # We are subscribed
+        self.assertEqual(len(foo_handlers), 1)
+        msg = Message("Foo", Block("Bar", Baz=1, Biz=1))
+        self._fake_received_message(msg)
+        # Should copy
+        self.assertIsNot(msg, await fut)
+        # Should have been queued
+        self.assertTrue(msg.queued)
+        # Receiving the message unsubscribes
+        self.assertEqual(len(foo_handlers), 0)

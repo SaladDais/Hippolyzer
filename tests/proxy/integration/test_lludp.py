@@ -13,7 +13,7 @@ from hippolyzer.lib.base.objects import Object
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.message import ProxiedMessage
-from hippolyzer.lib.proxy.message_logger import FilteringMessageLogger
+from hippolyzer.lib.proxy.message_logger import FilteringMessageLogger, LLUDPMessageLogEntry
 from hippolyzer.lib.proxy.packets import ProxiedUDPPacket, Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
@@ -30,6 +30,10 @@ class MockAddon(BaseAddon):
 
     def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
         self.events.append(("lludp", session.id, region.circuit_addr, message.name))
+        if message.name == "UndoLand":
+            # Simulate a message being taken out of the regular proxying flow
+            message.take()
+            return True
 
     def handle_object_updated(self, session: Session, region: ProxiedRegion,
                               obj: Object, updated_props: Set[str]):
@@ -203,3 +207,20 @@ class LLUDPIntegrationTests(BaseIntegrationTest):
         entries = message_logger.entries
         self.assertEqual(len(entries), 1)
         self.assertEqual(entries[0].name, "ObjectUpdateCompressed")
+
+    async def test_logging_taken_message(self):
+        message_logger = SimpleMessageLogger()
+        self.session_manager.message_logger = message_logger
+        self._setup_circuit()
+        obj_update = self.serializer.serialize(ProxiedMessage(
+            "UndoLand",
+            Block("AgentData", AgentID=UUID(), SessionID=UUID()),
+            direction=Direction.IN,
+        ))
+        self.protocol.datagram_received(obj_update, self.region_addr)
+        await self._wait_drained()
+        entries = message_logger.entries
+        self.assertEqual(len(entries), 1)
+        entry: LLUDPMessageLogEntry = entries[0]  # type: ignore
+        self.assertEqual(entry.name, "UndoLand")
+        self.assertEqual(entry.message.dropped, True)

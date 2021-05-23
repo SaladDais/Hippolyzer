@@ -134,6 +134,12 @@ class InterceptingLLUDPProxyProtocol(BaseLLUDPProxyProtocol):
             self.session, region, message
         )
 
+        # This message is owned by an async handler, drop it so it doesn't get
+        # sent with the normal flow.
+        if message.queued and not message.dropped:
+            region.circuit.drop_message(message)
+
+        # Shouldn't mutate the message past this point, so log it now.
         if message_logger:
             message_logger.log_lludp_message(self.session, region, message)
 
@@ -144,11 +150,6 @@ class InterceptingLLUDPProxyProtocol(BaseLLUDPProxyProtocol):
             region.mark_dead()
         elif message.name == "RegionHandshake":
             region.name = str(message["RegionInfo"][0]["SimName"])
-
-        # This message is owned by an async handler, drop it so it doesn't get
-        # sent with the normal flow.
-        if message.queued and not message.dropped:
-            region.circuit.drop_message(message)
 
         if not message.dropped:
             region.circuit.send_message(message)
