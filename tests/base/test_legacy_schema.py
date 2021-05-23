@@ -48,6 +48,11 @@ class TestLegacyInv(unittest.TestCase):
         self.assertTrue(UUID('f4d91477-def1-487a-b4f3-6fa201c17376') in model.containers)
         self.assertIsNotNone(model.root)
 
+    def test_serialize(self):
+        model = InventoryModel.from_str(SIMPLE_INV)
+        new_model = InventoryModel.from_str(model.to_str())
+        self.assertEqual(model, new_model)
+
     def test_item_access(self):
         model = InventoryModel.from_str(SIMPLE_INV)
         item = model.items[UUID('dd163122-946b-44df-99f6-a6030e2b9597')]
