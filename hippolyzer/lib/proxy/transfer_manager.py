@@ -108,8 +108,8 @@ class TransferManager:
     async def _pump_transfer_replies(self, transfer: Transfer):
         # Subscribe to message related to our transfer while we're in this block
         with self._region.message_handler.subscribe_async(
-            _TRANSFER_MESSAGES,
-            predicate=transfer.is_our_message
+                _TRANSFER_MESSAGES,
+                predicate=transfer.is_our_message,
         ) as get_msg:
             while not transfer.done():
                 try:

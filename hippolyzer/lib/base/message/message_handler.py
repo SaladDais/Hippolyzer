@@ -56,8 +56,8 @@ class MessageHandler(Generic[_T]):
         return notifiers
 
     @contextlib.contextmanager
-    def subscribe_async(self, message_names: MESSAGE_NAMES, take: bool = True,
-                        predicate: Optional[PREDICATE] = None) -> ContextManager[Callable[[], Awaitable[_T]]]:
+    def subscribe_async(self, message_names: MESSAGE_NAMES, predicate: Optional[PREDICATE] = None,
+                        take: bool = True) -> ContextManager[Callable[[], Awaitable[_T]]]:
         """
         Subscribe to a set of message matching predicate while within a block
 

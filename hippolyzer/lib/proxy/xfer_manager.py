@@ -123,8 +123,8 @@ class XferManager:
 
     async def _pump_xfer_replies(self, xfer: Xfer):
         with self._region.message_handler.subscribe_async(
-            _XFER_MESSAGES,
-            predicate=xfer.is_our_message
+                _XFER_MESSAGES,
+                predicate=xfer.is_our_message,
         ) as get_msg:
             while not xfer.done():
                 try:
