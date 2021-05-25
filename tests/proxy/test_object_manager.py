@@ -278,6 +278,15 @@ class ObjectManagerTests(unittest.TestCase):
             agent2_id: Vector3(2, 3, 16),
         })
 
+        # Simulate missing parent for agent
+        self._kill_object(seat_object)
+        self.assertDictEqual(self._get_avatar_positions(), {
+            # Agent is seated, but we don't know its parent. We have
+            # to use the coarse location.
+            agent1_id: Vector3(1, 2, 12),
+            agent2_id: Vector3(2, 3, 16),
+        })
+
         # If the object is killed and no coarse pos, it shouldn't be in the dict
         # CoarseLocationUpdates are expected to be complete, so any agents missing
         # are no longer in the sim.

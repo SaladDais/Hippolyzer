@@ -249,6 +249,15 @@ class Object(recordclass.datatuple):  # type: ignore
         # TODO: Cache this and dirty cache if ancestor updates rot?
         return self.Rotation * self.Parent.RegionRotation
 
+    @property
+    def AncestorsKnown(self) -> bool:
+        obj = self
+        while obj.ParentID:
+            if not obj.Parent:
+                return False
+            obj = obj.Parent
+        return True
+
     def update_properties(self, properties: Dict[str, Any]) -> Set[str]:
         """ takes a dictionary of attribute:value and makes it so """
         updated_properties = set()

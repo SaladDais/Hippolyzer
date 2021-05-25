@@ -83,13 +83,13 @@ class Avatar:
 
     @property
     def LocationType(self) -> "LocationType":
-        if self.Object:
+        if self.Object and self.Object.AncestorsKnown:
             return LocationType.EXACT
         return LocationType.COARSE
 
     @property
     def RegionPosition(self) -> Vector3:
-        if self.Object:
+        if self.Object and self.Object.AncestorsKnown:
             return self.Object.RegionPosition
         if self._coarse_location is not None:
             return self._coarse_location
