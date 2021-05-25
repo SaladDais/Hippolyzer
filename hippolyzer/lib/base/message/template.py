@@ -56,7 +56,8 @@ class MessageTemplateVariable:
             self._probably_text = False
         else:
             self._probably_text = any(x in self.name for x in (
-                "Name", "Text", "Title", "Description", "Message", "Label", "Method"))
+                "Name", "Text", "Title", "Description", "Message", "Label", "Method", "Filename",
+            ))
             self._probably_text = self._probably_text and self.name != "NameValue"
         return self._probably_text
 
