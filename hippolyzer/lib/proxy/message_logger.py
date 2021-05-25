@@ -554,6 +554,7 @@ class LLUDPMessageLogEntry(AbstractMessageLogEntry):
         # These are expensive to keep around. pickle them and un-pickle on
         # an as-needed basis.
         self._deserializer = self.message.deserializer
+        self.message.deserializer = None
         self._frozen_message = pickle.dumps(self._message, protocol=pickle.HIGHEST_PROTOCOL)
         self._message = None
 

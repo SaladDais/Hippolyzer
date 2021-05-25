@@ -176,20 +176,11 @@ class Message:
         # should be set once a packet is sent / dropped to prevent accidental
         # re-sending or re-dropping
         self.finalized = False
-        # Whether message is owned by a queue or should be sent immediately
+        # Whether message is owned by the queue or should be sent immediately
         self.queued: bool = False
         self._blocks: BLOCK_DICT = {}
 
         self.add_blocks(args)
-
-    def __reduce_ex__(self, protocol):
-        reduced: Tuple[Any] = super().__reduce_ex__(protocol)
-        # https://docs.python.org/3/library/pickle.html#object.__reduce__
-        # We need to make some changes to the object state to make it serializable
-        state_dict: Dict = reduced[2][1]
-        # Have to remove the deserializer weak ref so we can pickle
-        state_dict['deserializer'] = None
-        return reduced
 
     @property
     def packet_id(self) -> Optional[int]:
