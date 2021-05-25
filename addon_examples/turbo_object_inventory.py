@@ -41,7 +41,7 @@ from hippolyzer.lib.proxy.sessions import Session
 from hippolyzer.lib.proxy.xfer_manager import Xfer
 
 
-class TurboXferAddon(BaseAddon):
+class TurboObjectInventoryAddon(BaseAddon):
     def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
         if message.direction != Direction.OUT:
             return
@@ -102,4 +102,4 @@ class TurboXferAddon(BaseAddon):
         raise asyncio.TimeoutError("Failed to get inventory after 3 tries")
 
 
-addons = [TurboXferAddon()]
+addons = [TurboObjectInventoryAddon()]
