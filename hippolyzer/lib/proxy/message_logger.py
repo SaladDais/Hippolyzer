@@ -550,12 +550,16 @@ class LLUDPMessageLogEntry(AbstractMessageLogEntry):
             raise ValueError("Didn't have a fresh or frozen message somehow")
 
     def freeze(self):
-        self.message.invalidate_caches()
+        message = self.message
+        message.invalidate_caches()
         # These are expensive to keep around. pickle them and un-pickle on
         # an as-needed basis.
         self._deserializer = self.message.deserializer
-        self.message.deserializer = None
-        self._frozen_message = pickle.dumps(self._message, protocol=pickle.HIGHEST_PROTOCOL)
+        message.deserializer = None
+        try:
+            self._frozen_message = pickle.dumps(self._message, protocol=pickle.HIGHEST_PROTOCOL)
+        finally:
+            message.deserializer = self._deserializer
         self._message = None
 
     @property
