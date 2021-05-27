@@ -19,6 +19,8 @@ class TestCapsClient(unittest.IsolatedAsyncioTestCase):
             "circuit_code": 0,
             "sim_ip": "127.0.0.1",
             "sim_port": "1",
+            "region_x": 1,
+            "region_y": 2,
             "seed_capability": "https://test.localhost:4/foo",
         })
         self.region = ProxiedRegion(("127.0.0.1", 1), "", self.session)

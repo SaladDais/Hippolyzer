@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import collections
-import copy
 import enum
 import logging
 import math
@@ -10,16 +9,22 @@ import weakref
 from typing import *
 
 from hippolyzer.lib.base import llsd
-from hippolyzer.lib.base.datatypes import UUID, TaggedUnion, Vector3
+from hippolyzer.lib.base.datatypes import UUID, Vector3
 from hippolyzer.lib.base.helpers import proxify
 from hippolyzer.lib.base.message.message import Block
-from hippolyzer.lib.base.namevalue import NameValueCollection
-from hippolyzer.lib.base.objects import Object
+from hippolyzer.lib.base.objects import (
+    normalize_object_update,
+    normalize_terse_object_update,
+    normalize_object_update_compressed_data,
+    normalize_object_update_compressed,
+    Object,
+)
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.namecache import NameCache
 from hippolyzer.lib.proxy.templates import PCode, ObjectStateSerializer
+from hippolyzer.lib.proxy.vocache import RegionViewerObjectCacheChain
 
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.region import ProxiedRegion
@@ -118,13 +123,16 @@ class ObjectManager:
      manager per region.
     """
 
-    def __init__(self, region: ProxiedRegion):
+    def __init__(self, region: ProxiedRegion, use_vo_cache: bool = False):
+        self._region: ProxiedRegion = proxify(region)
+        self.use_vo_cache = use_vo_cache
+        self.cache_loaded: bool = False
+        self.object_cache: RegionViewerObjectCacheChain = RegionViewerObjectCacheChain([])
         self._localid_lookup: typing.Dict[int, Object] = {}
         self._fullid_lookup: typing.Dict[UUID, int] = {}
         self._coarse_locations: typing.Dict[UUID, Vector3] = {}
         # Objects that we've seen references to but don't have data for
         self.missing_locals = set()
-        self._region: ProxiedRegion = proxify(region)
         self._orphan_manager = OrphanManager()
         name_cache = None
         session = self._region.session()
@@ -304,41 +312,10 @@ class ObjectManager:
         if actually_updated_props:
             self._run_object_update_hooks(obj, actually_updated_props)
 
-    def _normalize_object_update(self, block: Block):
-        object_data = {
-            "FootCollisionPlane": None,
-            "SoundFlags": block["Flags"],
-            "SoundGain": block["Gain"],
-            "SoundRadius": block["Radius"],
-            **dict(block.items()),
-            "TextureEntry": block.deserialize_var("TextureEntry", make_copy=False),
-            "NameValue": block.deserialize_var("NameValue", make_copy=False),
-            "TextureAnim": block.deserialize_var("TextureAnim", make_copy=False),
-            "ExtraParams": block.deserialize_var("ExtraParams", make_copy=False) or {},
-            "PSBlock": block.deserialize_var("PSBlock", make_copy=False).value,
-            "UpdateFlags": block.deserialize_var("UpdateFlags", make_copy=False),
-            "State": block.deserialize_var("State", make_copy=False),
-            **block.deserialize_var("ObjectData", make_copy=False).value,
-        }
-        object_data["LocalID"] = object_data.pop("ID")
-        # Empty == not updated
-        if not object_data["TextureEntry"]:
-            object_data.pop("TextureEntry")
-        # OwnerID is only set in this packet if a sound is playing. Don't allow
-        # ObjectUpdates to clobber _real_ OwnerIDs we had from ObjectProperties
-        # with a null UUID.
-        if object_data["OwnerID"] == UUID():
-            del object_data["OwnerID"]
-        del object_data["Flags"]
-        del object_data["Gain"]
-        del object_data["Radius"]
-        del object_data["ObjectData"]
-        return object_data
-
     def _handle_object_update(self, packet: ProxiedMessage):
         seen_locals = []
         for block in packet['ObjectData']:
-            object_data = self._normalize_object_update(block)
+            object_data = normalize_object_update(block)
 
             seen_locals.append(object_data["LocalID"])
             obj = self.lookup_fullid(object_data["FullID"])
@@ -349,23 +326,10 @@ class ObjectManager:
                 self._track_object(obj)
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
-    def _normalize_terse_object_update(self, block: Block):
-        object_data = {
-            **block.deserialize_var("Data", make_copy=False),
-            **dict(block.items()),
-            "TextureEntry": block.deserialize_var("TextureEntry", make_copy=False),
-        }
-        object_data["LocalID"] = object_data.pop("ID")
-        object_data.pop("Data")
-        # Empty == not updated
-        if object_data["TextureEntry"] is None:
-            object_data.pop("TextureEntry")
-        return object_data
-
     def _handle_terse_object_update(self, packet: ProxiedMessage):
         seen_locals = []
         for block in packet['ObjectData']:
-            object_data = self._normalize_terse_object_update(block)
+            object_data = normalize_terse_object_update(block)
             obj = self.lookup_localid(object_data["LocalID"])
             # Can only update existing object with this message
             if obj:
@@ -382,77 +346,36 @@ class ObjectManager:
 
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
-    def _handle_coarse_location_update(self, packet: ProxiedMessage):
-        self._coarse_locations.clear()
-
-        coarse_locations: typing.Dict[UUID, Vector3] = {}
-        for agent_block, location_block in zip(packet["AgentData"], packet["Location"]):
-            x, y, z = location_block["X"], location_block["Y"], location_block["Z"]
-            coarse_locations[agent_block["AgentID"]] = Vector3(
-                X=x,
-                Y=y,
-                # The z-axis is multiplied by 4 to obtain true Z location
-                # The z-axis is also limited to 1020m in height
-                # If z == 255 then the true Z is unknown.
-                # http://wiki.secondlife.com/wiki/CoarseLocationUpdate
-                Z=z * 4 if z != 255 else math.inf,
-            )
-
-        self._coarse_locations.update(coarse_locations)
-
     def _handle_object_update_cached(self, packet: ProxiedMessage):
         seen_locals = []
         for block in packet['ObjectData']:
             seen_locals.append(block["ID"])
+            update_flags = block.deserialize_var("UpdateFlags", make_copy=False)
+
+            # Check if we already know about the object
             obj = self.lookup_localid(block["ID"])
             if obj is not None:
                 self._update_existing_object(obj, {
-                    "UpdateFlags": block.deserialize_var("UpdateFlags", make_copy=False),
+                    "UpdateFlags": update_flags,
                 })
-            else:
-                self.missing_locals.add(block["ID"])
+                continue
+
+            # Check if the object is in a viewer's VOCache
+            cached_obj_data = self.object_cache.lookup_object_data(block["ID"], block["CRC"])
+            if cached_obj_data is not None:
+                cached_obj = normalize_object_update_compressed_data(cached_obj_data)
+                cached_obj["UpdateFlags"] = update_flags
+                self._track_object(Object(**cached_obj))
+                continue
+
+            # Don't know about it and wasn't cached.
+            self.missing_locals.add(block["ID"])
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
-
-    def _normalize_object_update_compressed(self, block: Block):
-        # TODO: ObjectUpdateCompressed doesn't provide a default value for unused
-        #  fields, whereas ObjectUpdate and friends do (TextColor, etc.)
-        #  need some way to normalize ObjectUpdates so they won't appear to have
-        #  changed just because an ObjectUpdate got sent with a default value
-        # Only do a shallow copy
-        compressed = copy.copy(block.deserialize_var("Data", make_copy=False))
-        # Only used for determining which sections are present
-        del compressed["Flags"]
-
-        ps_block = compressed.pop("PSBlockNew", None)
-        if ps_block is None:
-            ps_block = compressed.pop("PSBlock", None)
-        if ps_block is None:
-            ps_block = TaggedUnion(0, None)
-        compressed.pop("PSBlock", None)
-        if compressed["NameValue"] is None:
-            compressed["NameValue"] = NameValueCollection()
-
-        object_data = {
-            "PSBlock": ps_block.value,
-            # Parent flag not set means explicitly un-parented
-            "ParentID": compressed.pop("ParentID", None) or 0,
-            "LocalID": compressed.pop("ID"),
-            **compressed,
-            **dict(block.items()),
-            "UpdateFlags": block.deserialize_var("UpdateFlags", make_copy=False),
-        }
-        if object_data["TextureEntry"] is None:
-            object_data.pop("TextureEntry")
-        # Don't clobber OwnerID in case the object has a proper one.
-        if object_data["OwnerID"] == UUID():
-            del object_data["OwnerID"]
-        object_data.pop("Data")
-        return object_data
 
     def _handle_object_update_compressed(self, packet: ProxiedMessage):
         seen_locals = []
         for block in packet['ObjectData']:
-            object_data = self._normalize_object_update_compressed(block)
+            object_data = normalize_object_update_compressed(block)
             seen_locals.append(object_data["LocalID"])
             obj = self.lookup_localid(object_data["LocalID"])
             if obj:
@@ -524,11 +447,39 @@ class ObjectManager:
             obj.ObjectCosts.update(object_costs)
             self._run_object_update_hooks(obj, {"ObjectCosts"})
 
+    def _handle_coarse_location_update(self, packet: ProxiedMessage):
+        self._coarse_locations.clear()
+
+        coarse_locations: typing.Dict[UUID, Vector3] = {}
+        for agent_block, location_block in zip(packet["AgentData"], packet["Location"]):
+            x, y, z = location_block["X"], location_block["Y"], location_block["Z"]
+            coarse_locations[agent_block["AgentID"]] = Vector3(
+                X=x,
+                Y=y,
+                # The z-axis is multiplied by 4 to obtain true Z location
+                # The z-axis is also limited to 1020m in height
+                # If z == 255 then the true Z is unknown.
+                # http://wiki.secondlife.com/wiki/CoarseLocationUpdate
+                Z=z * 4 if z != 255 else math.inf,
+            )
+
+        self._coarse_locations.update(coarse_locations)
+
     def _run_object_update_hooks(self, obj: Object, updated_props: Set[str]):
         if obj.PCode == PCode.AVATAR and "NameValue" in updated_props:
             if obj.NameValue:
                 self.name_cache.update(obj.FullID, obj.NameValue.to_dict())
         AddonManager.handle_object_updated(self._region.session(), self._region, obj, updated_props)
+
+    def load_cache(self):
+        if not self.use_vo_cache or self.cache_loaded:
+            return
+        handle = self._region.handle
+        if not handle:
+            LOG.warning(f"Tried to load cache for {self._region} without a handle")
+            return
+        self.cache_loaded = True
+        self.object_cache = RegionViewerObjectCacheChain.for_region(handle, self._region.cache_id)
 
     def clear(self):
         self._localid_lookup.clear()
@@ -536,6 +487,8 @@ class ObjectManager:
         self._coarse_locations.clear()
         self._orphan_manager.clear()
         self.missing_locals.clear()
+        self.object_cache = RegionViewerObjectCacheChain([])
+        self.cache_loaded = False
 
     def request_object_properties(self, objects: typing.Union[OBJECT_OR_LOCAL, typing.Sequence[OBJECT_OR_LOCAL]]):
         if isinstance(objects, (Object, int)):

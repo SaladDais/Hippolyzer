@@ -2,6 +2,7 @@ import math
 import random
 import unittest
 from typing import *
+from unittest import mock
 
 from hippolyzer.lib.base.datatypes import *
 from hippolyzer.lib.base.message.message import Block
@@ -14,12 +15,14 @@ from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.objects import ObjectManager
 from hippolyzer.lib.proxy.message import ProxiedMessage as Message
 from hippolyzer.lib.proxy.templates import PCode
+from hippolyzer.lib.proxy.vocache import RegionViewerObjectCacheChain, RegionViewerObjectCache, ViewerObjectCacheEntry
 
 
 class MockRegion:
     def __init__(self, message_handler: MessageHandler):
         self.session = lambda: None
         self.handle = 123
+        self.cache_id = UUID.random()
         self.message_handler = message_handler
         self.http_message_handler = MessageHandler()
 
@@ -40,7 +43,11 @@ class ObjectManagerTests(unittest.TestCase):
     def setUp(self) -> None:
         self.message_handler = MessageHandler()
         self.region = MockRegion(self.message_handler)
-        self.object_manager = ObjectManager(self.region)  # type: ignore
+        patched = mock.patch('hippolyzer.lib.proxy.vocache.RegionViewerObjectCacheChain.for_region')
+        self.addCleanup(patched.stop)
+        self.mock_get_region_object_cache_chain = patched.start()
+        self.mock_get_region_object_cache_chain.return_value = RegionViewerObjectCacheChain([])
+        self.object_manager = ObjectManager(self.region, use_vo_cache=True)  # type: ignore
         self.serializer = UDPMessageSerializer()
         self.deserializer = UDPMessageDeserializer(message_cls=Message)
         self.object_addon = ObjectTrackingAddon()
@@ -322,3 +329,37 @@ class ObjectManagerTests(unittest.TestCase):
         self.assertEqual(self.object_manager.name_cache.lookup(obj.FullID).FirstName, "firstname")
         av = self.object_manager.lookup_avatar(obj.FullID)
         self.assertEqual(av.Name, "firstname Resident")
+
+    def test_object_cache(self):
+        self.mock_get_region_object_cache_chain.return_value = RegionViewerObjectCacheChain([
+            RegionViewerObjectCache(self.region.cache_id, [
+                ViewerObjectCacheEntry(
+                    local_id=1234,
+                    crc=22,
+                    data=b"\x12\x12\x10\xbf\x16XB~\x8f\xb4\xfb\x00\x1a\xcd\x9b\xe5\xd2\x04\x00\x00\t\x00\xcdG\x00\x00"
+                         b"\x03\x00\x00\x00\x1cB\x00\x00\x1cB\xcd\xcc\xcc=\xedG,"
+                         b"B\x9e\xb1\x9eBff\xa0A\x00\x00\x00\x00\x00\x00\x00\x00["
+                         b"\x8b\xf8\xbe\xc0\x00\x00\x00k\x9b\xc4\xfe3\nOa\xbb\xe2\xe4\xb2C\xac7\xbd\x00\x00\x00\x00"
+                         b"\x00\x00\x00\x00\x00\x00\xa2=\x010\x00\x11\x00\x00\x00\x89UgG$\xcbC\xed\x92\x0bG\xca\xed"
+                         b"\x15F_@ \x00\x00\x00\x00d\x96\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                         b"\x00?\x00\x00\x00\x1c\x9fJoI\x8dH\xa0\x9d\xc4&''\x19=g\x00\x00\x00\x003\x00ff\x86\xbf"
+                         b"\x00ff\x86?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x89UgG$\xcbC"
+                         b"\xed\x92\x0bG\xca\xed\x15F_\x10\x00\x00\x003\x00\x01\x01\x00\x00\x00\x00\xdb\x0f\xc9@\xa6"
+                         b"\x9b\xc4="
+                )
+            ])
+        ])
+        self.object_manager.load_cache()
+        self.message_handler.handle(Message(
+            'ObjectUpdateCached',
+            Block(
+                "ObjectData",
+                ID=1234,
+                CRC=22,
+                UpdateFlags=4321,
+            )
+        ))
+        obj = self.object_manager.lookup_localid(1234)
+        self.assertEqual(obj.FullID, UUID('121210bf-1658-427e-8fb4-fb001acd9be5'))
+        # Flags from the ObjectUpdateCached should have been merged in
+        self.assertEqual(obj.UpdateFlags, 4321)

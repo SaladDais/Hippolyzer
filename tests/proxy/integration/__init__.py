@@ -32,6 +32,8 @@ class BaseIntegrationTest(unittest.IsolatedAsyncioTestCase):
             "circuit_code": self.circuit_code,
             "sim_ip": self.region_addr[0],
             "sim_port": self.region_addr[1],
+            "region_x": 1,
+            "region_y": 2,
             "seed_capability": "https://test.localhost:4/foo",
         })
         self.transport = MockTransport()

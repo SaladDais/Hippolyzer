@@ -26,7 +26,10 @@ from typing import *
 import lazy_object_proxy
 import recordclass
 
-from hippolyzer.lib.base.datatypes import Vector3, Quaternion, Vector4, UUID
+from hippolyzer.lib.base.datatypes import Vector3, Quaternion, Vector4, UUID, TaggedUnion
+from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.namevalue import NameValueCollection
+from hippolyzer.lib.base.templates import ObjectUpdateCompressedDataSerializer
 
 
 class Object(recordclass.datatuple):  # type: ignore
@@ -279,3 +282,97 @@ class Object(recordclass.datatuple):  # type: ignore
 
     def to_dict(self):
         return recordclass.asdict(self)
+
+
+def handle_to_gridxy(handle: int) -> Tuple[int, int]:
+    return (handle >> 32) // 256, (handle & 0xFFffFFff) // 256
+
+
+def gridxy_to_handle(x: int, y: int):
+    return ((x * 256) << 32) | (y * 256)
+
+
+def normalize_object_update(block: Block):
+    object_data = {
+        "FootCollisionPlane": None,
+        "SoundFlags": block["Flags"],
+        "SoundGain": block["Gain"],
+        "SoundRadius": block["Radius"],
+        **dict(block.items()),
+        "TextureEntry": block.deserialize_var("TextureEntry", make_copy=False),
+        "NameValue": block.deserialize_var("NameValue", make_copy=False),
+        "TextureAnim": block.deserialize_var("TextureAnim", make_copy=False),
+        "ExtraParams": block.deserialize_var("ExtraParams", make_copy=False) or {},
+        "PSBlock": block.deserialize_var("PSBlock", make_copy=False).value,
+        "UpdateFlags": block.deserialize_var("UpdateFlags", make_copy=False),
+        "State": block.deserialize_var("State", make_copy=False),
+        **block.deserialize_var("ObjectData", make_copy=False).value,
+    }
+    object_data["LocalID"] = object_data.pop("ID")
+    # Empty == not updated
+    if not object_data["TextureEntry"]:
+        object_data.pop("TextureEntry")
+    # OwnerID is only set in this packet if a sound is playing. Don't allow
+    # ObjectUpdates to clobber _real_ OwnerIDs we had from ObjectProperties
+    # with a null UUID.
+    if object_data["OwnerID"] == UUID():
+        del object_data["OwnerID"]
+    del object_data["Flags"]
+    del object_data["Gain"]
+    del object_data["Radius"]
+    del object_data["ObjectData"]
+    return object_data
+
+
+def normalize_terse_object_update(block: Block):
+    object_data = {
+        **block.deserialize_var("Data", make_copy=False),
+        **dict(block.items()),
+        "TextureEntry": block.deserialize_var("TextureEntry", make_copy=False),
+    }
+    object_data["LocalID"] = object_data.pop("ID")
+    object_data.pop("Data")
+    # Empty == not updated
+    if object_data["TextureEntry"] is None:
+        object_data.pop("TextureEntry")
+    return object_data
+
+
+def normalize_object_update_compressed_data(data: bytes):
+    # Shared by ObjectUpdateCompressed and VOCache case
+    compressed = ObjectUpdateCompressedDataSerializer.deserialize(None, data)
+    # TODO: ObjectUpdateCompressed doesn't provide a default value for unused
+    #  fields, whereas ObjectUpdate and friends do (TextColor, etc.)
+    #  need some way to normalize ObjectUpdates so they won't appear to have
+    #  changed just because an ObjectUpdate got sent with a default value
+    # Only used for determining which sections are present
+    del compressed["Flags"]
+
+    ps_block = compressed.pop("PSBlockNew", None)
+    if ps_block is None:
+        ps_block = compressed.pop("PSBlock", None)
+    if ps_block is None:
+        ps_block = TaggedUnion(0, None)
+    compressed.pop("PSBlock", None)
+    if compressed["NameValue"] is None:
+        compressed["NameValue"] = NameValueCollection()
+
+    object_data = {
+        "PSBlock": ps_block.value,
+        # Parent flag not set means explicitly un-parented
+        "ParentID": compressed.pop("ParentID", None) or 0,
+        "LocalID": compressed.pop("ID"),
+        **compressed,
+    }
+    if object_data["TextureEntry"] is None:
+        object_data.pop("TextureEntry")
+    # Don't clobber OwnerID in case the object has a proper one.
+    if object_data["OwnerID"] == UUID():
+        del object_data["OwnerID"]
+    return object_data
+
+
+def normalize_object_update_compressed(block: Block):
+    compressed = normalize_object_update_compressed_data(block["Data"])
+    compressed["UpdateFlags"] = block.deserialize_var("UpdateFlags", make_copy=False)
+    return compressed

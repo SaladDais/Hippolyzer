@@ -62,6 +62,7 @@ class Session:
         # Login data also has details about the initial sim
         sess.register_region(
             circuit_addr=(login_data["sim_ip"], login_data["sim_port"]),
+            handle=(login_data["region_x"] << 32) | login_data["region_y"],
             seed_url=login_data["seed_capability"],
         )
         return sess

@@ -122,6 +122,12 @@ class InterceptingLLUDPProxyProtocol(BaseLLUDPProxyProtocol):
                 region.handle = message["Data"]["RegionHandle"]
             LOG.info(f"Setting main region to {region!r}, had circuit addr {packet.far_addr!r}")
             AddonManager.handle_region_changed(self.session, region)
+        if message.name == "RegionHandshake":
+            region.cache_id = message["RegionInfo"]["CacheID"]
+            try:
+                region.objects.load_cache()
+            except:
+                LOG.exception("Failed to load region cache, skipping")
 
         try:
             region.message_handler.handle(message)

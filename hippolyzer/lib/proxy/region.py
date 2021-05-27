@@ -10,7 +10,7 @@ import urllib.parse
 
 import multidict
 
-from hippolyzer.lib.base.datatypes import Vector3
+from hippolyzer.lib.base.datatypes import Vector3, UUID
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.proxy.caps_client import CapsClient
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
@@ -48,6 +48,8 @@ class ProxiedRegion:
         # Cap URIs. We need to be able to look up both, so MultiDict is necessary.
         self.handle: Optional[int] = handle
         self._name: Optional[str] = None
+        # TODO: when does this change?
+        self.cache_id: Optional[UUID] = None
         self.circuit: Optional[ProxiedCircuit] = None
         self.circuit_addr = circuit_addr
         self._caps = CapsMultiDict()
@@ -60,7 +62,7 @@ class ProxiedRegion:
         self.xfer_manager = XferManager(self)
         self.transfer_manager = TransferManager(self)
         self.caps_client = CapsClient(self)
-        self.objects = ObjectManager(self)
+        self.objects = ObjectManager(self, use_vo_cache=True)
         if session:
             name_cache: NameCache = session.session_manager.name_cache
             self.message_handler.subscribe("UUIDNameReply", name_cache.handle_uuid_name_reply)
