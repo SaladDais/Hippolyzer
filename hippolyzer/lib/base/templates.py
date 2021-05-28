@@ -878,13 +878,13 @@ class MediaFlags:
 MEDIA_FLAGS = se.BitfieldDataclass(MediaFlags, se.U8, shift=False)
 
 
-class Color4(se.SerializableBase):
+class Color4(se.Adapter):
     def __init__(self, invert_bytes=False, invert_alpha=False):
         # There's several different ways of representing colors, presumably
         # to allow for more efficient zerocoding in common cases.
         self.invert_bytes = invert_bytes
         self.invert_alpha = invert_alpha
-        self._bytes_templ = se.BytesFixed(4)
+        super().__init__(se.BytesFixed(4))
 
     def _invert(self, val: bytes) -> bytes:
         if self.invert_bytes:
@@ -893,11 +893,11 @@ class Color4(se.SerializableBase):
             val = val[:3] + bytes((~val[4] & 0xFF,))
         return val
 
-    def serialize(self, val, writer: se.BufferWriter, ctx=None):
-        self._bytes_templ.serialize(self._invert(val), writer, ctx)
+    def encode(self, val: bytes, ctx: Optional[se.ParseContext]) -> bytes:
+        return self._invert(val)
 
-    def deserialize(self, reader: se.BufferReader, ctx=None):
-        return self._invert(self._bytes_templ.deserialize(reader, ctx))
+    def decode(self, val: bytes, ctx: Optional[se.ParseContext], pod: bool = False) -> bytes:
+        return self._invert(val)
 
 
 class TEFaceBitfield(se.SerializableBase):
@@ -1311,12 +1311,9 @@ class CompressedFlags(IntFlag):
     PARTICLES_NEW = 1 << 10
 
 
-UPDATE_COMPRESSED_FLAGS = se.IntFlag(CompressedFlags, se.U32)
-
-
 class CompressedOption(se.OptionalFlagged):
     def __init__(self, flag_val, spec):
-        super().__init__("Flags", UPDATE_COMPRESSED_FLAGS, flag_val, spec)
+        super().__init__("Flags", se.IntFlag(CompressedFlags, se.U32), flag_val, spec)
 
 
 NAMEVALUES_TERMINATED_TEMPLATE = se.TypedBytesTerminated(
@@ -1338,7 +1335,7 @@ class ObjectUpdateCompressedDataSerializer(se.SimpleSubfieldSerializer):
         "Scale": se.Vector3,
         "Position": se.Vector3,
         "Rotation": se.PackedQuat(se.Vector3),
-        "Flags": UPDATE_COMPRESSED_FLAGS,
+        "Flags": se.IntFlag(CompressedFlags, se.U32),
         # Only non-null if there's an attached sound
         "OwnerID": se.UUID,
         "AngularVelocity": CompressedOption(CompressedFlags.ANGULAR_VELOCITY, se.Vector3),
@@ -1356,7 +1353,7 @@ class ObjectUpdateCompressedDataSerializer(se.SimpleSubfieldSerializer):
         "ExtraParams": EXTRA_PARAM_COLLECTION,
         "Sound": CompressedOption(CompressedFlags.SOUND, se.UUID),
         "SoundGain": CompressedOption(CompressedFlags.SOUND, se.F32),
-        "SoundFlags": CompressedOption(CompressedFlags.SOUND, se.U8),
+        "SoundFlags": CompressedOption(CompressedFlags.SOUND, se.IntFlag(SoundFlags, se.U8)),
         "SoundRadius": CompressedOption(CompressedFlags.SOUND, se.F32),
         "NameValue": CompressedOption(CompressedFlags.NAME_VALUES, NAMEVALUES_TERMINATED_TEMPLATE),
         # Intentionally not de-quantizing to preserve their real ranges.

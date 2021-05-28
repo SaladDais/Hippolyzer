@@ -21,6 +21,8 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from __future__ import annotations
 
 import dataclasses
+import logging
+import struct
 from typing import *
 
 import lazy_object_proxy
@@ -29,7 +31,20 @@ import recordclass
 from hippolyzer.lib.base.datatypes import Vector3, Quaternion, Vector4, UUID, TaggedUnion
 from hippolyzer.lib.base.message.message import Block
 from hippolyzer.lib.base.namevalue import NameValueCollection
-from hippolyzer.lib.base.templates import ObjectUpdateCompressedDataSerializer
+import hippolyzer.lib.base.serialization as se
+from hippolyzer.lib.base.templates import (
+    PCode,
+    AgentState,
+    CompressedFlags,
+    AttachmentStateAdapter,
+    PSBLOCK_TEMPLATE,
+    Color4,
+    EXTRA_PARAM_COLLECTION,
+    SoundFlags,
+    NAMEVALUES_TERMINATED_TEMPLATE,
+    DATA_PACKER_TE_TEMPLATE,
+    TA_TEMPLATE,
+)
 
 
 class Object(recordclass.datatuple):  # type: ignore
@@ -340,7 +355,7 @@ def normalize_terse_object_update(block: Block):
 
 def normalize_object_update_compressed_data(data: bytes):
     # Shared by ObjectUpdateCompressed and VOCache case
-    compressed = ObjectUpdateCompressedDataSerializer.deserialize(None, data)
+    compressed = FastObjectUpdateCompressedDataDeserializer.read(data)
     # TODO: ObjectUpdateCompressed doesn't provide a default value for unused
     #  fields, whereas ObjectUpdate and friends do (TextColor, etc.)
     #  need some way to normalize ObjectUpdates so they won't appear to have
@@ -376,3 +391,146 @@ def normalize_object_update_compressed(block: Block):
     compressed = normalize_object_update_compressed_data(block["Data"])
     compressed["UpdateFlags"] = block.deserialize_var("UpdateFlags", make_copy=False)
     return compressed
+
+
+class SimpleStructReader(se.BufferReader):
+    def read_struct(self, spec: struct.Struct, peek=False) -> Tuple[Any, ...]:
+        val = spec.unpack_from(self._buffer, self._pos)
+        if not peek:
+            self._pos += spec.size
+        return val
+
+    def read_bytes_null_term(self) -> bytes:
+        old_offset = self._pos
+        while self._buffer[self._pos] != 0:
+            self._pos += 1
+        val = self._buffer[old_offset:self._pos]
+        self._pos += 1
+        return val
+
+
+class FastObjectUpdateCompressedDataDeserializer:
+    HEADER_STRUCT = struct.Struct("<16sIBBIBB3f3f3fI16s")
+    ANGULAR_VELOCITY_STRUCT = struct.Struct("<3f")
+    PARENT_ID_STRUCT = struct.Struct("<I")
+    TREE_SPECIES_STRUCT = struct.Struct("<B")
+    DATAPACKER_LEN = struct.Struct("<I")
+    COLOR_ADAPTER = Color4()
+    PARTICLES_OLD = se.TypedBytesFixed(86, PSBLOCK_TEMPLATE)
+    SOUND_STRUCT = struct.Struct("<16sfBf")
+    PRIM_PARAMS_STRUCT = struct.Struct("<BBHHBBBBbbbbbBbHHH")
+    ATTACHMENT_STATE_ADAPTER = AttachmentStateAdapter(None)
+
+    @classmethod
+    def read(cls, data: bytes) -> Dict:
+        reader = SimpleStructReader("<", data)
+        foo = reader.read_struct(cls.HEADER_STRUCT)
+        full_id, local_id, pcode, state, crc, material, click_action, \
+            scalex, scaley, scalez, posx, posy, posz, rotx, roty, rotz, \
+            flags, owner_id = foo
+        scale = Vector3(scalex, scaley, scalez)
+        full_id = UUID(bytes=full_id)
+        pcode = PCode(pcode)
+        if pcode == PCode.AVATAR:
+            state = AgentState(state)
+        elif pcode == PCode.PRIMITIVE:
+            state = cls.ATTACHMENT_STATE_ADAPTER.decode(state, None)
+        pos = Vector3(posx, posy, posz)
+        rot = Quaternion(rotx, roty, rotz)
+        owner_id = UUID(bytes=owner_id)
+        ang_vel = None
+        if flags & CompressedFlags.ANGULAR_VELOCITY.value:
+            ang_vel = Vector3(*reader.read_struct(cls.ANGULAR_VELOCITY_STRUCT))
+        parent_id = None
+        if flags & CompressedFlags.PARENT_ID.value:
+            parent_id = reader.read_struct(cls.PARENT_ID_STRUCT)[0]
+        tree_species = None
+        if flags & CompressedFlags.TREE.value:
+            tree_species = reader.read_struct(cls.TREE_SPECIES_STRUCT)[0]
+        scratchpad = None
+        if flags & CompressedFlags.SCRATCHPAD.value:
+            scratchpad = reader.read_bytes(reader.read_struct(cls.DATAPACKER_LEN)[0])
+        text = None
+        text_color = None
+        if flags & CompressedFlags.TEXT.value:
+            text = reader.read_bytes_null_term().decode("utf8")
+            text_color = cls.COLOR_ADAPTER.decode(reader.read_bytes(4), ctx=None)
+        media_url = None
+        if flags & CompressedFlags.MEDIA_URL.value:
+            media_url = reader.read_bytes_null_term().decode("utf8")
+        psblock = None
+        if flags & CompressedFlags.PARTICLES.value:
+            psblock = reader.read(cls.PARTICLES_OLD)
+        extra_params = reader.read(EXTRA_PARAM_COLLECTION)
+        sound, sound_gain, sound_flags, sound_radius = None, None, None, None
+        if flags & CompressedFlags.SOUND.value:
+            sound, sound_gain, sound_flags, sound_radius = reader.read_struct(cls.SOUND_STRUCT)
+            sound = UUID(bytes=sound)
+            sound_flags = SoundFlags(sound_flags)
+        name_value = None
+        if flags & CompressedFlags.NAME_VALUES.value:
+            name_value = reader.read(NAMEVALUES_TERMINATED_TEMPLATE)
+        path_curve, profile_curve, path_begin, path_end, path_scale_x, path_scale_y, \
+            path_shear_x, path_shear_y, path_twist, path_twist_begin, path_radius_offset, \
+            path_taper_x, path_taper_y, path_revolutions, path_skew, profile_begin, \
+            profile_end, profile_hollow = reader.read_struct(cls.PRIM_PARAMS_STRUCT)
+        texture_entry = reader.read(DATA_PACKER_TE_TEMPLATE)
+        texture_anim = None
+        if flags & CompressedFlags.TEXTURE_ANIM.value:
+            texture_anim = reader.read(se.TypedByteArray(se.U32, TA_TEMPLATE))
+        psblock_new = None
+        if flags & CompressedFlags.PARTICLES_NEW.value:
+            psblock_new = reader.read(PSBLOCK_TEMPLATE)
+
+        if len(reader):
+            logging.warning(f"{len(reader)} bytes left at end of buffer for compressed {data!r}")
+
+        return {
+            "FullID": full_id,
+            "ID": local_id,
+            "PCode": pcode,
+            "State": state,
+            "CRC": crc,
+            "Material": material,
+            "ClickAction": click_action,
+            "Scale": scale,
+            "Position": pos,
+            "Rotation": rot,
+            "Flags": flags,
+            "OwnerID": owner_id,
+            "AngularVelocity": ang_vel,
+            "ParentID": parent_id,
+            "TreeSpecies": tree_species,
+            "ScratchPad": scratchpad,
+            "Text": text,
+            "TextColor": text_color,
+            "MediaURL": media_url,
+            "PSBlock": psblock,
+            "ExtraParams": extra_params,
+            "Sound": sound,
+            "SoundGain": sound_gain,
+            "SoundFlags": sound_flags,
+            "SoundRadius": sound_radius,
+            "NameValue": name_value,
+            "PathCurve": path_curve,
+            "ProfileCurve": profile_curve,
+            "PathBegin": path_begin,  # 0 to 1, quanta = 0.01
+            "PathEnd": path_end,  # 0 to 1, quanta = 0.01
+            "PathScaleX": path_scale_x,  # 0 to 1, quanta = 0.01
+            "PathScaleY": path_scale_y,  # 0 to 1, quanta = 0.01
+            "PathShearX": path_shear_x,  # -.5 to .5, quanta = 0.01
+            "PathShearY": path_shear_y,  # -.5 to .5, quanta = 0.01
+            "PathTwist": path_twist,  # -1 to 1, quanta = 0.01
+            "PathTwistBegin": path_twist_begin,  # -1 to 1, quanta = 0.01
+            "PathRadiusOffset": path_radius_offset,  # -1 to 1, quanta = 0.01
+            "PathTaperX": path_taper_x,  # -1 to 1, quanta = 0.01
+            "PathTaperY": path_taper_y,  # -1 to 1, quanta = 0.01
+            "PathRevolutions": path_revolutions,  # 0 to 3, quanta = 0.015
+            "PathSkew": path_skew,  # -1 to 1, quanta = 0.01
+            "ProfileBegin": profile_begin,  # 0 to 1, quanta = 0.01
+            "ProfileEnd": profile_end,  # 0 to 1, quanta = 0.01
+            "ProfileHollow": profile_hollow,  # 0 to 1, quanta = 0.01
+            "TextureEntry": texture_entry,
+            "TextureAnim": texture_anim,
+            "PSBlockNew": psblock_new,
+        }

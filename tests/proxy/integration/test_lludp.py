@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import random
 import struct
-from typing import *
 import unittest
+from typing import *
 
 import lazy_object_proxy
 

@@ -9,13 +9,28 @@ from hippolyzer.lib.base.message.message import Block
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.message.udpserializer import UDPMessageSerializer
-from hippolyzer.lib.base.objects import Object
+from hippolyzer.lib.base.objects import Object, normalize_object_update_compressed_data
+from hippolyzer.lib.base.templates import ExtraParamType, SculptTypeData, SculptType
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.objects import ObjectManager
 from hippolyzer.lib.proxy.message import ProxiedMessage as Message
 from hippolyzer.lib.proxy.templates import PCode
 from hippolyzer.lib.proxy.vocache import RegionViewerObjectCacheChain, RegionViewerObjectCache, ViewerObjectCacheEntry
+
+
+OBJECT_UPDATE_COMPRESSED_DATA = (
+    b"\x12\x12\x10\xbf\x16XB~\x8f\xb4\xfb\x00\x1a\xcd\x9b\xe5\xd2\x04\x00\x00\t\x00\xcdG\x00\x00"
+    b"\x03\x00\x00\x00\x1cB\x00\x00\x1cB\xcd\xcc\xcc=\xedG,"
+    b"B\x9e\xb1\x9eBff\xa0A\x00\x00\x00\x00\x00\x00\x00\x00["
+    b"\x8b\xf8\xbe\xc0\x00\x00\x00k\x9b\xc4\xfe3\nOa\xbb\xe2\xe4\xb2C\xac7\xbd\x00\x00\x00\x00"
+    b"\x00\x00\x00\x00\x00\x00\xa2=\x010\x00\x11\x00\x00\x00\x89UgG$\xcbC\xed\x92\x0bG\xca\xed"
+    b"\x15F_@ \x00\x00\x00\x00d\x96\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    b"\x00?\x00\x00\x00\x1c\x9fJoI\x8dH\xa0\x9d\xc4&''\x19=g\x00\x00\x00\x003\x00ff\x86\xbf"
+    b"\x00ff\x86?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x89UgG$\xcbC"
+    b"\xed\x92\x0bG\xca\xed\x15F_\x10\x00\x00\x003\x00\x01\x01\x00\x00\x00\x00\xdb\x0f\xc9@\xa6"
+    b"\x9b\xc4="
+)
 
 
 class MockRegion:
@@ -330,27 +345,74 @@ class ObjectManagerTests(unittest.TestCase):
         av = self.object_manager.lookup_avatar(obj.FullID)
         self.assertEqual(av.Name, "firstname Resident")
 
+    def test_normalize_cache_data(self):
+        normalized = normalize_object_update_compressed_data(OBJECT_UPDATE_COMPRESSED_DATA)
+        expected = {
+            'PSBlock': None,
+            'ParentID': 0,
+            'LocalID': 1234,
+            'FullID': UUID('121210bf-1658-427e-8fb4-fb001acd9be5'),
+            'PCode': PCode.PRIMITIVE,
+            'State': 0,
+            'CRC': 18381,
+            'Material': 3,
+            'ClickAction': 0,
+            'Scale': Vector3(39.0, 39.0, 0.10000000149011612),
+            'Position': Vector3(43.07024002075195, 79.34690856933594, 20.049999237060547),
+            'Rotation': Quaternion(0.0, 0.0, -0.48543819785118103, 0.8742709854884798),
+            'OwnerID': UUID('6b9bc4fe-330a-4f61-bbe2-e4b243ac37bd'),
+            'AngularVelocity': Vector3(0.0, 0.0, 0.0791015625),
+            'TreeSpecies': None,
+            'ScratchPad': None,
+            'Text': None,
+            'TextColor': None,
+            'MediaURL': None,
+            'ExtraParams': {
+                ExtraParamType.SCULPT: {
+                    'Texture': UUID('89556747-24cb-43ed-920b-47caed15465f'),
+                    'TypeData': SculptTypeData(Type=SculptType.NONE, Invert=True, Mirror=False)
+                }
+            },
+            'Sound': None,
+            'SoundGain': None,
+            'SoundFlags': None,
+            'SoundRadius': None,
+            'NameValue': [],
+            'PathCurve': 32,
+            'ProfileCurve': 0,
+            'PathBegin': 0,
+            'PathEnd': 25600,
+            'PathScaleX': 150,
+            'PathScaleY': 0,
+            'PathShearX': 0,
+            'PathShearY': 0,
+            'PathTwist': 0,
+            'PathTwistBegin': 0,
+            'PathRadiusOffset': 0,
+            'PathTaperX': 0,
+            'PathTaperY': 0,
+            'PathRevolutions': 0,
+            'PathSkew': 0,
+            'ProfileBegin': 0,
+            'ProfileEnd': 0,
+            'ProfileHollow': 0
+        }
+        filtered_normalized = {k: v for k, v in normalized.items() if k in expected}
+        self.assertEqual(filtered_normalized, expected)
+        self.assertIsNotNone(normalized['TextureAnim'])
+        self.assertIsNotNone(normalized['TextureEntry'])
+
     def test_object_cache(self):
         self.mock_get_region_object_cache_chain.return_value = RegionViewerObjectCacheChain([
             RegionViewerObjectCache(self.region.cache_id, [
                 ViewerObjectCacheEntry(
                     local_id=1234,
                     crc=22,
-                    data=b"\x12\x12\x10\xbf\x16XB~\x8f\xb4\xfb\x00\x1a\xcd\x9b\xe5\xd2\x04\x00\x00\t\x00\xcdG\x00\x00"
-                         b"\x03\x00\x00\x00\x1cB\x00\x00\x1cB\xcd\xcc\xcc=\xedG,"
-                         b"B\x9e\xb1\x9eBff\xa0A\x00\x00\x00\x00\x00\x00\x00\x00["
-                         b"\x8b\xf8\xbe\xc0\x00\x00\x00k\x9b\xc4\xfe3\nOa\xbb\xe2\xe4\xb2C\xac7\xbd\x00\x00\x00\x00"
-                         b"\x00\x00\x00\x00\x00\x00\xa2=\x010\x00\x11\x00\x00\x00\x89UgG$\xcbC\xed\x92\x0bG\xca\xed"
-                         b"\x15F_@ \x00\x00\x00\x00d\x96\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                         b"\x00?\x00\x00\x00\x1c\x9fJoI\x8dH\xa0\x9d\xc4&''\x19=g\x00\x00\x00\x003\x00ff\x86\xbf"
-                         b"\x00ff\x86?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x89UgG$\xcbC"
-                         b"\xed\x92\x0bG\xca\xed\x15F_\x10\x00\x00\x003\x00\x01\x01\x00\x00\x00\x00\xdb\x0f\xc9@\xa6"
-                         b"\x9b\xc4="
+                    data=OBJECT_UPDATE_COMPRESSED_DATA,
                 )
             ])
         ])
-        self.object_manager.load_cache()
-        self.message_handler.handle(Message(
+        cache_msg = Message(
             'ObjectUpdateCached',
             Block(
                 "ObjectData",
@@ -358,7 +420,11 @@ class ObjectManagerTests(unittest.TestCase):
                 CRC=22,
                 UpdateFlags=4321,
             )
-        ))
+        )
+        obj = self.object_manager.lookup_localid(1234)
+        self.assertIsNone(obj)
+        self.object_manager.load_cache()
+        self.message_handler.handle(cache_msg)
         obj = self.object_manager.lookup_localid(1234)
         self.assertEqual(obj.FullID, UUID('121210bf-1658-427e-8fb4-fb001acd9be5'))
         # Flags from the ObjectUpdateCached should have been merged in
