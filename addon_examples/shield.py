@@ -31,7 +31,7 @@ class ShieldAddon(BaseAddon):
         if message.name == "RequestXfer":
             xfer_block = message["XferID"][0]
             # Don't allow Xfers for files, only assets
-            if xfer_block["FilePath"] != XferFilePath.NONE or xfer_block["Filename"].strip(b"\x00"):
+            if xfer_block["FilePath"] != XferFilePath.NONE or xfer_block["Filename"]:
                 show_message(f"Blocked suspicious {message.name} packet")
                 region.circuit.drop_message(message)
                 return True
