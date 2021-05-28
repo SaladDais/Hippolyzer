@@ -124,10 +124,11 @@ class InterceptingLLUDPProxyProtocol(BaseLLUDPProxyProtocol):
             AddonManager.handle_region_changed(self.session, region)
         if message.name == "RegionHandshake":
             region.cache_id = message["RegionInfo"]["CacheID"]
-            try:
-                region.objects.load_cache()
-            except:
-                LOG.exception("Failed to load region cache, skipping")
+            if self.session_manager.use_viewer_object_cache:
+                try:
+                    region.objects.load_cache()
+                except:
+                    LOG.exception("Failed to load region cache, skipping")
 
         try:
             region.message_handler.handle(message)

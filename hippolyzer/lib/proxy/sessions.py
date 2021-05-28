@@ -154,6 +154,7 @@ class SessionManager:
         self.message_logger: Optional[BaseMessageLogger] = None
         self.addon_ctx: Dict[str, Any] = {}
         self.name_cache = NameCache()
+        self.use_viewer_object_cache: bool = False
 
     def create_session(self, login_data) -> Session:
         session = Session.from_login_data(login_data, self)

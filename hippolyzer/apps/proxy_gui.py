@@ -189,6 +189,7 @@ class ProxyGUI(QtWidgets.QMainWindow):
         self.actionProxyRemotelyAccessible.setChecked(
             self.settings.value("RemotelyAccessible", False, type=bool))
         self.actionProxyRemotelyAccessible.triggered.connect(self._setProxyRemotelyAccessible)
+        self.actionUseViewerObjectCache.triggered.connect(self._setUseViewerObjectCache)
 
         self._filterMenu = QtWidgets.QMenu()
         self._populateFilterMenu()
@@ -372,6 +373,10 @@ class ProxyGUI(QtWidgets.QMainWindow):
         msg = QtWidgets.QMessageBox()
         msg.setText("Remote accessibility setting changes will take effect on next run")
         msg.exec()
+
+    def _setUseViewerObjectCache(self, checked: bool):
+        self.settings.setValue("UseViewerObjectCache", checked)
+        self.sessionManager.use_viewer_object_cache = checked
 
     def _manageAddons(self):
         dialog = AddonDialog(self)
@@ -809,6 +814,8 @@ def gui_main():
     signal.signal(signal.SIGINT, lambda *args: QtWidgets.QApplication.quit())
     window.show()
     remote_access = window.settings.value("RemotelyAccessible", False, type=bool)
+    use_vocache = window.settings.value("UseViewerObjectCache", False, type=bool)
+    window.sessionManager.use_viewer_object_cache = use_vocache
     http_host = None
     if remote_access:
         http_host = "0.0.0.0"

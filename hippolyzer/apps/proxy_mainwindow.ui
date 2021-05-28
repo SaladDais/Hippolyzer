@@ -262,6 +262,7 @@
     <addaction name="actionManageFilters"/>
     <addaction name="separator"/>
     <addaction name="actionProxyRemotelyAccessible"/>
+    <addaction name="actionUseViewerObjectCache"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -297,6 +298,17 @@
    </property>
    <property name="toolTip">
     <string>Make the proxy accessible from other devices on the network</string>
+   </property>
+  </action>
+  <action name="actionUseViewerObjectCache">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Use Viewer Object Cache</string>
+   </property>
+   <property name="toolTip">
+    <string>Can help make the proxy aware of certain objects, but can cause slowdowns</string>
    </property>
   </action>
  </widget>
