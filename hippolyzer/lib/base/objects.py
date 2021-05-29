@@ -49,7 +49,6 @@ from hippolyzer.lib.base.templates import (
 
 class Object(recordclass.datatuple):  # type: ignore
     __options__ = {
-        "fast_new": False,
         "use_weakref": True,
     }
     __weakref__: Any
@@ -143,107 +142,13 @@ class Object(recordclass.datatuple):  # type: ignore
     SitName: Optional[str] = None
     TextureID: Optional[Any] = None
 
-    def __init__(self, *, LocalID=None, State=None, FullID=None, CRC=None, PCode=None, Material=None,
-                 ClickAction=None, Scale=None, ParentID=None, UpdateFlags=None, PathCurve=None, ProfileCurve=None,
-                 PathBegin=None, PathEnd=None, PathScaleX=None, PathScaleY=None, PathShearX=None, PathShearY=None,
-                 PathTwist=None, PathTwistBegin=None, PathRadiusOffset=None, PathTaperX=None, PathTaperY=None,
-                 PathRevolutions=None, PathSkew=None, ProfileBegin=None, ProfileEnd=None, ProfileHollow=None,
-                 TextureEntry=None, TextureAnim=None, NameValue=None, Data=None, Text=None, TextColor=None,
-                 MediaURL=None, PSBlock=None, ExtraParams=None, Sound=None, OwnerID=None, SoundGain=None,
-                 SoundFlags=None, SoundRadius=None, JointType=None, JointPivot=None, JointAxisOrAnchor=None,
-                 FootCollisionPlane=None, Position=None, Velocity=None, Acceleration=None, Rotation=None,
-                 AngularVelocity=None, TreeSpecies=None, ObjectCosts=None, ScratchPad=None):
+    def __init__(self, **kwargs):
         """ set up the object attributes """
-
-        self.LocalID = LocalID  # U32
-        self.State = State  # U8
-        self.FullID = FullID  # LLUUID
-        self.CRC = CRC  # U32 // TEMPORARY HACK FOR JAMES
-        self.PCode = PCode  # U8
-        self.Material = Material  # U8
-        self.ClickAction = ClickAction  # U8
-        self.Scale = Scale  # LLVector3
-        self.ParentID = ParentID  # U32
-        # Actually contains a weakref proxy
-        self.Parent: Optional[Object] = None
-        self.UpdateFlags = UpdateFlags  # U32 // U32, see object_flags.h
-        self.PathCurve = PathCurve  # U8
-        self.ProfileCurve = ProfileCurve  # U8
-        self.PathBegin = PathBegin  # U16 // 0 to 1, quanta = 0.01
-        self.PathEnd = PathEnd  # U16 // 0 to 1, quanta = 0.01
-        self.PathScaleX = PathScaleX  # U8 // 0 to 1, quanta = 0.01
-        self.PathScaleY = PathScaleY  # U8 // 0 to 1, quanta = 0.01
-        self.PathShearX = PathShearX  # U8 // -.5 to .5, quanta = 0.01
-        self.PathShearY = PathShearY  # U8 // -.5 to .5, quanta = 0.01
-        self.PathTwist = PathTwist  # S8 // -1 to 1, quanta = 0.01
-        self.PathTwistBegin = PathTwistBegin  # S8 // -1 to 1, quanta = 0.01
-        self.PathRadiusOffset = PathRadiusOffset  # S8 // -1 to 1, quanta = 0.01
-        self.PathTaperX = PathTaperX  # S8 // -1 to 1, quanta = 0.01
-        self.PathTaperY = PathTaperY  # S8 // -1 to 1, quanta = 0.01
-        self.PathRevolutions = PathRevolutions  # U8 // 0 to 3, quanta = 0.015
-        self.PathSkew = PathSkew  # S8 // -1 to 1, quanta = 0.01
-        self.ProfileBegin = ProfileBegin  # U16 // 0 to 1, quanta = 0.01
-        self.ProfileEnd = ProfileEnd  # U16 // 0 to 1, quanta = 0.01
-        self.ProfileHollow = ProfileHollow  # U16 // 0 to 1, quanta = 0.01
-        self.TextureEntry = TextureEntry  # Variable 2
-        self.TextureAnim = TextureAnim  # Variable 1
-        self.NameValue = NameValue  # Variable 2
-        self.Data = Data  # Variable 2
-        self.Text = Text  # Variable 1 // llSetText() hovering text
-        self.TextColor = TextColor  # Fixed 4 // actually, a LLColor4U
-        self.MediaURL = MediaURL  # Variable 1 // URL for web page, movie, etc.
-        self.PSBlock = PSBlock  # Variable 1
-        self.ExtraParams = ExtraParams or {}  # Variable 1
-        self.Sound = Sound  # LLUUID
-        self.OwnerID = OwnerID  # LLUUID // HACK object's owner id, only set if non-null sound, for muting
-        self.SoundGain = SoundGain  # F32
-        self.SoundFlags = SoundFlags  # U8
-        self.SoundRadius = SoundRadius  # F32 // cutoff radius
-        self.JointType = JointType  # U8
-        self.JointPivot = JointPivot  # LLVector3
-        self.JointAxisOrAnchor = JointAxisOrAnchor  # LLVector3
-        self.TreeSpecies = TreeSpecies
-        self.ScratchPad = ScratchPad
-        self.ObjectCosts = ObjectCosts or {}
+        self.ExtraParams = self.ExtraParams or {}  # Variable 1
+        self.ObjectCosts = self.ObjectCosts or {}
         self.ChildIDs = []
         # Same as parent, contains weakref proxies.
         self.Children: List[Object] = []
-
-        # from ObjectUpdateCompressed
-        self.FootCollisionPlane: Optional[Vector4] = FootCollisionPlane
-        self.Position: Optional[Vector3] = Position
-        self.Velocity: Optional[Vector3] = Velocity
-        self.Acceleration: Optional[Vector3] = Acceleration
-        self.Rotation: Optional[Quaternion] = Rotation
-        self.AngularVelocity: Optional[Vector3] = AngularVelocity
-
-        # from ObjectProperties
-        self.CreatorID = None
-        self.GroupID = None
-        self.CreationDate = None
-        self.BaseMask = None
-        self.OwnerMask = None
-        self.GroupMask = None
-        self.EveryoneMask = None
-        self.NextOwnerMask = None
-        self.OwnershipCost = None
-        # TaxRate
-        self.SaleType = None
-        self.SalePrice = None
-        self.AggregatePerms = None
-        self.AggregatePermTextures = None
-        self.AggregatePermTexturesOwner = None
-        self.Category = None
-        self.InventorySerial = None
-        self.ItemID = None
-        self.FolderID = None
-        self.FromTaskID = None
-        self.LastOwnerID = None
-        self.Name = None
-        self.Description = None
-        self.TouchName = None
-        self.SitName = None
-        self.TextureID = None
 
     @property
     def RegionPosition(self) -> Vector3:
@@ -296,7 +201,10 @@ class Object(recordclass.datatuple):  # type: ignore
         return updated_properties
 
     def to_dict(self):
-        return recordclass.asdict(self)
+        val = recordclass.asdict(self)
+        del val["Children"]
+        del val["Parent"]
+        return val
 
 
 def handle_to_gridxy(handle: int) -> Tuple[int, int]:
