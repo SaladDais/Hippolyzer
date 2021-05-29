@@ -1,3 +1,4 @@
+import asyncio
 import math
 import random
 import unittest
@@ -33,10 +34,18 @@ OBJECT_UPDATE_COMPRESSED_DATA = (
 )
 
 
+class MockSession:
+    def __init__(self):
+        self.id = UUID.random()
+        self.agent_id = UUID.random()
+        self.session_manager = None
+
+
 class MockRegion:
     def __init__(self, message_handler: MessageHandler):
-        self.session = lambda: None
+        self.session = lambda: MockSession()
         self.handle = 123
+        self.circuit = mock.MagicMock()
         self.cache_id = UUID.random()
         self.message_handler = message_handler
         self.http_message_handler = MessageHandler()
@@ -54,7 +63,7 @@ class ObjectTrackingAddon(BaseAddon):
         self.events.append(("kill", obj))
 
 
-class ObjectManagerTests(unittest.TestCase):
+class ObjectManagerTestMixin(unittest.TestCase):
     def setUp(self) -> None:
         self.message_handler = MessageHandler()
         self.region = MockRegion(self.message_handler)
@@ -136,6 +145,8 @@ class ObjectManagerTests(unittest.TestCase):
     def _get_avatar_positions(self) -> Dict[UUID, Vector3]:
         return {av.FullID: av.RegionPosition for av in self.object_manager.all_avatars}
 
+
+class ObjectManagerTests(ObjectManagerTestMixin, unittest.TestCase):
     def test_basic_tracking(self):
         """Does creating an object result in it being tracked?"""
         msg = self._create_object_update()
@@ -429,3 +440,24 @@ class ObjectManagerTests(unittest.TestCase):
         self.assertEqual(obj.FullID, UUID('121210bf-1658-427e-8fb4-fb001acd9be5'))
         # Flags from the ObjectUpdateCached should have been merged in
         self.assertEqual(obj.UpdateFlags, 4321)
+
+
+class AsyncObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioTestCase):
+    async def test_request_objects(self):
+        # request three objects, one of which won't receive an ObjectUpdate
+        futures = self.object_manager.request_objects((1234, 1235, 1236))
+        self._create_object(1234)
+        self._create_object(1235)
+        done, pending = await asyncio.wait(futures, timeout=0.0001)
+        objects = await asyncio.gather(*done)
+        # wait() returns unordered results, so use a set.
+        self.assertEqual(set(o.LocalID for o in objects), {1234, 1235})
+        pending = list(pending)
+        self.assertEqual(len(pending), 1)
+        # The other futures being resolved should have removed them from the dict
+        pending_futures = sum(len(x) for x in self.object_manager._update_futures.values())
+        self.assertEqual(pending_futures, 1)
+
+        self.assertFalse(pending[0].cancelled())
+        self.object_manager.clear()
+        self.assertTrue(pending[0].cancelled())
