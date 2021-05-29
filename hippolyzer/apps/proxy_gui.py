@@ -188,6 +188,8 @@ class ProxyGUI(QtWidgets.QMainWindow):
         self.actionOpenMessageBuilder.triggered.connect(self._openMessageBuilder)
         self.actionProxyRemotelyAccessible.setChecked(
             self.settings.value("RemotelyAccessible", False, type=bool))
+        self.actionUseViewerObjectCache.setChecked(
+            self.settings.value("UseViewerObjectCache", False, type=bool))
         self.actionProxyRemotelyAccessible.triggered.connect(self._setProxyRemotelyAccessible)
         self.actionUseViewerObjectCache.triggered.connect(self._setUseViewerObjectCache)
 
