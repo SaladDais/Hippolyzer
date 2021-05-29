@@ -292,6 +292,9 @@ class Message:
         return msg
 
     def invalidate_caches(self):
+        # Don't have any caches if we haven't even parsed
+        if self.raw_body:
+            return
         for blocks in self.blocks.values():
             for block in blocks:
                 block.invalidate_caches()
