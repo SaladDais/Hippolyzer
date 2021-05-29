@@ -12,6 +12,7 @@ import multidict
 
 from hippolyzer.lib.base.datatypes import Vector3, UUID
 from hippolyzer.lib.base.message.message_handler import MessageHandler
+from hippolyzer.lib.base.objects import handle_to_global_pos
 from hippolyzer.lib.proxy.caps_client import CapsClient
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.proxy.namecache import NameCache
@@ -84,10 +85,10 @@ class ProxiedRegion:
         return multidict.MultiDict((x, y[1]) for x, y in self._caps.items())
 
     @property
-    def global_pos(self):
+    def global_pos(self) -> Vector3:
         if self.handle is None:
             raise ValueError("Can't determine global region position without handle")
-        return Vector3(self.handle >> 32, self.handle & 0xFFffFFff)
+        return handle_to_global_pos(self.handle)
 
     @property
     def is_alive(self):

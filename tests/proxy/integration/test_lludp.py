@@ -18,7 +18,7 @@ from hippolyzer.lib.proxy.packets import ProxiedUDPPacket, Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
 
-from . import BaseIntegrationTest
+from .. import BaseProxyTest
 
 
 class MockAddon(BaseAddon):
@@ -46,17 +46,17 @@ class SimpleMessageLogger(FilteringMessageLogger):
         return self._filtered_entries
 
 
-class LLUDPIntegrationTests(BaseIntegrationTest):
+class LLUDPIntegrationTests(BaseProxyTest):
     def setUp(self) -> None:
         super().setUp()
         self.addon = MockAddon()
         AddonManager.init([], self.session_manager, [self.addon])
 
-    def _make_objectupdate_compressed(self, localid: Optional[int] = None):
+    def _make_objectupdate_compressed(self, localid: Optional[int] = None, handle: Optional[int] = 123):
         if localid is None:
             localid = random.getrandbits(32)
 
-        return b'\x00\x00\x00\x0c\xba\x00\r\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\x03\xd0\x04\x00\x10' \
+        return b'\x00\x00\x00\x0c\xba\x00\r' + struct.pack("<Q", handle) + b'\xff\xff\x03\xd0\x04\x00\x10' \
                b'\xe6\x00\x12\x12\x10\xbf\x16XB~\x8f\xb4\xfb\x00\x1a\xcd\x9b\xe5' + struct.pack("<I", localid) + \
                b'\t\x00\xcdG\x00\x00\x03\x00\x00\x00\x1cB\x00\x00\x1cB\xcd\xcc\xcc=\xedG,' \
                b'B\x9e\xb1\x9eBff\xa0A\x00\x00\x00\x00\x00\x00\x00\x00[' \
@@ -142,14 +142,14 @@ class LLUDPIntegrationTests(BaseIntegrationTest):
     @unittest.skip("expensive")
     async def test_benchmark(self):
         num_times = 10_000
-        self._setup_circuit()
+        self._setup_default_circuit()
         for _ in range(num_times):
             self.protocol.datagram_received(self._make_objectupdate_compressed(), self.region_addr)
         await self._wait_drained()
         self.assertEqual(len(self.transport.packets), num_times)
 
     async def test_forwarded_with_header(self):
-        self._setup_circuit()
+        self._setup_default_circuit()
         obj_update = self._make_objectupdate_compressed()
         self.protocol.datagram_received(obj_update, self.region_addr)
         await self._wait_drained()
@@ -165,7 +165,7 @@ class LLUDPIntegrationTests(BaseIntegrationTest):
         self.assertEqual(obj_update, data)
 
     async def test_addon_hooks(self):
-        self._setup_circuit()
+        self._setup_default_circuit()
         obj_update = self._make_objectupdate_compressed()
         self.protocol.datagram_received(obj_update, self.region_addr)
         await self._wait_drained()
@@ -173,7 +173,7 @@ class LLUDPIntegrationTests(BaseIntegrationTest):
         self.assertTrue(any(x == expected_lludp_event for x in self.addon.events))
 
     async def test_object_added_with_tes(self):
-        self._setup_circuit()
+        self._setup_default_circuit()
         obj_update = self._make_objectupdate_compressed(1234)
         self.protocol.datagram_received(obj_update, self.region_addr)
         await self._wait_drained()
@@ -183,24 +183,24 @@ class LLUDPIntegrationTests(BaseIntegrationTest):
         self.assertEqual(len(self.session.regions[0].objects), 3)
 
     async def test_object_updated_changed_property_list(self):
-        self._setup_circuit()
+        self._setup_default_circuit()
         # One creating update and one no-op update
         obj_update = self._make_objectupdate_compressed(1234)
         self.protocol.datagram_received(obj_update, self.region_addr)
         obj_update = self._make_objectupdate_compressed(1234)
         self.protocol.datagram_received(obj_update, self.region_addr)
         await self._wait_drained()
-        self.assertEqual(len(self.session.regions[0].objects), 3)
+        self.assertEqual(3, len(self.session.regions[0].objects))
         object_events = [e for e in self.addon.events if e[0] == "object_update"]
         # 3 objects in example packet and we sent it twice
-        self.assertEqual(len(object_events), 6)
+        self.assertEqual(6, len(object_events))
         # Only TextureEntry should be marked updated since it's a proxy object
         self.assertEqual(object_events[-1][-1], {"TextureEntry"})
 
     async def test_message_logger(self):
         message_logger = SimpleMessageLogger()
         self.session_manager.message_logger = message_logger
-        self._setup_circuit()
+        self._setup_default_circuit()
         obj_update = self._make_objectupdate_compressed(1234)
         self.protocol.datagram_received(obj_update, self.region_addr)
         await self._wait_drained()
@@ -211,7 +211,7 @@ class LLUDPIntegrationTests(BaseIntegrationTest):
     async def test_logging_taken_message(self):
         message_logger = SimpleMessageLogger()
         self.session_manager.message_logger = message_logger
-        self._setup_circuit()
+        self._setup_default_circuit()
         obj_update = self.serializer.serialize(ProxiedMessage(
             "UndoLand",
             Block("AgentData", AgentID=UUID(), SessionID=UUID()),
@@ -224,3 +224,10 @@ class LLUDPIntegrationTests(BaseIntegrationTest):
         entry: LLUDPMessageLogEntry = entries[0]  # type: ignore
         self.assertEqual(entry.name, "UndoLand")
         self.assertEqual(entry.message.dropped, True)
+
+    async def test_session_message_handler(self):
+        self._setup_default_circuit()
+        obj_update = self._make_objectupdate_compressed(1234)
+        fut = self.session.message_handler.wait_for('ObjectUpdateCompressed')
+        self.protocol.datagram_received(obj_update, self.region_addr)
+        self.assertEqual("ObjectUpdateCompressed", (await fut).name)

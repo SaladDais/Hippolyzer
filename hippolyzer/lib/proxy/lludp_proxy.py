@@ -131,6 +131,10 @@ class InterceptingLLUDPProxyProtocol(BaseLLUDPProxyProtocol):
                     LOG.exception("Failed to load region cache, skipping")
 
         try:
+            self.session.message_handler.handle(message)
+        except:
+            LOG.exception("Failed in session message handler")
+        try:
             region.message_handler.handle(message)
         except:
             LOG.exception("Failed in region message handler")

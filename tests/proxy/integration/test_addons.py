@@ -15,7 +15,7 @@ from hippolyzer.lib.proxy.packets import Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
 
-from . import BaseIntegrationTest
+from .. import BaseProxyTest
 
 
 class MockAddon(BaseAddon):
@@ -30,7 +30,7 @@ class MockAddon(BaseAddon):
         show_message(bar)
 
 
-class AddonIntegrationTests(BaseIntegrationTest):
+class AddonIntegrationTests(BaseProxyTest):
     def setUp(self) -> None:
         super().setUp()
         self.addon = MockAddon()
@@ -50,7 +50,7 @@ class AddonIntegrationTests(BaseIntegrationTest):
         self.protocol.datagram_received(packet, self.client_addr)
 
     async def test_simple_command_setting_params(self):
-        self._setup_circuit()
+        self._setup_default_circuit()
         self._fake_command("foobar baz")
         await self._wait_drained()
         self.assertEqual(self.session.addon_ctx["bazquux"], "baz")

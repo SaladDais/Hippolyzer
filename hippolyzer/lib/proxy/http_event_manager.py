@@ -195,6 +195,11 @@ class MITMProxyEventManager:
                 self._handle_login_flow(flow)
                 return
             try:
+                session = cap_data.session and cap_data.session()
+                if not session:
+                    return
+                session.http_message_handler.handle(flow)
+
                 region = cap_data.region and cap_data.region()
                 if not region:
                     return

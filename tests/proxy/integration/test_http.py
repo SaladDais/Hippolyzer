@@ -13,7 +13,7 @@ from hippolyzer.lib.proxy.http_proxy import HTTPFlowContext, SerializedCapData
 from hippolyzer.lib.proxy.message_logger import FilteringMessageLogger
 from hippolyzer.lib.proxy.sessions import SessionManager
 
-from . import BaseIntegrationTest
+from .. import BaseProxyTest
 
 
 class MockAddon(BaseAddon):
@@ -30,14 +30,14 @@ class SimpleMessageLogger(FilteringMessageLogger):
         return self._filtered_entries
 
 
-class LLUDPIntegrationTests(BaseIntegrationTest):
+class LLUDPIntegrationTests(BaseProxyTest):
     def setUp(self) -> None:
         super().setUp()
         self.addon = MockAddon()
         AddonManager.init([], self.session_manager, [self.addon])
         self.flow_context = HTTPFlowContext()
         self.http_event_manager = MITMProxyEventManager(self.session_manager, self.flow_context)
-        self._setup_circuit()
+        self._setup_default_circuit()
 
     async def _pump_one_event(self):
         # If we don't yield then the new entry won't end up in the queue

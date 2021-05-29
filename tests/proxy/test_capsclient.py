@@ -1,28 +1,16 @@
-import unittest
-
 import aiohttp
 import aioresponses
 from yarl import URL
 
-from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.proxy.caps_client import CapsClient
 from hippolyzer.lib.proxy.region import ProxiedRegion
-from hippolyzer.lib.proxy.sessions import SessionManager
+
+from . import BaseProxyTest
 
 
-class TestCapsClient(unittest.IsolatedAsyncioTestCase):
+class TestCapsClient(BaseProxyTest):
     def setUp(self) -> None:
-        self.session = SessionManager().create_session({
-            "session_id": UUID.random(),
-            "secure_session_id": UUID.random(),
-            "agent_id": UUID.random(),
-            "circuit_code": 0,
-            "sim_ip": "127.0.0.1",
-            "sim_port": "1",
-            "region_x": 1,
-            "region_y": 2,
-            "seed_capability": "https://test.localhost:4/foo",
-        })
+        super().setUp()
         self.region = ProxiedRegion(("127.0.0.1", 1), "", self.session)
         self.caps_client = CapsClient(self.region)
 

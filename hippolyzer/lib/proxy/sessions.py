@@ -9,14 +9,18 @@ from typing import *
 from weakref import ref
 
 from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.proxy.http_asset_repo import HTTPAssetRepo
 from hippolyzer.lib.proxy.http_proxy import HTTPFlowContext, is_asset_server_cap_name, SerializedCapData
 from hippolyzer.lib.proxy.namecache import NameCache
+from hippolyzer.lib.proxy.objects import WorldObjectManager
 from hippolyzer.lib.proxy.region import ProxiedRegion, CapType
 
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.message_logger import BaseMessageLogger
+    from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
+    from hippolyzer.lib.proxy.message import ProxiedMessage
 
 
 class Session:
@@ -35,6 +39,9 @@ class Session:
         self.selected: SelectionModel = SelectionModel()
         self.regions: List[ProxiedRegion] = []
         self.started_at = datetime.datetime.now()
+        self.message_handler: MessageHandler[ProxiedMessage] = MessageHandler()
+        self.http_message_handler: MessageHandler[HippoHTTPFlow] = MessageHandler()
+        self.objects = WorldObjectManager(self)
         self._main_region = None
 
     @property
@@ -104,6 +111,12 @@ class Session:
     def region_by_circuit_addr(self, circuit_addr) -> Optional[ProxiedRegion]:
         for region in self.regions:
             if region.circuit_addr == circuit_addr and region.circuit:
+                return region
+        return None
+
+    def region_by_handle(self, handle: int) -> Optional[ProxiedRegion]:
+        for region in self.regions:
+            if region.handle == handle:
                 return region
         return None
 

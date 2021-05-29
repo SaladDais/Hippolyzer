@@ -1,27 +1,14 @@
-import unittest
-
 from mitmproxy.test import tflow, tutils
 
-from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.message_logger import HTTPMessageLogEntry
-from hippolyzer.lib.proxy.sessions import SessionManager
+
+from . import BaseProxyTest
 
 
-class TestHTTPFlows(unittest.TestCase):
+class TestHTTPFlows(BaseProxyTest):
     def setUp(self) -> None:
-        self.session_manager = SessionManager()
-        self.session = self.session = self.session_manager.create_session({
-            "session_id": UUID.random(),
-            "secure_session_id": UUID.random(),
-            "agent_id": UUID.random(),
-            "circuit_code": 0,
-            "sim_ip": "127.0.0.1",
-            "region_x": 1,
-            "region_y": 2,
-            "sim_port": "1",
-            "seed_capability": "https://test.localhost:4/foo",
-        })
+        super().setUp()
         self.region = self.session.register_region(
             ("127.0.0.1", 2),
             "https://test.localhost:4/foo",

@@ -141,14 +141,19 @@ class Object(recordclass.datatuple):  # type: ignore
     TouchName: Optional[str] = None
     SitName: Optional[str] = None
     TextureID: Optional[Any] = None
+    RegionHandle: Optional[int] = None
 
-    def __init__(self, **kwargs):
+    def __init__(self, **_kwargs):
         """ set up the object attributes """
         self.ExtraParams = self.ExtraParams or {}  # Variable 1
         self.ObjectCosts = self.ObjectCosts or {}
         self.ChildIDs = []
         # Same as parent, contains weakref proxies.
         self.Children: List[Object] = []
+
+    @property
+    def GlobalPosition(self) -> Vector3:
+        return handle_to_global_pos(self.RegionHandle) + self.RegionPosition
 
     @property
     def RegionPosition(self) -> Vector3:
@@ -215,8 +220,13 @@ def gridxy_to_handle(x: int, y: int):
     return ((x * 256) << 32) | (y * 256)
 
 
-def normalize_object_update(block: Block):
+def handle_to_global_pos(handle: int) -> Vector3:
+    return Vector3(handle >> 32, handle & 0xFFffFFff)
+
+
+def normalize_object_update(block: Block, handle: int):
     object_data = {
+        "RegionHandle": handle,
         "FootCollisionPlane": None,
         "SoundFlags": block["Flags"],
         "SoundGain": block["Gain"],
@@ -247,11 +257,12 @@ def normalize_object_update(block: Block):
     return object_data
 
 
-def normalize_terse_object_update(block: Block):
+def normalize_terse_object_update(block: Block, handle: int):
     object_data = {
         **block.deserialize_var("Data", make_copy=False),
         **dict(block.items()),
         "TextureEntry": block.deserialize_var("TextureEntry", make_copy=False),
+        "RegionHandle": handle,
     }
     object_data["LocalID"] = object_data.pop("ID")
     object_data.pop("Data")
@@ -295,9 +306,10 @@ def normalize_object_update_compressed_data(data: bytes):
     return object_data
 
 
-def normalize_object_update_compressed(block: Block):
+def normalize_object_update_compressed(block: Block, handle: int):
     compressed = normalize_object_update_compressed_data(block["Data"])
     compressed["UpdateFlags"] = block.deserialize_var("UpdateFlags", make_copy=False)
+    compressed["RegionHandle"] = handle
     return compressed
 
 

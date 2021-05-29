@@ -7,17 +7,18 @@ from unittest import mock
 
 from hippolyzer.lib.base.datatypes import *
 from hippolyzer.lib.base.message.message import Block
-from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.message.udpserializer import UDPMessageSerializer
 from hippolyzer.lib.base.objects import Object, normalize_object_update_compressed_data
-from hippolyzer.lib.base.templates import ExtraParamType, SculptTypeData, SculptType
+from hippolyzer.lib.base.templates import ExtraParamType
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
-from hippolyzer.lib.proxy.objects import ObjectManager
 from hippolyzer.lib.proxy.message import ProxiedMessage as Message
+from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.templates import PCode
 from hippolyzer.lib.proxy.vocache import RegionViewerObjectCacheChain, RegionViewerObjectCache, ViewerObjectCacheEntry
+
+from . import BaseProxyTest
 
 
 OBJECT_UPDATE_COMPRESSED_DATA = (
@@ -34,21 +35,14 @@ OBJECT_UPDATE_COMPRESSED_DATA = (
 )
 
 
-class MockSession:
-    def __init__(self):
-        self.id = UUID.random()
-        self.agent_id = UUID.random()
-        self.session_manager = None
+class WrappingMessageHandler:
+    """Calls both the session and region-local message handlers"""
+    def __init__(self, region: ProxiedRegion):
+        self.region = region
 
-
-class MockRegion:
-    def __init__(self, message_handler: MessageHandler):
-        self.session = lambda: MockSession()
-        self.handle = 123
-        self.circuit = mock.MagicMock()
-        self.cache_id = UUID.random()
-        self.message_handler = message_handler
-        self.http_message_handler = MessageHandler()
+    def handle(self, message: Message):
+        self.region.session().message_handler.handle(message)
+        self.region.message_handler.handle(message)
 
 
 class ObjectTrackingAddon(BaseAddon):
@@ -63,28 +57,32 @@ class ObjectTrackingAddon(BaseAddon):
         self.events.append(("kill", obj))
 
 
-class ObjectManagerTestMixin(unittest.TestCase):
+class ObjectManagerTestMixin(BaseProxyTest):
     def setUp(self) -> None:
-        self.message_handler = MessageHandler()
-        self.region = MockRegion(self.message_handler)
+        super().setUp()
+        self._setup_default_circuit()
+        self.region = self.session.main_region
+        self.message_handler = WrappingMessageHandler(self.region)
         patched = mock.patch('hippolyzer.lib.proxy.vocache.RegionViewerObjectCacheChain.for_region')
         self.addCleanup(patched.stop)
         self.mock_get_region_object_cache_chain = patched.start()
         self.mock_get_region_object_cache_chain.return_value = RegionViewerObjectCacheChain([])
-        self.object_manager = ObjectManager(self.region, use_vo_cache=True)  # type: ignore
+        self.object_manager = self.region.objects
         self.serializer = UDPMessageSerializer()
         self.deserializer = UDPMessageDeserializer(message_cls=Message)
         self.object_addon = ObjectTrackingAddon()
         AddonManager.init([], None, [self.object_addon])
 
     def _create_object_update(self, local_id=None, full_id=None, parent_id=None, pos=None, rot=None,
-                              pcode=None, namevalue=None) -> Message:
+                              pcode=None, namevalue=None, region_handle=None) -> Message:
         pos = pos if pos is not None else (1.0, 2.0, 3.0)
         rot = rot if rot is not None else (0.0, 0.0, 0.0, 1.0)
         pcode = pcode if pcode is not None else PCode.PRIMITIVE
+        if region_handle is None:
+            region_handle = 123
         msg = Message(
             "ObjectUpdate",
-            Block("RegionData", RegionHandle=123, TimeDilation=123),
+            Block("RegionData", RegionHandle=region_handle, TimeDilation=123),
             Block(
                 "ObjectData",
                 ID=local_id if local_id is not None else random.getrandbits(32),
@@ -123,10 +121,10 @@ class ObjectManagerTestMixin(unittest.TestCase):
         return self.deserializer.deserialize(self.serializer.serialize(msg))
 
     def _create_object(self, local_id=None, full_id=None, parent_id=None, pos=None, rot=None,
-                       pcode=None, namevalue=None) -> Object:
+                       pcode=None, namevalue=None, region_handle=None) -> Object:
         msg = self._create_object_update(
             local_id=local_id, full_id=full_id, parent_id=parent_id, pos=pos, rot=rot,
-            pcode=pcode, namevalue=namevalue)
+            pcode=pcode, namevalue=namevalue, region_handle=region_handle)
         self.message_handler.handle(msg)
         return self.object_manager.lookup_fullid(msg["ObjectData"]["FullID"])
 
@@ -139,14 +137,14 @@ class ObjectManagerTestMixin(unittest.TestCase):
             )
         )
 
-    def _kill_object(self, obj: Object):
-        self.message_handler.handle(self._create_kill_object(obj.LocalID))
+    def _kill_object(self, local_id: int):
+        self.message_handler.handle(self._create_kill_object(local_id))
 
     def _get_avatar_positions(self) -> Dict[UUID, Vector3]:
         return {av.FullID: av.RegionPosition for av in self.object_manager.all_avatars}
 
 
-class ObjectManagerTests(ObjectManagerTestMixin, unittest.TestCase):
+class RegionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioTestCase):
     def test_basic_tracking(self):
         """Does creating an object result in it being tracked?"""
         msg = self._create_object_update()
@@ -171,7 +169,7 @@ class ObjectManagerTests(ObjectManagerTestMixin, unittest.TestCase):
         _child = self._create_object(local_id=2, parent_id=1)
         parent = self._create_object(local_id=1)
         # This should orphan the child again
-        self._kill_object(parent)
+        self._kill_object(parent.LocalID)
         parent = self._create_object(local_id=1)
         # We should not have picked up any children
         self.assertSequenceEqual([], parent.ChildIDs)
@@ -182,7 +180,7 @@ class ObjectManagerTests(ObjectManagerTestMixin, unittest.TestCase):
         _parent = self._create_object(local_id=2, parent_id=1)
         grandparent = self._create_object(local_id=1)
         # KillObject implicitly kills all known descendents at that point
-        self._kill_object(grandparent)
+        self._kill_object(grandparent.LocalID)
         self.assertEqual(0, len(self.object_manager))
 
     def test_hierarchy_avatar_not_killed(self):
@@ -191,7 +189,7 @@ class ObjectManagerTests(ObjectManagerTestMixin, unittest.TestCase):
         grandparent = self._create_object(local_id=1)
         # KillObject should only "unsit" child avatars (does this require an ObjectUpdate
         # or is ParentID=0 implied?)
-        self._kill_object(grandparent)
+        self._kill_object(grandparent.LocalID)
         self.assertEqual(2, len(self.object_manager))
         self.assertIsNotNone(self.object_manager.lookup_localid(2))
 
@@ -284,6 +282,10 @@ class ObjectManagerTests(ObjectManagerTestMixin, unittest.TestCase):
         self.assertEqual(parent.RegionPosition, (0.0, 0.0, 0.0))
         self.assertEqual(child.RegionPosition, (1.0, 2.0, 0.0))
 
+    def test_global_position(self):
+        obj = self._create_object(pos=(0.0, 0.0, 0.0))
+        self.assertEqual(obj.GlobalPosition, (0.0, 123.0, 0.0))
+
     def test_avatar_locations(self):
         agent1_id = UUID.random()
         agent2_id = UUID.random()
@@ -312,7 +314,7 @@ class ObjectManagerTests(ObjectManagerTestMixin, unittest.TestCase):
         })
 
         # Simulate missing parent for agent
-        self._kill_object(seat_object)
+        self._kill_object(seat_object.LocalID)
         self.assertDictEqual(self._get_avatar_positions(), {
             # Agent is seated, but we don't know its parent. We have
             # to use the coarse location.
@@ -323,7 +325,7 @@ class ObjectManagerTests(ObjectManagerTestMixin, unittest.TestCase):
         # If the object is killed and no coarse pos, it shouldn't be in the dict
         # CoarseLocationUpdates are expected to be complete, so any agents missing
         # are no longer in the sim.
-        self._kill_object(avatar_obj)
+        self._kill_object(avatar_obj.LocalID)
         self.message_handler.handle(Message(
             "CoarseLocationUpdate",
             Block("AgentData", AgentID=agent2_id),
@@ -342,6 +344,8 @@ class ObjectManagerTests(ObjectManagerTestMixin, unittest.TestCase):
         self.assertDictEqual(self._get_avatar_positions(), {
             agent2_id: Vector3(2, 3, math.inf),
         })
+        agent2_avatar = self.object_manager.lookup_avatar(agent2_id)
+        self.assertEqual(agent2_avatar.GlobalPosition, Vector3(2, 126, math.inf))
 
     def test_name_cache(self):
         # Receiving an update with a NameValue for an avatar should update NameCache
@@ -378,12 +382,6 @@ class ObjectManagerTests(ObjectManagerTestMixin, unittest.TestCase):
             'Text': None,
             'TextColor': None,
             'MediaURL': None,
-            'ExtraParams': {
-                ExtraParamType.SCULPT: {
-                    'Texture': UUID('89556747-24cb-43ed-920b-47caed15465f'),
-                    'TypeData': SculptTypeData(Type=SculptType.NONE, Invert=True, Mirror=False)
-                }
-            },
             'Sound': None,
             'SoundGain': None,
             'SoundFlags': None,
@@ -406,10 +404,12 @@ class ObjectManagerTests(ObjectManagerTestMixin, unittest.TestCase):
             'PathSkew': 0,
             'ProfileBegin': 0,
             'ProfileEnd': 0,
-            'ProfileHollow': 0
+            'ProfileHollow': 0,
         }
         filtered_normalized = {k: v for k, v in normalized.items() if k in expected}
-        self.assertEqual(filtered_normalized, expected)
+        self.assertDictEqual(filtered_normalized, expected)
+        sculpt_texture = normalized["ExtraParams"][ExtraParamType.SCULPT]["Texture"]
+        self.assertEqual(sculpt_texture, UUID('89556747-24cb-43ed-920b-47caed15465f'))
         self.assertIsNotNone(normalized['TextureAnim'])
         self.assertIsNotNone(normalized['TextureEntry'])
 
@@ -425,6 +425,7 @@ class ObjectManagerTests(ObjectManagerTestMixin, unittest.TestCase):
         ])
         cache_msg = Message(
             'ObjectUpdateCached',
+            Block("RegionData", TimeDilation=102, RegionHandle=123),
             Block(
                 "ObjectData",
                 ID=1234,
@@ -441,10 +442,8 @@ class ObjectManagerTests(ObjectManagerTestMixin, unittest.TestCase):
         # Flags from the ObjectUpdateCached should have been merged in
         self.assertEqual(obj.UpdateFlags, 4321)
 
-
-class AsyncObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioTestCase):
     async def test_request_objects(self):
-        # request four objects, two of which won't receive an ObjectUpdate
+        # request five objects, three of which won't receive an ObjectUpdate
         futures = self.object_manager.request_objects((1234, 1235, 1236, 1237))
         self._create_object(1234)
         self._create_object(1235)
@@ -454,9 +453,6 @@ class AsyncObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioTe
         self.assertEqual(set(o.LocalID for o in objects), {1234, 1235})
         pending = list(pending)
         self.assertEqual(2, len(pending))
-        # The other futures being resolved should have removed them from the dict
-        pending_futures = sum(len(x) for x in self.object_manager._update_futures.values())
-        self.assertEqual(2, pending_futures)
         pending_1, pending_2 = pending
 
         # Timing out should cancel
@@ -464,7 +460,94 @@ class AsyncObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioTe
             await asyncio.wait_for(pending_1, 0.00001)
         self.assertTrue(pending_1.cancelled())
 
+        fut = self.object_manager.request_objects(1238)[0]
+        self._kill_object(1238)
+        self.assertTrue(fut.cancelled())
+
         # Object manager being cleared due to region death should cancel
         self.assertFalse(pending_2.cancelled())
         self.object_manager.clear()
         self.assertTrue(pending_2.cancelled())
+        # The clear should have triggered the objects to be removed from the world view as well
+        self.assertEqual(0, len(self.session.objects))
+
+
+class SessionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.second_region = self.session.register_region(
+            ("127.0.0.1", 9), "https://localhost:5", 124
+        )
+        self._setup_region_circuit(self.second_region)
+
+    def test_get_fullid(self):
+        obj = self._create_object()
+        self.assertIs(self.session.objects.lookup_fullid(obj.FullID), obj)
+        self._kill_object(obj.LocalID)
+        self.assertIsNone(self.session.objects.lookup_fullid(obj.FullID))
+
+    def test_region_handle_change(self):
+        obj = self._create_object(region_handle=123)
+        self.assertEqual(obj.RegionHandle, 123)
+        self.assertIs(self.region.objects.lookup_fullid(obj.FullID), obj)
+        self.assertIs(self.region.objects.lookup_localid(obj.LocalID), obj)
+
+        # Send an update moving the object to the new region
+        self._create_object(local_id=~obj.LocalID & 0xFFffFFff, full_id=obj.FullID, region_handle=124)
+        self.assertEqual(obj.RegionHandle, 124)
+        self.assertIsNone(self.region.objects.lookup_fullid(obj.FullID))
+        self.assertIsNone(self.region.objects.lookup_localid(obj.LocalID))
+        self.assertIs(self.second_region.objects.lookup_fullid(obj.FullID), obj)
+        self.assertIs(self.second_region.objects.lookup_localid(obj.LocalID), obj)
+        self.assertEqual(1, len(self.session.objects))
+        self.assertEqual(0, len(self.region.objects))
+        self.assertEqual(1, len(self.second_region.objects))
+
+    def test_linkset_region_handle_change(self):
+        parent = self._create_object(region_handle=123)
+        child = self._create_object(region_handle=123, parent_id=parent.LocalID)
+        self._create_object(local_id=~parent.LocalID & 0xFFffFFff, full_id=parent.FullID, region_handle=124)
+        # Children reference their parents, not the other way around. Moving this to a new region
+        # should have cleared the list because it now has no children in the same region.
+        self.assertEqual([], parent.ChildIDs)
+        # Move the child to the same region
+        self._create_object(
+            local_id=child.LocalID, full_id=child.FullID, region_handle=124, parent_id=parent.LocalID)
+        # Child should be back in the children list
+        self.assertEqual([child.LocalID], parent.ChildIDs)
+        self.assertEqual(parent.LocalID, child.ParentID)
+        self.assertEqual(0, len(self.region.objects))
+        self.assertEqual(2, len(self.second_region.objects))
+        self.assertEqual(0, len(self.region.objects.missing_locals))
+        self.assertEqual(0, len(self.second_region.objects.missing_locals))
+
+    def test_all_objects(self):
+        obj = self._create_object()
+        self.assertEqual([obj], list(self.session.objects.all_objects))
+
+    def test_all_avatars(self):
+        obj = self._create_object(pcode=PCode.AVATAR)
+        av_list = list(self.session.objects.all_avatars)
+        self.assertEqual(1, len(av_list))
+        self.assertEqual(obj, av_list[0].Object)
+
+    async def test_requesting_properties(self):
+        obj = self._create_object()
+        futs = self.session.objects.request_object_properties(obj)
+        self.region.message_handler.handle(Message(
+            "ObjectProperties",
+            Block("ObjectData", ObjectID=obj.FullID, Name="Foobar", TextureID=b""),
+        ))
+        await asyncio.wait_for(futs[0], timeout=0.0001)
+        self.assertEqual(obj.Name, "Foobar")
+
+    async def test_ensure_ancestors_loaded(self):
+        child = self._create_object(region_handle=123, parent_id=1)
+        parentless = self._create_object(region_handle=123)
+
+        async def _create_after():
+            await asyncio.sleep(0.001)
+            self._create_object(region_handle=123, local_id=child.ParentID)
+        asyncio.create_task(_create_after())
+        await self.session.objects.ensure_ancestors_loaded(child)
+        await self.session.objects.ensure_ancestors_loaded(parentless)

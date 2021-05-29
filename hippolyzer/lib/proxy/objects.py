@@ -15,6 +15,7 @@ from hippolyzer.lib.base.datatypes import UUID, Vector3
 from hippolyzer.lib.base.helpers import proxify
 from hippolyzer.lib.base.message.message import Block
 from hippolyzer.lib.base.objects import (
+    handle_to_global_pos,
     normalize_object_update,
     normalize_terse_object_update,
     normalize_object_update_compressed_data,
@@ -30,6 +31,7 @@ from hippolyzer.lib.proxy.vocache import RegionViewerObjectCacheChain
 
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.region import ProxiedRegion
+    from hippolyzer.lib.proxy.sessions import Session
 
 LOG = logging.getLogger(__name__)
 
@@ -86,12 +88,14 @@ class Avatar:
     def __init__(
             self,
             full_id: UUID,
+            region_handle: int,
             obj: Optional["Object"] = None,
             coarse_location: Optional[Vector3] = None,
             resolved_name: Optional[str] = None,
     ):
         self.FullID: UUID = full_id
         self.Object: Optional["Object"] = obj
+        self.RegionHandle: int = region_handle
         self._coarse_location = coarse_location
         self._resolved_name = resolved_name
 
@@ -110,6 +114,10 @@ class Avatar:
         raise ValueError(f"Avatar {self.FullID} has no known position")
 
     @property
+    def GlobalPosition(self) -> Vector3:
+        return self.RegionPosition + handle_to_global_pos(self.RegionHandle)
+
+    @property
     def Name(self) -> Optional[str]:
         if self.Object:
             nv: Dict[str, str] = self.Object.NameValue.to_dict()
@@ -120,16 +128,6 @@ class Avatar:
 class ObjectManager:
     """
     Object manager for a specific region
-
-    TODO: This model does not make sense given how region->region object handoff works.
-     The ObjectManager has to notice when an ObjectUpdate for an object came from a
-     new region and update the associated region itself. It will not receive a KillObject
-     from the old region in the case of physical region crossings. Right now this means
-     physical objects or agents that physically cross a sim border get dangling object
-     references. This is not the case when they teleport, even across a small distance
-     to a neighbor, as that will send a KillObject in the old sim.
-     Needs to switch to one manager managing objects for a full session rather than one
-     manager per region.
     """
 
     def __init__(self, region: ProxiedRegion, use_vo_cache: bool = False):
@@ -140,46 +138,36 @@ class ObjectManager:
         self._localid_lookup: typing.Dict[int, Object] = {}
         self._fullid_lookup: typing.Dict[UUID, int] = {}
         self._coarse_locations: typing.Dict[UUID, Vector3] = {}
-        self._update_futures: typing.Dict[int, List[asyncio.Future]] = collections.defaultdict(list)
-        self._property_futures: typing.Dict[int, List[asyncio.Future]] = collections.defaultdict(list)
+        self._object_futures: typing.Dict[Tuple[int, int], List[asyncio.Future]] = {}
         # Objects that we've seen references to but don't have data for
         self.missing_locals = set()
         self._orphan_manager = OrphanManager()
-        name_cache = None
-        session = self._region.session()
-        if session and session.session_manager:
-            name_cache = session.session_manager.name_cache
+        self._world_objects: WorldObjectManager = region.session().objects
+        name_cache = region.session().session_manager.name_cache
         # Use a local namecache if we don't have a session manager
         self.name_cache: Optional[NameCache] = name_cache or NameCache()
 
         message_handler = region.message_handler
-        message_handler.subscribe("ObjectUpdate", self._handle_object_update)
-        message_handler.subscribe("ImprovedTerseObjectUpdate",
-                                  self._handle_terse_object_update)
         message_handler.subscribe("CoarseLocationUpdate",
                                   self._handle_coarse_location_update)
-        message_handler.subscribe("ObjectUpdateCompressed",
-                                  self._handle_object_update_compressed)
-        message_handler.subscribe("ObjectUpdateCached",
-                                  self._handle_object_update_cached)
-        message_handler.subscribe("ObjectProperties",
-                                  self._handle_object_properties_generic)
-        message_handler.subscribe("ObjectPropertiesFamily",
-                                  self._handle_object_properties_generic)
         region.http_message_handler.subscribe("GetObjectCost",
                                               self._handle_get_object_cost)
         message_handler.subscribe("KillObject",
                                   self._handle_kill_object)
+        message_handler.subscribe("ObjectProperties",
+                                  self._handle_object_properties_generic)
+        message_handler.subscribe("ObjectPropertiesFamily",
+                                  self._handle_object_properties_generic)
 
     def __len__(self):
         return len(self._localid_lookup)
 
     @property
-    def all_objects(self) -> typing.Iterable[Object]:
+    def all_objects(self) -> Iterable[Object]:
         return self._localid_lookup.values()
 
     @property
-    def all_avatars(self) -> typing.Iterable[Avatar]:
+    def all_avatars(self) -> Iterable[Avatar]:
         av_objects = {o.FullID: o for o in self.all_objects if o.PCode == PCode.AVATAR}
         all_ids = set(av_objects.keys()) | self._coarse_locations.keys()
 
@@ -193,6 +181,7 @@ class ObjectManager:
                 resolved_name = f"{namecache_entry.FirstName} {namecache_entry.LastName}"
             avatars.append(Avatar(
                 full_id=av_id,
+                region_handle=self._region.handle,
                 coarse_location=coarse_location,
                 obj=av_obj,
                 resolved_name=resolved_name,
@@ -214,7 +203,53 @@ class ObjectManager:
                 return avatar
         return None
 
-    def _track_object(self, obj: Object, notify: bool = True):
+    def _update_existing_object(self, obj: Object, new_properties: dict, update_type: UpdateType):
+        new_parent_id = new_properties.get("ParentID", obj.ParentID)
+        new_region_handle = new_properties.get("RegionHandle", obj.RegionHandle)
+        new_local_id = new_properties.get("LocalID", obj.LocalID)
+        old_parent_id = obj.ParentID
+        old_region_handle = obj.RegionHandle
+        old_region = self._region.session().region_by_handle(old_region_handle)
+
+        actually_updated_props = set()
+
+        # The object just changed regions, we have to remove it from the old one.
+        if old_region_handle != new_region_handle:
+            old_region.objects.untrack_object(obj)
+        elif obj.LocalID != new_local_id:
+            # Our LocalID changed, and we deal with linkages to other prims by
+            # LocalID association. Break any links since our LocalID is changing.
+            # Could happen if we didn't mark an attachment prim dead and the parent agent
+            # came back into the sim. Attachment FullIDs do not change across TPs,
+            # LocalIDs do. This at least lets us partially recover from the bad state.
+            new_localid = new_properties["LocalID"]
+            LOG.warning(f"Got an update with new LocalID for {obj.FullID}, {obj.LocalID} != {new_localid}. "
+                        f"May have mishandled a KillObject for a prim that left and re-entered region.")
+            old_region.objects.untrack_object(obj)
+            obj.LocalID = new_localid
+            old_region.objects.track_object(obj)
+            actually_updated_props |= {"LocalID"}
+
+        actually_updated_props |= obj.update_properties(new_properties)
+
+        if new_region_handle != old_region_handle:
+            # Region just changed to this region, we should have untracked it before
+            # so mark it tracked on this region.
+            self.track_object(obj)
+        elif new_parent_id != old_parent_id:
+            # LocalID just changed and we're in the same region
+            self._unparent_object(obj, old_parent_id)
+            self._parent_object(obj, insert_at_head=True)
+
+        if actually_updated_props:
+            self.run_object_update_hooks(obj, actually_updated_props, update_type)
+
+    def _track_new_object(self, obj: Object):
+        self.track_object(obj)
+        self._world_objects.handle_new_object(obj)
+        self.run_object_update_hooks(obj, set(obj.to_dict().keys()), UpdateType.OBJECT_UPDATE)
+
+    def track_object(self, obj: Object):
         self._localid_lookup[obj.LocalID] = obj
         self._fullid_lookup[obj.FullID] = obj.LocalID
         # If it was missing, it's not missing anymore.
@@ -229,10 +264,7 @@ class ObjectManager:
             assert child_obj is not None
             self._parent_object(child_obj)
 
-        if notify:
-            self._run_object_update_hooks(obj, set(obj.to_dict().keys()), UpdateType.OBJECT_UPDATE)
-
-    def _untrack_object(self, obj: Object):
+    def untrack_object(self, obj: Object):
         former_child_ids = obj.ChildIDs[:]
         for child_id in former_child_ids:
             child_obj = self.lookup_localid(child_id)
@@ -247,6 +279,8 @@ class ObjectManager:
 
         # Make sure the parent knows we went away
         self._unparent_object(obj, obj.ParentID)
+
+        self._cancel_futures(obj.LocalID)
 
         # Do this last in case we only have a weak reference
         del self._fullid_lookup[obj.FullID]
@@ -290,138 +324,20 @@ class ObjectManager:
             else:
                 LOG.debug(f"Changing parent of {obj.LocalID}, but couldn't find old parent")
 
-    def _update_existing_object(self, obj: Object, new_properties: dict, update_type: UpdateType):
-        new_parent_id = new_properties.get("ParentID", obj.ParentID)
-
-        actually_updated_props = set()
-
-        if obj.LocalID != new_properties.get("LocalID", obj.LocalID):
-            # Our LocalID changed, and we deal with linkages to other prims by
-            # LocalID association. Break any links since our LocalID is changing.
-            # Could happen if we didn't mark an attachment prim dead and the parent agent
-            # came back into the sim. Attachment FullIDs do not change across TPs,
-            # LocalIDs do. This at least lets us partially recover from the bad state.
-            # Currently known to happen due to physical region crossings, so only debug.
-            new_localid = new_properties["LocalID"]
-            LOG.debug(f"Got an update with new LocalID for {obj.FullID}, {obj.LocalID} != {new_localid}. "
-                      f"May have mishandled a KillObject for a prim that left and re-entered region.")
-            self._untrack_object(obj)
-            obj.LocalID = new_localid
-            self._track_object(obj, notify=False)
-            actually_updated_props |= {"LocalID"}
-
-        old_parent_id = obj.ParentID
-
-        actually_updated_props |= obj.update_properties(new_properties)
-
-        if new_parent_id != old_parent_id:
-            self._unparent_object(obj, old_parent_id)
-            self._parent_object(obj, insert_at_head=True)
-
-        # Common case where this may be falsy is if we get an ObjectUpdateCached
-        # that didn't have a changed UpdateFlags field.
-        if actually_updated_props:
-            self._run_object_update_hooks(obj, actually_updated_props, update_type)
-
-    def _handle_object_update(self, packet: ProxiedMessage):
-        seen_locals = []
-        for block in packet['ObjectData']:
-            object_data = normalize_object_update(block)
-
-            seen_locals.append(object_data["LocalID"])
-            obj = self.lookup_fullid(object_data["FullID"])
-            if obj:
-                self._update_existing_object(obj, object_data, UpdateType.OBJECT_UPDATE)
-            else:
-                obj = Object(**object_data)
-                self._track_object(obj)
-        packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
-
-    def _handle_terse_object_update(self, packet: ProxiedMessage):
-        seen_locals = []
-        for block in packet['ObjectData']:
-            object_data = normalize_terse_object_update(block)
-            obj = self.lookup_localid(object_data["LocalID"])
-            # Can only update existing object with this message
-            if obj:
-                # Need the Object as context because decoding state requires PCode.
-                state_deserializer = ObjectStateSerializer.deserialize
-                object_data["State"] = state_deserializer(ctx_obj=obj, val=object_data["State"])
-
-            seen_locals.append(object_data["LocalID"])
-            if obj:
-                self._update_existing_object(obj, object_data, UpdateType.OBJECT_UPDATE)
-            else:
-                self.missing_locals.add(object_data["LocalID"])
-                LOG.debug(f"Received terse update for unknown object {object_data['LocalID']}")
-
-        packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
-
-    def _handle_object_update_cached(self, packet: ProxiedMessage):
-        seen_locals = []
-        for block in packet['ObjectData']:
-            seen_locals.append(block["ID"])
-            update_flags = block.deserialize_var("UpdateFlags", make_copy=False)
-
-            # Check if we already know about the object
-            obj = self.lookup_localid(block["ID"])
-            if obj is not None:
-                self._update_existing_object(obj, {
-                    "UpdateFlags": update_flags,
-                }, UpdateType.OBJECT_UPDATE)
-                continue
-
-            # Check if the object is in a viewer's VOCache
-            cached_obj_data = self.object_cache.lookup_object_data(block["ID"], block["CRC"])
-            if cached_obj_data is not None:
-                cached_obj = normalize_object_update_compressed_data(cached_obj_data)
-                cached_obj["UpdateFlags"] = update_flags
-                self._track_object(Object(**cached_obj))
-                continue
-
-            # Don't know about it and wasn't cached.
-            self.missing_locals.add(block["ID"])
-        packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
-
-    def _handle_object_update_compressed(self, packet: ProxiedMessage):
-        seen_locals = []
-        for block in packet['ObjectData']:
-            object_data = normalize_object_update_compressed(block)
-            seen_locals.append(object_data["LocalID"])
-            obj = self.lookup_localid(object_data["LocalID"])
-            if obj:
-                self._update_existing_object(obj, object_data, UpdateType.OBJECT_UPDATE)
-            else:
-                obj = Object(**object_data)
-                self._track_object(obj)
-        packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
-
-    def _handle_object_properties_generic(self, packet: ProxiedMessage):
-        seen_locals = []
-        for block in packet["ObjectData"]:
-            object_properties = dict(block.items())
-            if packet.name == "ObjectProperties":
-                object_properties["TextureID"] = block.deserialize_var("TextureID")
-
-            obj = self.lookup_fullid(block["ObjectID"])
-            if obj:
-                seen_locals.append(obj.LocalID)
-                self._update_existing_object(obj, object_properties, UpdateType.PROPERTIES)
-            else:
-                LOG.debug(f"Received {packet.name} for unknown {block['ObjectID']}")
-        packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
-
-    def _handle_kill_object(self, packet: ProxiedMessage):
-        seen_locals = []
-        for block in packet["ObjectData"]:
-            self._kill_object_by_local_id(block["ID"])
-            seen_locals.append(block["ID"])
-        packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
+    def _cancel_futures(self, local_id: int):
+        # Object was killed, so need to kill any pending futures.
+        for fut_key, futs in self._object_futures.items():
+            if fut_key[0] == local_id:
+                for fut in futs:
+                    fut.cancel()
+                break
 
     def _kill_object_by_local_id(self, local_id: int):
         obj = self.lookup_localid(local_id)
         self.missing_locals -= {local_id}
         child_ids: Sequence[int]
+
+        self._cancel_futures(local_id)
         if obj:
             AddonManager.handle_object_killed(self._region.session(), self._region, obj)
             child_ids = obj.ChildIDs
@@ -444,7 +360,98 @@ class ObjectManager:
 
         # Have to do this last, since untracking will clear child IDs
         if obj:
-            self._untrack_object(obj)
+            self.untrack_object(obj)
+            self._world_objects.handle_object_gone(obj)
+
+    def handle_object_update(self, packet: ProxiedMessage):
+        seen_locals = []
+        for block in packet['ObjectData']:
+            object_data = normalize_object_update(block, self._region.handle)
+
+            seen_locals.append(object_data["LocalID"])
+            obj = self._world_objects.lookup_fullid(object_data["FullID"])
+            if obj:
+                self._update_existing_object(obj, object_data, UpdateType.OBJECT_UPDATE)
+            else:
+                obj = Object(**object_data)
+                self._track_new_object(obj)
+        packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
+
+    def handle_terse_object_update(self, packet: ProxiedMessage):
+        seen_locals = []
+        for block in packet['ObjectData']:
+            object_data = normalize_terse_object_update(block, self._region.handle)
+            obj = self.lookup_localid(object_data["LocalID"])
+            # Can only update existing object with this message
+            if obj:
+                # Need the Object as context because decoding state requires PCode.
+                state_deserializer = ObjectStateSerializer.deserialize
+                object_data["State"] = state_deserializer(ctx_obj=obj, val=object_data["State"])
+
+            seen_locals.append(object_data["LocalID"])
+            if obj:
+                self._update_existing_object(obj, object_data, UpdateType.OBJECT_UPDATE)
+            else:
+                self.missing_locals.add(object_data["LocalID"])
+                LOG.debug(f"Received terse update for unknown object {object_data['LocalID']}")
+
+        packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
+
+    def handle_object_update_cached(self, packet: ProxiedMessage):
+        seen_locals = []
+        for block in packet['ObjectData']:
+            seen_locals.append(block["ID"])
+            update_flags = block.deserialize_var("UpdateFlags", make_copy=False)
+
+            # Check if we already know about the object
+            obj = self.lookup_localid(block["ID"])
+            if obj is not None:
+                self._update_existing_object(obj, {
+                    "UpdateFlags": update_flags,
+                    "RegionHandle": self._region.handle,
+                }, UpdateType.OBJECT_UPDATE)
+                continue
+
+            # Check if the object is in a viewer's VOCache
+            cached_obj_data = self.object_cache.lookup_object_data(block["ID"], block["CRC"])
+            if cached_obj_data is not None:
+                cached_obj = normalize_object_update_compressed_data(cached_obj_data)
+                cached_obj["UpdateFlags"] = update_flags
+                cached_obj["RegionHandle"] = self._region.handle
+                self._track_new_object(Object(**cached_obj))
+                continue
+
+            # Don't know about it and wasn't cached.
+            self.missing_locals.add(block["ID"])
+        packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
+
+    def handle_object_update_compressed(self, packet: ProxiedMessage):
+        seen_locals = []
+        for block in packet['ObjectData']:
+            object_data = normalize_object_update_compressed(block, self._region.handle)
+            seen_locals.append(object_data["LocalID"])
+            obj = self._world_objects.lookup_fullid(object_data["FullID"])
+            if obj:
+                self._update_existing_object(obj, object_data, UpdateType.OBJECT_UPDATE)
+            else:
+                obj = Object(**object_data)
+                self._track_new_object(obj)
+        packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
+
+    def _handle_object_properties_generic(self, packet: ProxiedMessage):
+        seen_locals = []
+        for block in packet["ObjectData"]:
+            object_properties = dict(block.items())
+            if packet.name == "ObjectProperties":
+                object_properties["TextureID"] = block.deserialize_var("TextureID")
+
+            obj = self.lookup_fullid(block["ObjectID"])
+            if obj:
+                seen_locals.append(obj.LocalID)
+                self._update_existing_object(obj, object_properties, UpdateType.PROPERTIES)
+            else:
+                LOG.debug(f"Received {packet.name} for unknown {block['ObjectID']}")
+        packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
     def _handle_get_object_cost(self, flow: HippoHTTPFlow):
         parsed = llsd.parse_xml(flow.response.content)
@@ -456,9 +463,21 @@ class ObjectManager:
                 LOG.debug(f"Received ObjectCost for unknown {object_id}")
                 continue
             obj.ObjectCosts.update(object_costs)
-            self._run_object_update_hooks(obj, {"ObjectCosts"}, UpdateType.COSTS)
+            self.run_object_update_hooks(obj, {"ObjectCosts"}, UpdateType.COSTS)
+
+    def _handle_kill_object(self, packet: ProxiedMessage):
+        seen_locals = []
+        for block in packet["ObjectData"]:
+            self._kill_object_by_local_id(block["ID"])
+            seen_locals.append(block["ID"])
+        packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
     def _handle_coarse_location_update(self, packet: ProxiedMessage):
+        # TODO: This could lead to weird situations when an avatar crosses a
+        #  region border. Might temporarily still have a CoarseLocationUpdate containing
+        #  the avatar in the old region, making the avatar appear to be in both regions.
+        #  figure out best way to deal with that. Store CoarseLocations by region handle
+        #  and always use the newest one containing a particular avatar ID?
         self._coarse_locations.clear()
 
         coarse_locations: typing.Dict[UUID, Vector3] = {}
@@ -476,18 +495,13 @@ class ObjectManager:
 
         self._coarse_locations.update(coarse_locations)
 
-    def _run_object_update_hooks(self, obj: Object, updated_props: Set[str], update_type: UpdateType):
+    def run_object_update_hooks(self, obj: Object, updated_props: Set[str], update_type: UpdateType):
         if obj.PCode == PCode.AVATAR and "NameValue" in updated_props:
             if obj.NameValue:
                 self.name_cache.update(obj.FullID, obj.NameValue.to_dict())
-        if update_type == UpdateType.OBJECT_UPDATE:
-            update_futures = self._update_futures[obj.LocalID]
-            for fut in update_futures[:]:
-                fut.set_result(obj)
-        elif update_type == UpdateType.PROPERTIES:
-            property_futures = self._property_futures[obj.LocalID]
-            for fut in property_futures[:]:
-                fut.set_result(obj)
+        futures = self._object_futures.get((obj.LocalID, update_type), [])
+        for fut in futures[:]:
+            fut.set_result(obj)
         AddonManager.handle_object_updated(self._region.session(), self._region, obj, updated_props)
 
     def load_cache(self):
@@ -501,21 +515,18 @@ class ObjectManager:
         self.object_cache = RegionViewerObjectCacheChain.for_region(handle, self._region.cache_id)
 
     def clear(self):
+        for obj in self._localid_lookup.values():
+            self._world_objects.handle_object_gone(obj)
         self._localid_lookup.clear()
         self._fullid_lookup.clear()
         self._coarse_locations.clear()
         self._orphan_manager.clear()
         self.missing_locals.clear()
-        self._clear_futures(self._update_futures)
-        self._clear_futures(self._property_futures)
+        for fut in tuple(itertools.chain(*self._object_futures.values())):
+            fut.cancel()
+        self._object_futures.clear()
         self.object_cache = RegionViewerObjectCacheChain([])
         self.cache_loaded = False
-
-    @staticmethod
-    def _clear_futures(future_dict: dict):
-        for future in itertools.chain(*future_dict.values()):
-            future.cancel()
-        future_dict.clear()
 
     def request_object_properties(self, objects: typing.Union[OBJECT_OR_LOCAL, typing.Sequence[OBJECT_OR_LOCAL]])\
             -> List[asyncio.Future[Object]]:
@@ -547,8 +558,10 @@ class ObjectManager:
             fut = asyncio.Future()
             if local_id in unselected_ids:
                 # Need to wait until we get our reply
-                local_futs = self._property_futures[local_id]
+                fut_key = (local_id, UpdateType.PROPERTIES)
+                local_futs = self._object_futures.get(fut_key, [])
                 local_futs.append(fut)
+                self._object_futures[fut_key] = local_futs
                 fut.add_done_callback(local_futs.remove)
             else:
                 # This was selected so we should already have up to date info
@@ -556,10 +569,10 @@ class ObjectManager:
             futures.append(fut)
         return futures
 
-    def request_missing_objects(self) -> List[Awaitable[Object]]:
+    def request_missing_objects(self) -> List[asyncio.Future[Object]]:
         return self.request_objects(self.missing_locals)
 
-    def request_objects(self, local_ids) -> List[Awaitable[Object]]:
+    def request_objects(self, local_ids) -> List[asyncio.Future[Object]]:
         """
         Request object local IDs, returning a list of awaitable handles for the objects
 
@@ -583,8 +596,110 @@ class ObjectManager:
         futures = []
         for local_id in local_ids:
             fut = asyncio.Future()
-            local_futs = self._update_futures[local_id]
+            fut_key = (local_id, UpdateType.OBJECT_UPDATE)
+            local_futs = self._object_futures.get(fut_key, [])
             local_futs.append(fut)
+            self._object_futures[fut_key] = local_futs
             fut.add_done_callback(local_futs.remove)
             futures.append(fut)
         return futures
+
+
+class WorldObjectManager:
+    """Manages Objects for a session's whole world"""
+    def __init__(self, session: Session):
+        self._session: Session = proxify(session)
+        self._fullid_lookup: Dict[UUID, Object] = {}
+        message_handler = self._session.message_handler
+        message_handler.subscribe("ObjectUpdate", self._handle_object_update)
+        message_handler.subscribe("ImprovedTerseObjectUpdate",
+                                  self._handle_terse_object_update)
+        message_handler.subscribe("ObjectUpdateCompressed",
+                                  self._handle_object_update_compressed)
+        message_handler.subscribe("ObjectUpdateCached",
+                                  self._handle_object_update_cached)
+
+    def _wrap_region_update_handler(self, handler: Callable, message: ProxiedMessage):
+        """
+        Dispatch an ObjectUpdate to a region's handler based on RegionHandle
+
+        Indra doesn't care what region actually sent the message, just what
+        region handle is in the message, so we need a global message handler
+        plus dispatch.
+        """
+        region = self._session.region_by_handle(message["RegionData"]["RegionHandle"])
+        if not region:
+            return
+        return handler(region.objects, message)
+
+    def _handle_object_update(self, message: ProxiedMessage):
+        self._wrap_region_update_handler(ObjectManager.handle_object_update, message)
+
+    def _handle_terse_object_update(self, message: ProxiedMessage):
+        self._wrap_region_update_handler(ObjectManager.handle_terse_object_update, message)
+
+    def _handle_object_update_compressed(self, message: ProxiedMessage):
+        self._wrap_region_update_handler(ObjectManager.handle_object_update_compressed, message)
+
+    def _handle_object_update_cached(self, message: ProxiedMessage):
+        self._wrap_region_update_handler(ObjectManager.handle_object_update_cached, message)
+
+    def handle_new_object(self, obj: Object):
+        """Called by a region's ObjectManager when a new Object is tracked"""
+        self._fullid_lookup[obj.FullID] = obj
+
+    def handle_object_gone(self, obj: Object):
+        """Called by a region's ObjectManager on KillObject or region going away"""
+        self._fullid_lookup.pop(obj.FullID, None)
+
+    def lookup_fullid(self, full_id: UUID) -> Optional[Object]:
+        return self._fullid_lookup.get(full_id, None)
+
+    def __len__(self):
+        return len(self._fullid_lookup)
+
+    @property
+    def all_objects(self) -> Iterable[Object]:
+        return self._fullid_lookup.values()
+
+    @property
+    def all_avatars(self) -> Iterable[Avatar]:
+        return itertools.chain(*(r.objects.all_avatars for r in self._session.regions))
+
+    def request_missing_objects(self) -> List[asyncio.Future[Object]]:
+        futs = []
+        for region in self._session.regions:
+            futs.extend(region.objects.request_missing_objects())
+        return futs
+
+    def request_object_properties(self, objects: typing.Union[Object, typing.Sequence[Object]]) \
+            -> List[asyncio.Future[Object]]:
+        # Doesn't accept local ID unlike ObjectManager because they're ambiguous here.
+        if isinstance(objects, Object):
+            objects = (objects,)
+        if not objects:
+            return []
+
+        # Has to be sent to the region they belong to, so split the objects out by region handle.
+        objs_by_region = collections.defaultdict(list)
+        for obj in objects:
+            objs_by_region[obj.RegionHandle].append(obj)
+
+        futs = []
+        for region_handle, region_objs in objs_by_region.items():
+            region = self._session.region_by_handle(region_handle)
+            futs.extend(region.objects.request_object_properties(region_objs))
+        return futs
+
+    async def ensure_ancestors_loaded(self, obj: Object):
+        """
+        Ensure that the entire chain of parents above this object is loaded
+
+        Use this to make sure the object you're dealing with isn't orphaned and
+        its RegionPosition can be determined.
+        """
+        region = self._session.region_by_handle(obj.RegionHandle)
+        while obj.ParentID:
+            if obj.Parent is None:
+                await asyncio.wait_for(region.objects.request_objects(obj.ParentID)[0], 1.0)
+            obj = obj.Parent
