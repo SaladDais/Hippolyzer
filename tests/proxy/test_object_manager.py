@@ -444,8 +444,8 @@ class ObjectManagerTests(ObjectManagerTestMixin, unittest.TestCase):
 
 class AsyncObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioTestCase):
     async def test_request_objects(self):
-        # request three objects, one of which won't receive an ObjectUpdate
-        futures = self.object_manager.request_objects((1234, 1235, 1236))
+        # request four objects, two of which won't receive an ObjectUpdate
+        futures = self.object_manager.request_objects((1234, 1235, 1236, 1237))
         self._create_object(1234)
         self._create_object(1235)
         done, pending = await asyncio.wait(futures, timeout=0.0001)
@@ -453,11 +453,18 @@ class AsyncObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioTe
         # wait() returns unordered results, so use a set.
         self.assertEqual(set(o.LocalID for o in objects), {1234, 1235})
         pending = list(pending)
-        self.assertEqual(len(pending), 1)
+        self.assertEqual(2, len(pending))
         # The other futures being resolved should have removed them from the dict
         pending_futures = sum(len(x) for x in self.object_manager._update_futures.values())
-        self.assertEqual(pending_futures, 1)
+        self.assertEqual(2, pending_futures)
+        pending_1, pending_2 = pending
 
-        self.assertFalse(pending[0].cancelled())
+        # Timing out should cancel
+        with self.assertRaises(asyncio.TimeoutError):
+            await asyncio.wait_for(pending_1, 0.00001)
+        self.assertTrue(pending_1.cancelled())
+
+        # Object manager being cleared due to region death should cancel
+        self.assertFalse(pending_2.cancelled())
         self.object_manager.clear()
-        self.assertTrue(pending[0].cancelled())
+        self.assertTrue(pending_2.cancelled())

@@ -484,12 +484,10 @@ class ObjectManager:
             update_futures = self._update_futures[obj.LocalID]
             for fut in update_futures[:]:
                 fut.set_result(obj)
-                update_futures.remove(fut)
         elif update_type == UpdateType.PROPERTIES:
             property_futures = self._property_futures[obj.LocalID]
             for fut in property_futures[:]:
                 fut.set_result(obj)
-                property_futures.remove(fut)
         AddonManager.handle_object_updated(self._region.session(), self._region, obj, updated_props)
 
     def load_cache(self):
@@ -549,7 +547,9 @@ class ObjectManager:
             fut = asyncio.Future()
             if local_id in unselected_ids:
                 # Need to wait until we get our reply
-                self._property_futures[local_id].append(fut)
+                local_futs = self._property_futures[local_id]
+                local_futs.append(fut)
+                fut.add_done_callback(local_futs.remove)
             else:
                 # This was selected so we should already have up to date info
                 fut.set_result(self.lookup_localid(local_id))
@@ -583,6 +583,8 @@ class ObjectManager:
         futures = []
         for local_id in local_ids:
             fut = asyncio.Future()
-            self._update_futures[local_id].append(fut)
+            local_futs = self._update_futures[local_id]
+            local_futs.append(fut)
+            fut.add_done_callback(local_futs.remove)
             futures.append(fut)
         return futures
