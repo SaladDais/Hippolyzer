@@ -53,6 +53,7 @@ class ProxiedRegion:
         self.circuit: Optional[ProxiedCircuit] = None
         self.circuit_addr = circuit_addr
         self._caps = CapsMultiDict()
+        self._caps_url_lookup: Dict[str, Tuple[CapType, str]] = {}
         if seed_cap:
             self._caps["Seed"] = (CapType.NORMAL, seed_cap)
         self.session: Optional[Callable[[], Session]] = weakref.ref(session)
@@ -66,6 +67,7 @@ class ProxiedRegion:
         if session:
             name_cache: NameCache = session.session_manager.name_cache
             self.message_handler.subscribe("UUIDNameReply", name_cache.handle_uuid_name_reply)
+        self._recalc_caps()
 
     @property
     def name(self):
@@ -97,6 +99,13 @@ class ProxiedRegion:
         for cap_name, cap_url in caps.items():
             if isinstance(cap_url, str) and cap_url.startswith('http'):
                 self._caps.add(cap_name, (CapType.NORMAL, cap_url))
+                self._recalc_caps()
+
+    def _recalc_caps(self):
+        self._caps_url_lookup.clear()
+        for name, cap_info in self._caps.items():
+            cap_type, cap_url = cap_info
+            self._caps_url_lookup[cap_url] = (cap_type, name)
 
     def register_wrapper_cap(self, name: str):
         """
@@ -114,6 +123,7 @@ class ProxiedRegion:
         parsed[0] = "http"
         wrapper_url = urllib.parse.urlunsplit(parsed)
         self._caps.add(name + "ProxyWrapper", (CapType.WRAPPER, wrapper_url))
+        self._recalc_caps()
         return wrapper_url
 
     def register_proxy_cap(self, name: str):
@@ -122,21 +132,24 @@ class ProxiedRegion:
         """
         cap_url = f"https://caps.hippo-proxy.localhost/cap/{uuid.uuid4()!s}"
         self._caps.add(name, (CapType.PROXY_ONLY, cap_url))
+        self._recalc_caps()
         return cap_url
 
     def register_temporary_cap(self, name: str, cap_url: str):
         """Register a Cap that only has meaning the first time it's used"""
         self._caps.add(name, (CapType.TEMPORARY, cap_url))
+        self._recalc_caps()
 
     def resolve_cap(self, url: str, consume=True) -> Optional[Tuple[str, str, CapType]]:
-        for name, cap_info in self._caps.items():
-            cap_type, cap_url = cap_info
+        for cap_url in self._caps_url_lookup.keys():
             if url.startswith(cap_url):
+                cap_type, name = self._caps_url_lookup[cap_url]
                 if cap_type == CapType.TEMPORARY and consume:
                     # Resolving a temporary cap pops it out of the dict
                     temporary_caps = self._caps.popall(name)
-                    temporary_caps.remove(cap_info)
+                    temporary_caps.remove((cap_type, cap_url))
                     self._caps.extend((name, x) for x in temporary_caps)
+                    self._recalc_caps()
                 return name, cap_url, cap_type
         return None
 
