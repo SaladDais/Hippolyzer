@@ -67,4 +67,4 @@ def iter_viewer_cache_dirs():
             yield viewer_dir
         # but it might also be in a subfolder
         if has_cache_file(viewer_dir / "cache"):
-            yield viewer_dir
+            yield viewer_dir / "cache"
