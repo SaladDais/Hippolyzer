@@ -208,16 +208,34 @@ class LLUDPIntegrationTests(BaseProxyTest):
         self.assertEqual(len(entries), 1)
         self.assertEqual(entries[0].name, "ObjectUpdateCompressed")
 
-    async def test_logging_taken_message(self):
+    async def test_filtering_logged_messages(self):
         message_logger = SimpleMessageLogger()
         self.session_manager.message_logger = message_logger
         self._setup_default_circuit()
-        obj_update = self.serializer.serialize(ProxiedMessage(
+        obj_update = self._make_objectupdate_compressed(1234)
+        self.protocol.datagram_received(obj_update, self.region_addr)
+        msg = self.serializer.serialize(ProxiedMessage(
             "UndoLand",
             Block("AgentData", AgentID=UUID(), SessionID=UUID()),
             direction=Direction.IN,
         ))
-        self.protocol.datagram_received(obj_update, self.region_addr)
+        self.protocol.datagram_received(msg, self.region_addr)
+        await self._wait_drained()
+        message_logger.set_filter("ObjectUpdateCompressed")
+        entries = message_logger.entries
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0].name, "ObjectUpdateCompressed")
+
+    async def test_logging_taken_message(self):
+        message_logger = SimpleMessageLogger()
+        self.session_manager.message_logger = message_logger
+        self._setup_default_circuit()
+        msg = self.serializer.serialize(ProxiedMessage(
+            "UndoLand",
+            Block("AgentData", AgentID=UUID(), SessionID=UUID()),
+            direction=Direction.IN,
+        ))
+        self.protocol.datagram_received(msg, self.region_addr)
         await self._wait_drained()
         entries = message_logger.entries
         self.assertEqual(len(entries), 1)
