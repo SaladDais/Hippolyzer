@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import random
 import struct
 import unittest
@@ -9,7 +10,9 @@ import lazy_object_proxy
 
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.objects import Object
+import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.message import ProxiedMessage
@@ -50,6 +53,7 @@ class LLUDPIntegrationTests(BaseProxyTest):
     def setUp(self) -> None:
         super().setUp()
         self.addon = MockAddon()
+        self.deserializer = UDPMessageDeserializer(message_cls=ProxiedMessage)
         AddonManager.init([], self.session_manager, [self.addon])
 
     def _make_objectupdate_compressed(self, localid: Optional[int] = None, handle: Optional[int] = 123):
@@ -249,3 +253,27 @@ class LLUDPIntegrationTests(BaseProxyTest):
         fut = self.session.message_handler.wait_for('ObjectUpdateCompressed')
         self.protocol.datagram_received(obj_update, self.region_addr)
         self.assertEqual("ObjectUpdateCompressed", (await fut).name)
+
+    def test_roundtrip_objectupdatecompressed(self):
+        msg_bytes = self._make_objectupdate_compressed()
+        message: ProxiedMessage = self.deserializer.deserialize(msg_bytes)
+        for block in itertools.chain(*message.blocks.values()):
+            for var_name in block.vars.keys():
+                orig_val = block[var_name]
+                try:
+                    serializer = block.get_serializer(var_name)
+                except KeyError:
+                    # Don't have a serializer, onto the next field
+                    continue
+                deser = serializer.deserialize(block, orig_val)
+                # For now we consider returning UNSERIALIZABLE to be acceptable.
+                # We should probably consider raising instead of returning that.
+                if deser is se.UNSERIALIZABLE:
+                    continue
+
+                new_val = serializer.serialize(block, deser)
+                if orig_val != new_val:
+                    raise AssertionError(f"{block.name}.{var_name} didn't reserialize correctly,"
+                                         f"{orig_val!r} != {new_val!r}")
+        new_msg_bytes = self.serializer.serialize(message)
+        self.assertEqual(new_msg_bytes, msg_bytes)
