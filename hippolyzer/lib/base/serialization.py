@@ -1491,6 +1491,9 @@ class DataclassAdapter(Adapter):
         self._data_cls = data_cls
 
     def encode(self, val: Any, ctx: Optional[ParseContext]) -> Any:
+        if isinstance(val, lazy_object_proxy.Proxy):
+            # Have to unwrap these or the dataclass check will fail
+            val = val.__wrapped__
         if dataclasses.is_dataclass(val):
             val = dataclasses.asdict(val)
         return val
