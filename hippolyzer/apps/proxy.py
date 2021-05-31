@@ -112,6 +112,7 @@ def start_proxy(extra_addons: Optional[list] = None, extra_addon_paths: Optional
 
     session_manager = session_manager or SessionManager()
     flow_context = session_manager.flow_context
+    session_manager.name_cache.load_viewer_caches()
 
     # TODO: argparse
     if len(sys.argv) == 3:

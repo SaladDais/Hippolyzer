@@ -24,9 +24,9 @@ class GreetingAddon(BaseAddon):
             dist = Vector3.dist(our_avatar.GlobalPosition, other_avatar.GlobalPosition)
             if dist >= 19.0:
                 continue
-            if other_avatar.Name is None:
+            if other_avatar.PreferredName is None:
                 continue
-            send_chat(f"Greetings, {other_avatar.Name}!")
+            send_chat(f"Greetings, {other_avatar.PreferredName}!")
 
 
 addons = [GreetingAddon()]

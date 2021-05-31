@@ -25,7 +25,7 @@ from hippolyzer.lib.base.objects import (
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.message import ProxiedMessage
-from hippolyzer.lib.proxy.namecache import NameCache
+from hippolyzer.lib.proxy.namecache import NameCache, NameCacheEntry
 from hippolyzer.lib.proxy.templates import PCode, ObjectStateSerializer
 from hippolyzer.lib.proxy.vocache import RegionViewerObjectCacheChain
 
@@ -91,7 +91,7 @@ class Avatar:
             region_handle: int,
             obj: Optional["Object"] = None,
             coarse_location: Optional[Vector3] = None,
-            resolved_name: Optional[str] = None,
+            resolved_name: Optional[NameCacheEntry] = None,
     ):
         self.FullID: UUID = full_id
         self.Object: Optional["Object"] = obj
@@ -119,10 +119,15 @@ class Avatar:
 
     @property
     def Name(self) -> Optional[str]:
-        if self.Object:
-            nv: Dict[str, str] = self.Object.NameValue.to_dict()
-            return f"{nv['FirstName']} {nv['LastName']}"
-        return self._resolved_name
+        if not self._resolved_name:
+            return None
+        return str(self._resolved_name)
+
+    @property
+    def PreferredName(self) -> Optional[str]:
+        if not self._resolved_name:
+            return None
+        return self._resolved_name.preferred_name
 
 
 class ObjectManager:
@@ -143,9 +148,7 @@ class ObjectManager:
         self.missing_locals = set()
         self._orphan_manager = OrphanManager()
         self._world_objects: WorldObjectManager = region.session().objects
-        name_cache = region.session().session_manager.name_cache
-        # Use a local namecache if we don't have a session manager
-        self.name_cache: Optional[NameCache] = name_cache or NameCache()
+        self.name_cache: NameCache = region.session().session_manager.name_cache
 
         message_handler = region.message_handler
         message_handler.subscribe("CoarseLocationUpdate",
@@ -176,15 +179,12 @@ class ObjectManager:
             av_obj = av_objects.get(av_id)
             coarse_location = self._coarse_locations.get(av_id)
 
-            resolved_name = None
-            if namecache_entry := self.name_cache.lookup(av_id):
-                resolved_name = f"{namecache_entry.FirstName} {namecache_entry.LastName}"
             avatars.append(Avatar(
                 full_id=av_id,
                 region_handle=self._region.handle,
                 coarse_location=coarse_location,
                 obj=av_obj,
-                resolved_name=resolved_name,
+                resolved_name=self.name_cache.lookup(av_id),
             ))
         return avatars
 

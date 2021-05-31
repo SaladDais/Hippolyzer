@@ -171,6 +171,10 @@ class SessionManager:
 
     def create_session(self, login_data) -> Session:
         session = Session.from_login_data(login_data, self)
+        self.name_cache.create_subscriptions(
+            session.message_handler,
+            session.http_message_handler,
+        )
         self.sessions.append(session)
         logging.info("Created %r" % session)
         return session
