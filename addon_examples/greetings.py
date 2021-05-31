@@ -13,13 +13,15 @@ class GreetingAddon(BaseAddon):
         if not our_avatar:
             show_message("Don't have an agent object?")
 
-        other_avatars = [o for o in region.objects.all_avatars if o.FullID != our_avatar.FullID]
+        # Look this up in the session object store since we may be next
+        # to a region border.
+        other_avatars = [o for o in session.objects.all_avatars if o.FullID != our_avatar.FullID]
 
         if not other_avatars:
             show_message("No other avatars?")
 
         for other_avatar in other_avatars:
-            dist = Vector3.dist(our_avatar.RegionPosition, other_avatar.RegionPosition)
+            dist = Vector3.dist(our_avatar.GlobalPosition, other_avatar.GlobalPosition)
             if dist >= 19.0:
                 continue
             if other_avatar.Name is None:
