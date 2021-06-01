@@ -32,19 +32,7 @@ from hippolyzer.lib.base.datatypes import Vector3, Quaternion, Vector4, UUID, Ta
 from hippolyzer.lib.base.message.message import Block
 from hippolyzer.lib.base.namevalue import NameValueCollection
 import hippolyzer.lib.base.serialization as se
-from hippolyzer.lib.base.templates import (
-    PCode,
-    AgentState,
-    CompressedFlags,
-    AttachmentStateAdapter,
-    PSBLOCK_TEMPLATE,
-    Color4,
-    EXTRA_PARAM_COLLECTION,
-    SoundFlags,
-    NAMEVALUES_TERMINATED_TEMPLATE,
-    DATA_PACKER_TE_TEMPLATE,
-    TA_TEMPLATE,
-)
+import hippolyzer.lib.base.templates as tmpls
 
 
 class Object(recordclass.datatuple):  # type: ignore
@@ -83,15 +71,15 @@ class Object(recordclass.datatuple):  # type: ignore
     ProfileBegin: Optional[int] = None
     ProfileEnd: Optional[int] = None
     ProfileHollow: Optional[int] = None
-    TextureEntry: Optional[Any] = None
-    TextureAnim: Optional[Any] = None
+    TextureEntry: Optional[tmpls.TextureEntry] = None
+    TextureAnim: Optional[tmpls.TextureAnim] = None
     NameValue: Optional[Any] = None
     Data: Optional[Any] = None
     Text: Optional[str] = None
     TextColor: Optional[bytes] = None
-    MediaURL: Optional[Any] = None
-    PSBlock: Optional[Any] = None
-    ExtraParams: Optional[Any] = None
+    MediaURL: Optional[str] = None
+    PSBlock: Optional[Dict] = None
+    ExtraParams: Optional[Dict[tmpls.ExtraParamType, Any]] = None
     Sound: Optional[UUID] = None
     OwnerID: Optional[UUID] = None
     SoundGain: Optional[float] = None
@@ -140,7 +128,7 @@ class Object(recordclass.datatuple):  # type: ignore
     Description: Optional[str] = None
     TouchName: Optional[str] = None
     SitName: Optional[str] = None
-    TextureID: Optional[Any] = None
+    TextureID: Optional[List[UUID]] = None
     RegionHandle: Optional[int] = None
 
     def __init__(self, **_kwargs):
@@ -335,11 +323,11 @@ class FastObjectUpdateCompressedDataDeserializer:
     PARENT_ID_STRUCT = struct.Struct("<I")
     TREE_SPECIES_STRUCT = struct.Struct("<B")
     DATAPACKER_LEN = struct.Struct("<I")
-    COLOR_ADAPTER = Color4()
-    PARTICLES_OLD = se.TypedBytesFixed(86, PSBLOCK_TEMPLATE)
+    COLOR_ADAPTER = tmpls.Color4()
+    PARTICLES_OLD = se.TypedBytesFixed(86, tmpls.PSBLOCK_TEMPLATE)
     SOUND_STRUCT = struct.Struct("<16sfBf")
     PRIM_PARAMS_STRUCT = struct.Struct("<BBHHBBBBbbbbbBbHHH")
-    ATTACHMENT_STATE_ADAPTER = AttachmentStateAdapter(None)
+    ATTACHMENT_STATE_ADAPTER = tmpls.AttachmentStateAdapter(None)
 
     @classmethod
     def read(cls, data: bytes) -> Dict:
@@ -350,57 +338,57 @@ class FastObjectUpdateCompressedDataDeserializer:
             flags, owner_id = foo
         scale = Vector3(scalex, scaley, scalez)
         full_id = UUID(bytes=full_id)
-        pcode = PCode(pcode)
-        if pcode == PCode.AVATAR:
-            state = AgentState(state)
-        elif pcode == PCode.PRIMITIVE:
+        pcode = tmpls.PCode(pcode)
+        if pcode == tmpls.PCode.AVATAR:
+            state = tmpls.AgentState(state)
+        elif pcode == tmpls.PCode.PRIMITIVE:
             state = cls.ATTACHMENT_STATE_ADAPTER.decode(state, None)
         pos = Vector3(posx, posy, posz)
         rot = Quaternion(rotx, roty, rotz)
         owner_id = UUID(bytes=owner_id)
         ang_vel = None
-        if flags & CompressedFlags.ANGULAR_VELOCITY.value:
+        if flags & tmpls.CompressedFlags.ANGULAR_VELOCITY.value:
             ang_vel = Vector3(*reader.read_struct(cls.ANGULAR_VELOCITY_STRUCT))
         parent_id = None
-        if flags & CompressedFlags.PARENT_ID.value:
+        if flags & tmpls.CompressedFlags.PARENT_ID.value:
             parent_id = reader.read_struct(cls.PARENT_ID_STRUCT)[0]
         tree_species = None
-        if flags & CompressedFlags.TREE.value:
+        if flags & tmpls.CompressedFlags.TREE.value:
             tree_species = reader.read_struct(cls.TREE_SPECIES_STRUCT)[0]
         scratchpad = None
-        if flags & CompressedFlags.SCRATCHPAD.value:
+        if flags & tmpls.CompressedFlags.SCRATCHPAD.value:
             scratchpad = reader.read_bytes(reader.read_struct(cls.DATAPACKER_LEN)[0])
         text = None
         text_color = None
-        if flags & CompressedFlags.TEXT.value:
+        if flags & tmpls.CompressedFlags.TEXT.value:
             text = reader.read_bytes_null_term().decode("utf8")
             text_color = cls.COLOR_ADAPTER.decode(reader.read_bytes(4), ctx=None)
         media_url = None
-        if flags & CompressedFlags.MEDIA_URL.value:
+        if flags & tmpls.CompressedFlags.MEDIA_URL.value:
             media_url = reader.read_bytes_null_term().decode("utf8")
         psblock = None
-        if flags & CompressedFlags.PARTICLES.value:
+        if flags & tmpls.CompressedFlags.PARTICLES.value:
             psblock = reader.read(cls.PARTICLES_OLD)
-        extra_params = reader.read(EXTRA_PARAM_COLLECTION)
+        extra_params = reader.read(tmpls.EXTRA_PARAM_COLLECTION)
         sound, sound_gain, sound_flags, sound_radius = None, None, None, None
-        if flags & CompressedFlags.SOUND.value:
+        if flags & tmpls.CompressedFlags.SOUND.value:
             sound, sound_gain, sound_flags, sound_radius = reader.read_struct(cls.SOUND_STRUCT)
             sound = UUID(bytes=sound)
-            sound_flags = SoundFlags(sound_flags)
+            sound_flags = tmpls.SoundFlags(sound_flags)
         name_value = None
-        if flags & CompressedFlags.NAME_VALUES.value:
-            name_value = reader.read(NAMEVALUES_TERMINATED_TEMPLATE)
+        if flags & tmpls.CompressedFlags.NAME_VALUES.value:
+            name_value = reader.read(tmpls.NAMEVALUES_TERMINATED_TEMPLATE)
         path_curve, profile_curve, path_begin, path_end, path_scale_x, path_scale_y, \
             path_shear_x, path_shear_y, path_twist, path_twist_begin, path_radius_offset, \
             path_taper_x, path_taper_y, path_revolutions, path_skew, profile_begin, \
             profile_end, profile_hollow = reader.read_struct(cls.PRIM_PARAMS_STRUCT)
-        texture_entry = reader.read(DATA_PACKER_TE_TEMPLATE)
+        texture_entry = reader.read(tmpls.DATA_PACKER_TE_TEMPLATE)
         texture_anim = None
-        if flags & CompressedFlags.TEXTURE_ANIM.value:
-            texture_anim = reader.read(se.TypedByteArray(se.U32, TA_TEMPLATE))
+        if flags & tmpls.CompressedFlags.TEXTURE_ANIM.value:
+            texture_anim = reader.read(se.TypedByteArray(se.U32, tmpls.TA_TEMPLATE))
         psblock_new = None
-        if flags & CompressedFlags.PARTICLES_NEW.value:
-            psblock_new = reader.read(PSBLOCK_TEMPLATE)
+        if flags & tmpls.CompressedFlags.PARTICLES_NEW.value:
+            psblock_new = reader.read(tmpls.PSBLOCK_TEMPLATE)
 
         if len(reader):
             logging.warning(f"{len(reader)} bytes left at end of buffer for compressed {data!r}")
