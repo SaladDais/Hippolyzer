@@ -495,7 +495,7 @@ class EQMessageLogEntry(AbstractMessageLogEntry):
         return "EQ"
 
     def request(self, beautify=False, replacements=None):
-        return self._format_llsd(self.event["body"])
+        return f'EQ {self.event["message"]}\n\n{self._format_llsd(self.event["body"])}'
 
     @property
     def name(self):

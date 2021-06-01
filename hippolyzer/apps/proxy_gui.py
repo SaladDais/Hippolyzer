@@ -584,6 +584,8 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
 
         if re.match(r"\A\s*(in|out)\s+", msg_text, re.I):
             sender_func = self._sendLLUDPMessage
+        elif re.match(r"\A\s*(eq)\s+", msg_text, re.I):
+            sender_func = self._sendEQMessage
         elif re.match(r"\A.*http/[0-9.]+\r?\n", msg_text, re.I):
             sender_func = self._sendHTTPMessage
         else:
@@ -625,6 +627,16 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
             if self.checkOffCircuit.isChecked():
                 transport = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             region.circuit.send_message(msg, transport=transport)
+
+    def _sendEQMessage(self, session, region: Optional[ProxiedRegion], msg_text: str, replacements: dict):
+        if not session or not region:
+            raise RuntimeError("Need a valid session and region to send EQ event")
+        message_line, _, body = (x.strip() for x in msg_text.partition("\n"))
+        message_name = message_line.rsplit(" ", 1)[-1]
+        region.eq_manager.queue_event({
+            "message": message_name,
+            "body": llsd.parse_xml(body.encode("utf8")),
+        })
 
     def _sendHTTPMessage(self, session, region, msg_text: str, replacements: dict):
         env = self._buildEnv(session, region)
