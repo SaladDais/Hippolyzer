@@ -3,13 +3,13 @@ Example of how to request an Xfer
 """
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.legacy_inv import InventoryModel
+from hippolyzer.lib.base.templates import XferFilePath, AssetType, InventoryType, WearableType
 from hippolyzer.lib.base.message.message import Block
 from hippolyzer.lib.proxy.addon_utils import BaseAddon, show_message
 from hippolyzer.lib.proxy.commands import handle_command
 from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
-from hippolyzer.lib.proxy.templates import XferFilePath, AssetType, InventoryType, WearableType
 
 
 class XferExampleAddon(BaseAddon):

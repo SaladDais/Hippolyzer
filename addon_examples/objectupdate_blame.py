@@ -11,11 +11,11 @@ from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.objects import Object
+from hippolyzer.lib.base.templates import PCode
 from hippolyzer.lib.proxy.addon_utils import BaseAddon, show_message, SessionProperty
 from hippolyzer.lib.proxy.commands import handle_command
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
-from hippolyzer.lib.proxy.templates import PCode
 
 
 class ObjectUpdateBlameAddon(BaseAddon):

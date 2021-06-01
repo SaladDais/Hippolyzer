@@ -30,6 +30,7 @@ from hippolyzer.lib.base.datatypes import *
 from hippolyzer.lib.base.mesh import LLMeshSerializer, MeshAsset
 from hippolyzer.lib.base import serialization as se
 from hippolyzer.lib.base.objects import Object
+from hippolyzer.lib.base.templates import ExtraParamType
 from hippolyzer.lib.proxy import addon_ctx
 from hippolyzer.lib.proxy.addon_utils import show_message, BaseAddon, GlobalProperty, SessionProperty
 from hippolyzer.lib.proxy.commands import handle_command
@@ -38,7 +39,6 @@ from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session, SessionManager
-from hippolyzer.lib.proxy.templates import ExtraParamType
 
 
 def _modify_crc(crc_tweak, crc_val):

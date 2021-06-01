@@ -1,10 +1,10 @@
 """Block potentially bad things"""
+from hippolyzer.lib.base.templates import IMDialogType, XferFilePath
 from hippolyzer.lib.proxy.addon_utils import BaseAddon, show_message
 from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.packets import Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
-from hippolyzer.lib.proxy.templates import IMDialogType, XferFilePath
 
 SUSPICIOUS_PACKETS = {"TransferRequest", "UUIDNameRequest", "UUIDGroupNameRequest", "OpenCircuit"}
 REGULAR_IM_DIALOGS = (IMDialogType.TYPING_STOP, IMDialogType.TYPING_STOP, IMDialogType.NOTHING_SPECIAL)

@@ -14,7 +14,7 @@ import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.helpers import HippoPrettyPrinter
 from hippolyzer.lib.base.message.message import Message, Block, PacketFlags
-import hippolyzer.lib.proxy.templates as templates
+import hippolyzer.lib.base.templates as templates
 from hippolyzer.lib.base.message.msgtypes import MsgBlockType
 from hippolyzer.lib.base.message.template import MessageTemplate
 from hippolyzer.lib.proxy.packets import Direction

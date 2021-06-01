@@ -15,7 +15,7 @@ from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.message import ProxiedMessage as Message
 from hippolyzer.lib.proxy.region import ProxiedRegion
-from hippolyzer.lib.proxy.templates import PCode
+from hippolyzer.lib.base.templates import PCode
 from hippolyzer.lib.proxy.vocache import RegionViewerObjectCacheChain, RegionViewerObjectCache, ViewerObjectCacheEntry
 
 from . import BaseProxyTest

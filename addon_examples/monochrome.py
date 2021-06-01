@@ -27,12 +27,12 @@ from mitmproxy.http import HTTPFlow
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.jp2_utils import BufferedJp2k
 from hippolyzer.lib.base.multiprocessing_utils import ParentProcessWatcher
+from hippolyzer.lib.base.templates import TextureEntry
 from hippolyzer.lib.proxy.addon_utils import AssetAliasTracker, BaseAddon, GlobalProperty, AddonProcess
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session, SessionManager
-from hippolyzer.lib.proxy.templates import TextureEntry
 
 
 glymur.set_option('lib.num_threads', 4)

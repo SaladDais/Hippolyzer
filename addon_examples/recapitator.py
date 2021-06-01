@@ -19,6 +19,7 @@ from typing import *
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.templates import AssetType, WearableType
 from hippolyzer.lib.base.wearables import Wearable, VISUAL_PARAMS
 from hippolyzer.lib.proxy.addon_utils import BaseAddon, SessionProperty, AssetAliasTracker, show_message
 from hippolyzer.lib.proxy.commands import handle_command
@@ -27,7 +28,6 @@ from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.packets import Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session, SessionManager
-from hippolyzer.lib.proxy.templates import AssetType, WearableType
 
 
 # Get all VisualParam IDs that belong to head sliders

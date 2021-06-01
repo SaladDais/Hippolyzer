@@ -4,11 +4,11 @@ Do the money dance whenever someone in the sim pays you directly
 
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.templates import MoneyTransactionType, PCode, ChatType
 from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.addon_utils import send_chat, BaseAddon
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
-from hippolyzer.lib.proxy.templates import MoneyTransactionType, PCode, ChatType
 
 
 class PaydayAddon(BaseAddon):

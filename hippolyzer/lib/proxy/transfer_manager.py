@@ -11,7 +11,7 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.helpers import proxify
 from hippolyzer.lib.base.message.message import Block
 from hippolyzer.lib.proxy.message import ProxiedMessage
-from hippolyzer.lib.proxy.templates import (
+from hippolyzer.lib.base.templates import (
     TransferRequestParamsBase,
     TransferChannelType,
     TransferSourceType,

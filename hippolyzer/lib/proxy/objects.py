@@ -26,7 +26,7 @@ from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.namecache import NameCache, NameCacheEntry
-from hippolyzer.lib.proxy.templates import PCode, ObjectStateSerializer
+from hippolyzer.lib.base.templates import PCode, ObjectStateSerializer
 from hippolyzer.lib.proxy.vocache import RegionViewerObjectCacheChain
 
 if TYPE_CHECKING:

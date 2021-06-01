@@ -3,7 +3,7 @@ import unittest
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.proxy.message import ProxiedMessage
-from hippolyzer.lib.proxy.templates import TextureEntrySubfieldSerializer, TEFaceBitfield
+from hippolyzer.lib.base.templates import TextureEntrySubfieldSerializer, TEFaceBitfield
 
 EXAMPLE_TE = b"\x89UgG$\xcbC\xed\x92\x0bG\xca\xed\x15F_\x08\xe7\xb2\x98\x04\xca\x10;\x85\x94\x05Lj\x8d\xd4" \
              b"\x0b\x1f\x01B\xcb\xe6|\x1d,\xa7sc\xa6\x1a\xa2L\xb1u\x01\x00\x00\x00\x00\x00\x00\x00\x00\x80?" \

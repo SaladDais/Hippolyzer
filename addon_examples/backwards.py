@@ -4,11 +4,11 @@ All buttons make you go backwards.
 Except for backward, which makes you go left.
 """
 
+from hippolyzer.lib.base.templates import AgentControlFlags
 from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
-from hippolyzer.lib.proxy.templates import AgentControlFlags
 
 
 NUDGE_MASK = sum(x for x in AgentControlFlags if "NUDGE" in x.name)
