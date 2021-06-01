@@ -698,7 +698,7 @@ class WorldObjectManager:
             futs.extend(region.objects.request_object_properties(region_objs))
         return futs
 
-    async def ensure_ancestors_loaded(self, obj: Object):
+    async def load_ancestors(self, obj: Object, wait_time: float = 1.0):
         """
         Ensure that the entire chain of parents above this object is loaded
 
@@ -708,5 +708,5 @@ class WorldObjectManager:
         region = self._session.region_by_handle(obj.RegionHandle)
         while obj.ParentID:
             if obj.Parent is None:
-                await asyncio.wait_for(region.objects.request_objects(obj.ParentID)[0], 1.0)
+                await asyncio.wait_for(region.objects.request_objects(obj.ParentID)[0], wait_time)
             obj = obj.Parent

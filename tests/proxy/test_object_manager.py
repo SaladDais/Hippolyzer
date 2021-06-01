@@ -570,13 +570,17 @@ class SessionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncio
         await asyncio.wait_for(futs[0], timeout=0.0001)
         self.assertEqual(obj.Name, "Foobar")
 
-    async def test_ensure_ancestors_loaded(self):
+    async def test_load_ancestors(self):
         child = self._create_object(region_handle=123, parent_id=1)
         parentless = self._create_object(region_handle=123)
+        orphaned = self._create_object(region_handle=123, parent_id=9)
 
         async def _create_after():
             await asyncio.sleep(0.001)
             self._create_object(region_handle=123, local_id=child.ParentID)
         asyncio.create_task(_create_after())
-        await self.session.objects.ensure_ancestors_loaded(child)
-        await self.session.objects.ensure_ancestors_loaded(parentless)
+
+        await self.session.objects.load_ancestors(child)
+        await self.session.objects.load_ancestors(parentless)
+        with self.assertRaises(asyncio.TimeoutError):
+            await self.session.objects.load_ancestors(orphaned, wait_time=0.005)
