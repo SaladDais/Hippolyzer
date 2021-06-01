@@ -126,7 +126,9 @@ class ObjectManagerTestMixin(BaseProxyTest):
             local_id=local_id, full_id=full_id, parent_id=parent_id, pos=pos, rot=rot,
             pcode=pcode, namevalue=namevalue, region_handle=region_handle)
         self.message_handler.handle(msg)
-        return self.object_manager.lookup_fullid(msg["ObjectData"]["FullID"])
+        actual_handle = msg["RegionData"]["RegionHandle"]
+        region = self.session.region_by_handle(actual_handle)
+        return region.objects.lookup_fullid(msg["ObjectData"]["FullID"])
 
     def _create_kill_object(self, local_id) -> Message:
         return Message(
@@ -531,6 +533,32 @@ class SessionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncio
         av_list = list(self.session.objects.all_avatars)
         self.assertEqual(1, len(av_list))
         self.assertEqual(obj, av_list[0].Object)
+
+    def test_avatars_preference(self):
+        # If we have a coarselocation for an avatar in one region and
+        # an actual object in another, we should always prefer the
+        # one with the actual object.
+        av_1 = self._create_object(pcode=PCode.AVATAR, region_handle=123)
+        av_2 = self._create_object(pcode=PCode.AVATAR, region_handle=124)
+        # Coarse location shouldn't be used for either of these
+        self.session.region_by_handle(123).message_handler.handle(Message(
+            "CoarseLocationUpdate",
+            Block("AgentData", AgentID=av_2.FullID),
+            Block("Location", X=2, Y=3, Z=4),
+        ))
+        self.session.region_by_handle(124).message_handler.handle(Message(
+            "CoarseLocationUpdate",
+            Block("AgentData", AgentID=av_1.FullID),
+            Block("Location", X=2, Y=3, Z=4),
+        ))
+        av_list = list(self.session.objects.all_avatars)
+        self.assertEqual(2, len(av_list))
+        self.assertTrue(all(a.Object for a in av_list))
+
+    def test_lookup_avatar(self):
+        av_1 = self._create_object(pcode=PCode.AVATAR)
+        av_obj = self.session.objects.lookup_avatar(av_1.FullID)
+        self.assertEqual(av_1.FullID, av_obj.FullID)
 
     async def test_requesting_properties(self):
         obj = self._create_object()

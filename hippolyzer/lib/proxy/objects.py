@@ -655,6 +655,9 @@ class WorldObjectManager:
     def lookup_fullid(self, full_id: UUID) -> Optional[Object]:
         return self._fullid_lookup.get(full_id, None)
 
+    def lookup_avatar(self, full_id: UUID) -> Optional[Avatar]:
+        return {a.FullID: a for a in self.all_avatars}.get(full_id, None)
+
     def __len__(self):
         return len(self._fullid_lookup)
 
@@ -664,7 +667,11 @@ class WorldObjectManager:
 
     @property
     def all_avatars(self) -> Iterable[Avatar]:
-        return itertools.chain(*(r.objects.all_avatars for r in self._session.regions))
+        chained = itertools.chain(*(r.objects.all_avatars for r in self._session.regions))
+        # If we have two regions with an avatar and one is just a stale coarselocation, make
+        # sure we take the one with the full object.
+        vals = {a.FullID: a for a in sorted(chained, key=lambda x: x.Object is not None)}
+        return vals.values()
 
     def request_missing_objects(self) -> List[asyncio.Future[Object]]:
         futs = []
