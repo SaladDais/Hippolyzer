@@ -890,7 +890,23 @@ class TupleCoord(SerializableBase):
         return cls.COORD_CLS
 
 
-class QuantizedTupleCoord(TupleCoord):
+class EncodedTupleCoord(TupleCoord, abc.ABC):
+    _elem_specs: Sequence[SERIALIZABLE_TYPE]
+
+    def serialize(self, vals, writer: BufferWriter, ctx):
+        vals = self._vals_to_tuple(vals)
+        for spec, val in zip(self._elem_specs, vals):
+            writer.write(spec, val, ctx=ctx)
+
+    def deserialize(self, reader: Reader, ctx):
+        vals = (reader.read(spec, ctx=ctx) for spec in self._elem_specs)
+        val = self.COORD_CLS(*vals)
+        if self.need_pod(reader):
+            return tuple(val)
+        return val
+
+
+class QuantizedTupleCoord(EncodedTupleCoord):
     def __init__(self, lower=None, upper=None, component_scales=None):
         super().__init__()
         if component_scales:
@@ -906,17 +922,14 @@ class QuantizedTupleCoord(TupleCoord):
             )
         assert len(self._elem_specs) == self.NUM_ELEMS
 
-    def serialize(self, vals, writer: BufferWriter, ctx):
-        vals = self._vals_to_tuple(vals)
-        for spec, val in zip(self._elem_specs, vals):
-            writer.write(spec, val, ctx=ctx)
 
-    def deserialize(self, reader: Reader, ctx):
-        vals = (reader.read(spec, ctx=ctx) for spec in self._elem_specs)
-        val = self.COORD_CLS(*vals)
-        if self.need_pod(reader):
-            return tuple(val)
-        return val
+class FixedPointTupleCoord(EncodedTupleCoord):
+    def __init__(self, int_bits: int, frac_bits: int, signed: bool):
+        super().__init__()
+        self._elem_specs = tuple(
+            FixedPoint(self.ELEM_SPEC, int_bits, frac_bits, signed)
+            for _ in range(self.NUM_ELEMS)
+        )
 
 
 class Vector3(TupleCoord):
@@ -990,6 +1003,12 @@ class Vector4U8(QuantizedTupleCoord):
     ELEM_SPEC = U8
     NUM_ELEMS = 4
     COORD_CLS = dtypes.Vector4
+
+
+class FixedPointVector3U16(FixedPointTupleCoord):
+    ELEM_SPEC = U16
+    NUM_ELEMS = 3
+    COORD_CLS = dtypes.Vector3
 
 
 class OptionalPrefixed(SerializableBase):

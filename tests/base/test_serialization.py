@@ -615,6 +615,16 @@ class QuantizedFloatSerializationTests(BaseSerializationTest):
         self.assertEqual(-2.0, reader.read(spec))
         self.assertEqual(1.0, reader.read(spec))
 
+    def test_fixed_point_tuplecoord(self):
+        expected_bytes = b"\xff\x80\x00\x00\x7f\x7f"
+        spec = se.FixedPointVector3U16(8, 7, signed=True)
+        self.writer.write_bytes(expected_bytes)
+        vec: Vector3 = self._get_reader().read(spec)
+        self._assert_coords_fuzzy_equals(tuple(vec), (255.0, -256.0, -1.0078))
+        self.writer.clear()
+        self.writer.write(spec, vec)
+        self.assertEqual(expected_bytes, self.writer.copy_buffer())
+
 
 class NameValueSerializationTests(BaseSerializationTest):
     EXAMPLE_NAMEVALUES = b'DisplayName STRING RW DS unicodename\n' \
