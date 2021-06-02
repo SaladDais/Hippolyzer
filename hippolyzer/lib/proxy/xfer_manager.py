@@ -189,7 +189,7 @@ class XferManager:
     def upload_asset(
             self,
             asset_type: AssetType,
-            data: bytes,
+            data: Union[bytes, str],
             store_local: bool = False,
             temp_file: bool = False,
             transaction_id: Optional[UUID] = None,
@@ -198,6 +198,8 @@ class XferManager:
         """Upload an asset through the Xfer upload path"""
         if not transaction_id:
             transaction_id = UUID.random()
+        if isinstance(data, str):
+            data = data.encode("utf8")
 
         # Small amounts of data can be sent inline, decide based on size
         if upload_strategy is None:
