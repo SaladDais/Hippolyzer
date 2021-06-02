@@ -267,7 +267,7 @@ class XferManager:
     ):
         message_handler = self._message_handler
         request_msg = await message_handler.wait_for(
-            'RequestXfer', predicate=request_predicate, timeout=5000)
+            'RequestXfer', predicate=request_predicate, timeout=5.0)
         xfer.xfer_id = request_msg["XferID"]["ID"]
 
         packet_id = 0
@@ -286,5 +286,5 @@ class XferManager:
             # Don't care about the value, just want to know it was confirmed.
             if wait_for_confirm:
                 await message_handler.wait_for(
-                    "ConfirmXferPacket", predicate=xfer.is_our_message, timeout=5000)
+                    "ConfirmXferPacket", predicate=xfer.is_our_message, timeout=5.0)
             packet_id += 1
