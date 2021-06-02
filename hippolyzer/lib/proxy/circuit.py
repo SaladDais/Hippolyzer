@@ -12,13 +12,12 @@ from hippolyzer.lib.base.message.udpserializer import UDPMessageSerializer
 from hippolyzer.lib.proxy.packets import Direction, ProxiedUDPPacket
 from hippolyzer.lib.proxy.message import ProxiedMessage
 
-if TYPE_CHECKING:
-    from hippolyzer.lib.proxy.region import ProxiedRegion
-    from hippolyzer.lib.proxy.message_logger import BaseMessageLogger
+
+LLUDP_LOGGING_HOOK = Optional[Callable[[ProxiedMessage], Any]]
 
 
 class ProxiedCircuit:
-    def __init__(self, near_host, far_host, transport, region: Optional[ProxiedRegion] = None,
+    def __init__(self, near_host, far_host, transport, logging_hook: LLUDP_LOGGING_HOOK = None,
                  socks_transport: Optional[bool] = None):
         self.near_host = near_host
         self.host = far_host
@@ -29,11 +28,7 @@ class ProxiedCircuit:
         self.out_injections = InjectionTracker(0)
         self.serializer = UDPMessageSerializer()
         self.last_packet_at = dt.datetime.now()
-        self.region: Optional[ProxiedRegion] = region
-        message_logger = None
-        if region:
-            message_logger = region.session().session_manager.message_logger
-        self.message_logger: Optional[BaseMessageLogger] = message_logger
+        self.logging_hook: LLUDP_LOGGING_HOOK = logging_hook
 
     def _send_prepared_message(self, message: ProxiedMessage, direction, transport=None):
         try:
@@ -41,8 +36,8 @@ class ProxiedCircuit:
         except:
             logging.exception(f"Failed to serialize: {message.to_dict()!r}")
             raise
-        if self.message_logger and message.injected:
-            self.message_logger.log_lludp_message(self.region.session(), self.region, message)
+        if self.logging_hook and message.injected:
+            self.logging_hook(message)
         return self.send_datagram(serialized, direction, transport=transport)
 
     def send_datagram(self, data: bytes, direction: Direction, transport=None):

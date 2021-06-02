@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import datetime
+import functools
 import logging
 import multiprocessing
 import weakref
@@ -124,8 +125,15 @@ class Session:
         for region in self.regions:
             if region.circuit_addr == circuit_addr:
                 if not region.circuit or not region.circuit.is_alive:
+                    logging_hook = None
+                    if self.session_manager.message_logger:
+                        logging_hook = functools.partial(
+                            self.session_manager.message_logger.log_lludp_message,
+                            self,
+                            region,
+                        )
                     region.circuit = ProxiedCircuit(
-                        near_addr, circuit_addr, transport, region=region)
+                        near_addr, circuit_addr, transport, logging_hook=logging_hook)
                     return True
                 if region.circuit and region.circuit.is_alive:
                     # Whatever, already open
