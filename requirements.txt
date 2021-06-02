@@ -60,7 +60,7 @@ sortedcontainers==2.3.0
 toml==0.10.2
 tornado==6.1
 typing-extensions==3.7.4.3
-urllib3==1.26.4
+urllib3==1.26.5
 urwid==2.1.2
 wcwidth==0.2.5
 Werkzeug==1.0.1
