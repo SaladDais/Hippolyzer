@@ -60,7 +60,6 @@ class ProxiedRegion:
         self.message_handler: MessageHandler[ProxiedMessage] = MessageHandler()
         self.http_message_handler: MessageHandler[HippoHTTPFlow] = MessageHandler()
         self.eq_manager = EventQueueManager(self)
-        self.transfer_manager = TransferManager(self)
         self.caps_client = CapsClient(self)
         self.objects = ObjectManager(self, use_vo_cache=True)
         self._recalc_caps()
@@ -68,6 +67,15 @@ class ProxiedRegion:
     @property
     def xfer_manager(self) -> XferManager:
         return XferManager(self.message_handler, self.circuit, self.session().secure_session_id)
+
+    @property
+    def transfer_manager(self) -> TransferManager:
+        return TransferManager(
+            self.message_handler,
+            self.circuit,
+            self.session().agent_id,
+            self.session().session_id,
+        )
 
     @property
     def name(self):

@@ -8,8 +8,9 @@ import dataclasses
 from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID
-from hippolyzer.lib.base.helpers import proxify
 from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.message_handler import MessageHandler
+from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.base.templates import (
     TransferRequestParamsBase,
@@ -18,8 +19,6 @@ from hippolyzer.lib.base.templates import (
     TransferStatus,
 )
 
-if TYPE_CHECKING:
-    from hippolyzer.lib.proxy.region import ProxiedRegion
 
 _TRANSFER_MESSAGES = {"TransferInfo", "TransferPacket", "TransferAbort"}
 
@@ -71,8 +70,17 @@ class Transfer:
 
 
 class TransferManager:
-    def __init__(self, region: ProxiedRegion):
-        self._region: ProxiedRegion = proxify(region)
+    def __init__(
+            self,
+            message_handler: MessageHandler[ProxiedMessage],
+            circuit: ProxiedCircuit,
+            agent_id: Optional[UUID] = None,
+            session_id: Optional[UUID] = None,
+    ):
+        self._message_handler = message_handler
+        self._circuit = circuit
+        self._agent_id = agent_id
+        self._session_id = session_id
 
     def request(
             self, *,
@@ -86,11 +94,11 @@ class TransferManager:
         params_dict = dataclasses.asdict(params)
         # Fill in any missing AgentID or SessionID attrs if the params type has them
         if params_dict.get("AgentID", dataclasses.MISSING) is None:
-            params.AgentID = self._region.session().agent_id
+            params.AgentID = self._agent_id
         if params_dict.get("SessionID", dataclasses.MISSING) is None:
-            params.SessionID = self._region.session().id
+            params.SessionID = self._session_id
 
-        self._region.circuit.send_message(ProxiedMessage(
+        self._circuit.send_message(ProxiedMessage(
             'TransferRequest',
             Block(
                 'TransferInfo',
@@ -107,7 +115,7 @@ class TransferManager:
 
     async def _pump_transfer_replies(self, transfer: Transfer):
         # Subscribe to message related to our transfer while we're in this block
-        with self._region.message_handler.subscribe_async(
+        with self._message_handler.subscribe_async(
                 _TRANSFER_MESSAGES,
                 predicate=transfer.is_our_message,
         ) as get_msg:
