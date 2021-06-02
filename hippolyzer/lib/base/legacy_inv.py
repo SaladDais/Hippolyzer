@@ -114,7 +114,7 @@ class InventoryBase(SchemaBase):
             if isinstance(val, SchemaBase):
                 val.to_writer(writer)
             elif issubclass(spec, SchemaFieldSerializer):
-                writer.write(f"\t\t{field_name}\t{spec.serializer(val)}\n")
+                writer.write(f"\t\t{field_name}\t{spec.serialize(val)}\n")
             else:
                 raise ValueError(f"Bad inventory spec {spec!r}")
         writer.write("\t}\n")

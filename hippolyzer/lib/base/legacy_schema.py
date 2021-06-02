@@ -28,7 +28,7 @@ class SchemaFieldSerializer(abc.ABC, Generic[_T]):
 
     @classmethod
     @abc.abstractmethod
-    def serializer(cls, val: _T) -> str:
+    def serialize(cls, val: _T) -> str:
         pass
 
 
@@ -38,7 +38,7 @@ class SchemaDate(SchemaFieldSerializer[dt.datetime]):
         return dt.datetime.utcfromtimestamp(int(val))
 
     @classmethod
-    def serializer(cls, val: dt.datetime) -> str:
+    def serialize(cls, val: dt.datetime) -> str:
         return str(calendar.timegm(val.utctimetuple()))
 
 
@@ -48,7 +48,7 @@ class SchemaHexInt(SchemaFieldSerializer[int]):
         return int(val, 16)
 
     @classmethod
-    def serializer(cls, val: int) -> str:
+    def serialize(cls, val: int) -> str:
         return "%08x" % val
 
 
@@ -58,7 +58,7 @@ class SchemaInt(SchemaFieldSerializer[int]):
         return int(val)
 
     @classmethod
-    def serializer(cls, val: int) -> str:
+    def serialize(cls, val: int) -> str:
         return str(val)
 
 
@@ -70,7 +70,7 @@ class SchemaMultilineStr(SchemaFieldSerializer[str]):
         return val.partition("|")[0]
 
     @classmethod
-    def serializer(cls, val: str) -> str:
+    def serialize(cls, val: str) -> str:
         return val + "|"
 
 
@@ -80,7 +80,7 @@ class SchemaStr(SchemaFieldSerializer[str]):
         return val
 
     @classmethod
-    def serializer(cls, val: str) -> str:
+    def serialize(cls, val: str) -> str:
         return val
 
 
@@ -90,7 +90,7 @@ class SchemaUUID(SchemaFieldSerializer[UUID]):
         return UUID(val)
 
     @classmethod
-    def serializer(cls, val: UUID) -> str:
+    def serialize(cls, val: UUID) -> str:
         return str(val)
 
 
