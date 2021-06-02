@@ -7,7 +7,6 @@ from hippolyzer.lib.base.templates import AssetType, XferFilePath, XferPacket
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.packets import Direction
-from hippolyzer.lib.proxy.xfer_manager import XferManager
 
 from . import BaseProxyTest
 
@@ -32,7 +31,7 @@ class XferManagerTests(BaseProxyTest):
         self.message_handler: MessageHandler[ProxiedMessage] = MessageHandler()
         self.circuit = MockHandlingCircuit(self.transport, self.message_handler)
         self.session.main_region.circuit = self.circuit
-        self.xfer_manager = XferManager(self.session.main_region)
+        self.xfer_manager = self.session.main_region.xfer_manager
         self.received_bytes: Optional[bytes] = None
 
     async def _handle_upload(self):
