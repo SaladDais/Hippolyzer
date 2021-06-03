@@ -233,10 +233,11 @@ class ObjectManager:
 
         if new_region_handle != old_region_handle:
             # Region just changed to this region, we should have untracked it before
-            # so mark it tracked on this region.
+            # so mark it tracked on this region. This should implicitly pick up any
+            # orphans and handle parent ID changes.
             self.track_object(obj)
         elif new_parent_id != old_parent_id:
-            # LocalID just changed and we're in the same region
+            # Parent ID changed, but we're in the same region
             self._unparent_object(obj, old_parent_id)
             self._parent_object(obj, insert_at_head=True)
 
