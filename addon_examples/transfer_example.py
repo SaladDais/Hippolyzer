@@ -4,7 +4,7 @@ Example of how to request a Transfer
 from typing import *
 
 from hippolyzer.lib.base.legacy_inv import InventoryModel, InventoryItem
-from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.templates import (
     AssetType,
     EstateAssetType,
@@ -15,7 +15,6 @@ from hippolyzer.lib.base.templates import (
 )
 from hippolyzer.lib.proxy.addon_utils import BaseAddon, show_message
 from hippolyzer.lib.proxy.commands import handle_command
-from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
 
@@ -36,7 +35,7 @@ class TransferExampleAddon(BaseAddon):
     async def get_first_script(self, session: Session, region: ProxiedRegion):
         """Get the contents of the first script in the selected object"""
         # Ask for the object inventory so we can find a script
-        region.circuit.send_message(ProxiedMessage(
+        region.circuit.send_message(Message(
             'RequestTaskInventory',
             Block('AgentData', AgentID=session.agent_id, SessionID=session.id),
             Block('InventoryData', LocalID=session.selected.object_local),

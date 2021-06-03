@@ -11,7 +11,7 @@ import secrets
 
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.proxy.addon_utils import BaseAddon, SessionProperty
-from hippolyzer.lib.proxy.message import ProxiedMessage
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
 
@@ -41,7 +41,7 @@ class BezosifyAddon(BaseAddon):
         # random value to XOR all CRCs with
         self.bezos_crc_xor = secrets.randbits(32)
 
-    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
         if message.name == "ObjectUpdateCached":
             for block in message["ObjectData"]:
                 # Cached only really has a CRC, this will force the cache miss.

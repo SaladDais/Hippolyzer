@@ -4,20 +4,30 @@ import unittest
 
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.udpserializer import UDPMessageSerializer
+from hippolyzer.lib.base.network.transport import AbstractUDPTransport, UDPPacket, ADDR_TUPLE
 from hippolyzer.lib.proxy.lludp_proxy import InterceptingLLUDPProxyProtocol
-from hippolyzer.lib.proxy.message import ProxiedMessage
-from hippolyzer.lib.proxy.packets import ProxiedUDPPacket
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import SessionManager
+from hippolyzer.lib.proxy.transport import SOCKS5UDPTransport
 
 
-class MockTransport(asyncio.DatagramTransport):
+class MockTransport(AbstractUDPTransport):
+    def sendto(self, data: Any, addr: Optional[ADDR_TUPLE] = ...) -> None:
+        pass
+
+    def abort(self) -> None:
+        pass
+
+    def close(self) -> None:
+        pass
+
     def __init__(self):
         super().__init__()
         self.packets: List[Tuple[bytes, Tuple[str, int]]] = []
 
-    def sendto(self, data: Any, addr=None) -> None:
-        self.packets.append((data, addr))
+    def send_packet(self, packet: UDPPacket) -> None:
+        self.packets.append((packet.data, packet.dst_addr))
 
 
 class BaseProxyTest(unittest.IsolatedAsyncioTestCase):
@@ -59,8 +69,8 @@ class BaseProxyTest(unittest.IsolatedAsyncioTestCase):
         self.session.open_circuit(self.client_addr, region.circuit_addr,
                                   self.protocol.transport)
 
-    def _msg_to_datagram(self, msg: ProxiedMessage, src, dst, direction, socks_header=True):
+    def _msg_to_datagram(self, msg: Message, src, dst, direction, socks_header=True):
         serialized = self.serializer.serialize(msg)
-        packet = ProxiedUDPPacket(src_addr=src, dst_addr=dst, data=serialized,
-                                  direction=direction)
-        return packet.serialize(socks_header=socks_header)
+        packet = UDPPacket(src_addr=src, dst_addr=dst, data=serialized,
+                           direction=direction)
+        return SOCKS5UDPTransport.serialize(packet, force_socks_header=socks_header)

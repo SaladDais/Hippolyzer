@@ -3,16 +3,15 @@ Do the money dance whenever someone in the sim pays you directly
 """
 
 from hippolyzer.lib.base.datatypes import UUID
-from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.templates import MoneyTransactionType, PCode, ChatType
-from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.addon_utils import send_chat, BaseAddon
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
 
 
 class PaydayAddon(BaseAddon):
-    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
         if message.name != "MoneyBalanceReply":
             return
         transaction_block = message["TransactionInfo"][0]
@@ -38,7 +37,7 @@ class PaydayAddon(BaseAddon):
             chat_type=ChatType.SHOUT,
         )
         # Do the traditional money dance.
-        session.main_region.circuit.send_message(ProxiedMessage(
+        session.main_region.circuit.send_message(Message(
             "AgentAnimation",
             Block("AgentData", AgentID=session.agent_id, SessionID=session.id),
             Block("AnimationList", AnimID=UUID("928cae18-e31d-76fd-9cc9-2f55160ff818"), StartAnim=True),

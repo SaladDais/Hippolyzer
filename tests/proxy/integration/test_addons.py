@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.proxy import addon_ctx
 from hippolyzer.lib.proxy.addon_utils import (
     BaseAddon,
@@ -10,8 +10,7 @@ from hippolyzer.lib.proxy.addon_utils import (
 )
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.commands import handle_command
-from hippolyzer.lib.proxy.message import ProxiedMessage
-from hippolyzer.lib.proxy.packets import Direction
+from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
 
@@ -40,7 +39,7 @@ class AddonIntegrationTests(BaseProxyTest):
         AddonManager.shutdown()
 
     def _fake_command(self, command: str) -> None:
-        msg = ProxiedMessage(
+        msg = Message(
             "ChatFromViewer",
             Block("AgentData", AgentID=self.session.agent_id, SessionID=self.session.id),
             Block("ChatData", Message=command, Channel=AddonManager.COMMAND_CHANNEL, fill_missing=True),

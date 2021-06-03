@@ -18,14 +18,13 @@ from typing import *
 
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
-from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.templates import AssetType, WearableType
 from hippolyzer.lib.base.wearables import Wearable, VISUAL_PARAMS
 from hippolyzer.lib.proxy.addon_utils import BaseAddon, SessionProperty, AssetAliasTracker, show_message
 from hippolyzer.lib.proxy.commands import handle_command
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-from hippolyzer.lib.proxy.message import ProxiedMessage
-from hippolyzer.lib.proxy.packets import Direction
+from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session, SessionManager
 
@@ -52,7 +51,7 @@ class RecapitatorAddon(BaseAddon):
         self.recapitating = False
         show_message("Recapitation disabled")
 
-    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
         if not self.recapitating:
             return
         if message.direction != Direction.OUT:
@@ -68,7 +67,7 @@ class RecapitatorAddon(BaseAddon):
         self._schedule_task(self._proxy_bodypart_upload(session, region, new_message))
         return True
 
-    async def _proxy_bodypart_upload(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    async def _proxy_bodypart_upload(self, session: Session, region: ProxiedRegion, message: Message):
         asset_block = message["AssetBlock"]
         # Asset will already be in the viewer's VFS as the expected asset ID, calculate it.
         asset_id = session.tid_to_assetid(asset_block["TransactionID"])
@@ -117,7 +116,7 @@ class RecapitatorAddon(BaseAddon):
         except:
             logging.exception("Exception while recapitating")
         # Tell the viewer about the status of its original upload
-        region.circuit.send_message(ProxiedMessage(
+        region.circuit.send_message(Message(
             "AssetUploadComplete",
             Block("AssetBlock", UUID=asset_id, Type=asset_block["Type"], Success=success),
             direction=Direction.IN,

@@ -1,36 +1,25 @@
 from __future__ import annotations
 
-import asyncio
-import datetime as dt
 import logging
 from collections import deque
 from typing import *
 
-from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.circuit import Circuit
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.message.msgtypes import PacketFlags
-from hippolyzer.lib.base.message.udpserializer import UDPMessageSerializer
-from hippolyzer.lib.proxy.packets import Direction, ProxiedUDPPacket
-from hippolyzer.lib.proxy.message import ProxiedMessage
+from hippolyzer.lib.base.network.transport import Direction
+
+LLUDP_LOGGING_HOOK = Optional[Callable[[Message], Any]]
 
 
-LLUDP_LOGGING_HOOK = Optional[Callable[[ProxiedMessage], Any]]
-
-
-class ProxiedCircuit:
-    def __init__(self, near_host, far_host, transport, logging_hook: LLUDP_LOGGING_HOOK = None,
-                 socks_transport: Optional[bool] = None):
-        self.near_host = near_host
-        self.host = far_host
-        self.is_alive = True
-        self.socks_transport = socks_transport
-        self.transport: Optional[asyncio.DatagramTransport] = transport
+class ProxiedCircuit(Circuit):
+    def __init__(self, near_host, far_host, transport, logging_hook: LLUDP_LOGGING_HOOK = None):
+        super().__init__(near_host, far_host, transport)
         self.in_injections = InjectionTracker(0)
         self.out_injections = InjectionTracker(0)
-        self.serializer = UDPMessageSerializer()
-        self.last_packet_at = dt.datetime.now()
         self.logging_hook: LLUDP_LOGGING_HOOK = logging_hook
 
-    def _send_prepared_message(self, message: ProxiedMessage, direction, transport=None):
+    def _send_prepared_message(self, message: Message, transport=None):
         try:
             serialized = self.serializer.serialize(message)
         except:
@@ -38,25 +27,14 @@ class ProxiedCircuit:
             raise
         if self.logging_hook and message.injected:
             self.logging_hook(message)
-        return self.send_datagram(serialized, direction, transport=transport)
-
-    def send_datagram(self, data: bytes, direction: Direction, transport=None):
-        self.last_packet_at = dt.datetime.now()
-        src_addr, dst_addr = self.host, self.near_host
-        if direction == Direction.OUT:
-            src_addr, dst_addr = self.near_host, self.host
-
-        packet = ProxiedUDPPacket(src_addr, dst_addr, data, direction)
-        packet_data = packet.serialize(socks_header=self.socks_transport)
-        (transport or self.transport).sendto(packet_data, dst_addr)
-        return packet
+        return self.send_datagram(serialized, message.direction, transport=transport)
 
     def _get_injections(self, direction: Direction):
         if direction == Direction.OUT:
             return self.out_injections, self.in_injections
         return self.in_injections, self.out_injections
 
-    def prepare_message(self, message: ProxiedMessage, direction=None):
+    def prepare_message(self, message: Message, direction=None):
         if message.finalized:
             raise RuntimeError(f"Trying to re-send finalized {message!r}")
         direction = direction or getattr(message, 'direction')
@@ -97,12 +75,7 @@ class ProxiedCircuit:
             message.send_flags &= ~PacketFlags.ACK
         return True
 
-    def send_message(self, message: ProxiedMessage, direction=None, transport=None):
-        direction = direction or getattr(message, 'direction')
-        if self.prepare_message(message, direction):
-            return self._send_prepared_message(message, direction, transport)
-
-    def _rewrite_packet_ack(self, message: ProxiedMessage, reverse_injections):
+    def _rewrite_packet_ack(self, message: Message, reverse_injections):
         new_blocks = []
         for block in message["Packets"]:
             packet_id = block["ID"]
@@ -119,14 +92,14 @@ class ProxiedCircuit:
         message["Packets"] = new_blocks
         return True
 
-    def _rewrite_start_ping_check(self, message: ProxiedMessage, fwd_injections):
+    def _rewrite_start_ping_check(self, message: Message, fwd_injections):
         orig_id = message["PingID"]["OldestUnacked"]
         new_id = fwd_injections.get_effective_id(orig_id)
         if orig_id != new_id:
             logging.debug("Rewrote oldest unacked %s -> %s" % (orig_id, new_id))
         message["PingID"]["OldestUnacked"] = new_id
 
-    def drop_message(self, message: ProxiedMessage, orig_direction=None):
+    def drop_message(self, message: Message, orig_direction=None):
         if message.finalized:
             raise RuntimeError(f"Trying to drop finalized {message!r}")
         if message.packet_id is None:
@@ -135,13 +108,12 @@ class ProxiedCircuit:
         fwd_injections, reverse_injections = self._get_injections(orig_direction)
 
         fwd_injections.mark_dropped(message.packet_id)
-        if hasattr(message, 'dropped'):
-            message.dropped = True
+        message.dropped = True
         message.finalized = True
 
         # Was sent reliably, tell the other end that we saw it and to shut up.
         if message.reliable:
-            self._send_acks([message.packet_id], ~orig_direction)
+            self.send_acks([message.packet_id], ~orig_direction)
 
         # This packet had acks for the other end, send them in a separate PacketAck
         effective_acks = tuple(
@@ -149,20 +121,7 @@ class ProxiedCircuit:
             if not reverse_injections.was_injected(x)
         )
         if effective_acks:
-            self._send_acks(effective_acks, orig_direction, packet_id=message.packet_id)
-
-    def _send_acks(self, to_ack, direction, packet_id=None):
-        logging.debug("%r acking %r" % (direction, to_ack))
-        # TODO: maybe tack this onto `.acks` for next message?
-        packet = ProxiedMessage('PacketAck',
-                                *[Block('Packets', ID=x) for x in to_ack])
-        packet.packet_id = packet_id
-        packet.injected = True
-        packet.direction = direction
-        self.send_message(packet)
-
-    def __repr__(self):
-        return "<%s %r : %r>" % (self.__class__.__name__, self.near_host, self.host)
+            self.send_acks(effective_acks, orig_direction, packet_id=message.packet_id)
 
 
 class InjectionTracker:

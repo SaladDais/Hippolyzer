@@ -11,7 +11,7 @@ from hippolyzer.lib.proxy.viewer_settings import iter_viewer_cache_dirs
 
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-    from hippolyzer.lib.proxy.message import ProxiedMessage
+    from hippolyzer.lib.base.message.message import Message
 
 
 @dataclasses.dataclass
@@ -42,7 +42,7 @@ class NameCache:
 
     def create_subscriptions(
             self,
-            message_handler: MessageHandler[ProxiedMessage],
+            message_handler: MessageHandler[Message],
             http_message_handler: MessageHandler[HippoHTTPFlow],
     ):
         message_handler.subscribe("UUIDNameReply", self._handle_uuid_name_reply)
@@ -83,7 +83,7 @@ class NameCache:
             entry.display_name = vals["DisplayName"] if vals["DisplayName"] else None
         self._cache[uuid] = entry
 
-    def _handle_uuid_name_reply(self, msg: ProxiedMessage):
+    def _handle_uuid_name_reply(self, msg: Message):
         for block in msg.blocks["UUIDNameBlock"]:
             self.update(block["ID"], {
                 "FirstName": block["FirstName"],

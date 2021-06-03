@@ -22,7 +22,7 @@ from hippolyzer.lib.proxy.xfer_manager import XferManager
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.sessions import Session
     from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-    from hippolyzer.lib.proxy.message import ProxiedMessage
+    from hippolyzer.lib.base.message.message import Message
 
 
 class CapType(enum.Enum):
@@ -57,7 +57,7 @@ class ProxiedRegion:
         if seed_cap:
             self._caps["Seed"] = (CapType.NORMAL, seed_cap)
         self.session: Optional[Callable[[], Session]] = weakref.ref(session)
-        self.message_handler: MessageHandler[ProxiedMessage] = MessageHandler()
+        self.message_handler: MessageHandler[Message] = MessageHandler()
         self.http_message_handler: MessageHandler[HippoHTTPFlow] = MessageHandler()
         self.eq_manager = EventQueueManager(self)
         self.caps_client = CapsClient(self)

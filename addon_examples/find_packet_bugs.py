@@ -16,8 +16,8 @@ import random
 from hippolyzer.lib.base.message.msgtypes import PacketLayout
 from hippolyzer.lib.base.message.udpserializer import UDPMessageSerializer
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
-from hippolyzer.lib.proxy.message import ProxiedMessage
-from hippolyzer.lib.proxy.packets import Direction
+from hippolyzer.lib.base.message.message import Message
+from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
 
@@ -28,7 +28,7 @@ class PacketMutationAddon(BaseAddon):
     def __init__(self):
         self.serializer = UDPMessageSerializer()
 
-    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
         # Only inbound messages, don't fiddle with the sim.
         if message.direction != Direction.IN:
             return

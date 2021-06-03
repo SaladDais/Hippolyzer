@@ -14,15 +14,14 @@ from typing import *
 from PySide2 import QtCore, QtGui, QtWidgets
 
 from hippolyzer.lib.base.datatypes import Vector3
-from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.objects import Object
 from hippolyzer.lib.base.ui_helpers import loadUi
 from hippolyzer.lib.base.templates import PCode
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.addon_utils import BaseAddon, SessionProperty
 from hippolyzer.lib.proxy.commands import handle_command
-from hippolyzer.lib.proxy.packets import Direction
-from hippolyzer.lib.proxy.message import ProxiedMessage
+from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
 from hippolyzer.lib.proxy.task_scheduler import TaskLifeScope
@@ -81,7 +80,7 @@ class BlueishObjectListGUIAddon(BaseAddon):
             raise
 
     def _highlight_object(self, session: Session, obj: Object):
-        session.main_region.circuit.send_message(ProxiedMessage(
+        session.main_region.circuit.send_message(Message(
             "ForceObjectSelect",
             Block("Header", ResetList=False),
             Block("Data", LocalID=obj.LocalID),
@@ -89,7 +88,7 @@ class BlueishObjectListGUIAddon(BaseAddon):
         ))
 
     def _teleport_to_object(self, session: Session, obj: Object):
-        session.main_region.circuit.send_message(ProxiedMessage(
+        session.main_region.circuit.send_message(Message(
             "TeleportLocationRequest",
             Block("AgentData", AgentID=session.agent_id, SessionID=session.id),
             Block(

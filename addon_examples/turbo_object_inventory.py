@@ -34,15 +34,15 @@ from typing import *
 
 from hippolyzer.lib.base.templates import XferFilePath
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
-from hippolyzer.lib.proxy.message import ProxiedMessage
-from hippolyzer.lib.proxy.packets import Direction
+from hippolyzer.lib.base.message.message import Message
+from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
 from hippolyzer.lib.proxy.xfer_manager import Xfer
 
 
 class TurboObjectInventoryAddon(BaseAddon):
-    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
         if message.direction != Direction.OUT:
             return
         if message.name != "RequestTaskInventory":
@@ -54,7 +54,7 @@ class TurboObjectInventoryAddon(BaseAddon):
     async def _proxy_task_inventory_request(
             self,
             region: ProxiedRegion,
-            request_msg: ProxiedMessage
+            request_msg: Message
     ):
         # Keep around a dict of chunks we saw previously in case we have to restart
         # an Xfer due to missing chunks. We don't expect chunks to change across Xfers

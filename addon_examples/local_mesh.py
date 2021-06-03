@@ -36,7 +36,7 @@ from hippolyzer.lib.proxy.addon_utils import show_message, BaseAddon, GlobalProp
 from hippolyzer.lib.proxy.commands import handle_command
 from hippolyzer.lib.proxy.http_asset_repo import HTTPAssetRepo
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-from hippolyzer.lib.proxy.message import ProxiedMessage
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session, SessionManager
 
@@ -125,7 +125,7 @@ class MeshUploadInterceptingAddon(BaseAddon):
             region.objects.request_objects(old_locals)
         show_message(f"Cleared target {old_locals}")
 
-    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
         # Replace any mesh asset IDs in tracked objects with our local assets
         if not self.local_mesh_target_locals:
             return

@@ -13,7 +13,7 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.llanim import Animation
 from hippolyzer.lib.proxy.addon_utils import AssetAliasTracker, BaseAddon, GlobalProperty
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-from hippolyzer.lib.proxy.message import ProxiedMessage
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session, SessionManager
 from hippolyzer.lib.base.vfs import STATIC_VFS
@@ -53,7 +53,7 @@ class HorrorAnimatorAddon(BaseAddon):
         # We've reloaded, so make sure assets get new aliases
         self.horror_anim_tracker.invalidate_aliases()
 
-    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
         tracker = self.horror_anim_tracker
 
         if message.name == "AvatarAnimation":

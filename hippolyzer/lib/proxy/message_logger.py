@@ -21,7 +21,7 @@ from hippolyzer.lib.proxy.region import CapType
 
 if typing.TYPE_CHECKING:
     from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-    from hippolyzer.lib.proxy.message import ProxiedMessage
+    from hippolyzer.lib.base.message.message import Message
     from hippolyzer.lib.proxy.region import ProxiedRegion
     from hippolyzer.lib.proxy.sessions import Session
 
@@ -29,7 +29,7 @@ LOG = logging.getLogger(__name__)
 
 
 class BaseMessageLogger:
-    def log_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    def log_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
         pass
 
     def log_http_response(self, flow: HippoHTTPFlow):
@@ -62,7 +62,7 @@ class FilteringMessageLogger(BaseMessageLogger):
     def set_paused(self, paused: bool):
         self._paused = paused
 
-    def log_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    def log_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
         if self._paused:
             return
         self._add_log_entry(LLUDPMessageLogEntry(message, region, session))
@@ -513,8 +513,8 @@ class EQMessageLogEntry(AbstractMessageLogEntry):
 class LLUDPMessageLogEntry(AbstractMessageLogEntry):
     __slots__ = ["_message", "_name", "_direction", "_frozen_message", "_seq", "_deserializer"]
 
-    def __init__(self, message: ProxiedMessage, region, session):
-        self._message: ProxiedMessage = message
+    def __init__(self, message: Message, region, session):
+        self._message: Message = message
         self._deserializer = None
         self._name = message.name
         self._direction = message.direction

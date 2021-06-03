@@ -3,12 +3,11 @@ import unittest
 from mitmproxy.test import tflow, tutils
 
 from hippolyzer.lib.base.datatypes import Vector3
-from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.message import Block, Message as Message
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.settings import Settings
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.http_proxy import SerializedCapData
-from hippolyzer.lib.proxy.message import ProxiedMessage as Message
 from hippolyzer.lib.proxy.message_logger import LLUDPMessageLogEntry, HTTPMessageLogEntry
 from hippolyzer.lib.proxy.message_filter import compile_filter
 from hippolyzer.lib.proxy.sessions import SessionManager
@@ -113,7 +112,7 @@ class MessageFilterTests(unittest.TestCase):
         settings = Settings()
         settings.ENABLE_DEFERRED_PACKET_PARSING = False
         settings.HANDLE_PACKETS = False
-        deser = UDPMessageDeserializer(settings=settings, message_cls=Message)
+        deser = UDPMessageDeserializer(settings=settings)
         update_msg = deser.deserialize(OBJECT_UPDATE)
         entry = LLUDPMessageLogEntry(update_msg, None, None)
         self.assertTrue(self._filter_matches("ObjectUpdate.ObjectData.ObjectData.Position > (88, 41, 25)", entry))

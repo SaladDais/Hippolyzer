@@ -6,7 +6,8 @@ import socket
 import struct
 from typing import Optional, List, Tuple
 
-from hippolyzer.lib.proxy.packets import ProxiedUDPPacket, Direction
+from hippolyzer.lib.base.network.transport import UDPPacket, Direction
+from hippolyzer.lib.proxy.transport import SOCKS5UDPTransport
 
 
 class SOCKS5Server:
@@ -145,10 +146,10 @@ class UDPProxyProtocol(asyncio.DatagramProtocol):
     def __init__(self, source_addr: Tuple[str, int]):
         self.socks_client_addr: Tuple[str, int] = source_addr
         self.far_to_near_map = {}
-        self.transport: Optional[asyncio.DatagramTransport] = None
+        self.transport: Optional[SOCKS5UDPTransport] = None
 
-    def connection_made(self, transport):
-        self.transport = transport
+    def connection_made(self, transport: asyncio.DatagramTransport):
+        self.transport = SOCKS5UDPTransport(transport)
 
     def _parse_socks_datagram(self, data):
         rsv, frag, address_type = struct.unpack("!HBB", data[:4])
@@ -183,7 +184,7 @@ class UDPProxyProtocol(asyncio.DatagramProtocol):
                 # this allows us to have source and dest addr on the same IP
                 # since we expect a send from client->far to happen first
                 self.far_to_near_map[remote_addr] = source_addr
-                src_packet = ProxiedUDPPacket(
+                src_packet = UDPPacket(
                     src_addr=source_addr,
                     dst_addr=remote_addr,
                     data=data,
@@ -198,7 +199,7 @@ class UDPProxyProtocol(asyncio.DatagramProtocol):
                 logging.warning("Got datagram from unknown host %s:%s" % source_addr)
                 return
 
-            src_packet = ProxiedUDPPacket(
+            src_packet = UDPPacket(
                 src_addr=source_addr,
                 dst_addr=near_addr,
                 data=data,
@@ -212,7 +213,7 @@ class UDPProxyProtocol(asyncio.DatagramProtocol):
             raise
 
     def _handle_proxied_packet(self, packet):
-        self.transport.sendto(packet.serialize(), packet.dst_addr)
+        self.transport.send_packet(packet)
 
     def close(self):
         logging.info("Closing UDP transport")

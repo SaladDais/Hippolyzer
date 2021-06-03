@@ -1,12 +1,12 @@
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
-from hippolyzer.lib.proxy.message import ProxiedMessage
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
 
 
 class REPLExampleAddon(BaseAddon):
-    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
         if message.name == "ChatFromViewer":
             chat_msg = message["ChatData"]["Message"]
             if not chat_msg:

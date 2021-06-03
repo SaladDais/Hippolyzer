@@ -13,7 +13,7 @@ from typing import *
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID, Vector3
 from hippolyzer.lib.base.helpers import proxify
-from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.objects import (
     handle_to_global_pos,
     normalize_object_update,
@@ -24,7 +24,6 @@ from hippolyzer.lib.base.objects import (
 )
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.namecache import NameCache, NameCacheEntry
 from hippolyzer.lib.base.templates import PCode, ObjectStateSerializer
 from hippolyzer.lib.proxy.vocache import RegionViewerObjectCacheChain
@@ -363,7 +362,7 @@ class ObjectManager:
             self.untrack_object(obj)
             self._world_objects.handle_object_gone(obj)
 
-    def handle_object_update(self, packet: ProxiedMessage):
+    def handle_object_update(self, packet: Message):
         seen_locals = []
         for block in packet['ObjectData']:
             object_data = normalize_object_update(block, self._region.handle)
@@ -377,7 +376,7 @@ class ObjectManager:
                 self._track_new_object(obj)
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
-    def handle_terse_object_update(self, packet: ProxiedMessage):
+    def handle_terse_object_update(self, packet: Message):
         seen_locals = []
         for block in packet['ObjectData']:
             object_data = normalize_terse_object_update(block, self._region.handle)
@@ -397,7 +396,7 @@ class ObjectManager:
 
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
-    def handle_object_update_cached(self, packet: ProxiedMessage):
+    def handle_object_update_cached(self, packet: Message):
         seen_locals = []
         for block in packet['ObjectData']:
             seen_locals.append(block["ID"])
@@ -425,7 +424,7 @@ class ObjectManager:
             self.missing_locals.add(block["ID"])
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
-    def handle_object_update_compressed(self, packet: ProxiedMessage):
+    def handle_object_update_compressed(self, packet: Message):
         seen_locals = []
         for block in packet['ObjectData']:
             object_data = normalize_object_update_compressed(block, self._region.handle)
@@ -438,7 +437,7 @@ class ObjectManager:
                 self._track_new_object(obj)
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
-    def _handle_object_properties_generic(self, packet: ProxiedMessage):
+    def _handle_object_properties_generic(self, packet: Message):
         seen_locals = []
         for block in packet["ObjectData"]:
             object_properties = dict(block.items())
@@ -465,14 +464,14 @@ class ObjectManager:
             obj.ObjectCosts.update(object_costs)
             self.run_object_update_hooks(obj, {"ObjectCosts"}, UpdateType.COSTS)
 
-    def _handle_kill_object(self, packet: ProxiedMessage):
+    def _handle_kill_object(self, packet: Message):
         seen_locals = []
         for block in packet["ObjectData"]:
             self._kill_object_by_local_id(block["ID"])
             seen_locals.append(block["ID"])
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
-    def _handle_coarse_location_update(self, packet: ProxiedMessage):
+    def _handle_coarse_location_update(self, packet: Message):
         # TODO: This could lead to weird situations when an avatar crosses a
         #  region border. Might temporarily still have a CoarseLocationUpdate containing
         #  the avatar in the old region, making the avatar appear to be in both regions.
@@ -549,8 +548,8 @@ class ObjectManager:
                 *[Block("ObjectData", ObjectLocalID=x) for x in ids_to_req[:100]],
             ]
             # Selecting causes ObjectProperties to be sent
-            self._region.circuit.send_message(ProxiedMessage("ObjectSelect", blocks))
-            self._region.circuit.send_message(ProxiedMessage("ObjectDeselect", blocks))
+            self._region.circuit.send_message(Message("ObjectSelect", blocks))
+            self._region.circuit.send_message(Message("ObjectDeselect", blocks))
             ids_to_req = ids_to_req[100:]
 
         futures = []
@@ -586,7 +585,7 @@ class ObjectManager:
         session = self._region.session()
         ids_to_req = local_ids
         while ids_to_req:
-            self._region.circuit.send_message(ProxiedMessage(
+            self._region.circuit.send_message(Message(
                 "RequestMultipleObjects",
                 Block("AgentData", AgentID=session.agent_id, SessionID=session.id),
                 *[Block("ObjectData", CacheMissType=0, ID=x) for x in ids_to_req[:100]],
@@ -619,7 +618,7 @@ class WorldObjectManager:
         message_handler.subscribe("ObjectUpdateCached",
                                   self._handle_object_update_cached)
 
-    def _wrap_region_update_handler(self, handler: Callable, message: ProxiedMessage):
+    def _wrap_region_update_handler(self, handler: Callable, message: Message):
         """
         Dispatch an ObjectUpdate to a region's handler based on RegionHandle
 
@@ -632,16 +631,16 @@ class WorldObjectManager:
             return
         return handler(region.objects, message)
 
-    def _handle_object_update(self, message: ProxiedMessage):
+    def _handle_object_update(self, message: Message):
         self._wrap_region_update_handler(ObjectManager.handle_object_update, message)
 
-    def _handle_terse_object_update(self, message: ProxiedMessage):
+    def _handle_terse_object_update(self, message: Message):
         self._wrap_region_update_handler(ObjectManager.handle_terse_object_update, message)
 
-    def _handle_object_update_compressed(self, message: ProxiedMessage):
+    def _handle_object_update_compressed(self, message: Message):
         self._wrap_region_update_handler(ObjectManager.handle_object_update_compressed, message)
 
-    def _handle_object_update_cached(self, message: ProxiedMessage):
+    def _handle_object_update_cached(self, message: Message):
         self._wrap_region_update_handler(ObjectManager.handle_object_update_cached, message)
 
     def handle_new_object(self, obj: Object):

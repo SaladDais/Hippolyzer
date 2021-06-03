@@ -64,10 +64,9 @@ def _parse_msg_num(reader: se.BufferReader):
 class UDPMessageDeserializer:
     DEFAULT_TEMPLATE = TemplateDictionary()
 
-    def __init__(self, settings=None, message_cls: Type[Message] = Message):
+    def __init__(self, settings=None):
         self.settings = settings or Settings()
         self.template_dict = self.DEFAULT_TEMPLATE
-        self.message_cls = message_cls
 
     def deserialize(self, msg_buff: bytes):
         msg = self._parse_message_header(msg_buff)
@@ -85,7 +84,7 @@ class UDPMessageDeserializer:
 
         reader = se.BufferReader("!", data)
 
-        msg: Message = self.message_cls("Placeholder")
+        msg: Message = Message("Placeholder")
         msg.send_flags = reader.read(se.U8)
         msg.packet_id = reader.read(se.U32)
 

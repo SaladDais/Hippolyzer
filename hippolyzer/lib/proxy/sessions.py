@@ -21,7 +21,7 @@ from hippolyzer.lib.proxy.region import ProxiedRegion, CapType
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.message_logger import BaseMessageLogger
     from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-    from hippolyzer.lib.proxy.message import ProxiedMessage
+    from hippolyzer.lib.base.message.message import Message
 
 
 class Session:
@@ -40,7 +40,7 @@ class Session:
         self.selected: SelectionModel = SelectionModel()
         self.regions: List[ProxiedRegion] = []
         self.started_at = datetime.datetime.now()
-        self.message_handler: MessageHandler[ProxiedMessage] = MessageHandler()
+        self.message_handler: MessageHandler[Message] = MessageHandler()
         self.http_message_handler: MessageHandler[HippoHTTPFlow] = MessageHandler()
         self.objects = WorldObjectManager(self)
         self._main_region = None

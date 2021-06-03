@@ -17,7 +17,7 @@ from hippolyzer.lib.proxy.commands import handle_command
 from hippolyzer.lib.proxy.http_proxy import create_http_proxy, create_proxy_master, HTTPFlowContext
 from hippolyzer.lib.proxy.http_event_manager import MITMProxyEventManager
 from hippolyzer.lib.proxy.lludp_proxy import SLSOCKS5Server
-from hippolyzer.lib.proxy.message import ProxiedMessage
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import SessionManager, Session
 
@@ -25,7 +25,7 @@ LOG = logging.getLogger(__name__)
 
 
 class SelectionManagerAddon(BaseAddon):
-    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
         selected = session.selected
         if message.name == "ObjectSelect":
             # ObjectDeselect intentionally ignored to deal with messages that

@@ -5,7 +5,7 @@ Except for backward, which makes you go left.
 """
 
 from hippolyzer.lib.base.templates import AgentControlFlags
-from hippolyzer.lib.proxy.message import ProxiedMessage
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
@@ -19,7 +19,7 @@ BACK_MASK = (AgentControlFlags.AT_NEG | AgentControlFlags.NUDGE_AT_NEG)
 
 
 class BackwardsAddon(BaseAddon):
-    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
         if message.name == "AgentUpdate":
             agent_data_block = message["AgentData"][0]
             flags: AgentControlFlags = agent_data_block.deserialize_var("ControlFlags")

@@ -6,14 +6,13 @@ from typing import *
 from unittest import mock
 
 from hippolyzer.lib.base.datatypes import *
-from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.message import Block, Message as Message
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.message.udpserializer import UDPMessageSerializer
 from hippolyzer.lib.base.objects import Object, normalize_object_update_compressed_data
 from hippolyzer.lib.base.templates import ExtraParamType
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
-from hippolyzer.lib.proxy.message import ProxiedMessage as Message
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.base.templates import PCode
 from hippolyzer.lib.proxy.vocache import RegionViewerObjectCacheChain, RegionViewerObjectCache, ViewerObjectCacheEntry
@@ -69,7 +68,7 @@ class ObjectManagerTestMixin(BaseProxyTest):
         self.mock_get_region_object_cache_chain.return_value = RegionViewerObjectCacheChain([])
         self.object_manager = self.region.objects
         self.serializer = UDPMessageSerializer()
-        self.deserializer = UDPMessageDeserializer(message_cls=Message)
+        self.deserializer = UDPMessageDeserializer()
         self.object_addon = ObjectTrackingAddon()
         AddonManager.init([], None, [self.object_addon])
 

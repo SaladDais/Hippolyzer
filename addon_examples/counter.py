@@ -1,9 +1,9 @@
-from hippolyzer.lib.proxy.message import ProxiedMessage
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
 
 
-def handle_lludp_message(session: Session, region: ProxiedRegion, message: ProxiedMessage):
+def handle_lludp_message(session: Session, region: ProxiedRegion, message: Message):
     # addon_ctx will persist across addon reloads, use for storing data that
     # needs to survive across calls to this function
     ctx = session.addon_ctx

@@ -7,8 +7,8 @@ from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.message.udpserializer import UDPMessageSerializer
 from hippolyzer.lib.base.settings import Settings
 from hippolyzer.lib.proxy.addons import AddonManager
-from hippolyzer.lib.proxy.packets import ProxiedUDPPacket
-from hippolyzer.lib.proxy.message import ProxiedMessage
+from hippolyzer.lib.base.network.transport import UDPPacket
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session, SessionManager
 from hippolyzer.lib.proxy.socks_proxy import SOCKS5Server, UDPProxyProtocol
@@ -35,11 +35,10 @@ class BaseLLUDPProxyProtocol(UDPProxyProtocol):
         self.serializer = UDPMessageSerializer()
         self.deserializer = UDPMessageDeserializer(
             settings=self.settings,
-            message_cls=ProxiedMessage,
         )
         self.message_xml = MessageDotXML()
 
-    def _ensure_message_allowed(self, msg: ProxiedMessage):
+    def _ensure_message_allowed(self, msg: Message):
         if not self.message_xml.validate_udp_msg(msg.name):
             LOG.warning(
                 f"Received {msg.name!r} over UDP, when it should come over the event queue. Discarding."
@@ -53,8 +52,8 @@ class InterceptingLLUDPProxyProtocol(BaseLLUDPProxyProtocol):
         self.session_manager: SessionManager = session_manager
         self.session: Optional[Session] = None
 
-    def _handle_proxied_packet(self, packet: ProxiedUDPPacket):
-        message: Optional[ProxiedMessage] = None
+    def _handle_proxied_packet(self, packet: UDPPacket):
+        message: Optional[Message] = None
         region: Optional[ProxiedRegion] = None
         # Try to do an initial region lookup so we have it for handle_proxied_packet()
         if self.session:

@@ -4,7 +4,7 @@ import unittest
 from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID
-from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.templates import (
     AssetType,
@@ -16,18 +16,17 @@ from hippolyzer.lib.base.templates import (
     TransferStatus,
 )
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
-from hippolyzer.lib.proxy.message import ProxiedMessage
-from hippolyzer.lib.proxy.packets import Direction
+from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.proxy.transfer_manager import TransferManager, Transfer
 from hippolyzer.lib.proxy.xfer_manager import XferManager
 
 
 class MockHandlingCircuit(ProxiedCircuit):
-    def __init__(self, handler: MessageHandler[ProxiedMessage]):
+    def __init__(self, handler: MessageHandler[Message]):
         super().__init__(("127.0.0.1", 1), ("127.0.0.1", 2), None)
         self.handler = handler
 
-    def _send_prepared_message(self, message: ProxiedMessage, direction, transport=None):
+    def _send_prepared_message(self, message: Message, transport=None):
         asyncio.get_event_loop().call_soon(self.handler.handle, message)
 
 
@@ -36,8 +35,8 @@ class BaseTransferTests(unittest.IsolatedAsyncioTestCase):
     LARGE_PAYLOAD = b"foobar" * 500
 
     def setUp(self) -> None:
-        self.server_message_handler: MessageHandler[ProxiedMessage] = MessageHandler()
-        self.client_message_handler: MessageHandler[ProxiedMessage] = MessageHandler()
+        self.server_message_handler: MessageHandler[Message] = MessageHandler()
+        self.client_message_handler: MessageHandler[Message] = MessageHandler()
         # The client side should send messages to the server side's message handler
         # and vice-versa
         self.client_circuit = MockHandlingCircuit(self.server_message_handler)
@@ -62,7 +61,7 @@ class XferManagerTests(BaseTransferTests):
             manager = XferManager(self.server_message_handler, self.server_circuit)
             xfer = await manager.request(vfile_id=asset_id, vfile_type=AssetType.BODYPART)
             self.received_bytes = xfer.reassemble_chunks()
-        self.server_circuit.send_message(ProxiedMessage(
+        self.server_circuit.send_message(Message(
             "AssetUploadComplete",
             Block("AssetBlock", UUID=asset_id, Type=asset_block["Type"], Success=True),
             direction=Direction.IN,
@@ -102,7 +101,7 @@ class TestTransferManager(BaseTransferTests):
         self.assertEqual(EstateAssetType.COVENANT, params.EstateAssetType)
         data = self.LARGE_PAYLOAD
 
-        self.server_circuit.send_message(ProxiedMessage(
+        self.server_circuit.send_message(Message(
             'TransferInfo',
             Block(
                 'TransferInfo',
@@ -118,7 +117,7 @@ class TestTransferManager(BaseTransferTests):
         while True:
             chunk = data[:1000]
             data = data[1000:]
-            self.server_circuit.send_message(ProxiedMessage(
+            self.server_circuit.send_message(Message(
                 'TransferPacket',
                 Block(
                     'TransferData',

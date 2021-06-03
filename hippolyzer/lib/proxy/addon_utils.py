@@ -8,13 +8,12 @@ import warnings
 from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID, Vector3
-from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.objects import Object
 from hippolyzer.lib.proxy import addon_ctx
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-from hippolyzer.lib.proxy.packets import Direction, ProxiedUDPPacket
-from hippolyzer.lib.proxy.message import ProxiedMessage
+from hippolyzer.lib.base.network.transport import UDPPacket, Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import SessionManager, Session
 from hippolyzer.lib.proxy.task_scheduler import TaskLifeScope
@@ -58,7 +57,7 @@ def show_message(text, session=None) -> None:
 
     # `or None` so we don't use a dead weakref Proxy which are False-y
     session = session or addon_ctx.session.get(None) or None
-    message = ProxiedMessage(
+    message = Message(
         "ChatFromSimulator",
         Block(
             "ChatData",
@@ -84,7 +83,7 @@ def send_chat(message: Union[bytes, str], channel=0, chat_type=ChatType.NORMAL, 
     session = session or addon_ctx.session.get(None) or None
     if not session:
         raise RuntimeError("Tried to send chat without session")
-    session.main_region.circuit.send_message(ProxiedMessage(
+    session.main_region.circuit.send_message(Message(
         "ChatFromViewer",
         Block(
             "AgentData",
@@ -160,7 +159,7 @@ class BaseAddon(abc.ABC):
     def handle_unload(self, session_manager: SessionManager):
         pass
 
-    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
         pass
 
     def handle_http_request(self, session_manager: SessionManager, flow: HippoHTTPFlow):
@@ -186,9 +185,9 @@ class BaseAddon(abc.ABC):
                            cmd: str, options: List[str], param: str):
         pass
 
-    def handle_proxied_packet(self, session_manager: SessionManager, packet: ProxiedUDPPacket,
+    def handle_proxied_packet(self, session_manager: SessionManager, packet: UDPPacket,
                               session: Optional[Session], region: Optional[ProxiedRegion],
-                              message: Optional[ProxiedMessage]):
+                              message: Optional[Message]):
         pass
 
 

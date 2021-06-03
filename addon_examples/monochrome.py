@@ -30,7 +30,7 @@ from hippolyzer.lib.base.multiprocessing_utils import ParentProcessWatcher
 from hippolyzer.lib.base.templates import TextureEntry
 from hippolyzer.lib.proxy.addon_utils import AssetAliasTracker, BaseAddon, GlobalProperty, AddonProcess
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-from hippolyzer.lib.proxy.message import ProxiedMessage
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session, SessionManager
 
@@ -98,7 +98,7 @@ class MonochromeAddon(BaseAddon):
         # Tell queue consumers to shut down
         self.mono_addon_shutdown_signal.set()
 
-    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
         tracker = self.mono_tracker
         if message.name == "ObjectUpdateCached":
             for block in message["ObjectData"]:

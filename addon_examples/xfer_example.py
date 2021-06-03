@@ -4,10 +4,9 @@ Example of how to request an Xfer
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.legacy_inv import InventoryModel
 from hippolyzer.lib.base.templates import XferFilePath, AssetType, InventoryType, WearableType
-from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.proxy.addon_utils import BaseAddon, show_message
 from hippolyzer.lib.proxy.commands import handle_command
-from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
 
@@ -16,7 +15,7 @@ class XferExampleAddon(BaseAddon):
     @handle_command()
     async def get_mute_list(self, session: Session, region: ProxiedRegion):
         """Fetch the current user's mute list"""
-        region.circuit.send_message(ProxiedMessage(
+        region.circuit.send_message(Message(
             'MuteListRequest',
             Block('AgentData', AgentID=session.agent_id, SessionID=session.id),
             Block("MuteData", MuteCRC=0),
@@ -36,7 +35,7 @@ class XferExampleAddon(BaseAddon):
     @handle_command()
     async def get_task_inventory(self, session: Session, region: ProxiedRegion):
         """Get the inventory of the currently selected object"""
-        region.circuit.send_message(ProxiedMessage(
+        region.circuit.send_message(Message(
             'RequestTaskInventory',
             # If no session is passed in we'll use the active session when the coro was created
             Block('AgentData', AgentID=session.agent_id, SessionID=session.id),
@@ -99,7 +98,7 @@ textures 1
             data=asset_data,
             transaction_id=transaction_id
         )
-        region.circuit.send_message(ProxiedMessage(
+        region.circuit.send_message(Message(
             'CreateInventoryItem',
             Block('AgentData', AgentID=session.agent_id, SessionID=session.id),
             Block(

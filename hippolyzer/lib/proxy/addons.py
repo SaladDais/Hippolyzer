@@ -22,9 +22,9 @@ from hippolyzer.lib.proxy.task_scheduler import TaskLifeScope, TaskScheduler
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.commands import CommandDetails, WrappedCommandCallable
     from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-    from hippolyzer.lib.proxy.message import ProxiedMessage
+    from hippolyzer.lib.base.message.message import Message
     from hippolyzer.lib.proxy.objects import Object
-    from hippolyzer.lib.proxy.packets import ProxiedUDPPacket
+    from hippolyzer.lib.base.network.transport import UDPPacket
     from hippolyzer.lib.proxy.region import ProxiedRegion
     from hippolyzer.lib.proxy.sessions import Session, SessionManager
 
@@ -385,7 +385,7 @@ class AddonManager:
         LOG.error(text)
 
     @classmethod
-    def handle_lludp_message(cls, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    def handle_lludp_message(cls, session: Session, region: ProxiedRegion, message: Message):
         cls._reload_addons()
         if message.name == "ChatFromViewer" and "ChatData" in message:
             if message["ChatData"]["Channel"] == cls.COMMAND_CHANNEL:
@@ -517,8 +517,8 @@ class AddonManager:
             return cls._call_all_addon_hooks("handle_region_changed", session, region)
 
     @classmethod
-    def handle_proxied_packet(cls, session_manager: SessionManager, packet: ProxiedUDPPacket,
+    def handle_proxied_packet(cls, session_manager: SessionManager, packet: UDPPacket,
                               session: Optional[Session], region: Optional[ProxiedRegion],
-                              message: Optional[ProxiedMessage]):
+                              message: Optional[Message]):
         return cls._call_all_addon_hooks("handle_proxied_packet", session_manager,
                                          packet, session, region, message)

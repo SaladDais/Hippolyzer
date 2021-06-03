@@ -8,10 +8,9 @@ import dataclasses
 from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID
-from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
-from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.base.templates import (
     TransferRequestParamsBase,
     TransferChannelType,
@@ -48,7 +47,7 @@ class Transfer:
     def cancelled(self) -> bool:
         return self._future.cancelled()
 
-    def is_our_message(self, message: ProxiedMessage):
+    def is_our_message(self, message: Message):
         if "TransferData" in message.blocks:
             transfer_block = message["TransferData"][0]
         else:
@@ -72,7 +71,7 @@ class Transfer:
 class TransferManager:
     def __init__(
             self,
-            message_handler: MessageHandler[ProxiedMessage],
+            message_handler: MessageHandler[Message],
             circuit: ProxiedCircuit,
             agent_id: Optional[UUID] = None,
             session_id: Optional[UUID] = None,
@@ -98,7 +97,7 @@ class TransferManager:
         if params_dict.get("SessionID", dataclasses.MISSING) is None:
             params.SessionID = self._session_id
 
-        self._circuit.send_message(ProxiedMessage(
+        self._circuit.send_message(Message(
             'TransferRequest',
             Block(
                 'TransferInfo',
@@ -121,7 +120,7 @@ class TransferManager:
         ) as get_msg:
             while not transfer.done():
                 try:
-                    msg: ProxiedMessage = await asyncio.wait_for(get_msg(), 5.0)
+                    msg: Message = await asyncio.wait_for(get_msg(), 5.0)
                 except TimeoutError as e:
                     transfer.set_exception(e)
                     return
@@ -139,7 +138,7 @@ class TransferManager:
                         ConnectionAbortedError("Unknown failure")
                     )
 
-    def _handle_transfer_packet(self, msg: ProxiedMessage, transfer: Transfer):
+    def _handle_transfer_packet(self, msg: Message, transfer: Transfer):
         transfer_block = msg["TransferData"][0]
         packet_id: int = transfer_block["Packet"]
         packet_data = transfer_block["Data"]
@@ -147,7 +146,7 @@ class TransferManager:
         if transfer_block["Status"] == TransferStatus.DONE and not transfer.done():
             transfer.mark_done()
 
-    def _handle_transfer_info(self, msg: ProxiedMessage, transfer: Transfer):
+    def _handle_transfer_info(self, msg: Message, transfer: Transfer):
         transfer_block = msg["TransferInfo"][0]
         transfer.expected_size = transfer_block["Size"]
         # Don't re-set if we get a resend of packet 0

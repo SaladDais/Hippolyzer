@@ -1,8 +1,8 @@
 """Block potentially bad things"""
 from hippolyzer.lib.base.templates import IMDialogType, XferFilePath
 from hippolyzer.lib.proxy.addon_utils import BaseAddon, show_message
-from hippolyzer.lib.proxy.message import ProxiedMessage
-from hippolyzer.lib.proxy.packets import Direction
+from hippolyzer.lib.base.message.message import Message
+from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
 
@@ -11,7 +11,7 @@ REGULAR_IM_DIALOGS = (IMDialogType.TYPING_STOP, IMDialogType.TYPING_STOP, IMDial
 
 
 class ShieldAddon(BaseAddon):
-    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
         if message.direction != Direction.IN:
             return
         if message.name in SUSPICIOUS_PACKETS:

@@ -15,8 +15,8 @@ from hippolyzer.lib.base import serialization as se
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.message.udpserializer import UDPMessageSerializer
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
-from hippolyzer.lib.proxy.message import ProxiedMessage
-from hippolyzer.lib.proxy.packets import ProxiedUDPPacket
+from hippolyzer.lib.base.message.message import Message
+from hippolyzer.lib.base.network.transport import UDPPacket
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import SessionManager, Session
 
@@ -28,9 +28,9 @@ class SerializationSanityChecker(BaseAddon):
         self.serializer = UDPMessageSerializer()
         self.deserializer = UDPMessageDeserializer()
 
-    def handle_proxied_packet(self, session_manager: SessionManager, packet: ProxiedUDPPacket,
+    def handle_proxied_packet(self, session_manager: SessionManager, packet: UDPPacket,
                               session: Optional[Session], region: Optional[ProxiedRegion],
-                              message: Optional[ProxiedMessage]):
+                              message: Optional[Message]):
         # Well this doesn't even parse as a message, can't do anything about it.
         if message is None:
             LOG.error(f"Received unparseable message from {packet.src_addr!r}: {packet.data!r}")
@@ -63,7 +63,7 @@ class SerializationSanityChecker(BaseAddon):
         except:
             LOG.exception(f"Exception during message validation:\n{message!r}")
 
-    def _roundtrip_var_serializers(self, message: ProxiedMessage):
+    def _roundtrip_var_serializers(self, message: Message):
         for block in itertools.chain(*message.blocks.values()):
             for var_name in block.vars.keys():
                 orig_val = block[var_name]

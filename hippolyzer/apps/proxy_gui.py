@@ -25,17 +25,17 @@ from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.helpers import bytes_unescape, bytes_escape, get_resource_filename
 from hippolyzer.lib.base.message.llsd_msg_serializer import LLSDMessageSerializer
-from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.msgtypes import MsgType
 from hippolyzer.lib.base.message.template_dict import TemplateDictionary
 from hippolyzer.lib.base.ui_helpers import loadUi
 import hippolyzer.lib.base.serialization as se
+from hippolyzer.lib.base.message.message import VerbatimHumanVal, subfield_eval, SpannedString
+from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.proxy.addons import BaseInteractionManager, AddonManager
 from hippolyzer.lib.proxy.ca_utils import setup_ca_everywhere
 from hippolyzer.lib.proxy.caps_client import CapsClient
 from hippolyzer.lib.proxy.http_proxy import create_proxy_master, HTTPFlowContext
-from hippolyzer.lib.proxy.packets import Direction
-from hippolyzer.lib.proxy.message import ProxiedMessage, VerbatimHumanVal, proxy_eval, SpannedString
 from hippolyzer.lib.proxy.message_logger import LLUDPMessageLogEntry, AbstractMessageLogEntry
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session, SessionManager
@@ -513,7 +513,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
         self.textRequest.clear()
 
         template = self.templateDict[message_name]
-        msg = ProxiedMessage(message_name, direction=Direction.OUT)
+        msg = Message(message_name, direction=Direction.OUT)
 
         for tmpl_block in template.blocks:
             num_blocks = tmpl_block.number or 1
@@ -609,7 +609,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
         env = self._buildEnv(session, region)
         # We specifically want to allow `eval()` in messages since
         # messages from here are trusted.
-        msg = ProxiedMessage.from_human_string(msg_text, replacements, env, safe=False)
+        msg = Message.from_human_string(msg_text, replacements, env, safe=False)
         if self.checkLLUDPViaCaps.isChecked():
             if msg.direction == Direction.IN:
                 region.eq_manager.queue_event(
@@ -628,7 +628,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
                 transport = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             region.circuit.send_message(msg, transport=transport)
 
-    def _sendEQMessage(self, session, region: Optional[ProxiedRegion], msg_text: str, replacements: dict):
+    def _sendEQMessage(self, session, region: Optional[ProxiedRegion], msg_text: str, _replacements: dict):
         if not session or not region:
             raise RuntimeError("Need a valid session and region to send EQ event")
         message_line, _, body = (x.strip() for x in msg_text.partition("\n"))
@@ -696,7 +696,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
         elif directive == b"UNESCAPE":
             val = unescaped_contents
         elif directive == b"EVAL":
-            val = proxy_eval(contents.decode("utf8").strip(), globals_={**env, **replacements})
+            val = subfield_eval(contents.decode("utf8").strip(), globals_={**env, **replacements})
             val = _coerce_to_bytes(val)
         elif directive == b"REPL":
             val = _coerce_to_bytes(replacements[contents.decode("utf8").strip()])

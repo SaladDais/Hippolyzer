@@ -10,12 +10,11 @@ from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID, RawBytes
 from hippolyzer.lib.base.message.data_packer import TemplateDataPacker
-from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.message.msgtypes import MsgType
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
-from hippolyzer.lib.proxy.message import ProxiedMessage
-from hippolyzer.lib.proxy.packets import Direction
+from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.base.templates import XferPacket, XferFilePath, AssetType, XferError
 
 _XFER_MESSAGES = {"AbortXfer", "ConfirmXferPacket", "RequestXfer", "SendXferPacket"}
@@ -94,7 +93,7 @@ class UploadStrategy(enum.IntEnum):
 class XferManager:
     def __init__(
             self,
-            message_handler: MessageHandler[ProxiedMessage],
+            message_handler: MessageHandler[Message],
             circuit: ProxiedCircuit,
             secure_session_id: Optional[UUID] = None,
     ):
@@ -114,7 +113,7 @@ class XferManager:
             direction: Direction = Direction.OUT,
     ) -> Xfer:
         xfer_id = xfer_id if xfer_id is not None else random.getrandbits(64)
-        self._circuit.send_message(ProxiedMessage(
+        self._circuit.send_message(Message(
             'RequestXfer',
             Block(
                 'XferID',
@@ -139,7 +138,7 @@ class XferManager:
         ) as get_msg:
             while not xfer.done():
                 try:
-                    msg: ProxiedMessage = await asyncio.wait_for(get_msg(), 5.0)
+                    msg: Message = await asyncio.wait_for(get_msg(), 5.0)
                 except asyncio.exceptions.TimeoutError as e:
                     xfer.set_exception(e)
                     return
@@ -157,7 +156,7 @@ class XferManager:
                         ConnectionAbortedError(f"Xfer failed with {xfer.error_code!r}")
                     )
 
-    def _handle_send_xfer_packet(self, msg: ProxiedMessage, xfer: Xfer):
+    def _handle_send_xfer_packet(self, msg: Message, xfer: Xfer):
         # Received a SendXfer for an Xfer we sent ourselves
         packet_id: XferPacket = msg["XferID"][0].deserialize_var("Packet")
         packet_data = msg["DataPacket"]["Data"]
@@ -178,7 +177,7 @@ class XferManager:
             to_ack = range(xfer.next_ackable, ack_max)
             xfer.next_ackable = ack_max
         for ack_id in to_ack:
-            self._circuit.send_message(ProxiedMessage(
+            self._circuit.send_message(Message(
                 "ConfirmXferPacket",
                 Block("XferID", ID=xfer.xfer_id, Packet=ack_id),
                 direction=xfer.direction,
@@ -220,7 +219,7 @@ class XferManager:
         else:
             inline_data = data
 
-        self._circuit.send_message(ProxiedMessage(
+        self._circuit.send_message(Message(
             "AssetUploadRequest",
             Block(
                 "AssetBlock",
@@ -243,12 +242,12 @@ class XferManager:
         try:
             # Only need to do this if we're using the xfer upload strategy, otherwise all the
             # data was already sent in the AssetUploadRequest and we don't expect a RequestXfer.
-            def request_predicate(request_msg: ProxiedMessage):
+            def request_predicate(request_msg: Message):
                 return request_msg["XferID"]["VFileID"] == asset_id
             if xfer is not None:
                 await self.serve_inbound_xfer_request(xfer, request_predicate)
 
-            def complete_predicate(complete_msg: ProxiedMessage):
+            def complete_predicate(complete_msg: Message):
                 return complete_msg["AssetBlock"]["UUID"] == asset_id
             msg = await message_handler.wait_for('AssetUploadComplete', predicate=complete_predicate)
             if msg["AssetBlock"]["Success"] == 1:
@@ -262,7 +261,7 @@ class XferManager:
     async def serve_inbound_xfer_request(
             self,
             xfer: Xfer,
-            request_predicate: Callable[[ProxiedMessage], bool],
+            request_predicate: Callable[[Message], bool],
             wait_for_confirm: bool = True
     ):
         message_handler = self._message_handler
@@ -276,7 +275,7 @@ class XferManager:
             chunk = xfer.chunks.pop(packet_id)
             # EOF if there are no chunks left
             packet_val = XferPacket(PacketID=packet_id, IsEOF=not bool(xfer.chunks))
-            self._circuit.send_message(ProxiedMessage(
+            self._circuit.send_message(Message(
                 "SendXferPacket",
                 Block("XferID", ID=xfer.xfer_id, Packet_=packet_val),
                 Block("DataPacket", Data=chunk),

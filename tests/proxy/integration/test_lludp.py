@@ -9,15 +9,14 @@ from typing import *
 import lazy_object_proxy
 
 from hippolyzer.lib.base.datatypes import UUID
-from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.objects import Object
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.addons import AddonManager
-from hippolyzer.lib.proxy.message import ProxiedMessage
 from hippolyzer.lib.proxy.message_logger import FilteringMessageLogger, LLUDPMessageLogEntry
-from hippolyzer.lib.proxy.packets import ProxiedUDPPacket, Direction
+from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
 
@@ -31,7 +30,7 @@ class MockAddon(BaseAddon):
     def handle_session_init(self, session: Session):
         self.events.append(("session_init", session.id))
 
-    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: ProxiedMessage):
+    def handle_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
         self.events.append(("lludp", session.id, region.circuit_addr, message.name))
         if message.name == "UndoLand":
             # Simulate a message being taken out of the regular proxying flow
@@ -53,7 +52,7 @@ class LLUDPIntegrationTests(BaseProxyTest):
     def setUp(self) -> None:
         super().setUp()
         self.addon = MockAddon()
-        self.deserializer = UDPMessageDeserializer(message_cls=ProxiedMessage)
+        self.deserializer = UDPMessageDeserializer()
         AddonManager.init([], self.session_manager, [self.addon])
 
     def _make_objectupdate_compressed(self, localid: Optional[int] = None, handle: Optional[int] = 123):
@@ -92,7 +91,7 @@ class LLUDPIntegrationTests(BaseProxyTest):
 
     async def test_session_claiming(self):
         # Need a UseCircuitCode to claim a pending session
-        msg = ProxiedMessage(
+        msg = Message(
             "UseCircuitCode",
             Block("CircuitCode", Code=self.circuit_code, SessionID=self.session.id,
                   ID=self.session.agent_id),
@@ -110,7 +109,7 @@ class LLUDPIntegrationTests(BaseProxyTest):
 
     async def test_bad_session_unclaimed(self):
         # Need a UseCircuitCode to claim a pending session
-        msg = ProxiedMessage(
+        msg = Message(
             "UseCircuitCode",
             Block("CircuitCode", Code=self.circuit_code, SessionID=UUID.random(),
                   ID=self.session.agent_id),
@@ -127,7 +126,7 @@ class LLUDPIntegrationTests(BaseProxyTest):
 
     async def test_bad_circuit_not_sent(self):
         # Need a UseCircuitCode to claim a pending session
-        msg = ProxiedMessage(
+        msg = Message(
             "UseCircuitCode",
             Block("CircuitCode", Code=self.circuit_code, SessionID=self.session.id,
                   ID=self.session.agent_id),
@@ -162,8 +161,6 @@ class LLUDPIntegrationTests(BaseProxyTest):
         data, dst_addr = packets[0]
         # Was being sent towards the client
         self.assertEqual(dst_addr, self.client_addr)
-        # Which means it has a SOCKS header we need to ignore
-        data = data[ProxiedUDPPacket.HEADER_STRUCT.size:]
         # The data should not have changed since we haven't injected
         # or dropped anything
         self.assertEqual(obj_update, data)
@@ -218,7 +215,7 @@ class LLUDPIntegrationTests(BaseProxyTest):
         self._setup_default_circuit()
         obj_update = self._make_objectupdate_compressed(1234)
         self.protocol.datagram_received(obj_update, self.region_addr)
-        msg = self.serializer.serialize(ProxiedMessage(
+        msg = self.serializer.serialize(Message(
             "UndoLand",
             Block("AgentData", AgentID=UUID(), SessionID=UUID()),
             direction=Direction.IN,
@@ -234,7 +231,7 @@ class LLUDPIntegrationTests(BaseProxyTest):
         message_logger = SimpleMessageLogger()
         self.session_manager.message_logger = message_logger
         self._setup_default_circuit()
-        msg = self.serializer.serialize(ProxiedMessage(
+        msg = self.serializer.serialize(Message(
             "UndoLand",
             Block("AgentData", AgentID=UUID(), SessionID=UUID()),
             direction=Direction.IN,
@@ -256,7 +253,7 @@ class LLUDPIntegrationTests(BaseProxyTest):
 
     def test_roundtrip_objectupdatecompressed(self):
         msg_bytes = self._make_objectupdate_compressed()
-        message: ProxiedMessage = self.deserializer.deserialize(msg_bytes)
+        message: Message = self.deserializer.deserialize(msg_bytes)
         for block in itertools.chain(*message.blocks.values()):
             for var_name in block.vars.keys():
                 orig_val = block[var_name]

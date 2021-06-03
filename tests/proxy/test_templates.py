@@ -2,7 +2,7 @@ import unittest
 
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base.datatypes import UUID
-from hippolyzer.lib.proxy.message import ProxiedMessage
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.templates import TextureEntrySubfieldSerializer, TEFaceBitfield
 
 EXAMPLE_TE = b"\x89UgG$\xcbC\xed\x92\x0bG\xca\xed\x15F_\x08\xe7\xb2\x98\x04\xca\x10;\x85\x94\x05Lj\x8d\xd4" \
@@ -44,7 +44,7 @@ class TemplateTests(unittest.TestCase):
             'MediaFlags': {None: {'WebPage': False, 'TexGen': 'DEFAULT', '_Unused': 0}}, 'Glow': {None: 0},
             'Materials': {None: '00000000-0000-0000-0000-000000000000'},
         }
-        msg = ProxiedMessage.from_human_string(f"""
+        msg = Message.from_human_string(f"""
         OUT ObjectImage
         [AgentData]
           AgentID = {UUID()}
@@ -55,7 +55,7 @@ class TemplateTests(unittest.TestCase):
           TextureEntry =| {repr(pod_te)}
         """)
         # Make sure from/to_human_string doesn't change meaning
-        msg = ProxiedMessage.from_human_string(msg.to_human_string(beautify=True))
+        msg = Message.from_human_string(msg.to_human_string(beautify=True))
         spec = msg["ObjectData"][0].get_serializer("TextureEntry")
         deser = spec.deserialize(None, msg["ObjectData"]["TextureEntry"], pod=True)
         self.assertEqual(deser, pod_te)

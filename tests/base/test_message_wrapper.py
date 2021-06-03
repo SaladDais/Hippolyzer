@@ -163,7 +163,7 @@ class TestMessage(unittest.TestCase):
     def test_repr(self):
         expected_repr = r"""Message('ChatFromViewer',
   Block('AgentData', AgentID=UUID('550e8400-e29b-41d4-a716-446655440000'), SessionID=UUID('550e8400-e29b-41d4-a716-446655440000')),
-  Block('ChatData', Message='Chatting\n', Type=1, Channel=0))"""
+  Block('ChatData', Message='Chatting\n', Type=1, Channel=0), direction=Direction.OUT)"""
         self.assertEqual(expected_repr, repr(self.chat_msg))
 
 
@@ -238,3 +238,59 @@ class TestMessageHandlers(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(msg.queued)
         # Receiving the message unsubscribes
         self.assertEqual(len(foo_handlers), 0)
+
+
+class TestMessageSubfieldSerializers(unittest.TestCase):
+    def setUp(self):
+        self.chat_msg = Message(
+            'ChatFromViewer',
+            Block('AgentData',
+                  AgentID=UUID('550e8400-e29b-41d4-a716-446655440000'),
+                  SessionID=UUID('550e8400-e29b-41d4-a716-446655440000')),
+            Block('ChatData', Message="Chatting\n", Type=1, Channel=0))
+
+    def test_pretty_repr(self):
+        expected_repr = r"""Message('ChatFromViewer',
+  Block('AgentData', AgentID=UUID('550e8400-e29b-41d4-a716-446655440000'), SessionID=UUID('550e8400-e29b-41d4-a716-446655440000')),
+  Block('ChatData', Message='Chatting\n', Type_=ChatType.NORMAL, Channel=0), direction=Direction.OUT)"""
+        self.assertEqual(expected_repr, self.chat_msg.repr(pretty=True))
+
+
+class HumanReadableMessageTests(unittest.TestCase):
+    def test_basic(self):
+        val = """
+        OUT FooMessage
+        [SomeBlock]
+        # IGNORE ME
+        SomeFloat = 1.0
+        SomeStr = "baz"
+        SomeVec = <1,1,1>
+        [OtherBlock]
+        UUID = 1f4ffb55-022e-49fb-8c63-6f159aed9b24
+        """
+
+        msg = Message.from_human_string(val)
+        self.assertEqual(msg.name, "FooMessage")
+        self.assertEqual(set(msg.blocks.keys()), {"SomeBlock", "OtherBlock"})
+        self.assertSequenceEqual(msg["SomeBlock"][0]["SomeVec"], (1.0, 1.0, 1.0))
+        self.assertEqual(msg["OtherBlock"][0]["UUID"], UUID("1f4ffb55-022e-49fb-8c63-6f159aed9b24"))
+
+    def test_eval_allowed(self):
+        val = """
+        OUT FooMessage
+        [SomeBlock]
+        evaled =$ 1+1
+        """
+
+        msg = Message.from_human_string(val, safe=False)
+        self.assertEqual(msg["SomeBlock"][0]["evaled"], 2)
+
+    def test_eval_disallowed(self):
+        val = """
+        OUT FooMessage
+        [SomeBlock]
+        evaled =$ 1+1
+        """
+
+        with self.assertRaises(ValueError):
+            Message.from_human_string(val)
