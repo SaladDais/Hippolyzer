@@ -16,8 +16,8 @@ from hippolyzer.lib.base.objects import handle_to_global_pos
 from hippolyzer.lib.proxy.caps_client import CapsClient
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.proxy.objects import ObjectManager
-from hippolyzer.lib.proxy.transfer_manager import TransferManager
-from hippolyzer.lib.proxy.xfer_manager import XferManager
+from hippolyzer.lib.base.transfer_manager import TransferManager
+from hippolyzer.lib.base.xfer_manager import XferManager
 
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.sessions import Session

@@ -17,8 +17,8 @@ from hippolyzer.lib.base.templates import (
 )
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.base.network.transport import Direction
-from hippolyzer.lib.proxy.transfer_manager import TransferManager, Transfer
-from hippolyzer.lib.proxy.xfer_manager import XferManager
+from hippolyzer.lib.base.transfer_manager import TransferManager, Transfer
+from hippolyzer.lib.base.xfer_manager import XferManager
 
 
 class MockHandlingCircuit(ProxiedCircuit):

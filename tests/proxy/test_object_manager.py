@@ -10,11 +10,10 @@ from hippolyzer.lib.base.message.message import Block, Message as Message
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.message.udpserializer import UDPMessageSerializer
 from hippolyzer.lib.base.objects import Object, normalize_object_update_compressed_data
-from hippolyzer.lib.base.templates import ExtraParamType
+from hippolyzer.lib.base.templates import ExtraParamType, PCode
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.region import ProxiedRegion
-from hippolyzer.lib.base.templates import PCode
 from hippolyzer.lib.proxy.vocache import RegionViewerObjectCacheChain, RegionViewerObjectCache, ViewerObjectCacheEntry
 
 from . import BaseProxyTest

@@ -9,11 +9,11 @@ import random
 from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID, RawBytes
+from hippolyzer.lib.base.message.circuit import Circuit
 from hippolyzer.lib.base.message.data_packer import TemplateDataPacker
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.message.msgtypes import MsgType
-from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.base.templates import XferPacket, XferFilePath, AssetType, XferError
 
@@ -94,7 +94,7 @@ class XferManager:
     def __init__(
             self,
             message_handler: MessageHandler[Message],
-            circuit: ProxiedCircuit,
+            circuit: Circuit,
             secure_session_id: Optional[UUID] = None,
     ):
         self._message_handler = message_handler

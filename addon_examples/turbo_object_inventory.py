@@ -38,7 +38,7 @@ from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
-from hippolyzer.lib.proxy.xfer_manager import Xfer
+from hippolyzer.lib.base.xfer_manager import Xfer
 
 
 class TurboObjectInventoryAddon(BaseAddon):

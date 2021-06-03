@@ -8,9 +8,9 @@ import dataclasses
 from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.message.circuit import Circuit
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
-from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.base.templates import (
     TransferRequestParamsBase,
     TransferChannelType,
@@ -72,7 +72,7 @@ class TransferManager:
     def __init__(
             self,
             message_handler: MessageHandler[Message],
-            circuit: ProxiedCircuit,
+            circuit: Circuit,
             agent_id: Optional[UUID] = None,
             session_id: Optional[UUID] = None,
     ):
