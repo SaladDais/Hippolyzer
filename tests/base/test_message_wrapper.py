@@ -26,6 +26,7 @@ import weakref
 from uuid import UUID
 
 from hippolyzer.lib.base.message.message import Message, Block
+from hippolyzer.lib.base.message.message_formatting import HumanMessageSerializer
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.message.udpserializer import UDPMessageSerializer
@@ -269,7 +270,7 @@ class HumanReadableMessageTests(unittest.TestCase):
         UUID = 1f4ffb55-022e-49fb-8c63-6f159aed9b24
         """
 
-        msg = Message.from_human_string(val)
+        msg = HumanMessageSerializer.from_human_string(val)
         self.assertEqual(msg.name, "FooMessage")
         self.assertEqual(set(msg.blocks.keys()), {"SomeBlock", "OtherBlock"})
         self.assertSequenceEqual(msg["SomeBlock"][0]["SomeVec"], (1.0, 1.0, 1.0))
@@ -282,7 +283,7 @@ class HumanReadableMessageTests(unittest.TestCase):
         evaled =$ 1+1
         """
 
-        msg = Message.from_human_string(val, safe=False)
+        msg = HumanMessageSerializer.from_human_string(val, safe=False)
         self.assertEqual(msg["SomeBlock"][0]["evaled"], 2)
 
     def test_eval_disallowed(self):
@@ -293,4 +294,4 @@ class HumanReadableMessageTests(unittest.TestCase):
         """
 
         with self.assertRaises(ValueError):
-            Message.from_human_string(val)
+            HumanMessageSerializer.from_human_string(val)

@@ -26,12 +26,17 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.helpers import bytes_unescape, bytes_escape, get_resource_filename
 from hippolyzer.lib.base.message.llsd_msg_serializer import LLSDMessageSerializer
 from hippolyzer.lib.base.message.message import Block, Message
+from hippolyzer.lib.base.message.message_formatting import (
+    HumanMessageSerializer,
+    VerbatimHumanVal,
+    subfield_eval,
+    SpannedString,
+)
 from hippolyzer.lib.base.message.msgtypes import MsgType
 from hippolyzer.lib.base.message.template_dict import TemplateDictionary
 from hippolyzer.lib.base.ui_helpers import loadUi
 import hippolyzer.lib.base.serialization as se
-from hippolyzer.lib.base.message.message import VerbatimHumanVal, subfield_eval, SpannedString
-from hippolyzer.lib.base.network.transport import Direction
+from hippolyzer.lib.base.network.transport import Direction, WrappingUDPTransport
 from hippolyzer.lib.proxy.addons import BaseInteractionManager, AddonManager
 from hippolyzer.lib.proxy.ca_utils import setup_ca_everywhere
 from hippolyzer.lib.proxy.caps_client import CapsClient
@@ -524,7 +529,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
                 msg_block = Block(tmpl_block.name, **fill_vars)
                 msg.add_block(msg_block)
         self.textRequest.setPlainText(
-            msg.to_human_string(replacements={}, beautify=True, template=template)
+            HumanMessageSerializer.to_human_string(msg, replacements={}, beautify=True, template=template)
         )
 
     def _getVarPlaceholder(self, msg, block, var):
@@ -609,7 +614,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
         env = self._buildEnv(session, region)
         # We specifically want to allow `eval()` in messages since
         # messages from here are trusted.
-        msg = Message.from_human_string(msg_text, replacements, env, safe=False)
+        msg = HumanMessageSerializer.from_human_string(msg_text, replacements, env, safe=False)
         if self.checkLLUDPViaCaps.isChecked():
             if msg.direction == Direction.IN:
                 region.eq_manager.queue_event(
@@ -624,9 +629,12 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
                 )
         else:
             transport = None
-            if self.checkOffCircuit.isChecked():
-                transport = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            off_circuit = self.checkOffCircuit.isChecked()
+            if off_circuit:
+                transport = WrappingUDPTransport(socket.socket(socket.AF_INET, socket.SOCK_DGRAM))
             region.circuit.send_message(msg, transport=transport)
+            if off_circuit:
+                transport.close()
 
     def _sendEQMessage(self, session, region: Optional[ProxiedRegion], msg_text: str, _replacements: dict):
         if not session or not region:

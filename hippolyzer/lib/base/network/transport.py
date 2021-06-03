@@ -1,10 +1,11 @@
 import abc
 import asyncio
 import enum
-import typing
+import socket
+from typing import *
 
 
-ADDR_TUPLE = typing.Tuple[str, int]
+ADDR_TUPLE = Tuple[str, int]
 
 
 class Direction(enum.Enum):
@@ -20,7 +21,7 @@ class Direction(enum.Enum):
 class UDPPacket:
     def __init__(
             self,
-            src_addr: typing.Optional[ADDR_TUPLE],
+            src_addr: Optional[ADDR_TUPLE],
             dst_addr: ADDR_TUPLE,
             data: bytes,
             direction: Direction
@@ -58,7 +59,7 @@ class AbstractUDPTransport(abc.ABC):
 
 
 class WrappingUDPTransport(AbstractUDPTransport):
-    def __init__(self, transport: asyncio.DatagramTransport):
+    def __init__(self, transport: Union[asyncio.DatagramTransport, socket.socket]):
         super().__init__()
         self.transport = transport
 

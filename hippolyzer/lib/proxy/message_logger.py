@@ -15,6 +15,7 @@ from defusedxml import minidom
 from hippolyzer.lib.base import serialization as se, llsd
 from hippolyzer.lib.base.datatypes import TaggedUnion, UUID, TupleCoord
 from hippolyzer.lib.base.helpers import bytes_escape
+from hippolyzer.lib.base.message.message_formatting import HumanMessageSerializer
 from hippolyzer.lib.proxy.message_filter import MetaFieldSpecifier, compile_filter, BaseFilterNode, MessageFilterNode, \
     EnumFieldSpecifier
 from hippolyzer.lib.proxy.region import CapType
@@ -539,7 +540,7 @@ class LLUDPMessageLogEntry(AbstractMessageLogEntry):
         return super()._get_meta(name)
 
     @property
-    def message(self):
+    def message(self) -> Message:
         if self._message:
             return self._message
         elif self._frozen_message:
@@ -579,7 +580,7 @@ class LLUDPMessageLogEntry(AbstractMessageLogEntry):
         return self._direction.name if self._direction is not None else ""
 
     def request(self, beautify=False, replacements=None):
-        return self.message.to_human_string(replacements, beautify)
+        return HumanMessageSerializer.to_human_string(self.message, replacements, beautify)
 
     def matches(self, matcher):
         base_matched = self._base_matches(matcher)
