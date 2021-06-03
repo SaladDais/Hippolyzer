@@ -39,7 +39,7 @@ import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base.network.transport import Direction, WrappingUDPTransport
 from hippolyzer.lib.proxy.addons import BaseInteractionManager, AddonManager
 from hippolyzer.lib.proxy.ca_utils import setup_ca_everywhere
-from hippolyzer.lib.proxy.caps_client import CapsClient
+from hippolyzer.lib.proxy.caps_client import ProxyCapsClient
 from hippolyzer.lib.proxy.http_proxy import create_proxy_master, HTTPFlowContext
 from hippolyzer.lib.proxy.message_logger import LLUDPMessageLogEntry, AbstractMessageLogEntry
 from hippolyzer.lib.proxy.region import ProxiedRegion
@@ -719,7 +719,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
         return val
 
     def _sendHTTPRequest(self, method, uri, headers, body):
-        caps_client = CapsClient()
+        caps_client = ProxyCapsClient()
 
         async def _send_request():
             req = caps_client.request(method, uri, headers=headers, data=body)

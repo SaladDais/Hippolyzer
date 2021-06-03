@@ -11,9 +11,10 @@ import urllib.parse
 import multidict
 
 from hippolyzer.lib.base.datatypes import Vector3, UUID
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.objects import handle_to_global_pos
-from hippolyzer.lib.proxy.caps_client import CapsClient
+from hippolyzer.lib.proxy.caps_client import ProxyCapsClient
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.proxy.objects import ObjectManager
 from hippolyzer.lib.base.transfer_manager import TransferManager
@@ -22,7 +23,6 @@ from hippolyzer.lib.base.xfer_manager import XferManager
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.sessions import Session
     from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-    from hippolyzer.lib.base.message.message import Message
 
 
 class CapType(enum.Enum):
@@ -60,7 +60,7 @@ class ProxiedRegion:
         self.message_handler: MessageHandler[Message] = MessageHandler()
         self.http_message_handler: MessageHandler[HippoHTTPFlow] = MessageHandler()
         self.eq_manager = EventQueueManager(self)
-        self.caps_client = CapsClient(self)
+        self.caps_client = ProxyCapsClient(self._caps)
         self.objects = ObjectManager(self, use_vo_cache=True)
         self._recalc_caps()
 

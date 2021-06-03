@@ -2,7 +2,6 @@ import aiohttp
 import aioresponses
 from yarl import URL
 
-from hippolyzer.lib.proxy.caps_client import CapsClient
 from hippolyzer.lib.proxy.region import ProxiedRegion
 
 from . import BaseProxyTest
@@ -12,7 +11,7 @@ class TestCapsClient(BaseProxyTest):
     def setUp(self) -> None:
         super().setUp()
         self.region = ProxiedRegion(("127.0.0.1", 1), "", self.session)
-        self.caps_client = CapsClient(self.region)
+        self.caps_client = self.region.caps_client
 
     async def test_bare_url_works(self):
         with aioresponses.aioresponses() as m:
