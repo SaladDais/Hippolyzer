@@ -5,10 +5,22 @@ import re
 import sys
 from typing import *
 
-from hippolyzer.lib.base.network.caps_client import CapsClient
+from hippolyzer.lib.base.network.caps_client import CapsClient, CAPS_DICT
+
+if TYPE_CHECKING:
+    from hippolyzer.lib.proxy.region import ProxiedRegion
 
 
 class ProxyCapsClient(CapsClient):
+    def __init__(self, region: Optional[ProxiedRegion] = None):
+        super().__init__(None)
+        self._region = region
+
+    def _get_caps(self) -> Optional[CAPS_DICT]:
+        if not self._region:
+            return None
+        return self._region.caps
+
     def _request_fixups(self, cap_or_url: str, headers: Dict, proxy: Optional[bool], ssl: Any):
         # We want to proxy this through Hippolyzer
         if proxy is None:

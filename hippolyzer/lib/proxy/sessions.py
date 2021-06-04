@@ -10,21 +10,22 @@ from typing import *
 from weakref import ref
 
 from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
+from hippolyzer.lib.client.object_manager import ClientWorldObjectManager
+from hippolyzer.lib.client.state import BaseClientSession
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.proxy.http_asset_repo import HTTPAssetRepo
 from hippolyzer.lib.proxy.http_proxy import HTTPFlowContext, is_asset_server_cap_name, SerializedCapData
-from hippolyzer.lib.proxy.namecache import NameCache
-from hippolyzer.lib.proxy.objects import WorldObjectManager
+from hippolyzer.lib.proxy.namecache import ProxyNameCache
 from hippolyzer.lib.proxy.region import ProxiedRegion, CapType
 
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.message_logger import BaseMessageLogger
     from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-    from hippolyzer.lib.base.message.message import Message
 
 
-class Session:
+class Session(BaseClientSession):
     def __init__(self, session_id, secure_session_id, agent_id, circuit_code,
                  login_data=None, session_manager=None):
         self.login_data = login_data or {}
@@ -42,7 +43,7 @@ class Session:
         self.started_at = datetime.datetime.now()
         self.message_handler: MessageHandler[Message] = MessageHandler()
         self.http_message_handler: MessageHandler[HippoHTTPFlow] = MessageHandler()
-        self.objects = WorldObjectManager(self)
+        self.objects = ClientWorldObjectManager(self)
         self._main_region = None
 
     @property
@@ -174,7 +175,7 @@ class SessionManager:
         self.asset_repo = HTTPAssetRepo()
         self.message_logger: Optional[BaseMessageLogger] = None
         self.addon_ctx: Dict[str, Any] = {}
-        self.name_cache = NameCache()
+        self.name_cache = ProxyNameCache()
         self.use_viewer_object_cache: bool = False
 
     def create_session(self, login_data) -> Session:
@@ -197,6 +198,7 @@ class SessionManager:
 
     def close_session(self, session: Session):
         logging.info("Closed %r" % session)
+        session.objects.clear()
         self.sessions.remove(session)
 
     def resolve_cap(self, url: str) -> Optional["CapData"]:

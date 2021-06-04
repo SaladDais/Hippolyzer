@@ -6,38 +6,30 @@ import enum
 import itertools
 import logging
 import math
-import typing
 import weakref
 from typing import *
 
-from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID, Vector3
 from hippolyzer.lib.base.helpers import proxify
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.objects import (
-    handle_to_global_pos,
     normalize_object_update,
     normalize_terse_object_update,
     normalize_object_update_compressed_data,
     normalize_object_update_compressed,
-    Object,
+    Object, handle_to_global_pos,
 )
-from hippolyzer.lib.proxy.addons import AddonManager
-from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-from hippolyzer.lib.proxy.namecache import NameCache, NameCacheEntry
+from hippolyzer.lib.client.namecache import NameCache, NameCacheEntry
+from hippolyzer.lib.client.state import BaseClientSession, BaseClientRegion
 from hippolyzer.lib.base.templates import PCode, ObjectStateSerializer
-from hippolyzer.lib.proxy.vocache import RegionViewerObjectCacheChain
 
-if TYPE_CHECKING:
-    from hippolyzer.lib.proxy.region import ProxiedRegion
-    from hippolyzer.lib.proxy.sessions import Session
 
 LOG = logging.getLogger(__name__)
 
 
 class OrphanManager:
     def __init__(self):
-        self._orphans: typing.Dict[int, typing.List[int]] = collections.defaultdict(list)
+        self._orphans: Dict[int, List[int]] = collections.defaultdict(list)
 
     def clear(self):
         return self._orphans.clear()
@@ -55,7 +47,7 @@ class OrphanManager:
             del self._orphans[parent_id]
         return removed
 
-    def collect_orphans(self, parent_localid: int) -> typing.Sequence[int]:
+    def collect_orphans(self, parent_localid: int) -> Sequence[int]:
         return self._orphans.pop(parent_localid, [])
 
     def track_orphan(self, obj: Object):
@@ -67,7 +59,7 @@ class OrphanManager:
         self._orphans[parent_id].append(local_id)
 
 
-OBJECT_OR_LOCAL = typing.Union[Object, int]
+OBJECT_OR_LOCAL = Union[Object, int]
 
 
 class LocationType(enum.IntEnum):
@@ -129,31 +121,27 @@ class Avatar:
         return self._resolved_name.preferred_name
 
 
-class ObjectManager:
+class ClientObjectManager:
     """
     Object manager for a specific region
     """
 
-    def __init__(self, region: ProxiedRegion, use_vo_cache: bool = False):
-        self._region: ProxiedRegion = proxify(region)
-        self.use_vo_cache = use_vo_cache
-        self.cache_loaded: bool = False
-        self.object_cache: RegionViewerObjectCacheChain = RegionViewerObjectCacheChain([])
-        self._localid_lookup: typing.Dict[int, Object] = {}
-        self._fullid_lookup: typing.Dict[UUID, int] = {}
-        self._coarse_locations: typing.Dict[UUID, Vector3] = {}
-        self._object_futures: typing.Dict[Tuple[int, int], List[asyncio.Future]] = {}
+    def __init__(self, region: BaseClientRegion, name_cache: Optional[NameCache]):
+        self._region: BaseClientRegion = region
+        self._localid_lookup: Dict[int, Object] = {}
+        self._fullid_lookup: Dict[UUID, int] = {}
+        self._coarse_locations: Dict[UUID, Vector3] = {}
+        self._object_futures: Dict[Tuple[int, int], List[asyncio.Future]] = {}
+        self._orphan_manager = OrphanManager()
+        self.name_cache = name_cache or NameCache()
         # Objects that we've seen references to but don't have data for
         self.missing_locals = set()
-        self._orphan_manager = OrphanManager()
-        self._world_objects: WorldObjectManager = region.session().objects
-        self.name_cache: NameCache = region.session().session_manager.name_cache
+
+        self._world_objects: ClientWorldObjectManager = proxify(region.session().objects)
 
         message_handler = region.message_handler
         message_handler.subscribe("CoarseLocationUpdate",
                                   self._handle_coarse_location_update)
-        region.http_message_handler.subscribe("GetObjectCost",
-                                              self._handle_get_object_cost)
         message_handler.subscribe("KillObject",
                                   self._handle_kill_object)
         message_handler.subscribe("ObjectProperties",
@@ -167,6 +155,15 @@ class ObjectManager:
     @property
     def all_objects(self) -> Iterable[Object]:
         return self._localid_lookup.values()
+
+    def lookup_localid(self, localid: int) -> Optional[Object]:
+        return self._localid_lookup.get(localid, None)
+
+    def lookup_fullid(self, fullid: UUID) -> Optional[Object]:
+        local_id = self._fullid_lookup.get(fullid, None)
+        if local_id is None:
+            return None
+        return self.lookup_localid(local_id)
 
     @property
     def all_avatars(self) -> Iterable[Avatar]:
@@ -187,16 +184,7 @@ class ObjectManager:
             ))
         return avatars
 
-    def lookup_localid(self, localid: int) -> typing.Optional[Object]:
-        return self._localid_lookup.get(localid, None)
-
-    def lookup_fullid(self, fullid: UUID) -> typing.Optional[Object]:
-        local_id = self._fullid_lookup.get(fullid, None)
-        if local_id is None:
-            return None
-        return self.lookup_localid(local_id)
-
-    def lookup_avatar(self, fullid: UUID) -> typing.Optional[Avatar]:
+    def lookup_avatar(self, fullid: UUID) -> Optional[Avatar]:
         for avatar in self.all_avatars:
             if avatar.FullID == fullid:
                 return avatar
@@ -250,6 +238,12 @@ class ObjectManager:
         self.run_object_update_hooks(obj, set(obj.to_dict().keys()), UpdateType.OBJECT_UPDATE)
 
     def track_object(self, obj: Object):
+        obj_same_localid = self._localid_lookup.get(obj.LocalID)
+        if obj_same_localid:
+            LOG.error(f"Clobbering existing object with LocalID {obj.LocalID}! "
+                      f"{obj.to_dict()} clobbered {obj_same_localid.to_dict()}")
+            # Clear the clobbered object out of the FullID lookup
+            self._fullid_lookup.pop(obj_same_localid.FullID, None)
         self._localid_lookup[obj.LocalID] = obj
         self._fullid_lookup[obj.FullID] = obj.LocalID
         # If it was missing, it's not missing anymore.
@@ -324,14 +318,6 @@ class ObjectManager:
             else:
                 LOG.debug(f"Changing parent of {obj.LocalID}, but couldn't find old parent")
 
-    def _cancel_futures(self, local_id: int):
-        # Object was killed, so need to kill any pending futures.
-        for fut_key, futs in self._object_futures.items():
-            if fut_key[0] == local_id:
-                for fut in futs:
-                    fut.cancel()
-                break
-
     def _kill_object_by_local_id(self, local_id: int):
         obj = self.lookup_localid(local_id)
         self.missing_locals -= {local_id}
@@ -339,7 +325,7 @@ class ObjectManager:
 
         self._cancel_futures(local_id)
         if obj:
-            AddonManager.handle_object_killed(self._region.session(), self._region, obj)
+            self.run_kill_object_hooks(obj)
             child_ids = obj.ChildIDs
         else:
             LOG.debug(f"Tried to kill unknown object {local_id}")
@@ -397,23 +383,27 @@ class ObjectManager:
 
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
+    # noinspection PyUnusedLocal
+    def _lookup_cache_entry(self, local_id: int, crc: int) -> Optional[bytes]:
+        return None
+
     def handle_object_update_cached(self, packet: Message):
         seen_locals = []
+        missing_locals = set()
         for block in packet['ObjectData']:
             seen_locals.append(block["ID"])
             update_flags = block.deserialize_var("UpdateFlags", make_copy=False)
 
             # Check if we already know about the object
             obj = self.lookup_localid(block["ID"])
-            if obj is not None:
+            if obj is not None and obj.CRC == block["CRC"]:
                 self._update_existing_object(obj, {
                     "UpdateFlags": update_flags,
                     "RegionHandle": self._region.handle,
                 }, UpdateType.OBJECT_UPDATE)
                 continue
 
-            # Check if the object is in a viewer's VOCache
-            cached_obj_data = self.object_cache.lookup_object_data(block["ID"], block["CRC"])
+            cached_obj_data = self._lookup_cache_entry(block["ID"], block["CRC"])
             if cached_obj_data is not None:
                 cached_obj = normalize_object_update_compressed_data(cached_obj_data)
                 cached_obj["UpdateFlags"] = update_flags
@@ -422,8 +412,13 @@ class ObjectManager:
                 continue
 
             # Don't know about it and wasn't cached.
-            self.missing_locals.add(block["ID"])
+            missing_locals.add(block["ID"])
+        self.missing_locals.update(missing_locals)
+        self._handle_object_update_cached_misses(missing_locals)
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
+
+    def _handle_object_update_cached_misses(self, local_ids: Set[int]):
+        self.request_objects(local_ids)
 
     def handle_object_update_compressed(self, packet: Message):
         seen_locals = []
@@ -453,18 +448,6 @@ class ObjectManager:
                 LOG.debug(f"Received {packet.name} for unknown {block['ObjectID']}")
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
-    def _handle_get_object_cost(self, flow: HippoHTTPFlow):
-        parsed = llsd.parse_xml(flow.response.content)
-        if "error" in parsed:
-            return
-        for object_id, object_costs in parsed.items():
-            obj = self.lookup_fullid(UUID(object_id))
-            if not obj:
-                LOG.debug(f"Received ObjectCost for unknown {object_id}")
-                continue
-            obj.ObjectCosts.update(object_costs)
-            self.run_object_update_hooks(obj, {"ObjectCosts"}, UpdateType.COSTS)
-
     def _handle_kill_object(self, packet: Message):
         seen_locals = []
         for block in packet["ObjectData"]:
@@ -480,7 +463,7 @@ class ObjectManager:
         #  and always use the newest one containing a particular avatar ID?
         self._coarse_locations.clear()
 
-        coarse_locations: typing.Dict[UUID, Vector3] = {}
+        coarse_locations: Dict[UUID, Vector3] = {}
         for agent_block, location_block in zip(packet["AgentData"], packet["Location"]):
             x, y, z = location_block["X"], location_block["Y"], location_block["Z"]
             coarse_locations[agent_block["AgentID"]] = Vector3(
@@ -495,25 +478,6 @@ class ObjectManager:
 
         self._coarse_locations.update(coarse_locations)
 
-    def run_object_update_hooks(self, obj: Object, updated_props: Set[str], update_type: UpdateType):
-        if obj.PCode == PCode.AVATAR and "NameValue" in updated_props:
-            if obj.NameValue:
-                self.name_cache.update(obj.FullID, obj.NameValue.to_dict())
-        futures = self._object_futures.get((obj.LocalID, update_type), [])
-        for fut in futures[:]:
-            fut.set_result(obj)
-        AddonManager.handle_object_updated(self._region.session(), self._region, obj, updated_props)
-
-    def load_cache(self):
-        if not self.use_vo_cache or self.cache_loaded:
-            return
-        handle = self._region.handle
-        if not handle:
-            LOG.warning(f"Tried to load cache for {self._region} without a handle")
-            return
-        self.cache_loaded = True
-        self.object_cache = RegionViewerObjectCacheChain.for_region(handle, self._region.cache_id)
-
     def clear(self):
         for obj in self._localid_lookup.values():
             self._world_objects.handle_object_gone(obj)
@@ -525,24 +489,55 @@ class ObjectManager:
         for fut in tuple(itertools.chain(*self._object_futures.values())):
             fut.cancel()
         self._object_futures.clear()
-        self.object_cache = RegionViewerObjectCacheChain([])
-        self.cache_loaded = False
 
-    def request_object_properties(self, objects: typing.Union[OBJECT_OR_LOCAL, typing.Sequence[OBJECT_OR_LOCAL]])\
+    # noinspection PyUnusedLocal
+    def _is_localid_selected(self, local_id: int):
+        return False
+
+    def _process_get_object_cost_response(self, parsed: dict):
+        if "error" in parsed:
+            return
+        for object_id, object_costs in parsed.items():
+            obj = self.lookup_fullid(UUID(object_id))
+            if not obj:
+                LOG.debug(f"Received ObjectCost for unknown {object_id}")
+                continue
+            obj.ObjectCosts.update(object_costs)
+            self.run_object_update_hooks(obj, {"ObjectCosts"}, UpdateType.COSTS)
+
+    def run_object_update_hooks(self, obj: Object, updated_props: Set[str], update_type: UpdateType):
+        futures = self._object_futures.get((obj.LocalID, update_type), [])
+        for fut in futures[:]:
+            fut.set_result(obj)
+        if obj.PCode == PCode.AVATAR and "NameValue" in updated_props:
+            if obj.NameValue:
+                self.name_cache.update(obj.FullID, obj.NameValue.to_dict())
+
+    def run_kill_object_hooks(self, obj: Object):
+        pass
+
+    def _cancel_futures(self, local_id: int):
+        # Object went away, so need to kill any pending futures.
+        for fut_key, futs in self._object_futures.items():
+            if fut_key[0] == local_id:
+                for fut in futs:
+                    fut.cancel()
+                break
+
+    def request_object_properties(self, objects: Union[OBJECT_OR_LOCAL, Sequence[OBJECT_OR_LOCAL]])\
             -> List[asyncio.Future[Object]]:
         if isinstance(objects, (Object, int)):
             objects = (objects,)
         if not objects:
             return []
 
-        session = self._region.session()
-
         local_ids = tuple((o.LocalID if isinstance(o, Object) else o) for o in objects)
 
         # Don't mess with already selected objects
-        unselected_ids = tuple(local for local in local_ids if local not in session.selected.object_locals)
+        unselected_ids = tuple(local for local in local_ids if not self._is_localid_selected(local))
         ids_to_req = unselected_ids
 
+        session = self._region.session()
         while ids_to_req:
             blocks = [
                 Block("AgentData", AgentID=session.agent_id, SessionID=session.id),
@@ -572,7 +567,7 @@ class ObjectManager:
     def request_missing_objects(self) -> List[asyncio.Future[Object]]:
         return self.request_objects(self.missing_locals)
 
-    def request_objects(self, local_ids) -> List[asyncio.Future[Object]]:
+    def request_objects(self, local_ids: Union[int, Iterable[int]]) -> List[asyncio.Future[Object]]:
         """
         Request object local IDs, returning a list of awaitable handles for the objects
 
@@ -605,10 +600,10 @@ class ObjectManager:
         return futures
 
 
-class WorldObjectManager:
+class ClientWorldObjectManager:
     """Manages Objects for a session's whole world"""
-    def __init__(self, session: Session):
-        self._session: Session = proxify(session)
+    def __init__(self, session: BaseClientSession):
+        self._session: BaseClientSession = session
         self._fullid_lookup: Dict[UUID, Object] = {}
         message_handler = self._session.message_handler
         message_handler.subscribe("ObjectUpdate", self._handle_object_update)
@@ -619,51 +614,18 @@ class WorldObjectManager:
         message_handler.subscribe("ObjectUpdateCached",
                                   self._handle_object_update_cached)
 
-    def _wrap_region_update_handler(self, handler: Callable, message: Message):
-        """
-        Dispatch an ObjectUpdate to a region's handler based on RegionHandle
-
-        Indra doesn't care what region actually sent the message, just what
-        region handle is in the message, so we need a global message handler
-        plus dispatch.
-        """
-        region = self._session.region_by_handle(message["RegionData"]["RegionHandle"])
-        if not region:
-            return
-        return handler(region.objects, message)
-
-    def _handle_object_update(self, message: Message):
-        self._wrap_region_update_handler(ObjectManager.handle_object_update, message)
-
-    def _handle_terse_object_update(self, message: Message):
-        self._wrap_region_update_handler(ObjectManager.handle_terse_object_update, message)
-
-    def _handle_object_update_compressed(self, message: Message):
-        self._wrap_region_update_handler(ObjectManager.handle_object_update_compressed, message)
-
-    def _handle_object_update_cached(self, message: Message):
-        self._wrap_region_update_handler(ObjectManager.handle_object_update_cached, message)
-
-    def handle_new_object(self, obj: Object):
-        """Called by a region's ObjectManager when a new Object is tracked"""
-        self._fullid_lookup[obj.FullID] = obj
-
-    def handle_object_gone(self, obj: Object):
-        """Called by a region's ObjectManager on KillObject or region going away"""
-        self._fullid_lookup.pop(obj.FullID, None)
-
     def lookup_fullid(self, full_id: UUID) -> Optional[Object]:
         return self._fullid_lookup.get(full_id, None)
-
-    def lookup_avatar(self, full_id: UUID) -> Optional[Avatar]:
-        return {a.FullID: a for a in self.all_avatars}.get(full_id, None)
-
-    def __len__(self):
-        return len(self._fullid_lookup)
 
     @property
     def all_objects(self) -> Iterable[Object]:
         return self._fullid_lookup.values()
+
+    # TODO: all Avatars should be owned by the WorldObjectManager to deal with the
+    #  possibility of duplicate avatars in different regions due to CoarseLocationUpdate.
+    #  would also allow us to have persistent Avatar instances.
+    def lookup_avatar(self, full_id: UUID) -> Optional[Avatar]:
+        return {a.FullID: a for a in self.all_avatars}.get(full_id, None)
 
     @property
     def all_avatars(self) -> Iterable[Avatar]:
@@ -673,13 +635,51 @@ class WorldObjectManager:
         vals = {a.FullID: a for a in sorted(chained, key=lambda x: x.Object is not None)}
         return vals.values()
 
+    def __len__(self):
+        return len(self._fullid_lookup)
+
+    def _wrap_region_update_handler(self, handler: Callable, message: Message):
+        """
+        Dispatch an ObjectUpdate to a region's handler based on RegionHandle
+
+        Indra doesn't care what region actually sent the message, just what
+        region handle is in the message, so we need a global message handler
+        plus dispatch.
+        """
+        handle = message["RegionData"]["RegionHandle"]
+        region = self._session.region_by_handle(handle)
+        if not region:
+            LOG.warning(f"Got {message.name} for unknown region {handle}")
+            return
+        return handler(region.objects, message)
+
+    def _handle_object_update(self, message: Message):
+        self._wrap_region_update_handler(ClientObjectManager.handle_object_update, message)
+
+    def _handle_terse_object_update(self, message: Message):
+        self._wrap_region_update_handler(ClientObjectManager.handle_terse_object_update, message)
+
+    def _handle_object_update_compressed(self, message: Message):
+        self._wrap_region_update_handler(ClientObjectManager.handle_object_update_compressed, message)
+
+    def _handle_object_update_cached(self, message: Message):
+        self._wrap_region_update_handler(ClientObjectManager.handle_object_update_cached, message)
+
+    def handle_new_object(self, obj: Object):
+        """Called by a region's ObjectManager when a new Object is tracked"""
+        self._fullid_lookup[obj.FullID] = obj
+
+    def handle_object_gone(self, obj: Object):
+        """Called by a region's ObjectManager on KillObject or region going away"""
+        self._fullid_lookup.pop(obj.FullID, None)
+
     def request_missing_objects(self) -> List[asyncio.Future[Object]]:
         futs = []
         for region in self._session.regions:
             futs.extend(region.objects.request_missing_objects())
         return futs
 
-    def request_object_properties(self, objects: typing.Union[Object, typing.Sequence[Object]]) \
+    def request_object_properties(self, objects: Union[Object, Sequence[Object]]) \
             -> List[asyncio.Future[Object]]:
         # Doesn't accept local ID unlike ObjectManager because they're ambiguous here.
         if isinstance(objects, Object):
@@ -710,3 +710,6 @@ class WorldObjectManager:
             if obj.Parent is None:
                 await asyncio.wait_for(region.objects.request_objects(obj.ParentID)[0], wait_time)
             obj = obj.Parent
+
+    def clear(self):
+        self._fullid_lookup.clear()

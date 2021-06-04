@@ -11,12 +11,14 @@ import urllib.parse
 import multidict
 
 from hippolyzer.lib.base.datatypes import Vector3, UUID
+from hippolyzer.lib.base.helpers import proxify
 from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.objects import handle_to_global_pos
+from hippolyzer.lib.client.state import BaseClientRegion
 from hippolyzer.lib.proxy.caps_client import ProxyCapsClient
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
-from hippolyzer.lib.proxy.objects import ObjectManager
+from hippolyzer.lib.proxy.object_manager import ProxyObjectManager
 from hippolyzer.lib.base.transfer_manager import TransferManager
 from hippolyzer.lib.base.xfer_manager import XferManager
 
@@ -33,6 +35,10 @@ class CapType(enum.Enum):
 
 
 class CapsMultiDict(multidict.MultiDict[Tuple[CapType, str]]):
+    # TODO: Make a view object for this that's just name -> URL
+    #  deriving from MultiMapping[_T] so we don't have to do
+    #  so many copies for consumers that aren't expecting the
+    #  CapType tag.
     def add(self, key, value) -> None:
         # Prepend rather than append when adding caps.
         # Necessary so the most recent for a region URI is returned
@@ -42,7 +48,7 @@ class CapsMultiDict(multidict.MultiDict[Tuple[CapType, str]]):
             super().add(key, val)
 
 
-class ProxiedRegion:
+class ProxiedRegion(BaseClientRegion):
     def __init__(self, circuit_addr, seed_cap: str, session, handle=None):
         # A client may make a Seed request twice, and may get back two (valid!) sets of
         # Cap URIs. We need to be able to look up both, so MultiDict is necessary.
@@ -56,26 +62,16 @@ class ProxiedRegion:
         self._caps_url_lookup: Dict[str, Tuple[CapType, str]] = {}
         if seed_cap:
             self._caps["Seed"] = (CapType.NORMAL, seed_cap)
-        self.session: Optional[Callable[[], Session]] = weakref.ref(session)
+        self.session: Callable[[], Session] = weakref.ref(session)
         self.message_handler: MessageHandler[Message] = MessageHandler()
         self.http_message_handler: MessageHandler[HippoHTTPFlow] = MessageHandler()
         self.eq_manager = EventQueueManager(self)
-        self.caps_client = ProxyCapsClient(self._caps)
-        self.objects = ObjectManager(self, use_vo_cache=True)
+        self.caps_client = ProxyCapsClient(proxify(self))
+        name_cache = session.session_manager.name_cache
+        self.objects: ProxyObjectManager = ProxyObjectManager(self, name_cache, use_vo_cache=True)
+        self.xfer_manager = XferManager(proxify(self), self.session().secure_session_id)
+        self.transfer_manager = TransferManager(proxify(self), session.agent_id, session.id)
         self._recalc_caps()
-
-    @property
-    def xfer_manager(self) -> XferManager:
-        return XferManager(self.message_handler, self.circuit, self.session().secure_session_id)
-
-    @property
-    def transfer_manager(self) -> TransferManager:
-        return TransferManager(
-            self.message_handler,
-            self.circuit,
-            self.session().agent_id,
-            self.session().session_id,
-        )
 
     @property
     def name(self):

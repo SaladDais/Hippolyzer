@@ -77,7 +77,7 @@ class _HippoSessionRequestContextManager:
 
 CAPS_DICT = Union[
     Mapping[str, str],
-    multidict.MultiDict[Tuple[Any, str]]
+    multidict.MultiDict[str],
 ]
 
 
@@ -88,6 +88,9 @@ class CapsClient:
     def _request_fixups(self, cap_or_url: str, headers: Dict, proxy: Optional[bool], ssl: Any):
         return cap_or_url, headers, proxy, ssl
 
+    def _get_caps(self) -> Optional[CAPS_DICT]:
+        return self._caps
+
     def request(self, method: str, cap_or_url: str, *, path: str = "", data: Any = None,
                 headers: Optional[Dict] = None, session: Optional[aiohttp.ClientSession] = None,
                 llsd: Any = dataclasses.MISSING, params: Optional[Dict[str, Any]] = None,
@@ -97,14 +100,12 @@ class CapsClient:
             if path:
                 raise ValueError("Specifying both path and a full URL not supported")
         else:
-            if self._caps is None:
+            caps = self._get_caps()
+            if caps is None:
                 raise RuntimeError(f"Need a caps dict to request a Cap like {cap_or_url}")
-            if cap_or_url not in self._caps:
+            if cap_or_url not in caps:
                 raise KeyError(f"{cap_or_url} is not a full URL and not a Cap")
-            cap_or_url = self._caps[cap_or_url]
-            # Stupid hack for proxy multidicts that contain a tuple of `(cap_type, cap_url)`
-            if isinstance(cap_or_url, tuple):
-                cap_or_url = cap_or_url[-1]
+            cap_or_url = caps[cap_or_url]
         if path:
             cap_or_url += path
 

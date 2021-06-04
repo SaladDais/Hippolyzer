@@ -6,6 +6,7 @@ from typing import *
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
+from hippolyzer.lib.base.message.circuit import ConnectionHolder
 from hippolyzer.lib.base.templates import (
     AssetType,
     EstateAssetType,
@@ -30,6 +31,12 @@ class MockHandlingCircuit(ProxiedCircuit):
         asyncio.get_event_loop().call_soon(self.handler.handle, message)
 
 
+class MockConnectionHolder(ConnectionHolder):
+    def __init__(self, circuit, message_handler):
+        self.circuit = circuit
+        self.message_handler = message_handler
+
+
 class BaseTransferTests(unittest.IsolatedAsyncioTestCase):
     SMALL_PAYLOAD = b"foobar"
     LARGE_PAYLOAD = b"foobar" * 500
@@ -41,13 +48,15 @@ class BaseTransferTests(unittest.IsolatedAsyncioTestCase):
         # and vice-versa
         self.client_circuit = MockHandlingCircuit(self.server_message_handler)
         self.server_circuit = MockHandlingCircuit(self.client_message_handler)
+        self.server_connection = MockConnectionHolder(self.server_circuit, self.server_message_handler)
+        self.client_connection = MockConnectionHolder(self.client_circuit, self.client_message_handler)
 
 
 class XferManagerTests(BaseTransferTests):
     def setUp(self) -> None:
         super().setUp()
         self.secure_session_id = UUID.random()
-        self.xfer_manager = XferManager(self.client_message_handler, self.client_circuit, self.secure_session_id)
+        self.xfer_manager = XferManager(self.client_connection, self.secure_session_id)
         self.received_bytes: Optional[bytes] = None
 
     async def _handle_vfile_upload(self):
@@ -58,7 +67,7 @@ class XferManagerTests(BaseTransferTests):
         if asset_block["AssetData"]:
             self.received_bytes = asset_block["AssetData"]
         else:
-            manager = XferManager(self.server_message_handler, self.server_circuit)
+            manager = XferManager(self.server_connection)
             xfer = await manager.request(vfile_id=asset_id, vfile_type=AssetType.BODYPART)
             self.received_bytes = xfer.reassemble_chunks()
         self.server_circuit.send_message(Message(
@@ -87,8 +96,7 @@ class TestTransferManager(BaseTransferTests):
     def setUp(self) -> None:
         super().setUp()
         self.transfer_manager = TransferManager(
-            self.client_message_handler,
-            self.client_circuit,
+            self.client_connection,
             UUID.random(),
             UUID.random(),
         )

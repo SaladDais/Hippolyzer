@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+import abc
 import datetime as dt
 import logging
 from typing import *
+from typing import Optional
 
+from .message_handler import MessageHandler
 from ..network.transport import AbstractUDPTransport, UDPPacket, Direction, ADDR_TUPLE
-from .message import Block
+from .message import Block, Message
 from .msgtypes import PacketFlags
 from .udpserializer import UDPMessageSerializer
-from .message import Message
 
 
 class Circuit:
@@ -63,3 +65,16 @@ class Circuit:
 
     def __repr__(self):
         return "<%s %r : %r>" % (self.__class__.__name__, self.near_host, self.host)
+
+
+class ConnectionHolder(abc.ABC):
+    """
+    Any object that has both a circuit and a message handler
+
+    Preferred to explicitly passing around a circuit, message handler pair
+    because generally a ConnectionHolder represents a region or a client.
+    The same region or client may have multiple different circuits across the
+    lifetime of a session (due to region restarts, etc.)
+    """
+    circuit: Optional[Circuit]
+    message_handler: MessageHandler[Message]

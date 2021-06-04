@@ -1,0 +1,34 @@
+"""
+Base classes for common session-related state shared between clients and proxies
+"""
+from __future__ import annotations
+
+import abc
+from typing import *
+
+from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.message.circuit import ConnectionHolder
+from hippolyzer.lib.base.message.message import Message
+from hippolyzer.lib.base.message.message_handler import MessageHandler
+
+if TYPE_CHECKING:
+    from hippolyzer.lib.client.object_manager import ClientObjectManager, ClientWorldObjectManager
+
+
+class BaseClientRegion(ConnectionHolder, abc.ABC):
+    """Represents a client's view of a remote region"""
+    # Actually a weakref
+    handle: Optional[int]
+    session: Callable[[], BaseClientSession]
+    objects: ClientObjectManager
+
+
+class BaseClientSession(abc.ABC):
+    """Represents a client's view of a remote session"""
+    id: UUID
+    agent_id: UUID
+    secure_session_id: UUID
+    message_handler: MessageHandler[Message]
+    regions: Sequence[BaseClientRegion]
+    region_by_handle: Callable[[int], Optional[BaseClientRegion]]
+    objects: ClientWorldObjectManager

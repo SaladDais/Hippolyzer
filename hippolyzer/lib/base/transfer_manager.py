@@ -8,9 +8,8 @@ import dataclasses
 from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID
-from hippolyzer.lib.base.message.circuit import Circuit
 from hippolyzer.lib.base.message.message import Block, Message
-from hippolyzer.lib.base.message.message_handler import MessageHandler
+from hippolyzer.lib.base.message.circuit import ConnectionHolder
 from hippolyzer.lib.base.templates import (
     TransferRequestParamsBase,
     TransferChannelType,
@@ -71,13 +70,11 @@ class Transfer:
 class TransferManager:
     def __init__(
             self,
-            message_handler: MessageHandler[Message],
-            circuit: Circuit,
+            connection_holder: ConnectionHolder,
             agent_id: Optional[UUID] = None,
             session_id: Optional[UUID] = None,
     ):
-        self._message_handler = message_handler
-        self._circuit = circuit
+        self._connection_holder = connection_holder
         self._agent_id = agent_id
         self._session_id = session_id
 
@@ -97,7 +94,7 @@ class TransferManager:
         if params_dict.get("SessionID", dataclasses.MISSING) is None:
             params.SessionID = self._session_id
 
-        self._circuit.send_message(Message(
+        self._connection_holder.circuit.send_message(Message(
             'TransferRequest',
             Block(
                 'TransferInfo',
@@ -114,7 +111,7 @@ class TransferManager:
 
     async def _pump_transfer_replies(self, transfer: Transfer):
         # Subscribe to message related to our transfer while we're in this block
-        with self._message_handler.subscribe_async(
+        with self._connection_holder.message_handler.subscribe_async(
                 _TRANSFER_MESSAGES,
                 predicate=transfer.is_our_message,
         ) as get_msg:
