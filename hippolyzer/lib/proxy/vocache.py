@@ -1,6 +1,12 @@
 """
 Viewer object cache implementation
 
+Important to have because if we're debugging potential state management issues
+in the viewer's scene graph, we need an idea of what it's scene graph _should_
+look like at the current point in time. We can get that by hooking into its
+VOCache so we know about its cache hits, and then compare whats in the proxy's
+ObjectManager vs the viewer's (through GDB or something.)
+
 Everything little-endian unless otherwise specified.
 These use native struct alignment and padding, which is the reason for the
 native address size being stored in the header. They should have just packed
