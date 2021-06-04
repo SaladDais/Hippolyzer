@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import asyncio
 
+import aioresponses
 from mitmproxy.test import tflow, tutils
 from mitmproxy.http import HTTPFlow
+from yarl import URL
 
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.addons import AddonManager
@@ -70,3 +72,21 @@ class LLUDPIntegrationTests(BaseProxyTest):
         mitm_flow: HTTPFlow = HTTPFlow.from_state(flow_state)
         # The response sent back to mitmproxy should have been our modified version
         self.assertEqual(True, mitm_flow.metadata["touched_addon"])
+
+
+class TestCapsClient(BaseProxyTest):
+    def setUp(self) -> None:
+        super().setUp()
+        self._setup_default_circuit()
+        self.caps = {}
+        self.caps_client = self.session.main_region.caps_client
+
+    async def test_requests_proxied_by_default(self):
+        with aioresponses.aioresponses() as m:
+            m.get("http://example.com/", body=b"foo")
+            async with self.caps_client.get("http://example.com/") as resp:
+                self.assertEqual(await resp.read(), b"foo")
+            kwargs = m.requests[("GET", URL("http://example.com/"))][0].kwargs
+        # Request should have been proxied, with a header marking it
+        self.assertEqual(kwargs['headers']["X-Hippo-Injected"], "1")
+        self.assertEqual(kwargs['proxy'], "http://127.0.0.1:9062")

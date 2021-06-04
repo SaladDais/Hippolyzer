@@ -1,17 +1,16 @@
+import unittest
+
 import aiohttp
 import aioresponses
 from yarl import URL
 
-from hippolyzer.lib.proxy.region import ProxiedRegion
-
-from . import BaseProxyTest
+from hippolyzer.lib.base.network.caps_client import CapsClient
 
 
-class TestCapsClient(BaseProxyTest):
+class TestCapsClient(unittest.IsolatedAsyncioTestCase):
     def setUp(self) -> None:
-        super().setUp()
-        self.region = ProxiedRegion(("127.0.0.1", 1), "", self.session)
-        self.caps_client = self.region.caps_client
+        self.caps = {}
+        self.caps_client = CapsClient(self.caps)
 
     async def test_bare_url_works(self):
         with aioresponses.aioresponses() as m:
@@ -33,7 +32,7 @@ class TestCapsClient(BaseProxyTest):
                 self.assertEqual(await resp.read_llsd(), 2)
 
     async def test_caps(self):
-        self.region.update_caps({"Foobar": "https://example.com/"})
+        self.caps.update({"Foobar": "https://example.com/"})
         with aioresponses.aioresponses() as m:
             m.post("https://example.com/baz", body=b"ok")
             data = {"hi": "hello"}
