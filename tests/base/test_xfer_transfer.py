@@ -80,7 +80,7 @@ class XferManagerTests(BaseTransferTests):
         asyncio.create_task(self._handle_vfile_upload())
         await asyncio.wait_for(self.xfer_manager.upload_asset(
             AssetType.BODYPART, self.SMALL_PAYLOAD
-        ), timeout=0.05)
+        ), timeout=0.1)
         self.assertEqual(self.received_bytes, self.SMALL_PAYLOAD)
 
     async def test_large_xfer_upload(self):
@@ -88,7 +88,7 @@ class XferManagerTests(BaseTransferTests):
         asyncio.create_task(self._handle_vfile_upload())
         await asyncio.wait_for(self.xfer_manager.upload_asset(
             AssetType.BODYPART, self.LARGE_PAYLOAD
-        ), timeout=0.05)
+        ), timeout=0.1)
         self.assertEqual(self.received_bytes, self.LARGE_PAYLOAD)
 
 
@@ -147,6 +147,6 @@ class TestTransferManager(BaseTransferTests):
             params=TransferRequestParamsSimEstate(
                 EstateAssetType=EstateAssetType.COVENANT,
             ),
-        ), 0.05)
+        ), 0.1)
         self.assertEqual(len(self.LARGE_PAYLOAD), transfer.expected_size)
         self.assertEqual(self.LARGE_PAYLOAD, transfer.reassemble_chunks())
