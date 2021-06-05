@@ -20,7 +20,7 @@ class VFSBlock:
 class VFS:
     def __init__(self, index_path):
         self._data_fh = None
-        self.blocks = []
+        self.blocks: List[VFSBlock] = []
         self._uuid_lookup: Dict[UUID, VFSBlock] = {}
 
         assert "index.db2" in index_path
@@ -44,10 +44,10 @@ class VFS:
                 self.blocks.append(block)
                 self._uuid_lookup[block.file_id] = block
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[VFSBlock]:
         return iter(self.blocks)
 
-    def __getitem__(self, item: UUID):
+    def __getitem__(self, item: UUID) -> VFSBlock:
         return self._uuid_lookup[item]
 
     def __contains__(self, item: UUID):
@@ -58,7 +58,7 @@ class VFS:
             self._data_fh.close()
             self._data_fh = None
 
-    def read_block(self, block: VFSBlock):
+    def read_block(self, block: VFSBlock) -> bytes:
         self._data_fh.seek(block.location)
         return self._data_fh.read(block.size)
 
