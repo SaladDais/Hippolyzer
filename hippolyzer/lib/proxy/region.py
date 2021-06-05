@@ -67,8 +67,7 @@ class ProxiedRegion(BaseClientRegion):
         self.http_message_handler: MessageHandler[HippoHTTPFlow] = MessageHandler()
         self.eq_manager = EventQueueManager(self)
         self.caps_client = ProxyCapsClient(proxify(self))
-        name_cache = session.session_manager.name_cache
-        self.objects: ProxyObjectManager = ProxyObjectManager(self, name_cache, use_vo_cache=True)
+        self.objects: ProxyObjectManager = ProxyObjectManager(self, use_vo_cache=True)
         self.xfer_manager = XferManager(proxify(self), self.session().secure_session_id)
         self.transfer_manager = TransferManager(proxify(self), session.agent_id, session.id)
         self._recalc_caps()

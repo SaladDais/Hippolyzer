@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 class Session(BaseClientSession):
     def __init__(self, session_id, secure_session_id, agent_id, circuit_code,
-                 login_data=None, session_manager=None):
+                 login_data=None, session_manager: Optional[SessionManager] = None):
         self.login_data = login_data or {}
         self.pending = True
         self.id: UUID = session_id
@@ -43,7 +43,7 @@ class Session(BaseClientSession):
         self.started_at = datetime.datetime.now()
         self.message_handler: MessageHandler[Message] = MessageHandler()
         self.http_message_handler: MessageHandler[HippoHTTPFlow] = MessageHandler()
-        self.objects = ClientWorldObjectManager(self)
+        self.objects = ClientWorldObjectManager(self, session_manager.name_cache)
         self._main_region = None
 
     @property

@@ -356,7 +356,7 @@ class RegionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioT
                       b'LastName STRING RW DS Resident\n'
                       b'Title STRING RW DS foo',
         )
-        self.assertEqual(self.object_manager.name_cache.lookup(obj.FullID).first_name, "firstname")
+        self.assertEqual(self.session_manager.name_cache.lookup(obj.FullID).first_name, "firstname")
         av = self.object_manager.lookup_avatar(obj.FullID)
         self.assertEqual(av.Name, "unicodename (firstname Resident)")
         self.assertEqual(av.PreferredName, "unicodename")

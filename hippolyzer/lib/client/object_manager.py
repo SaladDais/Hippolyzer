@@ -1,3 +1,7 @@
+"""
+Manager for a client's view of objects in the region and world.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -28,6 +32,8 @@ LOG = logging.getLogger(__name__)
 
 
 class OrphanManager:
+    """Tracker for objects that are parented to objects the client doesn't know about"""
+
     def __init__(self):
         self._orphans: Dict[int, List[int]] = collections.defaultdict(list)
 
@@ -63,6 +69,7 @@ OBJECT_OR_LOCAL = Union[Object, int]
 
 
 class LocationType(enum.IntEnum):
+    NONE = enum.auto()
     COARSE = enum.auto()
     EXACT = enum.auto()
 
@@ -76,6 +83,7 @@ class UpdateType(enum.IntEnum):
 
 class Avatar:
     """Wrapper for an avatar known through ObjectUpdate or CoarseLocationUpdate"""
+
     def __init__(
             self,
             full_id: UUID,
@@ -87,21 +95,26 @@ class Avatar:
         self.FullID: UUID = full_id
         self.Object: Optional["Object"] = obj
         self.RegionHandle: int = region_handle
-        self._coarse_location = coarse_location
+        # TODO: Allow hooking into getZOffsets FS bridge response
+        #  to fill in the Z axis if it's infinite
+        self.CoarseLocation = coarse_location
+        self.Valid = True
         self._resolved_name = resolved_name
 
     @property
     def LocationType(self) -> "LocationType":
         if self.Object and self.Object.AncestorsKnown:
             return LocationType.EXACT
-        return LocationType.COARSE
+        if self.CoarseLocation is not None:
+            return LocationType.COARSE
+        return LocationType.NONE
 
     @property
     def RegionPosition(self) -> Vector3:
         if self.Object and self.Object.AncestorsKnown:
             return self.Object.RegionPosition
-        if self._coarse_location is not None:
-            return self._coarse_location
+        if self.CoarseLocation is not None:
+            return self.CoarseLocation
         raise ValueError(f"Avatar {self.FullID} has no known position")
 
     @property
@@ -120,20 +133,23 @@ class Avatar:
             return None
         return self._resolved_name.preferred_name
 
+    def __repr__(self):
+        loc_str = str(self.RegionPosition) if self.LocationType != LocationType.NONE else "?"
+        return f"<{self.__class__.__name__} {self.FullID} {self.Name!r} @ {loc_str}>"
+
 
 class ClientObjectManager:
     """
     Object manager for a specific region
     """
 
-    def __init__(self, region: BaseClientRegion, name_cache: Optional[NameCache]):
+    def __init__(self, region: BaseClientRegion):
         self._region: BaseClientRegion = region
         self._localid_lookup: Dict[int, Object] = {}
         self._fullid_lookup: Dict[UUID, int] = {}
-        self._coarse_locations: Dict[UUID, Vector3] = {}
+        self.coarse_locations: Dict[UUID, Vector3] = {}
         self._object_futures: Dict[Tuple[int, int], List[asyncio.Future]] = {}
         self._orphan_manager = OrphanManager()
-        self.name_cache = name_cache or NameCache()
         # Objects that we've seen references to but don't have data for
         self.missing_locals = set()
 
@@ -167,22 +183,8 @@ class ClientObjectManager:
 
     @property
     def all_avatars(self) -> Iterable[Avatar]:
-        av_objects = {o.FullID: o for o in self.all_objects if o.PCode == PCode.AVATAR}
-        all_ids = set(av_objects.keys()) | self._coarse_locations.keys()
-
-        avatars: List[Avatar] = []
-        for av_id in all_ids:
-            av_obj = av_objects.get(av_id)
-            coarse_location = self._coarse_locations.get(av_id)
-
-            avatars.append(Avatar(
-                full_id=av_id,
-                region_handle=self._region.handle,
-                coarse_location=coarse_location,
-                obj=av_obj,
-                resolved_name=self.name_cache.lookup(av_id),
-            ))
-        return avatars
+        return tuple(a for a in self._world_objects.all_avatars
+                     if a.RegionHandle == self._region.handle)
 
     def lookup_avatar(self, fullid: UUID) -> Optional[Avatar]:
         for avatar in self.all_avatars:
@@ -200,8 +202,9 @@ class ClientObjectManager:
 
         actually_updated_props = set()
 
-        # The object just changed regions, we have to remove it from the old one.
         if old_region_handle != new_region_handle:
+            # The object just changed regions, we have to remove it from the old one.
+            # Our LocalID will most likely change because, well, our locale changed.
             old_region.objects.untrack_object(obj)
         elif obj.LocalID != new_local_id:
             # Our LocalID changed, and we deal with linkages to other prims by
@@ -224,6 +227,15 @@ class ClientObjectManager:
             # so mark it tracked on this region. This should implicitly pick up any
             # orphans and handle parent ID changes.
             self.track_object(obj)
+            # `Avatar` instances are owned by WorldObjectManager, let it know an avatar
+            # just changed regions so it can update the RegionHandle.
+            # TODO: These kinds of complex interdependencies between world / region
+            #  object managers shows that almost all logic should just be in the world
+            #  object manager, with the region object manager just being a thin wrapper
+            #  around it. Could have a dict keyed on region handle that contained
+            #  region-specific state like localid lookups, orphan manager, etc.
+            if obj.PCode == PCode.AVATAR:
+                self._world_objects.rebuild_avatar_objects()
         elif new_parent_id != old_parent_id:
             # Parent ID changed, but we're in the same region
             self._unparent_object(obj, old_parent_id)
@@ -355,12 +367,13 @@ class ClientObjectManager:
             object_data = normalize_object_update(block, self._region.handle)
 
             seen_locals.append(object_data["LocalID"])
+            # Do a lookup by FullID, if an object with this FullID already exists anywhere in
+            # our view of the world then we want to move it to this region.
             obj = self._world_objects.lookup_fullid(object_data["FullID"])
             if obj:
                 self._update_existing_object(obj, object_data, UpdateType.OBJECT_UPDATE)
             else:
-                obj = Object(**object_data)
-                self._track_new_object(obj)
+                self._track_new_object(Object(**object_data))
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
     def handle_terse_object_update(self, packet: Message):
@@ -429,8 +442,7 @@ class ClientObjectManager:
             if obj:
                 self._update_existing_object(obj, object_data, UpdateType.OBJECT_UPDATE)
             else:
-                obj = Object(**object_data)
-                self._track_new_object(obj)
+                self._track_new_object(Object(**object_data))
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
     def _handle_object_properties_generic(self, packet: Message):
@@ -456,12 +468,7 @@ class ClientObjectManager:
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
     def _handle_coarse_location_update(self, packet: Message):
-        # TODO: This could lead to weird situations when an avatar crosses a
-        #  region border. Might temporarily still have a CoarseLocationUpdate containing
-        #  the avatar in the old region, making the avatar appear to be in both regions.
-        #  figure out best way to deal with that. Store CoarseLocations by region handle
-        #  and always use the newest one containing a particular avatar ID?
-        self._coarse_locations.clear()
+        self.coarse_locations.clear()
 
         coarse_locations: Dict[UUID, Vector3] = {}
         for agent_block, location_block in zip(packet["AgentData"], packet["Location"]):
@@ -476,19 +483,21 @@ class ClientObjectManager:
                 Z=z * 4 if z != 255 else math.inf,
             )
 
-        self._coarse_locations.update(coarse_locations)
+        self.coarse_locations.update(coarse_locations)
+        self._world_objects.rebuild_avatar_objects()
 
     def clear(self):
         for obj in self._localid_lookup.values():
             self._world_objects.handle_object_gone(obj)
+        self.coarse_locations.clear()
         self._localid_lookup.clear()
         self._fullid_lookup.clear()
-        self._coarse_locations.clear()
         self._orphan_manager.clear()
         self.missing_locals.clear()
         for fut in tuple(itertools.chain(*self._object_futures.values())):
             fut.cancel()
         self._object_futures.clear()
+        self._world_objects.rebuild_avatar_objects()
 
     # noinspection PyUnusedLocal
     def _is_localid_selected(self, local_id: int):
@@ -511,7 +520,7 @@ class ClientObjectManager:
             fut.set_result(obj)
         if obj.PCode == PCode.AVATAR and "NameValue" in updated_props:
             if obj.NameValue:
-                self.name_cache.update(obj.FullID, obj.NameValue.to_dict())
+                self._world_objects.name_cache.update(obj.FullID, obj.NameValue.to_dict())
 
     def run_kill_object_hooks(self, obj: Object):
         pass
@@ -602,9 +611,12 @@ class ClientObjectManager:
 
 class ClientWorldObjectManager:
     """Manages Objects for a session's whole world"""
-    def __init__(self, session: BaseClientSession):
+    def __init__(self, session: BaseClientSession, name_cache: Optional[NameCache]):
         self._session: BaseClientSession = session
         self._fullid_lookup: Dict[UUID, Object] = {}
+        self._avatars: Dict[UUID, Avatar] = {}
+        self._avatar_objects: Dict[UUID, Object] = {}
+        self.name_cache = name_cache or NameCache()
         message_handler = self._session.message_handler
         message_handler.subscribe("ObjectUpdate", self._handle_object_update)
         message_handler.subscribe("ImprovedTerseObjectUpdate",
@@ -621,19 +633,12 @@ class ClientWorldObjectManager:
     def all_objects(self) -> Iterable[Object]:
         return self._fullid_lookup.values()
 
-    # TODO: all Avatars should be owned by the WorldObjectManager to deal with the
-    #  possibility of duplicate avatars in different regions due to CoarseLocationUpdate.
-    #  would also allow us to have persistent Avatar instances.
     def lookup_avatar(self, full_id: UUID) -> Optional[Avatar]:
         return {a.FullID: a for a in self.all_avatars}.get(full_id, None)
 
     @property
     def all_avatars(self) -> Iterable[Avatar]:
-        chained = itertools.chain(*(r.objects.all_avatars for r in self._session.regions))
-        # If we have two regions with an avatar and one is just a stale coarselocation, make
-        # sure we take the one with the full object.
-        vals = {a.FullID: a for a in sorted(chained, key=lambda x: x.Object is not None)}
-        return vals.values()
+        return tuple(self._avatars.values())
 
     def __len__(self):
         return len(self._fullid_lookup)
@@ -668,10 +673,67 @@ class ClientWorldObjectManager:
     def handle_new_object(self, obj: Object):
         """Called by a region's ObjectManager when a new Object is tracked"""
         self._fullid_lookup[obj.FullID] = obj
+        if obj.PCode == PCode.AVATAR:
+            self._avatar_objects[obj.FullID] = obj
+            self.rebuild_avatar_objects()
 
     def handle_object_gone(self, obj: Object):
         """Called by a region's ObjectManager on KillObject or region going away"""
         self._fullid_lookup.pop(obj.FullID, None)
+        if obj.PCode == PCode.AVATAR:
+            self._avatar_objects.pop(obj.FullID, None)
+            self.rebuild_avatar_objects()
+
+    def rebuild_avatar_objects(self):
+        # Merge together avatars known through coarse locations or objects
+        coarse_locations: Dict[UUID, Tuple[int, Vector3]] = {}
+        for region in self._session.regions:
+            for av_key, location in region.objects.coarse_locations.items():
+                coarse_locations[av_key] = (region.handle, location)
+        current_av_details: Dict[UUID, Tuple[Optional[Tuple[int, Vector3]], Optional[Object]]] = {}
+        for av_key in set(coarse_locations.keys()) | set(self._avatar_objects.keys()):
+            details = (coarse_locations.get(av_key), self._avatar_objects.get(av_key))
+            current_av_details[av_key] = details
+
+        # Look for changes in avatars we're already tracking
+        for existing_key in tuple(self._avatars.keys()):
+            av = self._avatars[existing_key]
+            if existing_key in current_av_details:
+                # This avatar this exists, update it.
+                coarse_pair, av_obj = current_av_details[existing_key]
+                av.Object = av_obj
+                if coarse_pair:
+                    coarse_handle, coarse_location = coarse_pair
+                    av.CoarseLocation = coarse_location
+                    av.RegionHandle = coarse_handle
+                if av_obj:
+                    av.Object = av_obj
+                    av.RegionHandle = av_obj.RegionHandle
+            else:
+                # Avatar isn't in coarse locations or objects, it's gone.
+                self._avatars.pop(existing_key, None)
+                av.Object = None
+                av.CoarseLocation = None
+                av.Valid = False
+
+        # Check for any new avatars
+        for av_key, (coarse_pair, av_obj) in current_av_details.items():
+            if av_key in self._avatars:
+                continue
+            region_handle = None
+            coarse_location = None
+            if coarse_pair:
+                region_handle, coarse_location = coarse_pair
+            if av_obj:
+                region_handle = av_obj.RegionHandle
+            assert region_handle is not None
+            self._avatars[av_key] = Avatar(
+                full_id=av_key,
+                region_handle=region_handle,
+                resolved_name=self.name_cache.lookup(av_key, create_if_none=True),
+                coarse_location=coarse_location,
+                obj=av_obj,
+            )
 
     def request_missing_objects(self) -> List[asyncio.Future[Object]]:
         futs = []
@@ -713,3 +775,5 @@ class ClientWorldObjectManager:
 
     def clear(self):
         self._fullid_lookup.clear()
+        self._avatars.clear()
+        self._avatar_objects.clear()

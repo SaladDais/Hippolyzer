@@ -43,8 +43,12 @@ class NameCache:
     ):
         message_handler.subscribe("UUIDNameReply", self._handle_uuid_name_reply)
 
-    def lookup(self, uuid: UUID) -> Optional[NameCacheEntry]:
-        return self._cache.get(uuid)
+    def lookup(self, uuid: UUID, create_if_none: bool = False) -> Optional[NameCacheEntry]:
+        val = self._cache.get(uuid)
+        if create_if_none and val is None:
+            val = NameCacheEntry(full_id=uuid)
+            self._cache[uuid] = val
+        return val
 
     def update(self, full_id: UUID, vals: dict):
         # upsert the cache entry

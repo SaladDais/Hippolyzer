@@ -12,7 +12,6 @@ from hippolyzer.lib.client.object_manager import (
 from hippolyzer.lib.base.objects import Object
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-from hippolyzer.lib.proxy.namecache import ProxyNameCache
 from hippolyzer.lib.proxy.vocache import RegionViewerObjectCacheChain
 
 if TYPE_CHECKING:
@@ -30,10 +29,9 @@ class ProxyObjectManager(ClientObjectManager):
     def __init__(
             self,
             region: ProxiedRegion,
-            name_cache: Optional[ProxyNameCache] = None,
             use_vo_cache: bool = False
     ):
-        super().__init__(region, name_cache)
+        super().__init__(region)
         self.use_vo_cache = use_vo_cache
         self.cache_loaded = False
         self.object_cache = RegionViewerObjectCacheChain([])
