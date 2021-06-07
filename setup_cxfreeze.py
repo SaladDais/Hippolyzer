@@ -82,6 +82,7 @@ class FinalizeCXFreezeCommand(Command):
                         pass
                 for to_copy in COPY_TO_ZIP:
                     shutil.copy(BASE_DIR / to_copy, path / to_copy)
+                shutil.copytree(BASE_DIR / "addon_examples", path / "addon_examples")
                 zip_path = BASE_DIR / "dist" / path.name
                 shutil.make_archive(zip_path, "zip", path)
 
