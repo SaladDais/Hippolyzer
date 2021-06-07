@@ -153,6 +153,32 @@ class RegionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioT
         obj = self.region_object_manager.lookup_fullid(msg["ObjectData"]["FullID"])
         self.assertIsNotNone(obj)
 
+    def test_terse_object_update(self):
+        msg = self._create_object_update(pos=Vector3(1, 2, 3))
+        self.message_handler.handle(msg)
+        local_id = msg["ObjectData"]["ID"]
+        msg = Message(
+            'ImprovedTerseObjectUpdate',
+            Block('RegionData', RegionHandle=123, TimeDilation=65345),
+            Block(
+                'ObjectData',
+                Data_={
+                    'ID': local_id,
+                    'State': 0,
+                    'FootCollisionPlane': None,
+                    'Position': Vector3(-2, -3, -4),
+                    'Velocity': Vector3(-0.0, -0.0, -0.0),
+                    'Acceleration': Vector3(-0.0, -0.0, -0.0),
+                    'Rotation': Quaternion(0, 0, 0, 1),
+                    'AngularVelocity': Vector3(-0.0, -0.0, -0.0)
+                },
+                TextureEntry_=None,
+            ),
+        )
+        self.message_handler.handle(msg)
+        obj = self.region_object_manager.lookup_localid(local_id)
+        self.assertEqual(obj.Position, Vector3(-2, -3, -4))
+
     def test_parent_tracking(self):
         """Are basic parenting scenarios handled?"""
         parent = self._create_object()
@@ -507,6 +533,17 @@ class SessionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncio
         self.assertEqual(1, len(self.session.objects))
         self.assertEqual(0, len(self.region.objects))
         self.assertEqual(1, len(self.second_region.objects))
+
+    def test_object_moved_to_bad_region(self):
+        obj = self._create_object(region_handle=123)
+        msg = self._create_object_update(
+            local_id=~obj.LocalID & 0xFFffFFff, full_id=obj.FullID, region_handle=999)
+        self.message_handler.handle(msg)
+        # Should not be in this region anymore
+        self.assertEqual(0, len(self.region_object_manager))
+        # Should still be tracked by the session
+        self.assertEqual(1, len(self.session.objects))
+        self.assertIsNotNone(self.session.objects.lookup_fullid(obj.FullID))
 
     def test_linkset_region_handle_change(self):
         parent = self._create_object(region_handle=123)

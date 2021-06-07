@@ -140,7 +140,7 @@ class ClientObjectManager:
         """
         if isinstance(local_ids, int):
             local_ids = (local_ids,)
-        if isinstance(local_ids, set):
+        elif isinstance(local_ids, set):
             local_ids = tuple(local_ids)
 
         session = self._region.session()
@@ -400,7 +400,7 @@ class ClientWorldObjectManager:
             object_data = normalize_terse_object_update(block, handle)
 
             if region_state is None:
-                LOG.warning(f"Got ObjectUpdateCompressed for unknown region {handle}: {object_data!r}")
+                LOG.warning(f"Got ImprovedTerseObjectUpdate for unknown region {handle}: {object_data!r}")
                 continue
 
             obj = region_state.lookup_localid(object_data["LocalID"])
