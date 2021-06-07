@@ -801,7 +801,7 @@ class AttachmentStateAdapter(se.Adapter):
 
 @se.flag_field_serializer("AgentUpdate", "AgentData", "State")
 class AgentState(IntFlag):
-    TYPING = 1 << 3
+    TYPING = 1 << 2
     EDITING = 1 << 4
 
 
