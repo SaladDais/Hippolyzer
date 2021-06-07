@@ -62,6 +62,7 @@ class InterceptingLLUDPProxyProtocol(BaseLLUDPProxyProtocol):
         try:
             message = self.deserializer.deserialize(packet.data)
             message.direction = packet.direction
+            message.sender = packet.src_addr
         except Exception as e:
             # Hang onto this since handle_proxied_packet doesn't need a parseable
             # message. If that hook doesn't handle the packet then re-raise.
@@ -123,6 +124,7 @@ class InterceptingLLUDPProxyProtocol(BaseLLUDPProxyProtocol):
             AddonManager.handle_region_changed(self.session, region)
         if message.name == "RegionHandshake":
             region.cache_id = message["RegionInfo"]["CacheID"]
+            self.session.objects.track_region_objects(region.handle)
             if self.session_manager.use_viewer_object_cache:
                 try:
                     region.objects.load_cache()

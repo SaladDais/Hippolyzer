@@ -32,8 +32,7 @@ from hippolyzer.lib.base.datatypes import *
 import hippolyzer.lib.base.serialization as se
 import hippolyzer.lib.base.templates as templates
 from hippolyzer.lib.base.message.msgtypes import PacketFlags
-from hippolyzer.lib.base.network.transport import Direction
-
+from hippolyzer.lib.base.network.transport import Direction, ADDR_TUPLE
 
 BLOCK_DICT = Dict[str, "MsgBlockList"]
 VAR_TYPE = Union[TupleCoord, bytes, str, float, int, Tuple, UUID]
@@ -183,7 +182,7 @@ class MsgBlockList(List["Block"]):
 class Message:
     __slots__ = ("name", "send_flags", "_packet_id", "acks", "body_boundaries", "queued",
                  "offset", "raw_extra", "raw_body", "deserializer", "_blocks", "finalized",
-                 "direction", "meta", "injected", "dropped")
+                 "direction", "meta", "injected", "dropped", "sender")
 
     def __init__(self, name, *args, packet_id=None, flags=0, acks=None, direction=None):
         # TODO: Do this on a timer or something.
@@ -210,6 +209,7 @@ class Message:
         self.meta = {}
         self.injected = False
         self.dropped = False
+        self.sender: Optional[ADDR_TUPLE] = None
 
         self.add_blocks(args)
 

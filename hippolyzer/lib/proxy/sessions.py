@@ -12,12 +12,12 @@ from weakref import ref
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
-from hippolyzer.lib.client.object_manager import ClientWorldObjectManager
 from hippolyzer.lib.client.state import BaseClientSession
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.proxy.http_asset_repo import HTTPAssetRepo
 from hippolyzer.lib.proxy.http_proxy import HTTPFlowContext, is_asset_server_cap_name, SerializedCapData
 from hippolyzer.lib.proxy.namecache import ProxyNameCache
+from hippolyzer.lib.proxy.object_manager import ProxyWorldObjectManager
 from hippolyzer.lib.proxy.region import ProxiedRegion, CapType
 
 if TYPE_CHECKING:
@@ -43,7 +43,7 @@ class Session(BaseClientSession):
         self.started_at = datetime.datetime.now()
         self.message_handler: MessageHandler[Message] = MessageHandler()
         self.http_message_handler: MessageHandler[HippoHTTPFlow] = MessageHandler()
-        self.objects = ClientWorldObjectManager(self, session_manager.name_cache)
+        self.objects = ProxyWorldObjectManager(self, session_manager.name_cache)
         self._main_region = None
 
     @property

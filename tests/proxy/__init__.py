@@ -52,6 +52,7 @@ class BaseProxyTest(unittest.IsolatedAsyncioTestCase):
             self.client_addr, self.session_manager)
         self.protocol.transport = self.transport
         self.serializer = UDPMessageSerializer()
+        self.session.objects.track_region_objects(123)
 
     async def _wait_drained(self):
         await asyncio.sleep(0.001)

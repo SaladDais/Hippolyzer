@@ -10,6 +10,7 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.circuit import ConnectionHolder
 from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
+from hippolyzer.lib.base.network.transport import ADDR_TUPLE
 
 if TYPE_CHECKING:
     from hippolyzer.lib.client.object_manager import ClientObjectManager, ClientWorldObjectManager
@@ -31,4 +32,5 @@ class BaseClientSession(abc.ABC):
     message_handler: MessageHandler[Message]
     regions: Sequence[BaseClientRegion]
     region_by_handle: Callable[[int], Optional[BaseClientRegion]]
+    region_by_circuit_addr: Callable[[ADDR_TUPLE], Optional[BaseClientRegion]]
     objects: ClientWorldObjectManager

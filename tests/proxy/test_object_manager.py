@@ -39,6 +39,7 @@ class WrappingMessageHandler:
         self.region = region
 
     def handle(self, message: Message):
+        message.sender = self.region.circuit_addr
         self.region.session().message_handler.handle(message)
         self.region.message_handler.handle(message)
 
@@ -65,7 +66,7 @@ class ObjectManagerTestMixin(BaseProxyTest):
         self.addCleanup(patched.stop)
         self.mock_get_region_object_cache_chain = patched.start()
         self.mock_get_region_object_cache_chain.return_value = RegionViewerObjectCacheChain([])
-        self.object_manager = self.region.objects
+        self.region_object_manager = self.region.objects
         self.serializer = UDPMessageSerializer()
         self.deserializer = UDPMessageDeserializer()
         self.object_addon = ObjectTrackingAddon()
@@ -141,7 +142,7 @@ class ObjectManagerTestMixin(BaseProxyTest):
         self.message_handler.handle(self._create_kill_object(local_id))
 
     def _get_avatar_positions(self) -> Dict[UUID, Vector3]:
-        return {av.FullID: av.RegionPosition for av in self.object_manager.all_avatars}
+        return {av.FullID: av.RegionPosition for av in self.region_object_manager.all_avatars}
 
 
 class RegionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioTestCase):
@@ -149,7 +150,7 @@ class RegionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioT
         """Does creating an object result in it being tracked?"""
         msg = self._create_object_update()
         self.message_handler.handle(msg)
-        obj = self.object_manager.lookup_fullid(msg["ObjectData"]["FullID"])
+        obj = self.region_object_manager.lookup_fullid(msg["ObjectData"]["FullID"])
         self.assertIsNotNone(obj)
 
     def test_parent_tracking(self):
@@ -160,9 +161,9 @@ class RegionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioT
 
     def test_orphan_parent_tracking(self):
         child = self._create_object(local_id=2, parent_id=1)
-        self.assertEqual({1}, self.object_manager.missing_locals)
+        self.assertEqual({1}, self.region_object_manager.missing_locals)
         parent = self._create_object(local_id=1)
-        self.assertEqual(set(), self.object_manager.missing_locals)
+        self.assertEqual(set(), self.region_object_manager.missing_locals)
         self.assertSequenceEqual([child.LocalID], parent.ChildIDs)
 
     def test_killing_parent_kills_children(self):
@@ -181,7 +182,7 @@ class RegionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioT
         grandparent = self._create_object(local_id=1)
         # KillObject implicitly kills all known descendents at that point
         self._kill_object(grandparent.LocalID)
-        self.assertEqual(0, len(self.object_manager))
+        self.assertEqual(0, len(self.region_object_manager))
 
     def test_hierarchy_avatar_not_killed(self):
         _child = self._create_object(local_id=3, parent_id=2)
@@ -190,8 +191,8 @@ class RegionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioT
         # KillObject should only "unsit" child avatars (does this require an ObjectUpdate
         # or is ParentID=0 implied?)
         self._kill_object(grandparent.LocalID)
-        self.assertEqual(2, len(self.object_manager))
-        self.assertIsNotNone(self.object_manager.lookup_localid(2))
+        self.assertEqual(2, len(self.region_object_manager))
+        self.assertIsNotNone(self.region_object_manager.lookup_localid(2))
 
     def test_attachment_orphan_parent_tracking(self):
         """
@@ -344,22 +345,22 @@ class RegionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioT
         self.assertDictEqual(self._get_avatar_positions(), {
             agent2_id: Vector3(2, 3, math.inf),
         })
-        agent2_avatar = self.object_manager.lookup_avatar(agent2_id)
+        agent2_avatar = self.region_object_manager.lookup_avatar(agent2_id)
         self.assertEqual(agent2_avatar.GlobalPosition, Vector3(2, 126, math.inf))
 
     def test_name_cache(self):
         # Receiving an update with a NameValue for an avatar should update NameCache
         obj = self._create_object(
             pcode=PCode.AVATAR,
-            namevalue=b'DisplayName STRING RW DS unicodename\n'
-                      b'FirstName STRING RW DS firstname\n'
-                      b'LastName STRING RW DS Resident\n'
-                      b'Title STRING RW DS foo',
+            namevalue='DisplayName STRING RW DS 𝔲𝔫𝔦𝔠𝔬𝔡𝔢𝔫𝔞𝔪𝔢\n'
+                      'FirstName STRING RW DS firstname\n'
+                      'LastName STRING RW DS Resident\n'
+                      'Title STRING RW DS foo'.encode("utf8"),
         )
         self.assertEqual(self.session_manager.name_cache.lookup(obj.FullID).first_name, "firstname")
-        av = self.object_manager.lookup_avatar(obj.FullID)
-        self.assertEqual(av.Name, "unicodename (firstname Resident)")
-        self.assertEqual(av.PreferredName, "unicodename")
+        av = self.region_object_manager.lookup_avatar(obj.FullID)
+        self.assertEqual(av.Name, "𝔲𝔫𝔦𝔠𝔬𝔡𝔢𝔫𝔞𝔪𝔢 (firstname Resident)")
+        self.assertEqual(av.PreferredName, "𝔲𝔫𝔦𝔠𝔬𝔡𝔢𝔫𝔞𝔪𝔢")
 
     def test_normalize_cache_data(self):
         normalized = normalize_object_update_compressed_data(OBJECT_UPDATE_COMPRESSED_DATA)
@@ -434,18 +435,18 @@ class RegionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioT
                 UpdateFlags=4321,
             )
         )
-        obj = self.object_manager.lookup_localid(1234)
+        obj = self.region_object_manager.lookup_localid(1234)
         self.assertIsNone(obj)
-        self.object_manager.load_cache()
+        self.region_object_manager.load_cache()
         self.message_handler.handle(cache_msg)
-        obj = self.object_manager.lookup_localid(1234)
+        obj = self.region_object_manager.lookup_localid(1234)
         self.assertEqual(obj.FullID, UUID('121210bf-1658-427e-8fb4-fb001acd9be5'))
         # Flags from the ObjectUpdateCached should have been merged in
         self.assertEqual(obj.UpdateFlags, 4321)
 
     async def test_request_objects(self):
         # request five objects, three of which won't receive an ObjectUpdate
-        futures = self.object_manager.request_objects((1234, 1235, 1236, 1237))
+        futures = self.region_object_manager.request_objects((1234, 1235, 1236, 1237))
         self._create_object(1234)
         self._create_object(1235)
         done, pending = await asyncio.wait(futures, timeout=0.0001)
@@ -461,16 +462,18 @@ class RegionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioT
             await asyncio.wait_for(pending_1, 0.00001)
         self.assertTrue(pending_1.cancelled())
 
-        fut = self.object_manager.request_objects(1238)[0]
+        fut = self.region_object_manager.request_objects(1238)[0]
         self._kill_object(1238)
         self.assertTrue(fut.cancelled())
 
         # Object manager being cleared due to region death should cancel
         self.assertFalse(pending_2.cancelled())
-        self.object_manager.clear()
+        self.region_object_manager.clear()
         self.assertTrue(pending_2.cancelled())
         # The clear should have triggered the objects to be removed from the world view as well
+        # as the region view
         self.assertEqual(0, len(self.session.objects))
+        self.assertEqual(0, len(self.region_object_manager))
 
 
 class SessionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioTestCase):
@@ -479,6 +482,7 @@ class SessionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncio
         self.second_region = self.session.register_region(
             ("127.0.0.1", 9), "https://localhost:5", 124
         )
+        self.session.objects.track_region_objects(124)
         self._setup_region_circuit(self.second_region)
 
     def test_get_fullid(self):
@@ -561,7 +565,7 @@ class SessionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncio
     async def test_requesting_properties(self):
         obj = self._create_object()
         futs = self.session.objects.request_object_properties(obj)
-        self.region.message_handler.handle(Message(
+        self.message_handler.handle(Message(
             "ObjectProperties",
             Block("ObjectData", ObjectID=obj.FullID, Name="Foobar", TextureID=b""),
         ))

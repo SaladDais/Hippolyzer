@@ -627,10 +627,10 @@ class QuantizedFloatSerializationTests(BaseSerializationTest):
 
 
 class NameValueSerializationTests(BaseSerializationTest):
-    EXAMPLE_NAMEVALUES = b'DisplayName STRING RW DS unicodename\n' \
-                         b'FirstName STRING RW DS firstname\n' \
-                         b'LastName STRING RW DS Resident\n' \
-                         b'Title STRING RW DS foo'
+    EXAMPLE_NAMEVALUES = 'DisplayName STRING RW DS 𝔲𝔫𝔦𝔠𝔬𝔡𝔢𝔫𝔞𝔪𝔢\n' \
+                         'FirstName STRING RW DS firstname\n' \
+                         'LastName STRING RW DS Resident\n' \
+                         'Title STRING RW DS foo'.encode("utf8")
 
     def test_basic(self):
         val = self.EXAMPLE_NAMEVALUES
@@ -639,6 +639,7 @@ class NameValueSerializationTests(BaseSerializationTest):
         deser = reader.read(NameValuesSerializer)
 
         self.assertEqual(deser.to_dict()['Title'], 'foo')
+        self.assertEqual(deser.to_dict()['DisplayName'], '𝔲𝔫𝔦𝔠𝔬𝔡𝔢𝔫𝔞𝔪𝔢')
 
         self.writer.clear()
         self.writer.write(NameValuesSerializer, deser)
