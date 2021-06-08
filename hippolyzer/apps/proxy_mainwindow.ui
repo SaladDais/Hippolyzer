@@ -263,6 +263,7 @@
     <addaction name="separator"/>
     <addaction name="actionProxyRemotelyAccessible"/>
     <addaction name="actionUseViewerObjectCache"/>
+    <addaction name="actionRequestMissingObjects"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -309,6 +310,17 @@
    </property>
    <property name="toolTip">
     <string>Can help make the proxy aware of certain objects, but can cause slowdowns</string>
+   </property>
+  </action>
+  <action name="actionRequestMissingObjects">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Automatically Request Missing Objects</string>
+   </property>
+   <property name="toolTip">
+    <string>Force the proxy to request objects that it doesn't know about due to cache misses</string>
    </property>
   </action>
  </widget>

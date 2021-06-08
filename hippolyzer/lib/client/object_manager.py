@@ -111,12 +111,12 @@ class ClientObjectManager:
         while ids_to_req:
             blocks = [
                 Block("AgentData", AgentID=session.agent_id, SessionID=session.id),
-                *[Block("ObjectData", ObjectLocalID=x) for x in ids_to_req[:100]],
+                *[Block("ObjectData", ObjectLocalID=x) for x in ids_to_req[:255]],
             ]
             # Selecting causes ObjectProperties to be sent
             self._region.circuit.send_message(Message("ObjectSelect", blocks))
             self._region.circuit.send_message(Message("ObjectDeselect", blocks))
-            ids_to_req = ids_to_req[100:]
+            ids_to_req = ids_to_req[255:]
 
         futures = []
         for local_id in local_ids:
@@ -151,9 +151,9 @@ class ClientObjectManager:
             self._region.circuit.send_message(Message(
                 "RequestMultipleObjects",
                 Block("AgentData", AgentID=session.agent_id, SessionID=session.id),
-                *[Block("ObjectData", CacheMissType=0, ID=x) for x in ids_to_req[:100]],
+                *[Block("ObjectData", CacheMissType=0, ID=x) for x in ids_to_req[:255]],
             ))
-            ids_to_req = ids_to_req[100:]
+            ids_to_req = ids_to_req[255:]
 
         futures = []
         for local_id in local_ids:
@@ -454,15 +454,17 @@ class ClientWorldObjectManager:
             missing_locals.add(block["ID"])
         if region_state:
             region_state.missing_locals.update(missing_locals)
-        self._handle_object_update_cached_misses(handle, missing_locals)
+        if missing_locals:
+            self._handle_object_update_cached_misses(handle, missing_locals)
         msg.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
-    def _handle_object_update_cached_misses(self, region_handle: int, local_ids: Set[int]):
+    def _handle_object_update_cached_misses(self, region_handle: int, missing_locals: Set[int]):
+        """Handle an ObjectUpdateCached that referenced some un-cached local IDs"""
         region_mgr = self._get_region_manager(region_handle)
-        region_mgr.request_objects(local_ids)
+        region_mgr.request_objects(missing_locals)
 
     # noinspection PyUnusedLocal
-    def _lookup_cache_entry(self, handle: int, local_id: int, crc: int) -> Optional[bytes]:
+    def _lookup_cache_entry(self, region_handle: int, local_id: int, crc: int) -> Optional[bytes]:
         return None
 
     def _handle_object_update_compressed(self, msg: Message):

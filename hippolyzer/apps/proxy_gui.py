@@ -196,8 +196,10 @@ class ProxyGUI(QtWidgets.QMainWindow):
 
         self.actionProxyRemotelyAccessible.setChecked(self.settings.REMOTELY_ACCESSIBLE)
         self.actionUseViewerObjectCache.setChecked(self.settings.USE_VIEWER_OBJECT_CACHE)
+        self.actionRequestMissingObjects.setChecked(self.settings.AUTOMATICALLY_REQUEST_MISSING_OBJECTS)
         self.actionProxyRemotelyAccessible.triggered.connect(self._setProxyRemotelyAccessible)
         self.actionUseViewerObjectCache.triggered.connect(self._setUseViewerObjectCache)
+        self.actionRequestMissingObjects.triggered.connect(self._setRequestMissingObjects)
 
         self._filterMenu = QtWidgets.QMenu()
         self._populateFilterMenu()
@@ -381,6 +383,9 @@ class ProxyGUI(QtWidgets.QMainWindow):
 
     def _setUseViewerObjectCache(self, checked: bool):
         self.sessionManager.settings.USE_VIEWER_OBJECT_CACHE = checked
+
+    def _setRequestMissingObjects(self, checked: bool):
+        self.sessionManager.settings.AUTOMATICALLY_REQUEST_MISSING_OBJECTS = checked
 
     def _manageAddons(self):
         dialog = AddonDialog(self)

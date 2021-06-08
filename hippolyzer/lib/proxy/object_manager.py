@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import *
 
 from hippolyzer.lib.base import llsd
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.client.namecache import NameCache
 from hippolyzer.lib.client.object_manager import (
     ClientObjectManager,
@@ -38,6 +40,12 @@ class ProxyObjectManager(ClientObjectManager):
         self.may_use_vo_cache = may_use_vo_cache
         self.cache_loaded = False
         self.object_cache = RegionViewerObjectCacheChain([])
+        self._cache_miss_timer: Optional[asyncio.TimerHandle] = None
+        self.queued_cache_misses: Set[int] = set()
+        region.message_handler.subscribe(
+            "RequestMultipleObjects",
+            self._handle_request_multiple_objects,
+        )
 
     def load_cache(self):
         if not self.may_use_vo_cache or self.cache_loaded:
@@ -49,17 +57,40 @@ class ProxyObjectManager(ClientObjectManager):
         self.cache_loaded = True
         self.object_cache = RegionViewerObjectCacheChain.for_region(handle, self._region.cache_id)
 
+    def request_missed_cached_objects_soon(self):
+        if self._cache_miss_timer:
+            self._cache_miss_timer.cancel()
+        # Basically debounce. Will only trigger 0.2 seconds after the last time it's invoked to
+        # deal with the initial flood of ObjectUpdateCached and the natural lag time between that
+        # and the viewers' RequestMultipleObjects messages
+        self._cache_miss_timer = asyncio.get_event_loop().call_later(
+            0.2, self._request_missed_cached_objects)
+
+    def _request_missed_cached_objects(self):
+        self._cache_miss_timer = None
+        self.request_objects(self.queued_cache_misses)
+        self.queued_cache_misses.clear()
+
     def clear(self):
         super().clear()
         self.object_cache = RegionViewerObjectCacheChain([])
         self.cache_loaded = False
+        self.queued_cache_misses.clear()
+        if self._cache_miss_timer:
+            self._cache_miss_timer.cancel()
+        self._cache_miss_timer = None
 
     def _is_localid_selected(self, localid: int):
         return localid in self._region.session().selected.object_locals
 
+    def _handle_request_multiple_objects(self, msg: Message):
+        # Remove any queued cache misses that the viewer just requested for itself
+        self.queued_cache_misses -= {b["ID"] for b in msg["ObjectData"]}
+
 
 class ProxyWorldObjectManager(ClientWorldObjectManager):
     _session: Session
+    _settings: ProxySettings
 
     def __init__(self, session: Session, settings: ProxySettings, name_cache: Optional[NameCache]):
         super().__init__(session, settings, name_cache)
@@ -68,10 +99,17 @@ class ProxyWorldObjectManager(ClientWorldObjectManager):
             self._handle_get_object_cost
         )
 
-    def _handle_object_update_cached_misses(self, region_handle: int, local_ids: Set[int]):
-        # Don't do anything automatically. People have to manually ask for
-        # missed objects to be fetched.
-        pass
+    def _handle_object_update_cached_misses(self, region_handle: int, missing_locals: Set[int]):
+        if self._settings.AUTOMATICALLY_REQUEST_MISSING_OBJECTS:
+            # Schedule these local IDs to be requested soon if the viewer doesn't request
+            # them itself. Ideally we could just mutate the CRC of the ObjectUpdateCached
+            # to force a CRC cache miss in the viewer, but that appears to cause the viewer
+            # to drop the resulting ObjectUpdateCompressed when the CRC doesn't match?
+            # It was causing all objects to go missing even though the ObjectUpdateCompressed
+            # was received.
+            region_mgr: Optional[ProxyObjectManager] = self._get_region_manager(region_handle)
+            region_mgr.queued_cache_misses |= missing_locals
+            region_mgr.request_missed_cached_objects_soon()
 
     def _run_object_update_hooks(self, obj: Object, updated_props: Set[str], update_type: UpdateType):
         super()._run_object_update_hooks(obj, updated_props, update_type)
@@ -83,8 +121,8 @@ class ProxyWorldObjectManager(ClientWorldObjectManager):
         region = self._session.region_by_handle(obj.RegionHandle)
         AddonManager.handle_object_killed(self._session, region, obj)
 
-    def _lookup_cache_entry(self, handle: int, local_id: int, crc: int) -> Optional[bytes]:
-        region_mgr: Optional[ProxyObjectManager] = self._get_region_manager(handle)
+    def _lookup_cache_entry(self, region_handle: int, local_id: int, crc: int) -> Optional[bytes]:
+        region_mgr: Optional[ProxyObjectManager] = self._get_region_manager(region_handle)
         return region_mgr.object_cache.lookup_object_data(local_id, crc)
 
     def _handle_get_object_cost(self, flow: HippoHTTPFlow):
