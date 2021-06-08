@@ -20,6 +20,7 @@ from hippolyzer.lib.proxy.lludp_proxy import SLSOCKS5Server
 from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import SessionManager, Session
+from hippolyzer.lib.proxy.settings import ProxySettings
 
 LOG = logging.getLogger(__name__)
 
@@ -91,8 +92,8 @@ def run_http_proxy_process(proxy_host, http_proxy_port, flow_context: HTTPFlowCo
     mitm_loop.run_forever()
 
 
-def start_proxy(extra_addons: Optional[list] = None, extra_addon_paths: Optional[list] = None,
-                session_manager=None, proxy_host=None):
+def start_proxy(session_manager: SessionManager, extra_addons: Optional[list] = None,
+                extra_addon_paths: Optional[list] = None, proxy_host=None):
     extra_addons = extra_addons or []
     extra_addon_paths = extra_addon_paths or []
     extra_addons.append(SelectionManagerAddon())
@@ -105,12 +106,11 @@ def start_proxy(extra_addons: Optional[list] = None, extra_addon_paths: Optional
 
     loop = asyncio.get_event_loop()
 
-    udp_proxy_port = int(os.environ.get("HIPPO_UDP_PORT", 9061))
-    http_proxy_port = int(os.environ.get("HIPPO_HTTP_PORT", 9062))
+    udp_proxy_port = session_manager.settings.SOCKS_PROXY_PORT
+    http_proxy_port = session_manager.settings.HTTP_PROXY_PORT
     if proxy_host is None:
-        proxy_host = os.environ.get("HIPPO_BIND_HOST", "127.0.0.1")
+        proxy_host = session_manager.settings.PROXY_BIND_ADDR
 
-    session_manager = session_manager or SessionManager()
     flow_context = session_manager.flow_context
     session_manager.name_cache.load_viewer_caches()
 
@@ -186,7 +186,7 @@ def _windows_timeout_killer(pid: int):
 
 def main():
     multiprocessing.set_start_method("spawn")
-    start_proxy()
+    start_proxy(SessionManager(ProxySettings()))
 
 
 if __name__ == "__main__":

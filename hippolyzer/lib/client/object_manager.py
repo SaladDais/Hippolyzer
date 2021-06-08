@@ -23,6 +23,7 @@ from hippolyzer.lib.base.objects import (
     normalize_object_update_compressed,
     Object, handle_to_global_pos,
 )
+from hippolyzer.lib.base.settings import Settings
 from hippolyzer.lib.client.namecache import NameCache, NameCacheEntry
 from hippolyzer.lib.client.state import BaseClientSession, BaseClientRegion
 from hippolyzer.lib.base.templates import PCode, ObjectStateSerializer
@@ -162,13 +163,14 @@ class ClientObjectManager:
 
 class ClientWorldObjectManager:
     """Manages Objects for a session's whole world"""
-    def __init__(self, session: BaseClientSession, name_cache: Optional[NameCache]):
+    def __init__(self, session: BaseClientSession, settings: Settings, name_cache: Optional[NameCache]):
         self._session: BaseClientSession = session
+        self._settings = settings
+        self.name_cache = name_cache or NameCache()
         self._fullid_lookup: Dict[UUID, Object] = {}
         self._avatars: Dict[UUID, Avatar] = {}
         self._avatar_objects: Dict[UUID, Object] = {}
         self._region_managers: Dict[int, ClientObjectManager] = {}
-        self.name_cache = name_cache or NameCache()
         message_handler = self._session.message_handler
         message_handler.subscribe("ObjectUpdate", self._handle_object_update)
         message_handler.subscribe("ImprovedTerseObjectUpdate",

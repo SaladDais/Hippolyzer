@@ -19,81 +19,48 @@ along with this program; if not, write to the Free Software Foundation,
 Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
+from __future__ import annotations
+
+import dataclasses
+from typing import *
+
+
+_T = TypeVar("_T")
+
+
+class SettingDescriptor(Generic[_T]):
+    __slots__ = ("name", "default")
+
+    def __init__(self, default: Union[Callable[[], _T], _T]):
+        self.default = default
+        self.name: Optional[str] = None
+
+    def __set_name__(self, owner: Settings, name: str):
+        self.name = name
+
+    def _make_default(self) -> _T:
+        if callable(self.default):
+            return self.default()
+        return self.default
+
+    def __get__(self, obj: Settings, owner: Optional[Type] = None) -> _T:
+        val: Union[_T, dataclasses.MISSING] = obj.get_setting(self.name)
+        if val is dataclasses.MISSING:
+            val = self._make_default()
+        return val
+
+    def __set__(self, obj: Settings, value: _T) -> None:
+        obj.set_setting(self.name, value)
+
 
 class Settings:
-    def __init__(self, quiet_logging=False, spammy_logging=False, log_tests=True):
-        """ some lovely configurable settings
+    ENABLE_DEFERRED_PACKET_PARSING: bool = SettingDescriptor(True)
 
-        These are applied application wide, and can be
-        overridden at any time in a specific instance
+    def __init__(self):
+        self._settings: Dict[str, Any] = {}
 
-        quiet_logging overrides spammy_logging
-        """
+    def get_setting(self, name: str) -> Any:
+        return self._settings.get(name, dataclasses.MISSING)
 
-        self.quiet_logging = quiet_logging
-        self.spammy_logging = spammy_logging
-
-        # toggle handling udp packets
-        self.HANDLE_PACKETS = True
-        self.HANDLE_OUTGOING_PACKETS = False
-
-        # toggle parsing all/handled packets
-        self.ENABLE_DEFERRED_PACKET_PARSING = True
-
-        # ~~~~~~~~~~~~~~~~~~
-        # Logging behaviors
-        # ~~~~~~~~~~~~~~~~~~
-        # being a test tool, and an immature one at that,
-        # enable fine granularity in the logging, but
-        # make sure we can tone it down as well
-
-        self.LOG_VERBOSE = True
-        self.ENABLE_BYTES_TO_HEX_LOGGING = False
-        self.ENABLE_CAPS_LOGGING = True
-        self.ENABLE_CAPS_LLSD_LOGGING = False
-        self.ENABLE_EQ_LOGGING = True
-        self.ENABLE_UDP_LOGGING = True
-        self.ENABLE_OBJECT_LOGGING = True
-        self.LOG_SKIPPED_PACKETS = True
-        self.ENABLE_HOST_LOGGING = True
-        self.LOG_COROUTINE_SPAWNS = True
-        self.PROXY_LOGGING = False
-
-        # allow disabling logging of certain packets
-        self.DISABLE_SPAMMERS = True
-        self.UDP_SPAMMERS = ['PacketAck', 'AgentUpdate']
-
-        # toggle handling a region's event queue
-        self.ENABLE_REGION_EVENT_QUEUE = True
-
-        # how many seconds to wait between polling
-        # a region's event queue
-        self.REGION_EVENT_QUEUE_POLL_INTERVAL = 1
-
-        if self.spammy_logging:
-            self.ENABLE_BYTES_TO_HEX_LOGGING = True
-            self.ENABLE_CAPS_LLSD_LOGGING = True
-            self.DISABLE_SPAMMERS = False
-
-        # override the defaults
-        if self.quiet_logging:
-            self.LOG_VERBOSE = False
-            self.ENABLE_BYTES_TO_HEX_LOGGING = False
-            self.ENABLE_CAPS_LOGGING = False
-            self.ENABLE_CAPS_LLSD_LOGGING = False
-            self.ENABLE_EQ_LOGGING = False
-            self.ENABLE_UDP_LOGGING = False
-            self.LOG_SKIPPED_PACKETS = False
-            self.ENABLE_OBJECT_LOGGING = False
-            self.ENABLE_HOST_LOGGING = False
-            self.LOG_COROUTINE_SPAWNS = False
-            self.DISABLE_SPAMMERS = True
-
-        # ~~~~~~~~~~~~~~~~~~~~~~
-        # Test related settings
-        # ~~~~~~~~~~~~~~~~~~~~~~
-
-        if log_tests:
-            self.ENABLE_LOGGING_IN_TESTS = True
-        else:
-            self.ENABLE_LOGGING_IN_TESTS = False
+    def set_setting(self, name: str, val: Any):
+        self._settings[name] = val

@@ -11,6 +11,7 @@ from hippolyzer.lib.proxy.http_proxy import SerializedCapData
 from hippolyzer.lib.proxy.message_logger import LLUDPMessageLogEntry, HTTPMessageLogEntry
 from hippolyzer.lib.proxy.message_filter import compile_filter
 from hippolyzer.lib.proxy.sessions import SessionManager
+from hippolyzer.lib.proxy.settings import ProxySettings
 
 OBJECT_UPDATE = b'\xc0\x00\x00\x00Q\x00\x0c\x00\x01\xea\x03\x00\x02\xe6\x03\x00\x01\xbe\xff\x01\x06\xbc\x8e\x0b\x00' \
                 b'\x01i\x94\x8cjM"\x1bf\xec\xe4\xac1c\x93\xcbKW\x89\x98\x01\t\x03\x00\x01Q@\x88>Q@\x88>Q@\x88><\xa2D' \
@@ -111,7 +112,6 @@ class MessageFilterTests(unittest.TestCase):
     def test_tagged_union_subfield(self):
         settings = Settings()
         settings.ENABLE_DEFERRED_PACKET_PARSING = False
-        settings.HANDLE_PACKETS = False
         deser = UDPMessageDeserializer(settings=settings)
         update_msg = deser.deserialize(OBJECT_UPDATE)
         entry = LLUDPMessageLogEntry(update_msg, None, None)
@@ -119,7 +119,7 @@ class MessageFilterTests(unittest.TestCase):
         self.assertTrue(self._filter_matches("ObjectUpdate.ObjectData.ObjectData.Position < (90, 43, 27)", entry))
 
     def test_http_flow(self):
-        session_manager = SessionManager()
+        session_manager = SessionManager(ProxySettings())
         fake_flow = tflow.tflow(req=tutils.treq(), resp=tutils.tresp())
         fake_flow.metadata["cap_data_ser"] = SerializedCapData(
             cap_name="FakeCap",

@@ -13,6 +13,7 @@ from hippolyzer.lib.client.object_manager import (
 from hippolyzer.lib.base.objects import Object
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
+from hippolyzer.lib.proxy.settings import ProxySettings
 from hippolyzer.lib.proxy.vocache import RegionViewerObjectCacheChain
 
 if TYPE_CHECKING:
@@ -31,15 +32,15 @@ class ProxyObjectManager(ClientObjectManager):
     def __init__(
             self,
             region: ProxiedRegion,
-            use_vo_cache: bool = False
+            may_use_vo_cache: bool = False
     ):
         super().__init__(region)
-        self.use_vo_cache = use_vo_cache
+        self.may_use_vo_cache = may_use_vo_cache
         self.cache_loaded = False
         self.object_cache = RegionViewerObjectCacheChain([])
 
     def load_cache(self):
-        if not self.use_vo_cache or self.cache_loaded:
+        if not self.may_use_vo_cache or self.cache_loaded:
             return
         handle = self._region.handle
         if not handle:
@@ -60,8 +61,8 @@ class ProxyObjectManager(ClientObjectManager):
 class ProxyWorldObjectManager(ClientWorldObjectManager):
     _session: Session
 
-    def __init__(self, session: Session, name_cache: Optional[NameCache]):
-        super().__init__(session, name_cache)
+    def __init__(self, session: Session, settings: ProxySettings, name_cache: Optional[NameCache]):
+        super().__init__(session, settings, name_cache)
         session.http_message_handler.subscribe(
             "GetObjectCost",
             self._handle_get_object_cost

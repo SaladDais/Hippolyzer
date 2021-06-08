@@ -5,7 +5,6 @@ from typing import Optional, Tuple
 from hippolyzer.lib.base.message.message_dot_xml import MessageDotXML
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.message.udpserializer import UDPMessageSerializer
-from hippolyzer.lib.base.settings import Settings
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.base.network.transport import UDPPacket
 from hippolyzer.lib.base.message.message import Message
@@ -26,17 +25,16 @@ class SLSOCKS5Server(SOCKS5Server):
         return lambda: InterceptingLLUDPProxyProtocol(source_addr, self.session_manager)
 
 
-class BaseLLUDPProxyProtocol(UDPProxyProtocol):
-    def __init__(self, source_addr: Tuple[str, int]):
+class InterceptingLLUDPProxyProtocol(UDPProxyProtocol):
+    def __init__(self, source_addr: Tuple[str, int], session_manager: SessionManager):
         super().__init__(source_addr)
-        self.settings = Settings()
-        self.settings.ENABLE_DEFERRED_PACKET_PARSING = True
-        self.settings.HANDLE_PACKETS = False
+        self.session_manager: SessionManager = session_manager
         self.serializer = UDPMessageSerializer()
         self.deserializer = UDPMessageDeserializer(
-            settings=self.settings,
+            settings=self.session_manager.settings,
         )
         self.message_xml = MessageDotXML()
+        self.session: Optional[Session] = None
 
     def _ensure_message_allowed(self, msg: Message):
         if not self.message_xml.validate_udp_msg(msg.name):
@@ -44,13 +42,6 @@ class BaseLLUDPProxyProtocol(UDPProxyProtocol):
                 f"Received {msg.name!r} over UDP, when it should come over the event queue. Discarding."
             )
             raise PermissionError(f"UDPBanned message {msg.name}")
-
-
-class InterceptingLLUDPProxyProtocol(BaseLLUDPProxyProtocol):
-    def __init__(self, source_addr: Tuple[str, int], session_manager: SessionManager):
-        super().__init__(source_addr)
-        self.session_manager: SessionManager = session_manager
-        self.session: Optional[Session] = None
 
     def _handle_proxied_packet(self, packet: UDPPacket):
         message: Optional[Message] = None
@@ -125,7 +116,7 @@ class InterceptingLLUDPProxyProtocol(BaseLLUDPProxyProtocol):
         if message.name == "RegionHandshake":
             region.cache_id = message["RegionInfo"]["CacheID"]
             self.session.objects.track_region_objects(region.handle)
-            if self.session_manager.use_viewer_object_cache:
+            if self.session_manager.settings.USE_VIEWER_OBJECT_CACHE:
                 try:
                     region.objects.load_cache()
                 except:

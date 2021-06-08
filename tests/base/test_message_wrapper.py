@@ -46,7 +46,6 @@ class TestMessage(unittest.TestCase):
         self.serial = UDPMessageSerializer()
         settings = Settings()
         settings.ENABLE_DEFERRED_PACKET_PARSING = True
-        settings.HANDLE_PACKETS = False
         self.deserial = UDPMessageDeserializer(settings=settings)
 
     def test_block(self):

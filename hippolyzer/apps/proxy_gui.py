@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import dataclasses
 import email
 import functools
 import html
@@ -44,6 +45,7 @@ from hippolyzer.lib.proxy.http_proxy import create_proxy_master, HTTPFlowContext
 from hippolyzer.lib.proxy.message_logger import LLUDPMessageLogEntry, AbstractMessageLogEntry
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session, SessionManager
+from hippolyzer.lib.proxy.settings import ProxySettings
 from hippolyzer.lib.proxy.templates import CAP_TEMPLATES
 
 LOG = logging.getLogger(__name__)
@@ -66,8 +68,8 @@ class GUISessionManager(SessionManager, QtCore.QObject):
     regionAdded = QtCore.Signal(ProxiedRegion)
     regionRemoved = QtCore.Signal(ProxiedRegion)
 
-    def __init__(self, model):
-        SessionManager.__init__(self)
+    def __init__(self, settings, model):
+        SessionManager.__init__(self, settings)
         QtCore.QObject.__init__(self)
         self.all_regions = []
         self.message_logger = model
@@ -172,9 +174,9 @@ class ProxyGUI(QtWidgets.QMainWindow):
         super().__init__()
         loadUi(MAIN_WINDOW_UI_PATH, self)
 
-        self.settings = QtCore.QSettings("SaladDais", "hippolyzer")
         self._selectedEntry: Optional[AbstractMessageLogEntry] = None
 
+        self.settings = GUIProxySettings(QtCore.QSettings("SaladDais", "hippolyzer"))
         self.model = MessageLogModel(parent=self.tableView)
         self.tableView.setModel(self.model)
         self.model.rowsAboutToBeInserted.connect(self.beforeInsert)
@@ -191,10 +193,9 @@ class ProxyGUI(QtWidgets.QMainWindow):
         self.actionManageAddons.triggered.connect(self._manageAddons)
         self.actionManageFilters.triggered.connect(self._manageFilters)
         self.actionOpenMessageBuilder.triggered.connect(self._openMessageBuilder)
-        self.actionProxyRemotelyAccessible.setChecked(
-            self.settings.value("RemotelyAccessible", False, type=bool))
-        self.actionUseViewerObjectCache.setChecked(
-            self.settings.value("UseViewerObjectCache", False, type=bool))
+
+        self.actionProxyRemotelyAccessible.setChecked(self.settings.REMOTELY_ACCESSIBLE)
+        self.actionUseViewerObjectCache.setChecked(self.settings.USE_VIEWER_OBJECT_CACHE)
         self.actionProxyRemotelyAccessible.triggered.connect(self._setProxyRemotelyAccessible)
         self.actionUseViewerObjectCache.triggered.connect(self._setUseViewerObjectCache)
 
@@ -202,7 +203,7 @@ class ProxyGUI(QtWidgets.QMainWindow):
         self._populateFilterMenu()
         self.toolButtonFilter.setMenu(self._filterMenu)
 
-        self.sessionManager = GUISessionManager(self.model)
+        self.sessionManager = GUISessionManager(self.settings, self.model)
         self.interactionManager = GUIInteractionManager(self)
         AddonManager.UI = self.interactionManager
 
@@ -223,15 +224,12 @@ class ProxyGUI(QtWidgets.QMainWindow):
         self._filterMenu.clear()
 
         _addFilterAction("Default", self.DEFAULT_FILTER)
-        filters = self.getFilterDict()
+        filters = self.settings.FILTERS
         for preset_name, preset_filter in filters.items():
             _addFilterAction(preset_name, preset_filter)
 
-    def getFilterDict(self):
-        return json.loads(str(self.settings.value("Filters", "{}")))
-
     def setFilterDict(self, val: dict):
-        self.settings.setValue("Filters", json.dumps(val))
+        self.settings.FILTERS = val
         self._populateFilterMenu()
 
     def _manageFilters(self):
@@ -376,24 +374,23 @@ class ProxyGUI(QtWidgets.QMainWindow):
         msg.exec()
 
     def _setProxyRemotelyAccessible(self, checked: bool):
-        self.settings.setValue("RemotelyAccessible", checked)
+        self.sessionManager.settings.REMOTELY_ACCESSIBLE = checked
         msg = QtWidgets.QMessageBox()
         msg.setText("Remote accessibility setting changes will take effect on next run")
         msg.exec()
 
     def _setUseViewerObjectCache(self, checked: bool):
-        self.settings.setValue("UseViewerObjectCache", checked)
-        self.sessionManager.use_viewer_object_cache = checked
+        self.sessionManager.settings.USE_VIEWER_OBJECT_CACHE = checked
 
     def _manageAddons(self):
         dialog = AddonDialog(self)
         dialog.exec_()
 
     def getAddonList(self) -> List[str]:
-        return json.loads(str(self.settings.value("Addons", "[]")))
+        return self.sessionManager.settings.ADDON_SCRIPTS
 
     def setAddonList(self, val: List[str]):
-        self.settings.setValue("Addons", json.dumps(val))
+        self.sessionManager.settings.ADDON_SCRIPTS = val
 
 
 BANNED_HEADERS = ("content-length", "host")
@@ -719,7 +716,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
         return val
 
     def _sendHTTPRequest(self, method, uri, headers, body):
-        caps_client = ProxyCapsClient()
+        caps_client = ProxyCapsClient(self.sessionManager.settings)
 
         async def _send_request():
             req = caps_client.request(method, uri, headers=headers, data=body)
@@ -823,6 +820,22 @@ class FilterDialog(QtWidgets.QDialog):
             self.listFilters.takeItem(idx)
 
 
+class GUIProxySettings(ProxySettings):
+    """Persistent settings backed by QSettings"""
+    def __init__(self, settings: QtCore.QSettings):
+        super().__init__()
+        self._settings_obj = settings
+
+    def get_setting(self, name: str) -> Any:
+        val: Any = self._settings_obj.value(name, defaultValue=dataclasses.MISSING)
+        if val is dataclasses.MISSING:
+            return val
+        return json.loads(val)
+
+    def set_setting(self, name: str, val: Any):
+        self._settings_obj.setValue(name, json.dumps(val))
+
+
 def gui_main():
     multiprocessing.set_start_method('spawn')
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
@@ -835,11 +848,8 @@ def gui_main():
     timer.start(100)
     signal.signal(signal.SIGINT, lambda *args: QtWidgets.QApplication.quit())
     window.show()
-    remote_access = window.settings.value("RemotelyAccessible", False, type=bool)
-    use_vocache = window.settings.value("UseViewerObjectCache", False, type=bool)
-    window.sessionManager.use_viewer_object_cache = use_vocache
     http_host = None
-    if remote_access:
+    if window.sessionManager.settings.REMOTELY_ACCESSIBLE:
         http_host = "0.0.0.0"
     start_proxy(
         session_manager=window.sessionManager,

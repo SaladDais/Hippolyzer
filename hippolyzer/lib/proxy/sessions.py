@@ -19,6 +19,7 @@ from hippolyzer.lib.proxy.http_proxy import HTTPFlowContext, is_asset_server_cap
 from hippolyzer.lib.proxy.namecache import ProxyNameCache
 from hippolyzer.lib.proxy.object_manager import ProxyWorldObjectManager
 from hippolyzer.lib.proxy.region import ProxiedRegion, CapType
+from hippolyzer.lib.proxy.settings import ProxySettings
 
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.message_logger import BaseMessageLogger
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
 
 class Session(BaseClientSession):
     def __init__(self, session_id, secure_session_id, agent_id, circuit_code,
-                 login_data=None, session_manager: Optional[SessionManager] = None):
+                 session_manager: Optional[SessionManager], login_data=None):
         self.login_data = login_data or {}
         self.pending = True
         self.id: UUID = session_id
@@ -43,7 +44,7 @@ class Session(BaseClientSession):
         self.started_at = datetime.datetime.now()
         self.message_handler: MessageHandler[Message] = MessageHandler()
         self.http_message_handler: MessageHandler[HippoHTTPFlow] = MessageHandler()
-        self.objects = ProxyWorldObjectManager(self, session_manager.name_cache)
+        self.objects = ProxyWorldObjectManager(self, session_manager.settings, session_manager.name_cache)
         self._main_region = None
 
     @property
@@ -59,8 +60,8 @@ class Session(BaseClientSession):
             secure_session_id=UUID(login_data["secure_session_id"]),
             agent_id=UUID(login_data["agent_id"]),
             circuit_code=int(login_data["circuit_code"]),
-            login_data=login_data,
             session_manager=session_manager,
+            login_data=login_data,
         )
         appearance_service = login_data.get("agent_appearance_service")
         map_image_service = login_data.get("map-server-url")
@@ -168,7 +169,8 @@ class Session(BaseClientSession):
 
 
 class SessionManager:
-    def __init__(self):
+    def __init__(self, settings: ProxySettings):
+        self.settings: ProxySettings = settings
         self.sessions: List[Session] = []
         self.shutdown_signal = multiprocessing.Event()
         self.flow_context = HTTPFlowContext()
@@ -176,7 +178,6 @@ class SessionManager:
         self.message_logger: Optional[BaseMessageLogger] = None
         self.addon_ctx: Dict[str, Any] = {}
         self.name_cache = ProxyNameCache()
-        self.use_viewer_object_cache: bool = False
 
     def create_session(self, login_data) -> Session:
         session = Session.from_login_data(login_data, self)

@@ -9,6 +9,7 @@ from hippolyzer.lib.proxy.lludp_proxy import InterceptingLLUDPProxyProtocol
 from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import SessionManager
+from hippolyzer.lib.proxy.settings import ProxySettings
 from hippolyzer.lib.proxy.transport import SOCKS5UDPTransport
 
 
@@ -35,7 +36,7 @@ class BaseProxyTest(unittest.IsolatedAsyncioTestCase):
         self.client_addr = ("127.0.0.1", 1)
         self.region_addr = ("127.0.0.1", 3)
         self.circuit_code = 1234
-        self.session_manager = SessionManager()
+        self.session_manager = SessionManager(ProxySettings())
         self.session = self.session_manager.create_session({
             "session_id": UUID.random(),
             "secure_session_id": UUID.random(),

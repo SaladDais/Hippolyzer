@@ -1,20 +1,21 @@
 from __future__ import annotations
 
-import os
 import re
 import sys
 from typing import *
 
 from hippolyzer.lib.base.network.caps_client import CapsClient, CAPS_DICT
+from hippolyzer.lib.proxy.settings import ProxySettings
 
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.region import ProxiedRegion
 
 
 class ProxyCapsClient(CapsClient):
-    def __init__(self, region: Optional[ProxiedRegion] = None):
+    def __init__(self, settings: ProxySettings, region: Optional[ProxiedRegion] = None):
         super().__init__(None)
         self._region = region
+        self._settings = settings
 
     def _get_caps(self) -> Optional[CAPS_DICT]:
         if not self._region:
@@ -28,8 +29,7 @@ class ProxyCapsClient(CapsClient):
             # request came from us so we can tag the request as injected. The header will be popped
             # off before passing through to the server.
             headers["X-Hippo-Injected"] = "1"
-            # TODO: Have a setting for this
-            proxy_port = int(os.environ.get("HIPPO_HTTP_PORT", 9062))
+            proxy_port = self._settings.HTTP_PROXY_PORT
             proxy = f"http://127.0.0.1:{proxy_port}"
             # TODO: set up the SSLContext to validate mitmproxy's cert
             ssl = ssl or False

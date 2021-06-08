@@ -49,7 +49,7 @@ class CapsMultiDict(multidict.MultiDict[Tuple[CapType, str]]):
 
 
 class ProxiedRegion(BaseClientRegion):
-    def __init__(self, circuit_addr, seed_cap: str, session, handle=None):
+    def __init__(self, circuit_addr, seed_cap: str, session: Session, handle=None):
         # A client may make a Seed request twice, and may get back two (valid!) sets of
         # Cap URIs. We need to be able to look up both, so MultiDict is necessary.
         self.handle: Optional[int] = handle
@@ -66,8 +66,9 @@ class ProxiedRegion(BaseClientRegion):
         self.message_handler: MessageHandler[Message] = MessageHandler()
         self.http_message_handler: MessageHandler[HippoHTTPFlow] = MessageHandler()
         self.eq_manager = EventQueueManager(self)
-        self.caps_client = ProxyCapsClient(proxify(self))
-        self.objects: ProxyObjectManager = ProxyObjectManager(self, use_vo_cache=True)
+        settings = session.session_manager.settings
+        self.caps_client = ProxyCapsClient(settings, proxify(self))
+        self.objects: ProxyObjectManager = ProxyObjectManager(self, may_use_vo_cache=True)
         self.xfer_manager = XferManager(proxify(self), self.session().secure_session_id)
         self.transfer_manager = TransferManager(proxify(self), session.agent_id, session.id)
         self._recalc_caps()
