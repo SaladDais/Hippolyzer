@@ -6,6 +6,7 @@ from typing import *
 
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.message.message import Message
+from hippolyzer.lib.base.templates import PCode
 from hippolyzer.lib.client.namecache import NameCache
 from hippolyzer.lib.client.object_manager import (
     ClientObjectManager,
@@ -114,6 +115,14 @@ class ProxyWorldObjectManager(ClientWorldObjectManager):
     def _run_object_update_hooks(self, obj: Object, updated_props: Set[str], update_type: UpdateType):
         super()._run_object_update_hooks(obj, updated_props, update_type)
         region = self._session.region_by_handle(obj.RegionHandle)
+        if obj.PCode == PCode.AVATAR and "ParentID" in updated_props:
+            if obj.ParentID and not region.objects.lookup_localid(obj.ParentID):
+                # If an avatar just sat on an object we don't know about, add it to the queued
+                # cache misses and request if if the viewer doesn't. This should happen
+                # regardless of the auto-request object setting because otherwise we have no way
+                # to get a sitting agent's true region location, even if it's ourself.
+                region.objects.queued_cache_misses.add(obj.ParentID)
+                region.objects.request_missed_cached_objects_soon()
         AddonManager.handle_object_updated(self._session, region, obj, updated_props)
 
     def _run_kill_object_hooks(self, obj: Object):

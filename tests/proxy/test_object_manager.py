@@ -141,6 +141,19 @@ class ObjectManagerTestMixin(BaseProxyTest):
     def _kill_object(self, local_id: int):
         self.message_handler.handle(self._create_kill_object(local_id))
 
+    def _create_object_update_cached(self, local_id: int, region_handle: int = 123,
+                                     crc: int = 22, flags: int = 4321):
+        return Message(
+            'ObjectUpdateCached',
+            Block("RegionData", TimeDilation=102, RegionHandle=region_handle),
+            Block(
+                "ObjectData",
+                ID=local_id,
+                CRC=crc,
+                UpdateFlags=flags,
+            )
+        )
+
     def _get_avatar_positions(self) -> Dict[UUID, Vector3]:
         return {av.FullID: av.RegionPosition for av in self.region_object_manager.all_avatars}
 
@@ -451,16 +464,7 @@ class RegionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioT
                 )
             ])
         ])
-        cache_msg = Message(
-            'ObjectUpdateCached',
-            Block("RegionData", TimeDilation=102, RegionHandle=123),
-            Block(
-                "ObjectData",
-                ID=1234,
-                CRC=22,
-                UpdateFlags=4321,
-            )
-        )
+        cache_msg = self._create_object_update_cached(1234, flags=4321)
         obj = self.region_object_manager.lookup_localid(1234)
         self.assertIsNone(obj)
         self.region_object_manager.load_cache()
@@ -623,3 +627,41 @@ class SessionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncio
         await self.session.objects.load_ancestors(parentless)
         with self.assertRaises(asyncio.TimeoutError):
             await self.session.objects.load_ancestors(orphaned, wait_time=0.005)
+
+    async def test_auto_request_objects(self):
+        self.session_manager.settings.AUTOMATICALLY_REQUEST_MISSING_OBJECTS = True
+        self.message_handler.handle(self._create_object_update_cached(1234))
+        self.message_handler.handle(self._create_object_update_cached(1235))
+        self.assertEqual({1234, 1235}, self.region_object_manager.queued_cache_misses)
+        # Pretend viewer sent out its own RequestMultipleObjects
+        self.region.message_handler.handle(Message(
+            'RequestMultipleObjects',
+            Block("RegionData", SessionID=self.session.id, AgentID=self.session.agent_id),
+            Block(
+                "ObjectData",
+                ID=1234,
+            )
+        ))
+        # Proxy should have killed its pending request for 1234
+        self.assertEqual({1235}, self.region_object_manager.queued_cache_misses)
+
+    async def test_auto_request_avatar_seats(self):
+        # Avatars' parent links should always be requested regardless of
+        # object auto-request setting's value.
+        seat_id = 999
+        av = self._create_object(pcode=PCode.AVATAR, parent_id=seat_id)
+        self.assertEqual({seat_id}, self.region_object_manager.queued_cache_misses)
+        # Need to wait for it to decide it's worth requesting
+        await asyncio.sleep(0.22)
+        self.assertEqual(set(), self.region_object_manager.queued_cache_misses)
+        # Make sure we sent a request after the timeout
+        req_msg = self.deserializer.deserialize(self.transport.packets[-1][0])
+        self.assertEqual("RequestMultipleObjects", req_msg.name)
+        self.assertEqual(
+            [{'CacheMissType': 0, 'ID': seat_id}],
+            req_msg.to_dict()['body']['ObjectData'],
+        )
+        # Parent should not be requested again if an unrelated property like pos changes
+        self._create_object(local_id=av.LocalID, full_id=av.FullID,
+                            pcode=PCode.AVATAR, parent_id=seat_id, pos=(1, 2, 9))
+        self.assertEqual(set(), self.region_object_manager.queued_cache_misses)

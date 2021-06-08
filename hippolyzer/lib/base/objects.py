@@ -185,11 +185,11 @@ class Object(recordclass.datatuple):  # type: ignore
                 if any(isinstance(x, lazy_object_proxy.Proxy) for x in (old_val, val)):
                     # TODO: be smarter about this. Can we store the raw bytes and
                     #  compare those if it's an unparsed object?
-                    if old_val is not val:
-                        updated_properties.add(key)
+                    is_updated = old_val is not val
                 else:
-                    if old_val != val:
-                        updated_properties.add(key)
+                    is_updated = old_val != val
+                if is_updated:
+                    updated_properties.add(key)
                 setattr(self, key, val)
         return updated_properties
 
