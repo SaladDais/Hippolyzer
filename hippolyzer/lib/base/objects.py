@@ -182,7 +182,7 @@ class Object(recordclass.datatuple):  # type: ignore
                 old_val = getattr(self, key, dataclasses.MISSING)
                 # Don't check equality if we're using a lazy proxy,
                 # parsing is deferred until we actually use it.
-                if isinstance(val, lazy_object_proxy.Proxy):
+                if any(isinstance(x, lazy_object_proxy.Proxy) for x in (old_val, val)):
                     # TODO: be smarter about this. Can we store the raw bytes and
                     #  compare those if it's an unparsed object?
                     if old_val is not val:
