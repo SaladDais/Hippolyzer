@@ -837,6 +837,18 @@ class Avatar:
             return None
         return self._resolved_name.preferred_name
 
+    @property
+    def DisplayName(self) -> Optional[str]:
+        if not self._resolved_name:
+            return None
+        return self._resolved_name.display_name
+
+    @property
+    def LegacyName(self) -> Optional[str]:
+        if not self._resolved_name:
+            return None
+        return self._resolved_name.legacy_name
+
     def __repr__(self):
         loc_str = str(self.RegionPosition) if self.LocationType != LocationType.NONE else "?"
         return f"<{self.__class__.__name__} {self.FullID} {self.Name!r} @ {loc_str}>"
