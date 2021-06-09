@@ -5,6 +5,7 @@ import logging
 from typing import *
 
 from hippolyzer.lib.base import llsd
+from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.templates import PCode
 from hippolyzer.lib.client.namecache import NameCache
@@ -99,6 +100,10 @@ class ProxyWorldObjectManager(ClientWorldObjectManager):
             "GetObjectCost",
             self._handle_get_object_cost
         )
+        session.http_message_handler.subscribe(
+            "FirestormBridge",
+            self._handle_firestorm_bridge_request,
+        )
 
     def _handle_object_update_cached_misses(self, region_handle: int, missing_locals: Set[int]):
         if self._settings.AUTOMATICALLY_REQUEST_MISSING_OBJECTS:
@@ -137,3 +142,27 @@ class ProxyWorldObjectManager(ClientWorldObjectManager):
     def _handle_get_object_cost(self, flow: HippoHTTPFlow):
         parsed = llsd.parse_xml(flow.response.content)
         self._process_get_object_cost_response(parsed)
+
+    def _handle_firestorm_bridge_request(self, flow: HippoHTTPFlow):
+        """
+        Pull guessed avatar Z offsets from Firestorm Bridge requests
+
+        CoarseLocationUpdate packets can only represent heights up to 1024, so
+        viewers typically use an LSL bridge to get avatar heights beyond that range
+        and combine it with their X and Y coords from CoarseLocationUpdate packets.
+        """
+        if not flow.request.content.startswith(b'<llsd><string>getZOffsets|'):
+            return
+        parsed: str = llsd.parse_xml(flow.response.content)
+        if not parsed:
+            return
+
+        # av_1_id, 1025.001, av_2_id, 3000.0, ...
+        split = parsed.split(", ")
+        for av_id, z_offset in zip(split[0::2], split[1::2]):
+            av_id = UUID(av_id)
+            z_offset = float(z_offset)
+            av = self.lookup_avatar(av_id)
+            if not av:
+                continue
+            av.GuessedZ = z_offset

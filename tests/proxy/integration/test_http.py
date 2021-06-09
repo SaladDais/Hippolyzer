@@ -1,17 +1,20 @@
 from __future__ import annotations
 
 import asyncio
+import math
 
 import aioresponses
+from mitmproxy.net import http
 from mitmproxy.test import tflow, tutils
 from mitmproxy.http import HTTPFlow
 from yarl import URL
 
+from hippolyzer.lib.base.datatypes import Vector3
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.http_event_manager import MITMProxyEventManager
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-from hippolyzer.lib.proxy.http_proxy import HTTPFlowContext, SerializedCapData
+from hippolyzer.lib.proxy.http_proxy import SerializedCapData
 from hippolyzer.lib.proxy.message_logger import FilteringMessageLogger
 from hippolyzer.lib.proxy.sessions import SessionManager
 
@@ -32,12 +35,12 @@ class SimpleMessageLogger(FilteringMessageLogger):
         return self._filtered_entries
 
 
-class LLUDPIntegrationTests(BaseProxyTest):
+class HTTPIntegrationTests(BaseProxyTest):
     def setUp(self) -> None:
         super().setUp()
         self.addon = MockAddon()
         AddonManager.init([], self.session_manager, [self.addon])
-        self.flow_context = HTTPFlowContext()
+        self.flow_context = self.session_manager.flow_context
         self.http_event_manager = MITMProxyEventManager(self.session_manager, self.flow_context)
         self._setup_default_circuit()
 
@@ -72,6 +75,30 @@ class LLUDPIntegrationTests(BaseProxyTest):
         mitm_flow: HTTPFlow = HTTPFlow.from_state(flow_state)
         # The response sent back to mitmproxy should have been our modified version
         self.assertEqual(True, mitm_flow.metadata["touched_addon"])
+
+    async def test_firestorm_bridge_avatar_z_pos(self):
+        # Simulate an avatar with a non-finite Z pos in a coarselocation
+        self.session.main_region.objects.state.coarse_locations.update({
+            self.session.agent_id: Vector3(1, 2, math.inf),
+        })
+        self.session.objects._rebuild_avatar_objects()
+        # GuessedZ should be picked up for the avatar based on the bridge request
+        fake_flow = tflow.tflow(
+            req=tutils.treq(host="example.com", content=b'<llsd><string>getZOffsets|'),
+            resp=tutils.tresp(
+                headers=http.Headers((
+                    (b"X-SecondLife-Object-Name", b"#Firestorm LSL Bridge v99999"),
+                    (b"X-SecondLife-Owner-Key", str(self.session.agent_id).encode("utf8")),
+                )),
+                content=f"<llsd><string>{self.session.agent_id}, 2000.0</string></llsd>".encode("utf8")
+            ),
+        )
+        fake_flow.metadata["cap_data_ser"] = SerializedCapData("FirestormBridge")
+        fake_flow.metadata["from_browser"] = False
+        self.session_manager.flow_context.from_proxy_queue.put(("response", fake_flow.get_state()), True)
+        await self._pump_one_event()
+        av = tuple(self.session.objects.all_avatars)[0]
+        self.assertEqual(Vector3(1, 2, 2000.0), av.RegionPosition)
 
 
 class TestCapsClient(BaseProxyTest):

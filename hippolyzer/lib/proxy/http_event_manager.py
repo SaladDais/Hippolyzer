@@ -14,6 +14,7 @@ import defusedxml.xmlrpc
 import mitmproxy.http
 
 from hippolyzer.lib.base import llsd
+from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.llsd_msg_serializer import LLSDMessageSerializer
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
@@ -181,69 +182,89 @@ class MITMProxyEventManager:
         if flow.request_injected:
             return
 
-        if AddonManager.handle_http_response(flow):
-            return
-
         status = flow.response.status_code
         cap_data: Optional[CapData] = flow.metadata["cap_data"]
 
-        if cap_data:
-            if status != 200:
+        if status == 200 and cap_data and cap_data.cap_name == "FirestormBridge":
+            # Fake FirestormBridge cap based on a bridge-like response coming from
+            # a non-browser HTTP request. Figure out what session it belongs to
+            # so it can be handled in the session and region HTTP MessageHandlers
+            agent_id_str = flow.response.headers.get("X-SecondLife-Owner-Key", "")
+            if not agent_id_str:
                 return
+            agent_id = UUID(agent_id_str)
+            for session in self.session_manager.sessions:
+                if session.pending:
+                    continue
+                if session.agent_id == agent_id:
+                    # Enrich the flow with the session and region info
+                    cap_data = CapData(
+                        cap_name="FirestormBridge",
+                        region=weakref.ref(session.main_region),
+                        session=weakref.ref(session),
+                    )
+                    flow.cap_data = cap_data
+                    break
 
-            if cap_data.cap_name == "LoginRequest":
-                self._handle_login_flow(flow)
+        if AddonManager.handle_http_response(flow):
+            return
+
+        if status != 200 or not cap_data:
+            return
+
+        if cap_data.cap_name == "LoginRequest":
+            self._handle_login_flow(flow)
+            return
+
+        try:
+            session = cap_data.session and cap_data.session()
+            if not session:
                 return
-            try:
-                session = cap_data.session and cap_data.session()
-                if not session:
-                    return
-                session.http_message_handler.handle(flow)
+            session.http_message_handler.handle(flow)
 
-                region = cap_data.region and cap_data.region()
+            region = cap_data.region and cap_data.region()
+            if not region:
+                return
+            region.http_message_handler.handle(flow)
+
+            if cap_data.cap_name == "Seed":
+                parsed = llsd.parse_xml(flow.response.content)
+                logging.debug("Got seed cap for %r : %r" % (cap_data, parsed))
+                region.update_caps(parsed)
+
+                # On LL's grid these URIs aren't unique across sessions or regions,
+                # so we get request attribution by replacing them with a unique
+                # alias URI.
+                logging.debug("Replacing GetMesh caps with wrapped versions")
+                wrappable_caps = {"GetMesh2", "GetMesh", "GetTexture", "ViewerAsset"}
+                for cap_name in wrappable_caps:
+                    if cap_name in parsed:
+                        parsed[cap_name] = region.register_wrapper_cap(cap_name)
+                flow.response.content = llsd.format_pretty_xml(parsed)
+            elif cap_data.cap_name == "EventQueueGet":
+                parsed_eq_resp = llsd.parse_xml(flow.response.content)
+                if parsed_eq_resp:
+                    old_events = parsed_eq_resp["events"]
+                    new_events = []
+                    for event in old_events:
+                        if not self._handle_eq_event(cap_data.session(), region, event):
+                            new_events.append(event)
+                    # Add on any fake events that've been queued by addons
+                    eq_manager = cap_data.region().eq_manager
+                    new_events.extend(eq_manager.take_events())
+                    parsed_eq_resp["events"] = new_events
+                    if old_events and not new_events:
+                        # Need at least one event or the viewer will refuse to ack!
+                        new_events.append({"message": "NOP", "body": {}})
+                flow.response.content = llsd.format_pretty_xml(parsed_eq_resp)
+            elif cap_data.cap_name in self.UPLOAD_CREATING_CAPS:
                 if not region:
                     return
-
-                region.http_message_handler.handle(flow)
-
-                if cap_data.cap_name == "Seed":
-                    parsed = llsd.parse_xml(flow.response.content)
-                    logging.debug("Got seed cap for %r : %r" % (cap_data, parsed))
-                    region.update_caps(parsed)
-
-                    # On LL's grid these URIs aren't unique across sessions or regions,
-                    # so we get request attribution by replacing them with a unique
-                    # alias URI.
-                    logging.debug("Replacing GetMesh caps with wrapped versions")
-                    wrappable_caps = {"GetMesh2", "GetMesh", "GetTexture", "ViewerAsset"}
-                    for cap_name in wrappable_caps:
-                        if cap_name in parsed:
-                            parsed[cap_name] = region.register_wrapper_cap(cap_name)
-                    flow.response.content = llsd.format_pretty_xml(parsed)
-                elif cap_data.cap_name == "EventQueueGet":
-                    parsed_eq_resp = llsd.parse_xml(flow.response.content)
-                    if parsed_eq_resp:
-                        old_events = parsed_eq_resp["events"]
-                        new_events = []
-                        for event in old_events:
-                            if not self._handle_eq_event(cap_data.session(), region, event):
-                                new_events.append(event)
-                        # Add on any fake events that've been queued by addons
-                        eq_manager = cap_data.region().eq_manager
-                        new_events.extend(eq_manager.take_events())
-                        parsed_eq_resp["events"] = new_events
-                        if old_events and not new_events:
-                            # Need at least one event or the viewer will refuse to ack!
-                            new_events.append({"message": "NOP", "body": {}})
-                    flow.response.content = llsd.format_pretty_xml(parsed_eq_resp)
-                elif cap_data.cap_name in self.UPLOAD_CREATING_CAPS:
-                    if not region:
-                        return
-                    parsed = llsd.parse_xml(flow.response.content)
-                    if "uploader" in parsed:
-                        region.register_temporary_cap(cap_data.cap_name + "Uploader", parsed["uploader"])
-            except:
-                logging.exception("OOPS, blew up in HTTP proxy!")
+                parsed = llsd.parse_xml(flow.response.content)
+                if "uploader" in parsed:
+                    region.register_temporary_cap(cap_data.cap_name + "Uploader", parsed["uploader"])
+        except:
+            logging.exception("OOPS, blew up in HTTP proxy!")
 
     def _handle_login_flow(self, flow: HippoHTTPFlow):
         resp = xmlrpc.client.loads(flow.response.content)[0][0]  # type: ignore

@@ -634,7 +634,7 @@ class SessionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncio
         self.message_handler.handle(self._create_object_update_cached(1235))
         self.assertEqual({1234, 1235}, self.region_object_manager.queued_cache_misses)
         # Pretend viewer sent out its own RequestMultipleObjects
-        self.region.message_handler.handle(Message(
+        self.message_handler.handle(Message(
             'RequestMultipleObjects',
             Block("RegionData", SessionID=self.session.id, AgentID=self.session.agent_id),
             Block(

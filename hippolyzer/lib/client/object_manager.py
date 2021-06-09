@@ -64,11 +64,11 @@ class ClientObjectManager:
         return self.state.missing_locals
 
     def clear(self):
+        self.state.clear()
         if self._region.handle is not None:
             # We're tracked by the world object manager, tell it to untrack
             # any objects that we owned
             self._world_objects.clear_region_objects(self._region.handle)
-        self.state.clear()
 
     def lookup_localid(self, localid: int) -> Optional[Object]:
         return self.state.lookup_localid(localid)
@@ -217,13 +217,12 @@ class ClientWorldObjectManager:
             self._region_managers[handle] = proxify(self._session.region_by_handle(handle).objects)
 
     def clear_region_objects(self, handle: int):
-        """Signal that a region object manager is being cleared"""
-        region_mgr = self._region_managers.get(handle)
-        if region_mgr is None:
-            return
-        # Make sure they're gone from our lookup table first
-        for obj in region_mgr.all_objects:
-            del self._fullid_lookup[obj.FullID]
+        """Handle signal that a region object manager was just cleared"""
+        # Make sure they're gone from our lookup table
+        for obj in tuple(self._fullid_lookup.values()):
+            if obj.RegionHandle == handle:
+                del self._fullid_lookup[obj.FullID]
+        self._rebuild_avatar_objects()
 
     def _get_region_manager(self, handle: int) -> Optional[ClientObjectManager]:
         return self._region_managers.get(handle)
@@ -578,6 +577,9 @@ class ClientWorldObjectManager:
                     coarse_handle, coarse_location = coarse_pair
                     av.CoarseLocation = coarse_location
                     av.RegionHandle = coarse_handle
+                    # If we have a real value for Z then throw away any stale guesses
+                    if av.CoarseLocation.Z != math.inf:
+                        av.GuessedZ = None
                 if av_obj:
                     av.Object = av_obj
                     av.RegionHandle = av_obj.RegionHandle
@@ -803,6 +805,7 @@ class Avatar:
         #  to fill in the Z axis if it's infinite
         self.CoarseLocation = coarse_location
         self.Valid = True
+        self.GuessedZ: Optional[float] = None
         self._resolved_name = resolved_name
 
     @property
@@ -818,6 +821,9 @@ class Avatar:
         if self.Object and self.Object.AncestorsKnown:
             return self.Object.RegionPosition
         if self.CoarseLocation is not None:
+            if self.CoarseLocation.Z == math.inf and self.GuessedZ is not None:
+                coarse = self.CoarseLocation
+                return Vector3(coarse.X, coarse.Y, self.GuessedZ)
             return self.CoarseLocation
         raise ValueError(f"Avatar {self.FullID} has no known position")
 
