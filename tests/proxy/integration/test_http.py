@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import math
+import multiprocessing
 
 import aioresponses
 from mitmproxy.net import http
@@ -9,6 +10,7 @@ from mitmproxy.test import tflow, tutils
 from mitmproxy.http import HTTPFlow
 from yarl import URL
 
+from hippolyzer.apps.proxy import run_http_proxy_process
 from hippolyzer.lib.base.datatypes import Vector3
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.addons import AddonManager
@@ -105,7 +107,6 @@ class TestCapsClient(BaseProxyTest):
     def setUp(self) -> None:
         super().setUp()
         self._setup_default_circuit()
-        self.caps = {}
         self.caps_client = self.session.main_region.caps_client
 
     async def test_requests_proxied_by_default(self):
@@ -117,3 +118,37 @@ class TestCapsClient(BaseProxyTest):
         # Request should have been proxied, with a header marking it
         self.assertEqual(kwargs['headers']["X-Hippo-Injected"], "1")
         self.assertEqual(kwargs['proxy'], "http://127.0.0.1:9062")
+
+
+class TestMITMProxy(BaseProxyTest):
+    def setUp(self) -> None:
+        super().setUp()
+        self._setup_default_circuit()
+        self.caps_client = self.session.main_region.caps_client
+
+    def test_mitmproxy_works(self):
+        proxy_port = 9905
+        self.session_manager.settings.HTTP_PROXY_PORT = proxy_port
+
+        http_proc = multiprocessing.Process(
+            target=run_http_proxy_process,
+            args=("127.0.0.1", proxy_port, self.session_manager.flow_context),
+            daemon=True,
+        )
+        http_proc.start()
+
+        self.session_manager.flow_context.mitmproxy_ready.wait(1.0)
+
+        http_event_manager = MITMProxyEventManager(self.session_manager, self.session_manager.flow_context)
+
+        async def _request_example_com():
+            # Pump callbacks from mitmproxy
+            asyncio.create_task(http_event_manager.run())
+            try:
+                async with self.caps_client.get("http://example.com/", timeout=0.3) as resp:
+                    self.assertIn(b"Example Domain", await resp.read())
+            finally:
+                # Tell the event pump and mitmproxy they need to shut down
+                self.session_manager.flow_context.shutdown_signal.set()
+        asyncio.run(_request_example_com())
+        http_proc.join()

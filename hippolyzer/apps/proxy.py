@@ -89,6 +89,7 @@ def run_http_proxy_process(proxy_host, http_proxy_port, flow_context: HTTPFlowCo
     mitmproxy_master = create_http_proxy(proxy_host, http_proxy_port, flow_context)
     mitmproxy_master.start_server()
     gc.freeze()
+    flow_context.mitmproxy_ready.set()
     mitm_loop.run_forever()
 
 

@@ -82,6 +82,7 @@ class HTTPFlowContext:
         self.from_proxy_queue = multiprocessing.Queue()
         self.to_proxy_queue = multiprocessing.Queue()
         self.shutdown_signal = multiprocessing.Event()
+        self.mitmproxy_ready = multiprocessing.Event()
 
 
 class IPCInterceptionAddon:

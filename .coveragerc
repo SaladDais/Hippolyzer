@@ -1,5 +1,6 @@
 [run]
 omit =
+concurrency = multiprocessing
 [report]
 exclude_lines =
     pragma: no cover
