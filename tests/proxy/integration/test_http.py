@@ -145,7 +145,9 @@ class TestMITMProxy(BaseProxyTest):
             # Pump callbacks from mitmproxy
             asyncio.create_task(http_event_manager.run())
             try:
-                async with self.caps_client.get("http://example.com/", timeout=0.3) as resp:
+                async with self.caps_client.get("http://example.com/", timeout=0.5) as resp:
+                    self.assertIn(b"Example Domain", await resp.read())
+                async with self.caps_client.get("https://example.com/", timeout=0.5) as resp:
                     self.assertIn(b"Example Domain", await resp.read())
             finally:
                 # Tell the event pump and mitmproxy they need to shut down
