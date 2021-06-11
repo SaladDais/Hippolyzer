@@ -48,7 +48,11 @@ class HTTPAssetRepo(collections.UserDict):
         asset_id = None
         for name, val in flow.request.query.items():
             if name.endswith("_id"):
-                asset_id = UUID(val)
+                try:
+                    asset_id = UUID(val)
+                    break
+                except ValueError:
+                    pass
 
         if not asset_id or asset_id not in self.data:
             return False
