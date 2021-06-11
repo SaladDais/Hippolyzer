@@ -97,9 +97,14 @@ class AddonManager:
 
     @classmethod
     def shutdown(cls):
+        to_pop = []
         for mod in cls.FRESH_ADDON_MODULES.values():
+            to_pop.append(mod)
             cls._call_module_hooks(mod, "handle_unload", cls.SESSION_MANAGER)
         cls.SCHEDULER.shutdown()
+        for mod in to_pop:
+            if isinstance(mod, ModuleType):
+                sys.modules.pop(mod.__name__, None)
 
     @classmethod
     def have_active_repl(cls):
@@ -169,6 +174,7 @@ class AddonManager:
         old_mod = cls.FRESH_ADDON_MODULES.pop(specs[0].name, None)
         if old_mod:
             cls._unload_module(old_mod)
+            sys.modules.pop(old_mod.__name__, None)
         if reload:
             cls._reload_addons()
 
