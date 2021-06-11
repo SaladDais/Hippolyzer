@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import math
 import multiprocessing
+from urllib.parse import urlparse
 
 import aioresponses
 from mitmproxy.net import http
@@ -101,6 +102,34 @@ class HTTPIntegrationTests(BaseProxyTest):
         await self._pump_one_event()
         av = tuple(self.session.objects.all_avatars)[0]
         self.assertEqual(Vector3(1, 2, 2000.0), av.RegionPosition)
+
+    async def test_asset_server_proxy_wrapper_caps(self):
+        # We support "wrapper caps" that disambiguate otherwise ambiguous caps.
+        # The URL provided by the sim may not be unique across regions or sessions,
+        # in the case of ViewerAsset on agni, so we generate a random hostname
+        # as an alias and send that to the viewer instead.
+        region = self.session.main_region
+        region.update_caps({
+            "ViewerAsset": "http://assets.local/foo",
+        })
+        wrapper_url = region.register_wrapper_cap("ViewerAsset")
+        parsed = urlparse(wrapper_url)
+        fake_flow = tflow.tflow(req=tutils.treq(
+            host=parsed.hostname,
+            path="/foo/baz?asset_id=bar",
+            port=80,
+        ))
+        fake_flow.metadata["cap_data_ser"] = SerializedCapData()
+        self.flow_context.from_proxy_queue.put(("request", fake_flow.get_state()), True)
+        await self._pump_one_event()
+        flow_state = self.flow_context.to_proxy_queue.get(True)[2]
+        mitm_flow: HTTPFlow = HTTPFlow.from_state(flow_state)
+        self.assertIsNotNone(mitm_flow.response)
+        self.assertEqual(307, mitm_flow.response.status_code)
+        self.assertEqual(
+            "http://assets.local/foo/baz?asset_id=bar",
+            mitm_flow.response.headers["Location"],
+        )
 
 
 class TestCapsClient(BaseProxyTest):
