@@ -142,6 +142,19 @@ class GUIInteractionManager(BaseInteractionManager, QtCore.QObject):
             return None
         return dialog.selectedFiles()[0]
 
+    async def confirm(self, title: str, caption: str) -> bool:
+        msg = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Icon.Question,
+            title,
+            caption,
+            QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel,
+            self.parent(),
+        )
+        fut = asyncio.Future()
+        msg.finished.connect(lambda r: fut.set_result(r))
+        msg.open()
+        return (await fut) == QtWidgets.QMessageBox.Ok
+
 
 def nonFatalExceptions(f):
     @functools.wraps(f)

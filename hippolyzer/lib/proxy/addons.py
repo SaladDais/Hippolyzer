@@ -55,6 +55,10 @@ class BaseInteractionManager:
     async def save_file(self, caption: str = '', directory: str = '', filter_str: str = '') -> Optional[str]:
         pass
 
+    @abc.abstractmethod
+    async def confirm(self, title: str, caption: str) -> bool:
+        pass
+
     def main_window_handle(self) -> Any:
         return None
 
