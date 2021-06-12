@@ -45,8 +45,8 @@ class Object(recordclass.datatuple):  # type: ignore
     State: Optional[int] = None
     FullID: Optional[UUID] = None
     CRC: Optional[int] = None
-    PCode: Optional[int] = None
-    Material: Optional[int] = None
+    PCode: Optional[tmpls.PCode] = None
+    Material: Optional[tmpls.MCode] = None
     ClickAction: Optional[int] = None
     Scale: Optional[Vector3] = None
     ParentID: Optional[int] = None

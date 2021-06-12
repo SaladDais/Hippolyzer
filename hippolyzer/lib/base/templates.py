@@ -742,6 +742,21 @@ class PCode(IntEnum):
     TREE = 255
 
 
+@se.enum_field_serializer("ObjectUpdate", "ObjectData", "Material")
+@se.enum_field_serializer("ObjectAdd", "ObjectData", "Material")
+@se.enum_field_serializer("ObjectMaterial", "ObjectData", "Material")
+class MCode(IntEnum):
+    # Seems like this is normally stored in a U8 with the high nybble masked off?
+    # What's in the high nybble, anything?
+    STONE = 0
+    METAL = 1
+    WOOD = 3
+    FLESH = 4
+    PLASTIC = 5
+    RUBBER = 6
+    LIGHT = 7
+
+
 @se.flag_field_serializer("ObjectUpdate", "ObjectData", "UpdateFlags")
 @se.flag_field_serializer("ObjectUpdateCompressed", "ObjectData", "UpdateFlags")
 @se.flag_field_serializer("ObjectUpdateCached", "ObjectData", "UpdateFlags")
@@ -1326,7 +1341,7 @@ class ObjectUpdateCompressedDataSerializer(se.SimpleSubfieldSerializer):
         # point if an object with parents set to an avatar.
         "State": ObjectStateAdapter(se.U8),
         "CRC": se.U32,
-        "Material": se.U8,
+        "Material": se.IntEnum(MCode, se.U8),
         "ClickAction": se.U8,
         "Scale": se.Vector3,
         "Position": se.Vector3,
