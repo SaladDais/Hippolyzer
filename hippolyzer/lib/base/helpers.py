@@ -139,3 +139,9 @@ def bytes_escape(val: bytes) -> bytes:
 
 def get_resource_filename(resource_filename: str):
     return pkg_resources.resource_filename("hippolyzer", resource_filename)
+
+
+def to_chunks(chunkable: Sequence[_T], chunk_size: int) -> Generator[_T, None, None]:
+    while chunkable:
+        yield chunkable[:chunk_size]
+        chunkable = chunkable[chunk_size:]
