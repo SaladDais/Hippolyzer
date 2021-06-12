@@ -3,7 +3,7 @@ import unittest
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message_formatting import HumanMessageSerializer
-from hippolyzer.lib.base.templates import TextureEntrySubfieldSerializer, TEFaceBitfield
+from hippolyzer.lib.base.templates import TextureEntrySubfieldSerializer, TEFaceBitfield, TextureEntry
 
 EXAMPLE_TE = b"\x89UgG$\xcbC\xed\x92\x0bG\xca\xed\x15F_\x08\xe7\xb2\x98\x04\xca\x10;\x85\x94\x05Lj\x8d\xd4" \
              b"\x0b\x1f\x01B\xcb\xe6|\x1d,\xa7sc\xa6\x1a\xa2L\xb1u\x01\x00\x00\x00\x00\x00\x00\x00\x00\x80?" \
@@ -31,8 +31,8 @@ class TemplateTests(unittest.TestCase):
         pod_te = {
             'Textures': {
                 None: '89556747-24cb-43ed-920b-47caed15465f',
-                (3,): 'e7b29804-ca10-3b85-9405-4c6a8dd40b1f',
-                (0,): '42cbe67c-1d2c-a773-63a6-1aa24cb17501'
+                (3,): 'ca2a983a-1802-2c0d-f41e-c6f591015d83',
+                (0,): '34009069-2b10-80a1-aaa2-67116fa85dc6'
             },
             'Color': {None: b'\xff\xff\xff\xff'},
             'ScalesS': {None: 1.0},
@@ -60,6 +60,10 @@ class TemplateTests(unittest.TestCase):
         spec = msg["ObjectData"][0].get_serializer("TextureEntry")
         deser = spec.deserialize(None, msg["ObjectData"]["TextureEntry"], pod=True)
         self.assertEqual(deser, pod_te)
+
+    def test_textureentry_defaults(self):
+        te = TextureEntry()
+        self.assertEqual(UUID('89556747-24cb-43ed-920b-47caed15465f'), te.Textures[None])
 
 
 if __name__ == "__main__":

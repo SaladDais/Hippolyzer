@@ -1022,8 +1022,18 @@ class TEExceptionField(se.SerializableBase):
         return dict
 
 
-def _te_dataclass_field(spec: se.SERIALIZABLE_TYPE, first=False, optional=False):
-    return se.dataclass_field(TEExceptionField(spec, first=first, optional=optional))
+def _te_field(spec: se.SERIALIZABLE_TYPE, first=False, optional=False,
+              default_factory=dataclasses.MISSING, default=dataclasses.MISSING):
+    if default_factory is not dataclasses.MISSING:
+        new_default_factory = lambda: {None: default_factory()}
+    elif default is not None:
+        new_default_factory = lambda: {None: default}
+    else:
+        new_default_factory = dataclasses.MISSING
+    return se.dataclass_field(
+        TEExceptionField(spec, first=first, optional=optional),
+        default_factory=new_default_factory,
+    )
 
 
 _T = TypeVar("_T")
@@ -1032,18 +1042,25 @@ TE_FIELD_TYPE = Dict[Optional[Sequence[int]], _T]
 
 @dataclasses.dataclass
 class TextureEntry:
-    Textures: TE_FIELD_TYPE[UUID] = _te_dataclass_field(se.UUID, first=True)
+    Textures: TE_FIELD_TYPE[UUID] = _te_field(
+        # Plywood texture
+        se.UUID, first=True, default=UUID('89556747-24cb-43ed-920b-47caed15465f'))
     # Bytes are inverted so fully opaque white is \x00\x00\x00\x00
-    Color: TE_FIELD_TYPE[bytes] = _te_dataclass_field(Color4(invert_bytes=True))
-    ScalesS: TE_FIELD_TYPE[float] = _te_dataclass_field(se.F32)
-    ScalesT: TE_FIELD_TYPE[float] = _te_dataclass_field(se.F32)
-    OffsetsS: TE_FIELD_TYPE[int] = _te_dataclass_field(se.S16)
-    OffsetsT: TE_FIELD_TYPE[int] = _te_dataclass_field(se.S16)
-    Rotation: TE_FIELD_TYPE[int] = _te_dataclass_field(se.S16)
-    BasicMaterials: TE_FIELD_TYPE["BasicMaterials"] = _te_dataclass_field(BUMP_SHINY_FULLBRIGHT)
-    MediaFlags: TE_FIELD_TYPE["MediaFlags"] = _te_dataclass_field(MEDIA_FLAGS)
-    Glow: TE_FIELD_TYPE[int] = _te_dataclass_field(se.U8)
-    Materials: TE_FIELD_TYPE[UUID] = _te_dataclass_field(se.UUID, optional=True)
+    Color: TE_FIELD_TYPE[bytes] = _te_field(Color4(invert_bytes=True), default=b"\xff\xff\xff\xff")
+    ScalesS: TE_FIELD_TYPE[float] = _te_field(se.F32, default=1.0)
+    ScalesT: TE_FIELD_TYPE[float] = _te_field(se.F32, default=1.0)
+    OffsetsS: TE_FIELD_TYPE[int] = _te_field(se.S16, default=0)
+    OffsetsT: TE_FIELD_TYPE[int] = _te_field(se.S16, default=0)
+    Rotation: TE_FIELD_TYPE[int] = _te_field(se.S16, default=0)
+    BasicMaterials: TE_FIELD_TYPE["BasicMaterials"] = _te_field(
+        BUMP_SHINY_FULLBRIGHT, default_factory=lambda: BasicMaterials(Bump=0, FullBright=False, Shiny=0),
+    )
+    MediaFlags: TE_FIELD_TYPE["MediaFlags"] = _te_field(
+        MEDIA_FLAGS,
+        default_factory=lambda: MediaFlags(WebPage=False, TexGen=TexGen.DEFAULT, _Unused=0),
+    )
+    Glow: TE_FIELD_TYPE[int] = _te_field(se.U8, default=0)
+    Materials: TE_FIELD_TYPE[UUID] = _te_field(se.UUID, optional=True, default=UUID())
 
 
 TE_SERIALIZER = se.Dataclass(TextureEntry)
