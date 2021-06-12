@@ -1037,30 +1037,30 @@ def _te_field(spec: se.SERIALIZABLE_TYPE, first=False, optional=False,
 
 
 _T = TypeVar("_T")
-TE_FIELD_TYPE = Dict[Optional[Sequence[int]], _T]
+_TE_FIELD_KEY = Optional[Sequence[int]]
 
 
 @dataclasses.dataclass
 class TextureEntry:
-    Textures: TE_FIELD_TYPE[UUID] = _te_field(
+    Textures: Dict[_TE_FIELD_KEY, UUID] = _te_field(
         # Plywood texture
         se.UUID, first=True, default=UUID('89556747-24cb-43ed-920b-47caed15465f'))
     # Bytes are inverted so fully opaque white is \x00\x00\x00\x00
-    Color: TE_FIELD_TYPE[bytes] = _te_field(Color4(invert_bytes=True), default=b"\xff\xff\xff\xff")
-    ScalesS: TE_FIELD_TYPE[float] = _te_field(se.F32, default=1.0)
-    ScalesT: TE_FIELD_TYPE[float] = _te_field(se.F32, default=1.0)
-    OffsetsS: TE_FIELD_TYPE[int] = _te_field(se.S16, default=0)
-    OffsetsT: TE_FIELD_TYPE[int] = _te_field(se.S16, default=0)
-    Rotation: TE_FIELD_TYPE[int] = _te_field(se.S16, default=0)
-    BasicMaterials: TE_FIELD_TYPE["BasicMaterials"] = _te_field(
+    Color: Dict[_TE_FIELD_KEY, bytes] = _te_field(Color4(invert_bytes=True), default=b"\xff\xff\xff\xff")
+    ScalesS: Dict[_TE_FIELD_KEY, float] = _te_field(se.F32, default=1.0)
+    ScalesT: Dict[_TE_FIELD_KEY, float] = _te_field(se.F32, default=1.0)
+    OffsetsS: Dict[_TE_FIELD_KEY, int] = _te_field(se.S16, default=0)
+    OffsetsT: Dict[_TE_FIELD_KEY, int] = _te_field(se.S16, default=0)
+    Rotation: Dict[_TE_FIELD_KEY, int] = _te_field(se.S16, default=0)
+    BasicMaterials: Dict[_TE_FIELD_KEY, "BasicMaterials"] = _te_field(
         BUMP_SHINY_FULLBRIGHT, default_factory=lambda: BasicMaterials(Bump=0, FullBright=False, Shiny=0),
     )
-    MediaFlags: TE_FIELD_TYPE["MediaFlags"] = _te_field(
+    MediaFlags: Dict[_TE_FIELD_KEY, "MediaFlags"] = _te_field(
         MEDIA_FLAGS,
         default_factory=lambda: MediaFlags(WebPage=False, TexGen=TexGen.DEFAULT, _Unused=0),
     )
-    Glow: TE_FIELD_TYPE[int] = _te_field(se.U8, default=0)
-    Materials: TE_FIELD_TYPE[UUID] = _te_field(se.UUID, optional=True, default=UUID())
+    Glow: Dict[_TE_FIELD_KEY, int] = _te_field(se.U8, default=0)
+    Materials: Dict[_TE_FIELD_KEY, UUID] = _te_field(se.UUID, optional=True, default=UUID())
 
 
 TE_SERIALIZER = se.Dataclass(TextureEntry)
