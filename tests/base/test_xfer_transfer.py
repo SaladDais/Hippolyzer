@@ -23,7 +23,7 @@ from hippolyzer.lib.base.xfer_manager import XferManager
 
 
 class MockHandlingCircuit(ProxiedCircuit):
-    def __init__(self, handler: MessageHandler[Message]):
+    def __init__(self, handler: MessageHandler[Message, str]):
         super().__init__(("127.0.0.1", 1), ("127.0.0.1", 2), None)
         self.handler = handler
 
@@ -42,8 +42,8 @@ class BaseTransferTests(unittest.IsolatedAsyncioTestCase):
     LARGE_PAYLOAD = b"foobar" * 500
 
     def setUp(self) -> None:
-        self.server_message_handler: MessageHandler[Message] = MessageHandler()
-        self.client_message_handler: MessageHandler[Message] = MessageHandler()
+        self.server_message_handler: MessageHandler[Message, str] = MessageHandler()
+        self.client_message_handler: MessageHandler[Message, str] = MessageHandler()
         # The client side should send messages to the server side's message handler
         # and vice-versa
         self.client_circuit = MockHandlingCircuit(self.server_message_handler)
@@ -60,7 +60,7 @@ class XferManagerTests(BaseTransferTests):
         self.received_bytes: Optional[bytes] = None
 
     async def _handle_vfile_upload(self):
-        msg = await self.server_message_handler.wait_for('AssetUploadRequest', timeout=0.01)
+        msg = await self.server_message_handler.wait_for(('AssetUploadRequest',), timeout=0.01)
         asset_block = msg["AssetBlock"]
         transaction_id = asset_block["TransactionID"]
         asset_id = UUID.combine(transaction_id, self.secure_session_id)
@@ -102,7 +102,7 @@ class TestTransferManager(BaseTransferTests):
         )
 
     async def _handle_covenant_download(self):
-        msg = await self.server_message_handler.wait_for('TransferRequest', timeout=0.01)
+        msg = await self.server_message_handler.wait_for(('TransferRequest',), timeout=0.01)
         self.assertEqual(TransferSourceType.SIM_ESTATE, msg["TransferInfo"]["SourceType"])
         tid = msg["TransferInfo"]["TransferID"]
         params: TransferRequestParamsSimEstate = msg["TransferInfo"][0].deserialize_var("Params")

@@ -16,6 +16,7 @@ from typing import *
 from hippolyzer.lib.base.datatypes import UUID, Vector3
 from hippolyzer.lib.base.helpers import proxify
 from hippolyzer.lib.base.message.message import Block, Message
+from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.objects import (
     normalize_object_update,
     normalize_terse_object_update,
@@ -38,6 +39,7 @@ class UpdateType(enum.IntEnum):
     PROPERTIES = enum.auto()
     FAMILY = enum.auto()
     COSTS = enum.auto()
+    KILL = enum.auto()
 
 
 class ClientObjectManager:
@@ -161,12 +163,30 @@ class ClientObjectManager:
         return futures
 
 
+class ObjectEvent:
+    __slots__ = ("object", "updated", "update_type")
+
+    object: Object
+    updated: Set[str]
+    update_type: UpdateType
+
+    def __init__(self, obj: Object, updated: Set[str], update_type: UpdateType):
+        self.object = obj
+        self.updated = updated
+        self.update_type = update_type
+
+    @property
+    def name(self) -> UpdateType:
+        return self.update_type
+
+
 class ClientWorldObjectManager:
     """Manages Objects for a session's whole world"""
     def __init__(self, session: BaseClientSession, settings: Settings, name_cache: Optional[NameCache]):
         self._session: BaseClientSession = session
         self._settings = settings
         self.name_cache = name_cache or NameCache()
+        self.events: MessageHandler[ObjectEvent, UpdateType] = MessageHandler(take_by_default=False)
         self._fullid_lookup: Dict[UUID, Object] = {}
         self._avatars: Dict[UUID, Avatar] = {}
         self._avatar_objects: Dict[UUID, Object] = {}
@@ -549,9 +569,10 @@ class ClientWorldObjectManager:
         if obj.PCode == PCode.AVATAR and "NameValue" in updated_props:
             if obj.NameValue:
                 self.name_cache.update(obj.FullID, obj.NameValue.to_dict())
+        self.events.handle(ObjectEvent(obj, updated_props, update_type))
 
     def _run_kill_object_hooks(self, obj: Object):
-        pass
+        self.events.handle(ObjectEvent(obj, set(), UpdateType.KILL))
 
     def _rebuild_avatar_objects(self):
         # Get all avatars known through coarse locations and which region the location was in

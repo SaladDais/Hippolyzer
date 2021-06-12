@@ -17,8 +17,8 @@ if TYPE_CHECKING:
 class ProxyNameCache(NameCache):
     def create_subscriptions(
             self,
-            message_handler: MessageHandler[Message],
-            http_message_handler: Optional[MessageHandler[HippoHTTPFlow]] = None,
+            message_handler: MessageHandler[Message, str],
+            http_message_handler: Optional[MessageHandler[HippoHTTPFlow, str]] = None,
     ):
         super().create_subscriptions(message_handler)
         if http_message_handler is not None:

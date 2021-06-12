@@ -247,7 +247,7 @@ class LLUDPIntegrationTests(BaseProxyTest):
     async def test_session_message_handler(self):
         self._setup_default_circuit()
         obj_update = self._make_objectupdate_compressed(1234)
-        fut = self.session.message_handler.wait_for('ObjectUpdateCompressed')
+        fut = self.session.message_handler.wait_for(('ObjectUpdateCompressed',))
         self.protocol.datagram_received(obj_update, self.region_addr)
         self.assertEqual("ObjectUpdateCompressed", (await fut).name)
 

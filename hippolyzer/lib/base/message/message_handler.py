@@ -28,28 +28,28 @@ from hippolyzer.lib.base.events import Event
 
 LOG = logging.getLogger(__name__)
 _T = TypeVar("_T")
+_K = TypeVar("_K", bound=Hashable)
 MESSAGE_HANDLER = Callable[[_T], Any]
 PREDICATE = Callable[[_T], bool]
-MESSAGE_NAMES = Union[str, Iterable[str]]
+MESSAGE_NAMES = Iterable[_K]
 
 
-class MessageHandler(Generic[_T]):
-    def __init__(self):
-        self.handlers: Dict[str, Event] = {}
+class MessageHandler(Generic[_T, _K]):
+    def __init__(self, take_by_default: bool = True):
+        self.handlers: Dict[_K, Event] = {}
+        self.take_by_default = take_by_default
 
-    def register(self, message_name: str) -> Event:
+    def register(self, message_name: _K) -> Event:
         LOG.debug('Creating a monitor for %s' % message_name)
         return self.handlers.setdefault(message_name, Event())
 
-    def subscribe(self, message_name: str, handler: MESSAGE_HANDLER) -> Event:
+    def subscribe(self, message_name: _K, handler: MESSAGE_HANDLER) -> Event:
         notifier = self.register(message_name)
         notifier.subscribe(handler)
         return notifier
 
     def _subscribe_all(self, message_names: MESSAGE_NAMES, handler: MESSAGE_HANDLER,
                        predicate: Optional[PREDICATE] = None) -> List[Event]:
-        if isinstance(message_names, str):
-            message_names = (message_names,)
         notifiers = [self.register(name) for name in message_names]
         for n in notifiers:
             n.subscribe(handler, predicate=predicate)
@@ -57,7 +57,7 @@ class MessageHandler(Generic[_T]):
 
     @contextlib.contextmanager
     def subscribe_async(self, message_names: MESSAGE_NAMES, predicate: Optional[PREDICATE] = None,
-                        take: bool = True) -> ContextManager[Callable[[], Awaitable[_T]]]:
+                        take: Optional[bool] = None) -> ContextManager[Callable[[], Awaitable[_T]]]:
         """
         Subscribe to a set of message matching predicate while within a block
 
@@ -69,6 +69,8 @@ class MessageHandler(Generic[_T]):
         If a subscriber is just an observer that will never drop or modify a message, take=False
         may be used and messages will be sent as usual.
         """
+        if take is None:
+            take = self.take_by_default
         msg_queue = asyncio.Queue()
 
         def _handler_wrapper(message: _T):
@@ -91,8 +93,8 @@ class MessageHandler(Generic[_T]):
             for n in notifiers:
                 n.unsubscribe(_handler_wrapper)
 
-    def wait_for(self, message_names: MESSAGE_NAMES,
-                 predicate: Optional[PREDICATE] = None, timeout=None, take=True) -> Awaitable[_T]:
+    def wait_for(self, message_names: MESSAGE_NAMES, predicate: Optional[PREDICATE] = None,
+                 timeout: Optional[float] = None, take: Optional[bool] = None) -> Awaitable[_T]:
         """
         Wait for a single instance one of message_names matching predicate
 
@@ -101,8 +103,8 @@ class MessageHandler(Generic[_T]):
         sequence of packets, since multiple packets may come in after the future has already
         been marked completed, causing some to be missed.
         """
-        if isinstance(message_names, str):
-            message_names = (message_names,)
+        if take is None:
+            take = self.take_by_default
         notifiers = [self.register(name) for name in message_names]
 
         fut = asyncio.get_event_loop().create_future()
@@ -132,7 +134,7 @@ class MessageHandler(Generic[_T]):
             notifier.subscribe(_handler, predicate=predicate)
         return fut
 
-    def is_handled(self, message_name: str):
+    def is_handled(self, message_name: _K):
         return message_name in self.handlers
 
     def handle(self, message: _T):
@@ -140,7 +142,7 @@ class MessageHandler(Generic[_T]):
         # Always try to call wildcard handlers
         self._handle_type('*', message)
 
-    def _handle_type(self, name: str, message: _T):
+    def _handle_type(self, name: _K, message: _T):
         handler = self.handlers.get(name)
         if not handler:
             return

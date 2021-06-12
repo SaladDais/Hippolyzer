@@ -40,7 +40,7 @@ class TransferExampleAddon(BaseAddon):
             Block('AgentData', AgentID=session.agent_id, SessionID=session.id),
             Block('InventoryData', LocalID=session.selected.object_local),
         ))
-        inv_message = await region.message_handler.wait_for('ReplyTaskInventory', timeout=5.0)
+        inv_message = await region.message_handler.wait_for(('ReplyTaskInventory',), timeout=5.0)
 
         # Xfer the inventory file and look for a script
         xfer = await region.xfer_manager.request(

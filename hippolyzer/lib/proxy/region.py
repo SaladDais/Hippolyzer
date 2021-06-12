@@ -63,8 +63,8 @@ class ProxiedRegion(BaseClientRegion):
         if seed_cap:
             self._caps["Seed"] = (CapType.NORMAL, seed_cap)
         self.session: Callable[[], Session] = weakref.ref(session)
-        self.message_handler: MessageHandler[Message] = MessageHandler()
-        self.http_message_handler: MessageHandler[HippoHTTPFlow] = MessageHandler()
+        self.message_handler: MessageHandler[Message, str] = MessageHandler()
+        self.http_message_handler: MessageHandler[HippoHTTPFlow, str] = MessageHandler()
         self.eq_manager = EventQueueManager(self)
         settings = session.session_manager.settings
         self.caps_client = ProxyCapsClient(settings, proxify(self))

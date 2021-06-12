@@ -39,7 +39,7 @@ class NameCache:
 
     def create_subscriptions(
             self,
-            message_handler: MessageHandler[Message],
+            message_handler: MessageHandler[Message, str],
     ):
         message_handler.subscribe("UUIDNameReply", self._handle_uuid_name_reply)
 

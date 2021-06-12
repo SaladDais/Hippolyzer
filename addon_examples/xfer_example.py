@@ -22,7 +22,7 @@ class XferExampleAddon(BaseAddon):
         ))
 
         # Wait for any MuteListUpdate, dropping it before it reaches the viewer
-        update_msg = await region.message_handler.wait_for('MuteListUpdate', timeout=5.0)
+        update_msg = await region.message_handler.wait_for(('MuteListUpdate',), timeout=5.0)
         mute_file_name = update_msg["MuteData"]["Filename"]
         if not mute_file_name:
             show_message("Nobody muted?")
@@ -42,7 +42,7 @@ class XferExampleAddon(BaseAddon):
             Block('InventoryData', LocalID=session.selected.object_local),
         ))
 
-        inv_message = await region.message_handler.wait_for('ReplyTaskInventory', timeout=5.0)
+        inv_message = await region.message_handler.wait_for(('ReplyTaskInventory',), timeout=5.0)
 
         # Xfer doesn't need to be immediately awaited, multiple signals can be waited on.
         xfer = region.xfer_manager.request(

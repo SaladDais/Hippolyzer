@@ -169,7 +169,7 @@ class TestMessage(unittest.TestCase):
 
 class TestMessageHandlers(unittest.IsolatedAsyncioTestCase):
     def setUp(self) -> None:
-        self.message_handler: MessageHandler[Message] = MessageHandler()
+        self.message_handler: MessageHandler[Message, str] = MessageHandler()
 
     def _fake_received_message(self, msg: Message):
         self.message_handler.handle(msg)
@@ -203,7 +203,7 @@ class TestMessageHandlers(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(foo_handlers), 0)
 
     async def test_subscription_no_take(self):
-        with self.message_handler.subscribe_async("Foo", take=False) as get_msg:
+        with self.message_handler.subscribe_async(("Foo",), take=False) as get_msg:
             msg = Message("Foo", Block("Bar", Baz=1, Biz=1))
             self._fake_received_message(msg)
             # Should not copy
@@ -212,7 +212,7 @@ class TestMessageHandlers(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(msg.queued)
 
     async def test_wait_for(self):
-        fut = self.message_handler.wait_for("Foo", timeout=0.001, take=False)
+        fut = self.message_handler.wait_for(("Foo",), timeout=0.001, take=False)
         foo_handlers = self.message_handler.handlers['Foo']
         # We are subscribed
         self.assertEqual(len(foo_handlers), 1)
@@ -226,7 +226,7 @@ class TestMessageHandlers(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(foo_handlers), 0)
 
     async def test_wait_for_take(self):
-        fut = self.message_handler.wait_for("Foo", timeout=0.001)
+        fut = self.message_handler.wait_for(("Foo",), timeout=0.001)
         foo_handlers = self.message_handler.handlers['Foo']
         # We are subscribed
         self.assertEqual(len(foo_handlers), 1)

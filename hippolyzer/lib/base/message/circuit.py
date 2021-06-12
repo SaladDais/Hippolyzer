@@ -77,4 +77,4 @@ class ConnectionHolder(abc.ABC):
     lifetime of a session (due to region restarts, etc.)
     """
     circuit: Optional[Circuit]
-    message_handler: MessageHandler[Message]
+    message_handler: MessageHandler[Message, str]

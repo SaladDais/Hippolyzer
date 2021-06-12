@@ -65,7 +65,7 @@ class TurboObjectInventoryAddon(BaseAddon):
             # by marking it complete on the server-side. Re-send our RequestTaskInventory
             # To make sure there's a fresh copy.
             region.circuit.send_message(request_msg.take())
-            inv_message = await region.message_handler.wait_for('ReplyTaskInventory', timeout=5.0)
+            inv_message = await region.message_handler.wait_for(('ReplyTaskInventory',), timeout=5.0)
             # No task inventory, send the reply as-is
             file_name = inv_message["InventoryData"]["Filename"]
             if not file_name:

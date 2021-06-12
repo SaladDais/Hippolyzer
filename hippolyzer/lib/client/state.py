@@ -29,7 +29,7 @@ class BaseClientSession(abc.ABC):
     id: UUID
     agent_id: UUID
     secure_session_id: UUID
-    message_handler: MessageHandler[Message]
+    message_handler: MessageHandler[Message, str]
     regions: Sequence[BaseClientRegion]
     region_by_handle: Callable[[int], Optional[BaseClientRegion]]
     region_by_circuit_addr: Callable[[ADDR_TUPLE], Optional[BaseClientRegion]]

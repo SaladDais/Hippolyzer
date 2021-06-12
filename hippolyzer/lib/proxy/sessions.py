@@ -42,8 +42,8 @@ class Session(BaseClientSession):
         self.selected: SelectionModel = SelectionModel()
         self.regions: List[ProxiedRegion] = []
         self.started_at = datetime.datetime.now()
-        self.message_handler: MessageHandler[Message] = MessageHandler()
-        self.http_message_handler: MessageHandler[HippoHTTPFlow] = MessageHandler()
+        self.message_handler: MessageHandler[Message, str] = MessageHandler()
+        self.http_message_handler: MessageHandler[HippoHTTPFlow, str] = MessageHandler()
         self.objects = ProxyWorldObjectManager(self, session_manager.settings, session_manager.name_cache)
         self._main_region = None
 

@@ -246,7 +246,7 @@ class XferManager:
 
             def complete_predicate(complete_msg: Message):
                 return complete_msg["AssetBlock"]["UUID"] == asset_id
-            msg = await message_handler.wait_for('AssetUploadComplete', predicate=complete_predicate)
+            msg = await message_handler.wait_for(('AssetUploadComplete',), predicate=complete_predicate)
             if msg["AssetBlock"]["Success"] == 1:
                 fut.set_result(asset_id)
             else:
@@ -263,7 +263,7 @@ class XferManager:
     ):
         message_handler = self._connection_holder.message_handler
         request_msg = await message_handler.wait_for(
-            'RequestXfer', predicate=request_predicate, timeout=5.0)
+            ('RequestXfer',), predicate=request_predicate, timeout=5.0)
         xfer.xfer_id = request_msg["XferID"]["ID"]
 
         packet_id = 0
@@ -282,5 +282,5 @@ class XferManager:
             # Don't care about the value, just want to know it was confirmed.
             if wait_for_confirm:
                 await message_handler.wait_for(
-                    "ConfirmXferPacket", predicate=xfer.is_our_message, timeout=5.0)
+                    ("ConfirmXferPacket",), predicate=xfer.is_our_message, timeout=5.0)
             packet_id += 1
