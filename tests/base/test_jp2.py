@@ -13,7 +13,6 @@ BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 class TestJP2Utils(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        # Use a rigged cube SLM from the upload process as a test file
         with open(os.path.join(BASE_PATH, "test_resources", "plywood.j2c"), "rb") as f:
             cls.j2c_bytes = f.read()
 
