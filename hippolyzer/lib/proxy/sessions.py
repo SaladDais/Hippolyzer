@@ -13,6 +13,7 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.client.state import BaseClientSession
+from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.proxy.http_asset_repo import HTTPAssetRepo
 from hippolyzer.lib.proxy.http_proxy import HTTPFlowContext, is_asset_server_cap_name, SerializedCapData
@@ -136,6 +137,7 @@ class Session(BaseClientSession):
                         )
                     region.circuit = ProxiedCircuit(
                         near_addr, circuit_addr, transport, logging_hook=logging_hook)
+                    AddonManager.handle_circuit_created(self, region)
                     return True
                 if region.circuit and region.circuit.is_alive:
                     # Whatever, already open

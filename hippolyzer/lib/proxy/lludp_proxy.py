@@ -44,29 +44,20 @@ class InterceptingLLUDPProxyProtocol(UDPProxyProtocol):
             raise PermissionError(f"UDPBanned message {msg.name}")
 
     def _handle_proxied_packet(self, packet: UDPPacket):
-        message: Optional[Message] = None
         region: Optional[ProxiedRegion] = None
         # Try to do an initial region lookup so we have it for handle_proxied_packet()
         if self.session:
             region = self.session.region_by_circuit_addr(packet.far_addr)
-        deserialize_exc = None
-        try:
-            message = self.deserializer.deserialize(packet.data)
-            message.direction = packet.direction
-            message.sender = packet.src_addr
-        except Exception as e:
-            # Hang onto this since handle_proxied_packet doesn't need a parseable
-            # message. If that hook doesn't handle the packet then re-raise.
-            deserialize_exc = e
 
+        # the proxied packet handler is allowed to mutate `packet.data` before
+        # the message gets parsed.
         if AddonManager.handle_proxied_packet(self.session_manager, packet,
-                                              self.session, region, message):
-            # Swallow any error raised by above message deserialization, it was handled.
+                                              self.session, region):
             return
 
-        if deserialize_exc is not None:
-            # handle_proxied_packet() didn't deal with the error, so it's fatal.
-            raise deserialize_exc
+        message = self.deserializer.deserialize(packet.data)
+        message.direction = packet.direction
+        message.sender = packet.src_addr
 
         assert message is not None
         # Check for UDP bans on inbound messages

@@ -37,7 +37,7 @@ from hippolyzer.lib.base.message.msgtypes import MsgType
 from hippolyzer.lib.base.message.template_dict import TemplateDictionary
 from hippolyzer.lib.base.ui_helpers import loadUi
 import hippolyzer.lib.base.serialization as se
-from hippolyzer.lib.base.network.transport import Direction, WrappingUDPTransport
+from hippolyzer.lib.base.network.transport import Direction, SocketUDPTransport
 from hippolyzer.lib.proxy.addons import BaseInteractionManager, AddonManager
 from hippolyzer.lib.proxy.ca_utils import setup_ca_everywhere
 from hippolyzer.lib.proxy.caps_client import ProxyCapsClient
@@ -646,7 +646,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
             transport = None
             off_circuit = self.checkOffCircuit.isChecked()
             if off_circuit:
-                transport = WrappingUDPTransport(socket.socket(socket.AF_INET, socket.SOCK_DGRAM))
+                transport = SocketUDPTransport(socket.socket(socket.AF_INET, socket.SOCK_DGRAM))
             region.circuit.send_message(msg, transport=transport)
             if off_circuit:
                 transport.close()

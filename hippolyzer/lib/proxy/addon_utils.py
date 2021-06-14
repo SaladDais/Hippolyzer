@@ -181,13 +181,15 @@ class BaseAddon(abc.ABC):
     def handle_region_changed(self, session: Session, region: ProxiedRegion):
         pass
 
+    def handle_circuit_created(self, session: Session, region: ProxiedRegion):
+        pass
+
     def handle_rlv_command(self, session: Session, region: ProxiedRegion, source: UUID,
                            cmd: str, options: List[str], param: str):
         pass
 
     def handle_proxied_packet(self, session_manager: SessionManager, packet: UDPPacket,
-                              session: Optional[Session], region: Optional[ProxiedRegion],
-                              message: Optional[Message]):
+                              session: Optional[Session], region: Optional[ProxiedRegion]):
         pass
 
 

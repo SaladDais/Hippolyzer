@@ -1,10 +1,10 @@
 import socket
 import struct
 
-from hippolyzer.lib.base.network.transport import WrappingUDPTransport, UDPPacket
+from hippolyzer.lib.base.network.transport import SocketUDPTransport, UDPPacket
 
 
-class SOCKS5UDPTransport(WrappingUDPTransport):
+class SOCKS5UDPTransport(SocketUDPTransport):
     HEADER_STRUCT = struct.Struct("!HBB4sH")
 
     @classmethod

@@ -16,15 +16,15 @@ from types import ModuleType
 from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.message.message import Message
+from hippolyzer.lib.base.network.transport import UDPPacket
 from hippolyzer.lib.proxy import addon_ctx
 from hippolyzer.lib.proxy.task_scheduler import TaskLifeScope, TaskScheduler
 
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.commands import CommandDetails, WrappedCommandCallable
     from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-    from hippolyzer.lib.base.message.message import Message
-    from hippolyzer.lib.proxy.objects import Object
-    from hippolyzer.lib.base.network.transport import UDPPacket
+    from hippolyzer.lib.proxy.object_manager import Object
     from hippolyzer.lib.proxy.region import ProxiedRegion
     from hippolyzer.lib.proxy.sessions import Session, SessionManager
 
@@ -527,8 +527,13 @@ class AddonManager:
             return cls._call_all_addon_hooks("handle_region_changed", session, region)
 
     @classmethod
+    def handle_circuit_created(cls, session: Session, region: ProxiedRegion):
+        with addon_ctx.push(session, region):
+            return cls._call_all_addon_hooks("handle_circuit_created", session, region)
+
+    @classmethod
     def handle_proxied_packet(cls, session_manager: SessionManager, packet: UDPPacket,
-                              session: Optional[Session], region: Optional[ProxiedRegion],
-                              message: Optional[Message]):
-        return cls._call_all_addon_hooks("handle_proxied_packet", session_manager,
-                                         packet, session, region, message)
+                              session: Optional[Session], region: Optional[ProxiedRegion]):
+        with addon_ctx.push(session, region):
+            return cls._call_all_addon_hooks("handle_proxied_packet", session_manager,
+                                             packet, session, region)

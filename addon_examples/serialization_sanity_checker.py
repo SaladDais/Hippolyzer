@@ -29,10 +29,11 @@ class SerializationSanityChecker(BaseAddon):
         self.deserializer = UDPMessageDeserializer()
 
     def handle_proxied_packet(self, session_manager: SessionManager, packet: UDPPacket,
-                              session: Optional[Session], region: Optional[ProxiedRegion],
-                              message: Optional[Message]):
+                              session: Optional[Session], region: Optional[ProxiedRegion]):
         # Well this doesn't even parse as a message, can't do anything about it.
-        if message is None:
+        try:
+            message = self.deserializer.deserialize(packet.data)
+        except:
             LOG.error(f"Received unparseable message from {packet.src_addr!r}: {packet.data!r}")
             return
         try:

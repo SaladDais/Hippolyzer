@@ -58,7 +58,7 @@ class AbstractUDPTransport(abc.ABC):
         pass
 
 
-class WrappingUDPTransport(AbstractUDPTransport):
+class SocketUDPTransport(AbstractUDPTransport):
     def __init__(self, transport: Union[asyncio.DatagramTransport, socket.socket]):
         super().__init__()
         self.transport = transport
