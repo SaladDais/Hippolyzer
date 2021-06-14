@@ -70,7 +70,7 @@ class RecapitatorAddon(BaseAddon):
     async def _proxy_bodypart_upload(self, session: Session, region: ProxiedRegion, message: Message):
         asset_block = message["AssetBlock"]
         # Asset will already be in the viewer's VFS as the expected asset ID, calculate it.
-        asset_id = session.tid_to_assetid(asset_block["TransactionID"])
+        asset_id = session.transaction_to_assetid(asset_block["TransactionID"])
         success = False
         try:
             # Xfer the asset from the viewer if it wasn't small enough to fit in AssetData

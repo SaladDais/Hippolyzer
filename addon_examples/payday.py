@@ -4,7 +4,7 @@ Do the money dance whenever someone in the sim pays you directly
 
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message import Block, Message
-from hippolyzer.lib.base.templates import MoneyTransactionType, PCode, ChatType
+from hippolyzer.lib.base.templates import MoneyTransactionType, ChatType
 from hippolyzer.lib.proxy.addon_utils import send_chat, BaseAddon
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
@@ -27,8 +27,8 @@ class PaydayAddon(BaseAddon):
             return
 
         # Check if they're likely to be in the sim
-        sender_obj = region.objects.lookup_fullid(sender)
-        if not sender_obj or sender_obj.PCode != PCode.AVATAR:
+        sender_obj = region.objects.lookup_avatar(sender)
+        if not sender_obj:
             return
 
         amount = transaction_block['Amount']

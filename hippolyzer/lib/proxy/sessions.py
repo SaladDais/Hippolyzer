@@ -161,7 +161,7 @@ class Session(BaseClientSession):
                 return CapData(cap_name, ref(region), ref(self), base_url, cap_type)
         return None
 
-    def tid_to_assetid(self, transaction_id: UUID):
+    def transaction_to_assetid(self, transaction_id: UUID):
         return UUID.combine(transaction_id, self.secure_session_id)
 
     def __repr__(self):
