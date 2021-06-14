@@ -212,7 +212,9 @@ class RegionViewerObjectCacheChain:
         for cache_dir in iter_viewer_cache_dirs():
             if not (cache_dir / "objectcache" / "object.cache").exists():
                 continue
-            caches.append(ViewerObjectCache.from_path(cache_dir / "objectcache"))
+            cache = ViewerObjectCache.from_path(cache_dir / "objectcache")
+            if cache:
+                caches.append(cache)
         regions = []
         for cache in caches:
             region = cache.read_region(handle)
