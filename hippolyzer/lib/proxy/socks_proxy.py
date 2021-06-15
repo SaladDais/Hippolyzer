@@ -207,12 +207,12 @@ class UDPProxyProtocol(asyncio.DatagramProtocol):
             )
 
         try:
-            self._handle_proxied_packet(src_packet)
+            self.handle_proxied_packet(src_packet)
         except:
             logging.exception("Barfed while handling UDP packet!")
             raise
 
-    def _handle_proxied_packet(self, packet):
+    def handle_proxied_packet(self, packet):
         self.transport.send_packet(packet)
 
     def close(self):

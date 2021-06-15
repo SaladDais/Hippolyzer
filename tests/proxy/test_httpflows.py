@@ -2,8 +2,7 @@ from mitmproxy.test import tflow, tutils
 
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.message_logger import HTTPMessageLogEntry
-
-from . import BaseProxyTest
+from hippolyzer.lib.proxy.test_utils import BaseProxyTest
 
 
 class TestHTTPFlows(BaseProxyTest):

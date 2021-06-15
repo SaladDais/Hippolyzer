@@ -43,7 +43,7 @@ class InterceptingLLUDPProxyProtocol(UDPProxyProtocol):
             )
             raise PermissionError(f"UDPBanned message {msg.name}")
 
-    def _handle_proxied_packet(self, packet: UDPPacket):
+    def handle_proxied_packet(self, packet: UDPPacket):
         region: Optional[ProxiedRegion] = None
         # Try to do an initial region lookup so we have it for handle_proxied_packet()
         if self.session:

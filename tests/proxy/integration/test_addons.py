@@ -15,11 +15,9 @@ from hippolyzer.lib.proxy.addon_utils import (
 )
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.commands import handle_command
-from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
-
-from .. import BaseProxyTest
+from hippolyzer.lib.proxy.test_utils import BaseProxyTest
 
 
 class MockAddon(BaseAddon):
@@ -82,9 +80,8 @@ class AddonIntegrationTests(BaseProxyTest):
             Block("AgentData", AgentID=self.session.agent_id, SessionID=self.session.id),
             Block("ChatData", Message=command, Channel=AddonManager.COMMAND_CHANNEL, fill_missing=True),
         )
-        packet = self._msg_to_datagram(msg, src=self.client_addr,
-                                       dst=self.region_addr, direction=Direction.OUT)
-        self.protocol.datagram_received(packet, self.client_addr)
+        packet = self._msg_to_packet(msg, src=self.client_addr, dst=self.region_addr)
+        self.protocol.handle_proxied_packet(packet)
 
     async def test_simple_command_setting_params(self):
         self._setup_default_circuit()

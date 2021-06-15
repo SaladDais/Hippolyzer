@@ -15,9 +15,7 @@ from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.vocache import RegionViewerObjectCacheChain, RegionViewerObjectCache, ViewerObjectCacheEntry
-
-from . import BaseProxyTest
-
+from hippolyzer.lib.proxy.test_utils import BaseProxyTest
 
 OBJECT_UPDATE_COMPRESSED_DATA = (
     b"\x12\x12\x10\xbf\x16XB~\x8f\xb4\xfb\x00\x1a\xcd\x9b\xe5\xd2\x04\x00\x00\t\x00\xcdG\x00\x00"

@@ -20,8 +20,7 @@ from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.http_proxy import SerializedCapData
 from hippolyzer.lib.proxy.message_logger import FilteringMessageLogger
 from hippolyzer.lib.proxy.sessions import SessionManager
-
-from .. import BaseProxyTest
+from hippolyzer.lib.proxy.test_utils import BaseProxyTest
 
 
 class MockAddon(BaseAddon):

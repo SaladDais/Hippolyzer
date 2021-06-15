@@ -19,8 +19,7 @@ from hippolyzer.lib.proxy.message_logger import FilteringMessageLogger, LLUDPMes
 from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
-
-from .. import BaseProxyTest
+from hippolyzer.lib.proxy.test_utils import BaseProxyTest
 
 
 class MockAddon(BaseAddon):
@@ -98,7 +97,7 @@ class LLUDPIntegrationTests(BaseProxyTest):
             packet_id=1,
         )
         datagram = self._msg_to_datagram(msg, self.client_addr, self.region_addr,
-                                         Direction.OUT, socks_header=True)
+                                         socks_header=True)
         self.protocol.datagram_received(datagram, self.client_addr)
         await self._wait_drained()
         self.assertFalse(self.session.pending)
@@ -116,7 +115,7 @@ class LLUDPIntegrationTests(BaseProxyTest):
             packet_id=1,
         )
         datagram = self._msg_to_datagram(msg, self.client_addr, self.region_addr,
-                                         Direction.OUT, socks_header=True)
+                                         socks_header=True)
         self.protocol.datagram_received(datagram, source_addr=self.client_addr)
         await self._wait_drained()
         # Packet got dropped completely
@@ -133,7 +132,7 @@ class LLUDPIntegrationTests(BaseProxyTest):
             packet_id=1,
         )
         datagram = self._msg_to_datagram(msg, self.client_addr, (self.region_addr[0], 9),
-                                         Direction.OUT, socks_header=True)
+                                         socks_header=True)
         self.protocol.datagram_received(datagram, source_addr=self.client_addr)
         await self._wait_drained()
         # The session claim will still work
