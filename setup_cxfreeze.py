@@ -112,7 +112,7 @@ executables = [
 
 setup(
     name="hippolyzer_gui",
-    version="0.6.0",
+    version="0.6.1",
     description="Hippolyzer GUI",
     options=options,
     executables=executables,
