@@ -26,7 +26,7 @@ from .data_packer import TemplateDataPacker
 from .message import Message, MsgBlockList
 from .msgtypes import MsgType, MsgBlockType
 from .template import MessageTemplateVariable, MessageTemplateBlock
-from .template_dict import TemplateDictionary
+from .template_dict import TemplateDictionary, DEFAULT_TEMPLATE_DICT
 from hippolyzer.lib.base import exc
 from hippolyzer.lib.base import serialization as se
 from hippolyzer.lib.base.datatypes import RawBytes
@@ -35,7 +35,7 @@ logger = getLogger('message.udpserializer')
 
 
 class UDPMessageSerializer:
-    DEFAULT_TEMPLATE = TemplateDictionary(None)
+    DEFAULT_TEMPLATE = DEFAULT_TEMPLATE_DICT
 
     def __init__(self, message_template=None):
         if message_template is not None:

@@ -27,24 +27,34 @@ from .template import MessageTemplate
 from .template_parser import MessageTemplateParser
 
 
+DEFAULT_PARSER = MessageTemplateParser(msg_tmpl)
+
+
 class TemplateDictionary:
     """the dictionary with all known templates"""
 
     def __init__(self, template_list=None, message_template=None):
         if template_list is None:
             if message_template is None:
-                parser = MessageTemplateParser(msg_tmpl)
+                parser = DEFAULT_PARSER
             else:
                 parser = MessageTemplateParser(message_template)
             template_list = parser.message_templates
 
-        self.template_list: typing.List[MessageTemplate] = template_list
-
+        self.template_list: typing.List[MessageTemplate] = []
         # maps name to template
         self.message_templates = {}
 
         # maps (freq,num) to template
         self.message_dict = {}
+
+        self.load_templates(template_list)
+
+    def load_templates(self, template_list):
+        self.template_list.clear()
+        self.template_list.extend(template_list)
+        self.message_templates.clear()
+        self.message_dict.clear()
 
         self.build_dictionaries(template_list)
         self.build_message_ids()
@@ -99,3 +109,6 @@ class TemplateDictionary:
 
     def __iter__(self):
         return iter(self.template_list)
+
+
+DEFAULT_TEMPLATE_DICT = TemplateDictionary()

@@ -5,14 +5,13 @@ from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.message.data_packer import LLSDDataPacker
 from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.message.template import MessageTemplateVariable
-from hippolyzer.lib.base.message.template_dict import TemplateDictionary
-
+from hippolyzer.lib.base.message.template_dict import TemplateDictionary, DEFAULT_TEMPLATE_DICT
 
 VAR_PAIR = Tuple[dict, MessageTemplateVariable]
 
 
 class LLSDMessageSerializer:
-    DEFAULT_TEMPLATE = TemplateDictionary()
+    DEFAULT_TEMPLATE = DEFAULT_TEMPLATE_DICT
 
     def __init__(self, message_template=None, message_cls: Type[Message] = Message):
         if message_template is not None:

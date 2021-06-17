@@ -34,7 +34,7 @@ from hippolyzer.lib.base.message.message_formatting import (
     SpannedString,
 )
 from hippolyzer.lib.base.message.msgtypes import MsgType
-from hippolyzer.lib.base.message.template_dict import TemplateDictionary
+from hippolyzer.lib.base.message.template_dict import DEFAULT_TEMPLATE_DICT
 from hippolyzer.lib.base.ui_helpers import loadUi
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base.network.transport import Direction, SocketUDPTransport
@@ -446,7 +446,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
     def __init__(self, parent, session_manager):
         super().__init__(parent=parent)
         loadUi(MESSAGE_BUILDER_UI_PATH, self)
-        self.templateDict = TemplateDictionary()
+        self.templateDict = DEFAULT_TEMPLATE_DICT
         self.llsdSerializer = LLSDMessageSerializer()
         self.sessionManager: SessionManager = session_manager
         self.regionModel = RegionListModel(self, self.sessionManager)

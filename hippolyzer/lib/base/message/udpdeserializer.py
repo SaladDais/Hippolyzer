@@ -26,7 +26,7 @@ from logging import getLogger
 from hippolyzer.lib.base.datatypes import JankStringyBytes
 from hippolyzer.lib.base.settings import Settings
 from .template import MessageTemplateVariable
-from .template_dict import TemplateDictionary
+from .template_dict import DEFAULT_TEMPLATE_DICT
 from .msgtypes import MsgType, MsgBlockType, PacketLayout
 from .data_packer import TemplateDataPacker
 from .message import Message, Block
@@ -62,7 +62,7 @@ def _parse_msg_num(reader: se.BufferReader):
 
 
 class UDPMessageDeserializer:
-    DEFAULT_TEMPLATE = TemplateDictionary()
+    DEFAULT_TEMPLATE = DEFAULT_TEMPLATE_DICT
 
     def __init__(self, settings=None):
         self.settings = settings or Settings()
