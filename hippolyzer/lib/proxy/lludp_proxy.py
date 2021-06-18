@@ -58,6 +58,7 @@ class InterceptingLLUDPProxyProtocol(UDPProxyProtocol):
         message = self.deserializer.deserialize(packet.data)
         message.direction = packet.direction
         message.sender = packet.src_addr
+        message.meta.update(packet.meta)
 
         assert message is not None
         # Check for UDP bans on inbound messages

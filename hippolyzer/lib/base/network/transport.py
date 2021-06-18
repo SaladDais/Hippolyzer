@@ -30,6 +30,7 @@ class UDPPacket:
         self.dst_addr = dst_addr
         self.data = data
         self.direction = direction
+        self.meta = {}
 
     @property
     def outgoing(self):
