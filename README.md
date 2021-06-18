@@ -224,7 +224,7 @@ OUT ObjectAdd
 ```
 
 The repeat spinner at the bottom of the window lets you send a message multiple times.
-an `i` variable is put into the eval context and can be used to vary messages accros repeats.
+an `i` variable is put into the eval context and can be used to vary messages across repeats.
 With repeat set to two:
 
 ```
