@@ -6,7 +6,13 @@ from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
 
-SUSPICIOUS_PACKETS = {"TransferRequest", "UUIDNameRequest", "UUIDGroupNameRequest", "OpenCircuit"}
+SUSPICIOUS_PACKETS = {
+    "TransferRequest",
+    "UUIDNameRequest",
+    "UUIDGroupNameRequest",
+    "OpenCircuit",
+    "AddCircuitCode",
+}
 REGULAR_IM_DIALOGS = (IMDialogType.TYPING_STOP, IMDialogType.TYPING_STOP, IMDialogType.NOTHING_SPECIAL)
 
 
