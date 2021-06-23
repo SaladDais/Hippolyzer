@@ -162,6 +162,7 @@ class ProxiedRegion(BaseClientRegion):
         if self.circuit:
             self.circuit.is_alive = False
         self.objects.clear()
+        self.eq_manager.clear()
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.name)
@@ -172,11 +173,27 @@ class EventQueueManager:
         # TODO: Per-EQ InjectionTracker so we can inject fake responses on 499
         self._queued_events = []
         self._region = weakref.proxy(region)
+        self._last_ack: Optional[int] = None
+        self._last_payload: Optional[Any] = None
 
-    def queue_event(self, event: dict):
+    def inject_event(self, event: dict):
         self._queued_events.append(event)
 
-    def take_events(self):
+    def take_injected_events(self):
         events = self._queued_events
         self._queued_events = []
         return events
+
+    def cache_last_poll_response(self, req_ack: int, payload: Any):
+        self._last_ack = req_ack
+        self._last_payload = payload
+
+    def get_cached_poll_response(self, req_ack: Optional[int]) -> Optional[Any]:
+        if self._last_ack == req_ack:
+            return self._last_payload
+        return None
+
+    def clear(self):
+        self._queued_events.clear()
+        self._last_ack = None
+        self._last_payload = None

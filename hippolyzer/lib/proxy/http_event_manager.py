@@ -137,6 +137,27 @@ class MITMProxyEventManager:
             # the proxy
             self._asset_server_proxied = True
             logging.warning("noproxy not used, switching to URI rewrite strategy")
+        elif cap_data and cap_data.cap_name == "EventQueueGet":
+            # HACK: The sim's EQ acking mechanism doesn't seem to actually work.
+            # if the client drops the connection due to timeout before we can
+            # proxy back the response then it will be lost forever. Keep around
+            # the last EQ response we got so we can re-send it if the client repeats
+            # its previous request.
+            req_ack_id = llsd.parse_xml(flow.request.content)["ack"]
+            eq_manager = cap_data.region().eq_manager
+            cached_resp = eq_manager.get_cached_poll_response(req_ack_id)
+            if cached_resp:
+                logging.warning("Had to serve a cached EventQueueGet due to client desync")
+                flow.response = mitmproxy.http.HTTPResponse.make(
+                    200,
+                    llsd.format_xml(cached_resp),
+                    {
+                        "Content-Type": "application/llsd+xml",
+                        # So we can differentiate these in the log
+                        "X-Hippo-Fake-EQ": "1",
+                        "Connection": "close",
+                    },
+                )
         elif not cap_data:
             if self._is_login_request(flow):
                 # Not strictly a Cap, but makes it easier to filter on.
@@ -251,11 +272,14 @@ class MITMProxyEventManager:
                             new_events.append(event)
                     # Add on any fake events that've been queued by addons
                     eq_manager = cap_data.region().eq_manager
-                    new_events.extend(eq_manager.take_events())
+                    new_events.extend(eq_manager.take_injected_events())
                     parsed_eq_resp["events"] = new_events
+                    # Empty event list is an error, need to return undef instead.
                     if old_events and not new_events:
-                        # Need at least one event or the viewer will refuse to ack!
-                        new_events.append({"message": "NOP", "body": {}})
+                        parsed_eq_resp = None
+                    # HACK: see note in above request handler for EventQueueGet
+                    req_ack_id = llsd.parse_xml(flow.request.content)["ack"]
+                    eq_manager.cache_last_poll_response(req_ack_id, parsed_eq_resp)
                 flow.response.content = llsd.format_pretty_xml(parsed_eq_resp)
             elif cap_data.cap_name in self.UPLOAD_CREATING_CAPS:
                 if not region:

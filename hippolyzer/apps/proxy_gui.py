@@ -632,7 +632,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
         msg = HumanMessageSerializer.from_human_string(msg_text, replacements, env, safe=False)
         if self.checkLLUDPViaCaps.isChecked():
             if msg.direction == Direction.IN:
-                region.eq_manager.queue_event(
+                region.eq_manager.inject_event(
                     self.llsdSerializer.serialize(msg, as_dict=True)
                 )
             else:
@@ -656,7 +656,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
             raise RuntimeError("Need a valid session and region to send EQ event")
         message_line, _, body = (x.strip() for x in msg_text.partition("\n"))
         message_name = message_line.rsplit(" ", 1)[-1]
-        region.eq_manager.queue_event({
+        region.eq_manager.inject_event({
             "message": message_name,
             "body": llsd.parse_xml(body.encode("utf8")),
         })
