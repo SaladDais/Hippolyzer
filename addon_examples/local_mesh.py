@@ -280,4 +280,23 @@ class MeshUploadInterceptingAddon(BaseAddon):
                 cls._replace_local_mesh(session.main_region, asset_repo, mesh_list)
 
 
+class BaseMeshManglerAddon(BaseAddon):
+    """Base class for addons that mangle uploaded or local mesh"""
+    MESH_MANGLERS: List[Callable[[MeshAsset], MeshAsset]]
+
+    def handle_init(self, session_manager: SessionManager):
+        # Add our manglers into the list
+        MeshUploadInterceptingAddon.mesh_manglers.extend(self.MESH_MANGLERS)
+        # Tell the local mesh plugin that the mangler list changed, and to re-apply
+        MeshUploadInterceptingAddon.remangle_local_mesh(session_manager)
+
+    def handle_unload(self, session_manager: SessionManager):
+        # Clean up our manglers before we go away
+        mangler_list = MeshUploadInterceptingAddon.mesh_manglers
+        for mangler in self.MESH_MANGLERS:
+            if mangler in mangler_list:
+                mangler_list.remove(mangler)
+        MeshUploadInterceptingAddon.remangle_local_mesh(session_manager)
+
+
 addons = [MeshUploadInterceptingAddon()]
