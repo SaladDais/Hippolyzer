@@ -32,6 +32,9 @@ class ProxyNameCache(NameCache):
                     with open(namecache_file, "rb") as f:
                         namecache_bytes = f.read()
                     agents = llsd.parse_xml(namecache_bytes)["agents"]
+                    # Can be `None` if the file was just created
+                    if not agents:
+                        continue
                     for agent_id, agent_data in agents.items():
                         # Don't set display name if they just have the default
                         display_name = None
