@@ -575,24 +575,9 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
         if var.name in ("TaskID", "ObjectID"):
             return VerbatimHumanVal("[[SELECTED_FULL]]")
 
-        if var.type.is_int:
-            return 0
-        elif var.type.is_float:
-            return 0.0
-        elif var.type == MsgType.MVT_LLUUID:
-            return UUID()
-        elif var.type == MsgType.MVT_BOOL:
-            return False
-        elif var.type == MsgType.MVT_VARIABLE:
-            return ""
-        elif var.type in (MsgType.MVT_LLVector3, MsgType.MVT_LLVector3d, MsgType.MVT_LLQuaternion):
-            return VerbatimHumanVal("(0.0, 0.0, 0.0)")
-        elif var.type == MsgType.MVT_LLVector4:
-            return VerbatimHumanVal("(0.0, 0.0, 0.0, 0.0)")
-        elif var.type == MsgType.MVT_FIXED:
-            return b"\x00" * var.size
-        elif var.type == MsgType.MVT_IP_ADDR:
-            return "0.0.0.0"
+        default_val = var.default_value
+        if default_val is not None:
+            return default_val
         return VerbatimHumanVal("")
 
     @nonFatalExceptions

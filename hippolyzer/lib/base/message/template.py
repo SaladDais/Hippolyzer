@@ -22,6 +22,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import typing
 
 from .msgtypes import MsgType, MsgBlockType
+from ..datatypes import UUID
 
 
 class MessageTemplateVariable:
@@ -60,6 +61,32 @@ class MessageTemplateVariable:
             ))
             self._probably_text = self._probably_text and self.name != "NameValue"
         return self._probably_text
+
+    @property
+    def default_value(self):
+        if self.type.is_int:
+            return 0
+        elif self.type.is_float:
+            return 0.0
+        elif self.type == MsgType.MVT_LLUUID:
+            return UUID()
+        elif self.type == MsgType.MVT_BOOL:
+            return False
+        elif self.type == MsgType.MVT_VARIABLE:
+            if self.probably_binary:
+                return b""
+            if self.probably_text:
+                return ""
+            return b""
+        elif self.type in (MsgType.MVT_LLVector3, MsgType.MVT_LLVector3d, MsgType.MVT_LLQuaternion):
+            return 0.0, 0.0, 0.0
+        elif self.type == MsgType.MVT_LLVector4:
+            return 0.0, 0.0, 0.0, 0.0
+        elif self.type == MsgType.MVT_FIXED:
+            return b"\x00" * self.size
+        elif self.type == MsgType.MVT_IP_ADDR:
+            return "0.0.0.0"
+        return None
 
 
 class MessageTemplateBlock:
