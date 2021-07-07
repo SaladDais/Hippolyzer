@@ -32,6 +32,7 @@ from typing import *
 from hippolyzer.lib.base.datatypes import *
 import hippolyzer.lib.base.serialization as se
 import hippolyzer.lib.base.templates as templates
+from hippolyzer.lib.base.datatypes import Pretty
 from hippolyzer.lib.base.message.msgtypes import PacketFlags
 from hippolyzer.lib.base.network.transport import Direction, ADDR_TUPLE
 
@@ -62,11 +63,12 @@ class Block:
     Block expects a name, and kwargs for variables (var_name = value)
     """
     __slots__ = ('name', 'size', 'vars', 'message_name', '_ser_cache', 'fill_missing',)
+    PARENT_MESSAGE_NAME: ClassVar[Optional[str]] = None
 
     def __init__(self, name, /, *, fill_missing=False, **kwargs):
         self.name = name
         self.size = 0
-        self.message_name: Optional[str] = None
+        self.message_name: Optional[str] = self.PARENT_MESSAGE_NAME
         self.vars: Dict[str, VAR_TYPE] = {}
         self._ser_cache: Dict[str, Any] = {}
         self.fill_missing = fill_missing
@@ -83,6 +85,9 @@ class Block:
         return self.vars[name]
 
     def __setitem__(self, key, value):
+        if isinstance(value, Pretty):
+            return self.serialize_var(key, value.value)
+
         # These don't pickle well since they're likely to get hot-reloaded
         if isinstance(value, (enum.IntEnum, enum.IntFlag)):
             value = int(value)

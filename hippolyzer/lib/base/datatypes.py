@@ -294,6 +294,17 @@ class RawBytes(bytes):
     pass
 
 
+_T = TypeVar("_T")
+
+
+class Pretty(Generic[_T]):
+    """Wrapper for var values so Messages will know to serialize"""
+    __slots__ = ("value",)
+
+    def __init__(self, value: _T):
+        self.value: _T = value
+
+
 class StringEnum(str, enum.Enum):
     def __str__(self):
         return self.value
@@ -333,5 +344,5 @@ class TaggedUnion(recordclass.datatuple):  # type: ignore
 __all__ = [
     "Vector3", "Vector4", "Vector2", "Quaternion", "TupleCoord",
     "UUID", "RawBytes", "StringEnum", "JankStringyBytes", "TaggedUnion",
-    "IntEnum", "IntFlag", "flags_to_pod"
+    "IntEnum", "IntFlag", "flags_to_pod", "Pretty"
 ]
