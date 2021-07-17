@@ -120,7 +120,7 @@ class MITMProxyEventManager:
             if not flow.can_stream or self._asset_server_proxied:
                 flow.request.url = redir_url
             else:
-                flow.response = mitmproxy.http.HTTPResponse.make(
+                flow.response = mitmproxy.http.Response.make(
                     307,
                     # Can't provide explanation in the body because this results in failing Range requests under
                     # mitmproxy that return garbage data. Chances are there's weird interactions
@@ -166,7 +166,7 @@ class MITMProxyEventManager:
         if cap_data and cap_data.type == CapType.PROXY_ONLY:
             # A proxy addon was supposed to respond itself, but it didn't.
             if not flow.taken and not flow.response_injected:
-                flow.response = mitmproxy.http.HTTPResponse.make(
+                flow.response = mitmproxy.http.Response.make(
                     500,
                     b"Proxy didn't handle proxy-only Cap correctly",
                     {

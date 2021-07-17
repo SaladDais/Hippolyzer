@@ -30,11 +30,11 @@ class HippoHTTPFlow:
         meta.setdefault("from_browser", False)
 
     @property
-    def request(self) -> mitmproxy.http.HTTPRequest:
+    def request(self) -> mitmproxy.http.Request:
         return self.flow.request
 
     @property
-    def response(self) -> Optional[mitmproxy.http.HTTPResponse]:
+    def response(self) -> Optional[mitmproxy.http.Response]:
         return self.flow.response
 
     @property
@@ -42,7 +42,7 @@ class HippoHTTPFlow:
         return self.flow.id
 
     @response.setter
-    def response(self, val: Optional[mitmproxy.http.HTTPResponse]):
+    def response(self, val: Optional[mitmproxy.http.Response]):
         self.flow.metadata["response_injected"] = True
         self.flow.response = val
 

@@ -15,7 +15,8 @@ import mitmproxy.log
 import mitmproxy.master
 import mitmproxy.options
 import mitmproxy.proxy
-from mitmproxy.addons import core, clientplayback
+from mitmproxy.addons import core, clientplayback, proxyserver, next_layer, disable_h2c
+from mitmproxy.connection import ConnectionState
 from mitmproxy.http import HTTPFlow
 import OpenSSL
 
@@ -41,14 +42,15 @@ OpenSSL.SSL._lib.X509_VERIFY_PARAM_set_hostflags = _sethostflags_wrapper  # noqa
 
 
 class SLCertStore(mitmproxy.certs.CertStore):
-    def get_cert(self, commonname: typing.Optional[bytes], sans: typing.List[bytes], *args):
-        cert, privkey, chain = super().get_cert(commonname, sans, *args)
-        x509: OpenSSL.crypto.X509 = cert.x509
+    def get_cert(self, commonname: typing.Optional[str], sans: typing.List[str], *args, **kwargs):
+        entry = super().get_cert(commonname, sans, *args, **kwargs)
+        cert, privkey, chain = entry.cert, entry.privatekey, entry.chain_file
+        x509 = cert.to_pyopenssl()
         for i in range(0, x509.get_extension_count()):
             ext = x509.get_extension(i)
             # This cert already has a subject key id, pass through.
             if ext.get_short_name() == b"subjectKeyIdentifier":
-                return cert, privkey, chain
+                return entry
 
         # Need to add a subject key ID onto this cert or the viewer will reject it.
         x509.add_extensions([
@@ -58,17 +60,23 @@ class SLCertStore(mitmproxy.certs.CertStore):
                 uuid.uuid4().hex.encode("utf8"),
             ),
         ])
-        x509.sign(privkey, "sha256")  # type: ignore
-        return cert, privkey, chain
+        x509.sign(OpenSSL.crypto.PKey.from_cryptography_key(privkey), "sha256")  # type: ignore
+        new_entry = mitmproxy.certs.CertStoreEntry(
+            mitmproxy.certs.Cert.from_pyopenssl(x509), privkey, chain
+        )
+        self.certs[(commonname, tuple(sans))] = new_entry
+        self.expire_queue.pop(-1)
+        self.expire(new_entry)
+        return new_entry
 
 
-class SLProxyConfig(mitmproxy.proxy.ProxyConfig):
-    def configure(self, options, updated) -> None:
-        super().configure(options, updated)
+class SLTlsConfig(mitmproxy.addons.tlsconfig.TlsConfig):
+    def running(self):
+        super().running()
         old_cert_store = self.certstore
         # Replace the cert store with one that knows how to add
         # a subject key ID extension.
-        self.certstore = SLCertStore(  # noqa
+        self.certstore = SLCertStore(
             default_privatekey=old_cert_store.default_privatekey,
             default_ca=old_cert_store.default_ca,
             default_chain_file=old_cert_store.default_chain_file,
@@ -92,12 +100,13 @@ class IPCInterceptionAddon:
     flow which is merged in and resumed.
     """
     def __init__(self, flow_context: HTTPFlowContext):
+        self.mitmproxy_ready = flow_context.mitmproxy_ready
         self.intercepted_flows: typing.Dict[str, HTTPFlow] = {}
         self.from_proxy_queue: multiprocessing.Queue = flow_context.from_proxy_queue
         self.to_proxy_queue: multiprocessing.Queue = flow_context.to_proxy_queue
         self.shutdown_signal: multiprocessing.Event = flow_context.shutdown_signal
 
-    def log(self, entry: mitmproxy.log.LogEntry):
+    def add_log(self, entry: mitmproxy.log.LogEntry):
         if entry.level == "debug":
             logging.debug(entry.msg)
         elif entry.level in ("alert", "info"):
@@ -112,6 +121,8 @@ class IPCInterceptionAddon:
     def running(self):
         # register to pump the events or something here
         asyncio.create_task(self._pump_callbacks())
+        # Tell the main process mitmproxy is ready to handle requests
+        self.mitmproxy_ready.set()
 
     async def _pump_callbacks(self):
         watcher = ParentProcessWatcher(self.shutdown_signal)
@@ -126,6 +137,11 @@ class IPCInterceptionAddon:
                     continue
                 if event_type == "callback":
                     orig_flow = self.intercepted_flows.pop(flow_id)
+                    # HACK: Have to temporarily lie and say that the connection is closed so
+                    # we can do a no-op assignment on server connection address inside `from_state()`.
+                    # Will need an upstream fix.
+                    if orig_flow.server_conn:
+                        orig_flow.server_conn.state = ConnectionState.CLOSED
                     orig_flow.set_state(flow_state)
                     # Remove the taken flag from the flow if present, the flow by definition
                     # isn't take()n anymore once it's been passed back to the proxy.
@@ -213,7 +229,11 @@ class SLMITMMaster(mitmproxy.master.Master):
         self.addons.add(
             core.Core(),
             clientplayback.ClientPlayback(),
-            SLMITMAddon(flow_context)
+            disable_h2c.DisableH2C(),
+            proxyserver.Proxyserver(),
+            next_layer.NextLayer(),
+            SLTlsConfig(),
+            SLMITMAddon(flow_context),
         )
 
     def start_server(self):
@@ -242,9 +262,6 @@ def create_proxy_master(host, port, flow_context: HTTPFlowContext):  # pragma: n
 
 def create_http_proxy(bind_host, port, flow_context: HTTPFlowContext):  # pragma: no cover
     master = create_proxy_master(bind_host, port, flow_context)
-    pconf = SLProxyConfig(master.options)
-    server = mitmproxy.proxy.server.ProxyServer(pconf)
-    master.server = server
     return master
 
 

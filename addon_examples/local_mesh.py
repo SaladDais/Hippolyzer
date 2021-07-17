@@ -201,7 +201,7 @@ class MeshUploadInterceptingAddon(BaseAddon):
                 self.local_mesh_mapping = {x["mesh_name"]: x["mesh"] for x in instances}
 
                 # Fake a response, we don't want to actually send off the request.
-                flow.response = mitmproxy.http.HTTPResponse.make(
+                flow.response = mitmproxy.http.Response.make(
                     200,
                     b"",
                     {

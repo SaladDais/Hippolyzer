@@ -105,7 +105,7 @@ class HorrorAnimatorAddon(BaseAddon):
             # send the response back immediately
             block = STATIC_VFS[orig_anim_id]
             anim_data = STATIC_VFS.read_block(block)
-            flow.response = mitmproxy.http.HTTPResponse.make(
+            flow.response = mitmproxy.http.Response.make(
                 200,
                 _mutate_anim_bytes(anim_data),
                 {

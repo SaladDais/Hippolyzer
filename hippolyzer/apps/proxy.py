@@ -89,7 +89,6 @@ def run_http_proxy_process(proxy_host, http_proxy_port, flow_context: HTTPFlowCo
     mitmproxy_master = create_http_proxy(proxy_host, http_proxy_port, flow_context)
     mitmproxy_master.start_server()
     gc.freeze()
-    flow_context.mitmproxy_ready.set()
     mitm_loop.run_forever()
 
 
@@ -120,7 +119,7 @@ def start_proxy(session_manager: SessionManager, extra_addons: Optional[list] = 
         if sys.argv[1] == "--setup-ca":
             try:
                 mitmproxy_master = create_http_proxy(proxy_host, http_proxy_port, flow_context)
-            except mitmproxy.exceptions.ServerException:
+            except mitmproxy.exceptions.MitmproxyException:
                 # Proxy already running, create the master so we don't try to bind to a port
                 mitmproxy_master = create_proxy_master(proxy_host, http_proxy_port, flow_context)
             setup_ca(sys.argv[2], mitmproxy_master)

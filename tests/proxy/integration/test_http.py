@@ -6,9 +6,8 @@ import multiprocessing
 from urllib.parse import urlparse
 
 import aioresponses
-from mitmproxy.net import http
 from mitmproxy.test import tflow, tutils
-from mitmproxy.http import HTTPFlow
+from mitmproxy.http import HTTPFlow, Headers
 from yarl import URL
 
 from hippolyzer.apps.proxy import run_http_proxy_process
@@ -88,7 +87,7 @@ class HTTPIntegrationTests(BaseProxyTest):
         fake_flow = tflow.tflow(
             req=tutils.treq(host="example.com", content=b'<llsd><string>getZOffsets|'),
             resp=tutils.tresp(
-                headers=http.Headers((
+                headers=Headers((
                     (b"X-SecondLife-Object-Name", b"#Firestorm LSL Bridge v99999"),
                     (b"X-SecondLife-Owner-Key", str(self.session.agent_id).encode("utf8")),
                 )),

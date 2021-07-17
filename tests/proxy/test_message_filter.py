@@ -24,7 +24,7 @@ OBJECT_UPDATE = b'\xc0\x00\x00\x00Q\x00\x0c\x00\x01\xea\x03\x00\x02\xe6\x03\x00\
                 b'\x88\x00"'
 
 
-class MessageFilterTests(unittest.TestCase):
+class MessageFilterTests(unittest.IsolatedAsyncioTestCase):
     def _filter_matches(self, filter_str, message):
         compiled = compile_filter(filter_str)
         return compiled.match(message)

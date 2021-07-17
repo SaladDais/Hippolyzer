@@ -58,7 +58,7 @@ class HTTPAssetRepo(collections.UserDict):
             return False
 
         asset = self[asset_id]
-        flow.response = http.HTTPResponse.make(
+        flow.response = http.Response.make(
             content=asset.data,
             headers={
                 "Content-Type": "application/octet-stream",
