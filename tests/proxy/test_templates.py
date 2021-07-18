@@ -5,10 +5,10 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message_formatting import HumanMessageSerializer
 from hippolyzer.lib.base.templates import TextureEntrySubfieldSerializer, TEFaceBitfield, TextureEntry
 
-EXAMPLE_TE = b"\x89UgG$\xcbC\xed\x92\x0bG\xca\xed\x15F_\x08\xe7\xb2\x98\x04\xca\x10;\x85\x94\x05Lj\x8d\xd4" \
-             b"\x0b\x1f\x01B\xcb\xe6|\x1d,\xa7sc\xa6\x1a\xa2L\xb1u\x01\x00\x00\x00\x00\x00\x00\x00\x00\x80?" \
-             b"\x00\x00\x00\x80?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-             b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+EXAMPLE_TE = b'\x89UgG$\xcbC\xed\x92\x0bG\xca\xed\x15F_\x08\xca*\x98:\x18\x02,\r\xf4\x1e\xc6\xf5\x91\x01]\x83\x014' \
+             b'\x00\x90i+\x10\x80\xa1\xaa\xa2g\x11o\xa8]\xc6\x00\x00\x00\x00\x00\x00\x00\x00\x80?\x00\x00\x00\x80?' \
+             b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' \
+             b'\x00\x00\x00\x00\x00\x00\x00'
 
 
 class TemplateTests(unittest.TestCase):
@@ -58,7 +58,10 @@ class TemplateTests(unittest.TestCase):
         str_msg = HumanMessageSerializer.to_human_string(msg, beautify=True)
         msg = HumanMessageSerializer.from_human_string(str_msg)
         spec = msg["ObjectData"][0].get_serializer("TextureEntry")
-        deser = spec.deserialize(None, msg["ObjectData"]["TextureEntry"], pod=True)
+        data_field = msg["ObjectData"]["TextureEntry"]
+        # Serialization order and format should match indra's exactly
+        self.assertEqual(EXAMPLE_TE, data_field)
+        deser = spec.deserialize(None, data_field, pod=True)
         self.assertEqual(deser, pod_te)
 
     def test_textureentry_defaults(self):
