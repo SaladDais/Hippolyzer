@@ -1,5 +1,4 @@
 import asyncio
-import functools
 import logging
 import multiprocessing
 import os
@@ -18,27 +17,11 @@ import mitmproxy.proxy
 from mitmproxy.addons import core, clientplayback, proxyserver, next_layer, disable_h2c
 from mitmproxy.connection import ConnectionState
 from mitmproxy.http import HTTPFlow
+from mitmproxy.proxy.layers import tls
 import OpenSSL
 
 from hippolyzer.lib.base.helpers import get_resource_filename
 from hippolyzer.lib.base.multiprocessing_utils import ParentProcessWatcher
-
-orig_sethostflags = OpenSSL.SSL._lib.X509_VERIFY_PARAM_set_hostflags  # noqa
-
-
-@functools.wraps(orig_sethostflags)
-def _sethostflags_wrapper(param, flags):
-    # Since 2000 the recommendation per RFCs has been to only check SANs and not the CN field.
-    # Most browsers do this, as does mitmproxy. The viewer does not, and the sim certs have no SAN
-    # field. Just monkeypatch out this flag since mitmproxy's internals are in flux and there's
-    # no good way to stop setting this flag currently.
-    return orig_sethostflags(
-        param,
-        flags & (~OpenSSL.SSL._lib.X509_CHECK_FLAG_NEVER_CHECK_SUBJECT)  # noqa
-    )
-
-
-OpenSSL.SSL._lib.X509_VERIFY_PARAM_set_hostflags = _sethostflags_wrapper  # noqa
 
 
 class SLCertStore(mitmproxy.certs.CertStore):
@@ -46,13 +29,15 @@ class SLCertStore(mitmproxy.certs.CertStore):
         entry = super().get_cert(commonname, sans, *args, **kwargs)
         cert, privkey, chain = entry.cert, entry.privatekey, entry.chain_file
         x509 = cert.to_pyopenssl()
+        # The cert must have a subject key ID or the viewer will reject it.
         for i in range(0, x509.get_extension_count()):
             ext = x509.get_extension(i)
             # This cert already has a subject key id, pass through.
             if ext.get_short_name() == b"subjectKeyIdentifier":
                 return entry
 
-        # Need to add a subject key ID onto this cert or the viewer will reject it.
+        # The viewer doesn't actually use the subject key ID for its intended purpose,
+        # so a random, unique value is fine.
         x509.add_extensions([
             OpenSSL.crypto.X509Extension(
                 b"subjectKeyIdentifier",
@@ -64,6 +49,7 @@ class SLCertStore(mitmproxy.certs.CertStore):
         new_entry = mitmproxy.certs.CertStoreEntry(
             mitmproxy.certs.Cert.from_pyopenssl(x509), privkey, chain
         )
+        # Replace the cert that was created in the base `get_cert()` with our modified cert
         self.certs[(commonname, tuple(sans))] = new_entry
         self.expire_queue.pop(-1)
         self.expire(new_entry)
@@ -83,6 +69,18 @@ class SLTlsConfig(mitmproxy.addons.tlsconfig.TlsConfig):
             dhparams=old_cert_store.dhparams,
         )
         self.certstore.certs = old_cert_store.certs
+
+    def tls_start_server(self, tls_start: tls.TlsStartData):
+        super().tls_start_server(tls_start)
+        # Since 2000 the recommendation per RFCs has been to only check SANs and not the CN field.
+        # Most browsers do this, as does mitmproxy. The viewer does not, and the sim certs have no SAN
+        # field. set the host verification flags to remove the flag that disallows falling back to
+        # checking the CN (X509_CHECK_FLAG_NEVER_CHECK_SUBJECT)
+        param = OpenSSL.SSL._lib.SSL_get0_param(tls_start.ssl_conn._ssl)  # noqa
+        # get_hostflags() doesn't seem to be exposed, just set the usual flags without
+        # the problematic `X509_CHECK_FLAG_NEVER_CHECK_SUBJECT` flag.
+        flags = OpenSSL.SSL._lib.X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS  # noqa
+        OpenSSL.SSL._lib.X509_VERIFY_PARAM_set_hostflags(param, flags)  # noqa
 
 
 class HTTPFlowContext:
