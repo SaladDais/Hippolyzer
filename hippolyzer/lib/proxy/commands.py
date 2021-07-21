@@ -26,6 +26,10 @@ class CommandDetails(NamedTuple):
     lifetime: Optional[TaskLifeScope] = None
 
 
+def parse_bool(val: str) -> bool:
+    return val.lower() in ('on', 'true', '1', '1.0', 'yes')
+
+
 def handle_command(command_name: Optional[str] = None, /, *, lifetime: Optional[TaskLifeScope] = None,
                    single_instance: bool = False, **params: Union[Parameter, callable]):
     """
