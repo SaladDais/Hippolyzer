@@ -50,4 +50,4 @@ class TestCapsClient(unittest.IsolatedAsyncioTestCase):
 
             with self.assertRaises(KeyError):
                 with self.caps_client.get("BadCap"):
-                    pass
+                    assert False

@@ -128,7 +128,3 @@ class MessageFilterTests(unittest.IsolatedAsyncioTestCase):
         entry = HTTPMessageLogEntry(flow)
         self.assertTrue(self._filter_matches("FakeCap", entry))
         self.assertFalse(self._filter_matches("NotFakeCap", entry))
-
-
-if __name__ == "__main__":
-    unittest.main()

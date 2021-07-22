@@ -791,7 +791,3 @@ class SubfieldSerializationTests(BaseSerializationTest):
         self.assertEqual(ser.serialize(None, FooFlags.FOO), 1)
         self.assertEqual(ser.serialize(None, 3), 3)
         self.assertEqual(ser.serialize(None, 7), 7)
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -52,4 +52,4 @@ class TestCommandHandlers(unittest.IsolatedAsyncioTestCase):
             class _BadCommandHandler:
                 @handle_command("foobaz")
                 def bad_command(self, session, region):
-                    pass
+                    assert False

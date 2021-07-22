@@ -17,7 +17,6 @@ from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.http_event_manager import MITMProxyEventManager
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.http_proxy import SerializedCapData
-from hippolyzer.lib.proxy.message_logger import FilteringMessageLogger
 from hippolyzer.lib.proxy.sessions import SessionManager
 from hippolyzer.lib.proxy.test_utils import BaseProxyTest
 
@@ -28,12 +27,6 @@ class MockAddon(BaseAddon):
 
     def handle_http_response(self, session_manager: SessionManager, flow: HippoHTTPFlow):
         flow.metadata["touched_addon"] = True
-
-
-class SimpleMessageLogger(FilteringMessageLogger):
-    @property
-    def entries(self):
-        return self._filtered_entries
 
 
 class HTTPIntegrationTests(BaseProxyTest):

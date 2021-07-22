@@ -67,7 +67,3 @@ class TemplateTests(unittest.TestCase):
     def test_textureentry_defaults(self):
         te = TextureEntry()
         self.assertEqual(UUID('89556747-24cb-43ed-920b-47caed15465f'), te.Textures[None])
-
-
-if __name__ == "__main__":
-    unittest.main()
