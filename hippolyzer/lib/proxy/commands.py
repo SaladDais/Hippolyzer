@@ -65,13 +65,13 @@ def handle_command(command_name: Optional[str] = None, /, *, lifetime: Optional[
                 # Greedy, takes the rest of the message
                 if param.sep is None:
                     param_val = message
-                    message = None
+                    message = ""
                 else:
                     message = message.lstrip(param.sep)
                     if not message:
-                        if param.optional:
-                            break
-                        raise KeyError(f"Missing parameter {param_name}")
+                        if not param.optional:
+                            raise KeyError(f"Missing parameter {param_name}")
+                        continue
                     param_val, _, message = message.partition(param.sep)  # type: ignore
 
                 param_vals[param_name] = param.parser(param_val)

@@ -26,7 +26,13 @@ class ExampleCommandHandler:
         y=str,
     )
     async def own_name(self, _session, _region, y):
-        self.bar = y
+        pass
+
+    @handle_command(
+        x=Parameter(str, optional=True),
+    )
+    async def optional(self, _session, _region, x=42):
+        self.bar = x
 
 
 class TestCommandHandlers(unittest.IsolatedAsyncioTestCase):
@@ -46,6 +52,17 @@ class TestCommandHandlers(unittest.IsolatedAsyncioTestCase):
 
     async def test_own_name(self):
         self.assertEqual(self.handler.own_name.command.name, "own_name")
+
+    async def test_missing_param(self):
+        with self.assertRaises(KeyError):
+            await self.handler.foo(None, None, "")
+
+    async def test_optional_param(self):
+        await self.handler.optional(None, None, "foo")  # type: ignore
+        self.assertEqual(self.handler.bar, "foo")
+        await self.handler.optional(None, None, "")  # type: ignore
+        # Should have picked up the default value
+        self.assertEqual(self.handler.bar, 42)
 
     async def test_bad_command(self):
         with self.assertRaises(ValueError):
