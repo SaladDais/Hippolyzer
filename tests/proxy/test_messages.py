@@ -236,11 +236,11 @@ class PacketIDTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             # Re-dropping the same message should raise
             self.circuit.drop_message(to_drop)
-        # Clears finalized flag
-        to_drop.packet_id = None
-        self.circuit.send_message(to_drop)
+        # Returns a new message without finalized flag
+        new_msg = to_drop.take()
+        self.circuit.send_message(new_msg)
         with self.assertRaises(RuntimeError):
-            self.circuit.send_message(to_drop)
+            self.circuit.send_message(new_msg)
         self.assertSequenceEqual(self.circuit.sent_simple, [
             (1, "ChatFromViewer", Direction.OUT, False, ()),
             (1, "PacketAck", Direction.IN, True, ()),

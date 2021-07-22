@@ -37,6 +37,9 @@ class ProxiedCircuit(Circuit):
     def prepare_message(self, message: Message, direction=None):
         if message.finalized:
             raise RuntimeError(f"Trying to re-send finalized {message!r}")
+        if message.queued:
+            # This is due to be dropped, nothing should be sending the original
+            raise RuntimeError(f"Trying to send original of queued {message!r}")
         direction = direction or getattr(message, 'direction')
         fwd_injections, reverse_injections = self._get_injections(direction)
 

@@ -186,7 +186,7 @@ class MsgBlockList(List["Block"]):
 
 
 class Message:
-    __slots__ = ("name", "send_flags", "_packet_id", "acks", "body_boundaries", "queued",
+    __slots__ = ("name", "send_flags", "packet_id", "acks", "body_boundaries", "queued",
                  "offset", "raw_extra", "raw_body", "deserializer", "_blocks", "finalized",
                  "direction", "meta", "injected", "dropped", "sender")
 
@@ -196,7 +196,7 @@ class Message:
 
         self.name = name
         self.send_flags = flags
-        self._packet_id: Optional[int] = packet_id  # aka, sequence number
+        self.packet_id: Optional[int] = packet_id  # aka, sequence number
 
         self.acks = acks if acks is not None else tuple()
         self.body_boundaries = (-1, -1)
@@ -218,16 +218,6 @@ class Message:
         self.sender: Optional[ADDR_TUPLE] = None
 
         self.add_blocks(args)
-
-    @property
-    def packet_id(self) -> Optional[int]:
-        return self._packet_id
-
-    @packet_id.setter
-    def packet_id(self, val: Optional[int]):
-        self._packet_id = val
-        # Changing packet ID clears the finalized flag
-        self.finalized = False
 
     def add_blocks(self, block_list):
         # can have a list of blocks if it is multiple or variable
@@ -364,12 +354,15 @@ class Message:
         message_copy = copy.deepcopy(self)
 
         # Set the queued flag so the original will be dropped and acks will be sent
-        self.queued = True
+        if not self.finalized:
+            self.queued = True
 
         # Original was dropped so let's make sure we have clean acks and packet id
         message_copy.acks = tuple()
         message_copy.send_flags &= ~PacketFlags.ACK
         message_copy.packet_id = None
+        message_copy.dropped = False
+        message_copy.finalized = False
         return message_copy
 
     def to_summary(self):

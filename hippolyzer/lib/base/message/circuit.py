@@ -48,6 +48,8 @@ class Circuit:
         self.packet_id_base += 1
         if not message.acks:
             message.send_flags &= PacketFlags.ACK
+        # If it was queued, it's not anymore
+        message.queued = False
         message.finalized = True
 
     def send_message(self, message: Message, transport=None):

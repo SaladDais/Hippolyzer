@@ -131,7 +131,7 @@ class InterceptingLLUDPProxyProtocol(UDPProxyProtocol):
 
         # This message is owned by an async handler, drop it so it doesn't get
         # sent with the normal flow.
-        if message.queued and not message.dropped:
+        if message.queued:
             region.circuit.drop_message(message)
 
         # Shouldn't mutate the message past this point, so log it now.
@@ -146,7 +146,8 @@ class InterceptingLLUDPProxyProtocol(UDPProxyProtocol):
         elif message.name == "RegionHandshake":
             region.name = str(message["RegionInfo"][0]["SimName"])
 
-        if not message.dropped:
+        # Send the message if it wasn't explicitly dropped or sent before
+        if not message.finalized:
             region.circuit.send_message(message)
 
     def close(self):
