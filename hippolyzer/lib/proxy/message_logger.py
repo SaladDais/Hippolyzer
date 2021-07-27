@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import abc
 import collections
 import copy
 import fnmatch
@@ -30,22 +31,37 @@ LOG = logging.getLogger(__name__)
 
 
 class BaseMessageLogger:
+    paused: bool
+
     def log_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
-        pass
+        if self.paused:
+            return False
+        return self.add_log_entry(LLUDPMessageLogEntry(message, region, session))
 
     def log_http_response(self, flow: HippoHTTPFlow):
-        pass
+        if self.paused:
+            return False
+        # These are huge, let's not log them for now.
+        if flow.cap_data and flow.cap_data.asset_server_cap:
+            return False
+        return self.add_log_entry(HTTPMessageLogEntry(flow))
 
     def log_eq_event(self, session: Session, region: ProxiedRegion, event: dict):
+        if self.paused:
+            return False
+        return self.add_log_entry(EQMessageLogEntry(event, region, session))
+
+    @abc.abstractmethod
+    def add_log_entry(self, entry: AbstractMessageLogEntry):
         pass
 
 
 class FilteringMessageLogger(BaseMessageLogger):
-    def __init__(self):
+    def __init__(self, maxlen=2000):
         BaseMessageLogger.__init__(self)
-        self._raw_entries = collections.deque(maxlen=2000)
+        self._raw_entries = collections.deque(maxlen=maxlen)
         self._filtered_entries: typing.List[AbstractMessageLogEntry] = []
-        self._paused = False
+        self.paused = False
         self.filter: BaseFilterNode = compile_filter("")
 
     def set_filter(self, filter_str: str):
@@ -61,25 +77,7 @@ class FilteringMessageLogger(BaseMessageLogger):
         self._end_reset()
 
     def set_paused(self, paused: bool):
-        self._paused = paused
-
-    def log_lludp_message(self, session: Session, region: ProxiedRegion, message: Message):
-        if self._paused:
-            return
-        self._add_log_entry(LLUDPMessageLogEntry(message, region, session))
-
-    def log_http_response(self, flow: HippoHTTPFlow):
-        if self._paused:
-            return
-        # These are huge, let's not log them for now.
-        if flow.cap_data and flow.cap_data.asset_server_cap:
-            return
-        self._add_log_entry(HTTPMessageLogEntry(flow))
-
-    def log_eq_event(self, session: Session, region: ProxiedRegion, event: dict):
-        if self._paused:
-            return
-        self._add_log_entry(EQMessageLogEntry(event, region, session))
+        self.paused = paused
 
     # Hooks that Qt models will want to implement
     def _begin_insert(self, insert_idx: int):
@@ -94,31 +92,47 @@ class FilteringMessageLogger(BaseMessageLogger):
     def _end_reset(self):
         pass
 
-    def _add_log_entry(self, entry: AbstractMessageLogEntry):
+    def add_log_entry(self, entry: AbstractMessageLogEntry):
         try:
             # Paused, throw it away.
-            if self._paused:
-                return
+            if self.paused:
+                return False
             self._raw_entries.append(entry)
             if self.filter.match(entry):
                 next_idx = len(self._filtered_entries)
                 self._begin_insert(next_idx)
                 self._filtered_entries.append(entry)
                 self._end_insert()
-
-                entry.cache_summary()
-            # In the common case we don't need to keep around the serialization
-            # caches anymore. If the filter changes, the caches will be repopulated
-            # as necessary.
-            entry.freeze()
+                return True
         except Exception:
             LOG.exception("Failed to filter queued message")
+        return False
 
     def clear(self):
         self._begin_reset()
         self._filtered_entries.clear()
         self._raw_entries.clear()
         self._end_reset()
+
+
+class WrappingMessageLogger(BaseMessageLogger):
+    def __init__(self):
+        self.loggers: typing.List[BaseMessageLogger] = []
+
+    @property
+    def paused(self):
+        return all(x.paused for x in self.loggers)
+
+    def add_log_entry(self, entry: AbstractMessageLogEntry):
+        logged = False
+        for logger in self.loggers:
+            if logger.add_log_entry(entry):
+                logged = True
+        # At least one logger ended up keeping the message around, so let's
+        # cache the summary before we freeze the message.
+        if logged:
+            entry.cache_summary()
+        entry.freeze()
 
 
 class AbstractMessageLogEntry:

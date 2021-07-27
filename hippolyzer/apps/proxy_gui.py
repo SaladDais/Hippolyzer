@@ -42,7 +42,7 @@ from hippolyzer.lib.proxy.addons import BaseInteractionManager, AddonManager
 from hippolyzer.lib.proxy.ca_utils import setup_ca_everywhere
 from hippolyzer.lib.proxy.caps_client import ProxyCapsClient
 from hippolyzer.lib.proxy.http_proxy import create_proxy_master, HTTPFlowContext
-from hippolyzer.lib.proxy.message_logger import LLUDPMessageLogEntry, AbstractMessageLogEntry
+from hippolyzer.lib.proxy.message_logger import LLUDPMessageLogEntry, AbstractMessageLogEntry, WrappingMessageLogger
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session, SessionManager
 from hippolyzer.lib.proxy.settings import ProxySettings
@@ -72,7 +72,8 @@ class GUISessionManager(SessionManager, QtCore.QObject):
         SessionManager.__init__(self, settings)
         QtCore.QObject.__init__(self)
         self.all_regions = []
-        self.message_logger = model
+        self.message_logger = WrappingMessageLogger()
+        self.message_logger.loggers.append(model)
 
     def checkRegions(self):
         new_regions = itertools.chain(*[s.regions for s in self.sessions])
@@ -167,6 +168,34 @@ def nonFatalExceptions(f):
             return None
 
     return _wrapper
+
+
+def buildReplacements(session: Session, region: ProxiedRegion):
+    if not session or not region:
+        return {}
+    selected = session.selected
+    agent_object = region.objects.lookup_fullid(session.agent_id)
+    selected_local = selected.object_local
+    selected_object = None
+    if selected_local:
+        # We may or may not have an object for this
+        selected_object = region.objects.lookup_localid(selected_local)
+    return {
+        "SELECTED_LOCAL": selected_local,
+        "SELECTED_FULL": selected_object.FullID if selected_object else None,
+        "SELECTED_PARCEL_LOCAL": selected.parcel_local,
+        "SELECTED_PARCEL_FULL": selected.parcel_full,
+        "SELECTED_SCRIPT_ITEM": selected.script_item,
+        "SELECTED_TASK_ITEM": selected.task_item,
+        "AGENT_ID": session.agent_id,
+        "AGENT_LOCAL": agent_object.LocalID if agent_object else None,
+        "SESSION_ID": session.id,
+        "AGENT_POS": agent_object.Position if agent_object else None,
+        "NULL_KEY": UUID(),
+        "RANDOM_KEY": UUID.random,
+        "CIRCUIT_CODE": session.circuit_code,
+        "REGION_HANDLE": region.handle,
+    }
 
 
 class ProxyGUI(QtWidgets.QMainWindow):
@@ -284,7 +313,7 @@ class ProxyGUI(QtWidgets.QMainWindow):
             return
         req = entry.request(
             beautify=self.checkBeautify.isChecked(),
-            replacements=self.buildReplacements(entry.session, entry.region),
+            replacements=buildReplacements(entry.session, entry.region),
         )
         highlight_range = None
         if isinstance(req, SpannedString):
@@ -324,7 +353,7 @@ class ProxyGUI(QtWidgets.QMainWindow):
         win.show()
         msg = self._selectedEntry
         beautify = self.checkBeautify.isChecked()
-        replacements = self.buildReplacements(msg.session, msg.region)
+        replacements = buildReplacements(msg.session, msg.region)
         win.setMessageText(msg.request(beautify=beautify, replacements=replacements))
 
     @nonFatalExceptions
@@ -339,33 +368,6 @@ class ProxyGUI(QtWidgets.QMainWindow):
     def _openMessageBuilder(self):
         win = MessageBuilderWindow(self, self.sessionManager)
         win.show()
-
-    def buildReplacements(self, session: Session, region: ProxiedRegion):
-        if not session or not region:
-            return {}
-        selected = session.selected
-        agent_object = region.objects.lookup_fullid(session.agent_id)
-        selected_local = selected.object_local
-        selected_object = None
-        if selected_local:
-            # We may or may not have an object for this
-            selected_object = region.objects.lookup_localid(selected_local)
-        return {
-            "SELECTED_LOCAL": selected_local,
-            "SELECTED_FULL": selected_object.FullID if selected_object else None,
-            "SELECTED_PARCEL_LOCAL": selected.parcel_local,
-            "SELECTED_PARCEL_FULL": selected.parcel_full,
-            "SELECTED_SCRIPT_ITEM": selected.script_item,
-            "SELECTED_TASK_ITEM": selected.task_item,
-            "AGENT_ID": session.agent_id,
-            "AGENT_LOCAL": agent_object.LocalID if agent_object else None,
-            "SESSION_ID": session.id,
-            "AGENT_POS": agent_object.Position if agent_object else None,
-            "NULL_KEY": UUID(),
-            "RANDOM_KEY": UUID.random,
-            "CIRCUIT_CODE": session.circuit_code,
-            "REGION_HANDLE": region.handle,
-        }
 
     def _installHTTPSCerts(self):
         msg = QtWidgets.QMessageBox()
@@ -585,7 +587,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
         session, region = self._getTarget()
 
         msg_text = self.textRequest.toPlainText()
-        replacements = self.parent().buildReplacements(session, region)
+        replacements = buildReplacements(session, region)
 
         if re.match(r"\A\s*(in|out)\s+", msg_text, re.I):
             sender_func = self._sendLLUDPMessage
