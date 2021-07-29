@@ -19,9 +19,9 @@ class MessageLogHeader(enum.IntEnum):
 
 
 class MessageLogModel(QtCore.QAbstractTableModel, FilteringMessageLogger):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, maxlen=2000):
         QtCore.QAbstractTableModel.__init__(self, parent)
-        FilteringMessageLogger.__init__(self)
+        FilteringMessageLogger.__init__(self, maxlen=maxlen)
 
     def _begin_insert(self, insert_idx: int):
         self.beginInsertRows(QtCore.QModelIndex(), insert_idx, insert_idx)

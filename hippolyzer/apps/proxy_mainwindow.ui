@@ -256,6 +256,7 @@
      <bool>true</bool>
     </property>
     <addaction name="actionOpenMessageBuilder"/>
+    <addaction name="actionOpenNewMessageLogWindow"/>
     <addaction name="separator"/>
     <addaction name="actionInstallHTTPSCerts"/>
     <addaction name="actionManageAddons"/>
@@ -321,6 +322,11 @@
    </property>
    <property name="toolTip">
     <string>Force the proxy to request objects that it doesn't know about due to cache misses</string>
+   </property>
+  </action>
+  <action name="actionOpenNewMessageLogWindow">
+   <property name="text">
+    <string>Open New Message Log Window</string>
    </property>
   </action>
  </widget>

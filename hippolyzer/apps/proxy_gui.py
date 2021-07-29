@@ -68,12 +68,11 @@ class GUISessionManager(SessionManager, QtCore.QObject):
     regionAdded = QtCore.Signal(ProxiedRegion)
     regionRemoved = QtCore.Signal(ProxiedRegion)
 
-    def __init__(self, settings, model):
+    def __init__(self, settings):
         SessionManager.__init__(self, settings)
         QtCore.QObject.__init__(self)
         self.all_regions = []
         self.message_logger = WrappingMessageLogger()
-        self.message_logger.loggers.append(model)
 
     def checkRegions(self):
         new_regions = itertools.chain(*[s.regions for s in self.sessions])
@@ -157,6 +156,22 @@ class GUIInteractionManager(BaseInteractionManager, QtCore.QObject):
         return (await fut) == QtWidgets.QMessageBox.Ok
 
 
+class GUIProxySettings(ProxySettings):
+    """Persistent settings backed by QSettings"""
+    def __init__(self, settings: QtCore.QSettings):
+        super().__init__()
+        self._settings_obj = settings
+
+    def get_setting(self, name: str) -> Any:
+        val: Any = self._settings_obj.value(name, defaultValue=dataclasses.MISSING)
+        if val is dataclasses.MISSING:
+            return val
+        return json.loads(val)
+
+    def set_setting(self, name: str, val: Any):
+        self._settings_obj.setValue(name, json.dumps(val))
+
+
 def nonFatalExceptions(f):
     @functools.wraps(f)
     def _wrapper(self, *args, **kwargs):
@@ -198,7 +213,7 @@ def buildReplacements(session: Session, region: ProxiedRegion):
     }
 
 
-class ProxyGUI(QtWidgets.QMainWindow):
+class MessageLogWindow(QtWidgets.QMainWindow):
     DEFAULT_IGNORE = "StartPingCheck CompletePingCheck PacketAck SimulatorViewerTimeMessage SimStats " \
                      "AgentUpdate AgentAnimation AvatarAnimation ViewerEffect CoarseLocationUpdate LayerData " \
                      "CameraConstraint ObjectUpdateCached RequestMultipleObjects ObjectUpdate ObjectUpdateCompressed " \
@@ -212,23 +227,36 @@ class ProxyGUI(QtWidgets.QMainWindow):
 
     textRequest: QtWidgets.QTextEdit
 
-    def __init__(self):
-        super().__init__()
+    def __init__(
+            self, settings: GUIProxySettings, session_manager: GUISessionManager,
+            log_live_messages: bool, parent: Optional[QtWidgets.QWidget] = None,
+    ):
+        super().__init__(parent=parent)
         loadUi(MAIN_WINDOW_UI_PATH, self)
+
+        if parent:
+            self.setWindowTitle("Message Log")
+            self.menuBar.setEnabled(False)  # type: ignore
+            self.menuBar.hide()  # type: ignore
 
         self._selectedEntry: Optional[AbstractMessageLogEntry] = None
 
-        self.settings = GUIProxySettings(QtCore.QSettings("SaladDais", "hippolyzer"))
-        self.model = MessageLogModel(parent=self.tableView)
+        self.settings = settings
+        self.sessionManager = session_manager
+        if log_live_messages:
+            self.model = MessageLogModel(parent=self.tableView)
+            session_manager.message_logger.loggers.append(self.model)
+        else:
+            self.model = MessageLogModel(parent=self.tableView, maxlen=None)
         self.tableView.setModel(self.model)
         self.model.rowsAboutToBeInserted.connect(self.beforeInsert)
         self.model.rowsInserted.connect(self.afterInsert)
         self.tableView.selectionModel().selectionChanged.connect(self._messageSelected)
         self.checkBeautify.clicked.connect(self._showSelectedMessage)
         self.checkPause.clicked.connect(self._setPaused)
-        self._setFilter(self.DEFAULT_FILTER)
+        self.setFilter(self.DEFAULT_FILTER)
         self.btnClearLog.clicked.connect(self.model.clear)
-        self.lineEditFilter.editingFinished.connect(self._setFilter)
+        self.lineEditFilter.editingFinished.connect(self.setFilter)
         self.btnMessageBuilder.clicked.connect(self._sendToMessageBuilder)
         self.btnCopyRepr.clicked.connect(self._copyRepr)
         self.actionInstallHTTPSCerts.triggered.connect(self._installHTTPSCerts)
@@ -242,14 +270,11 @@ class ProxyGUI(QtWidgets.QMainWindow):
         self.actionProxyRemotelyAccessible.triggered.connect(self._setProxyRemotelyAccessible)
         self.actionUseViewerObjectCache.triggered.connect(self._setUseViewerObjectCache)
         self.actionRequestMissingObjects.triggered.connect(self._setRequestMissingObjects)
+        self.actionOpenNewMessageLogWindow.triggered.connect(self._openNewMessageLogWindow)
 
         self._filterMenu = QtWidgets.QMenu()
         self._populateFilterMenu()
         self.toolButtonFilter.setMenu(self._filterMenu)
-
-        self.sessionManager = GUISessionManager(self.settings, self.model)
-        self.interactionManager = GUIInteractionManager(self)
-        AddonManager.UI = self.interactionManager
 
         self._shouldScrollOnInsert = True
         self.tableView.horizontalHeader().resizeSection(MessageLogHeader.Host, 80)
@@ -259,10 +284,16 @@ class ProxyGUI(QtWidgets.QMainWindow):
 
         self.textResponse.hide()
 
+    def closeEvent(self, event) -> None:
+        loggers = self.sessionManager.message_logger.loggers
+        if self.model in loggers:
+            loggers.remove(self.model)
+        super().closeEvent(event)
+
     def _populateFilterMenu(self):
         def _addFilterAction(text, filter_str):
             filter_action = QtWidgets.QAction(text, self)
-            filter_action.triggered.connect(lambda: self._setFilter(filter_str))
+            filter_action.triggered.connect(lambda: self.setFilter(filter_str))
             self._filterMenu.addAction(filter_action)
 
         self._filterMenu.clear()
@@ -281,7 +312,7 @@ class ProxyGUI(QtWidgets.QMainWindow):
         dialog.exec_()
 
     @nonFatalExceptions
-    def _setFilter(self, filter_str=None):
+    def setFilter(self, filter_str=None):
         if filter_str is None:
             filter_str = self.lineEditFilter.text()
         else:
@@ -367,6 +398,11 @@ class ProxyGUI(QtWidgets.QMainWindow):
 
     def _openMessageBuilder(self):
         win = MessageBuilderWindow(self, self.sessionManager)
+        win.show()
+
+    def _openNewMessageLogWindow(self):
+        win = MessageLogWindow(self.settings, self.sessionManager, log_live_messages=True, parent=self)
+        win.setFilter(self.lineEditFilter.text())
         win.show()
 
     def _installHTTPSCerts(self):
@@ -736,7 +772,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
 class AddonDialog(QtWidgets.QDialog):
     listAddons: QtWidgets.QListWidget
 
-    def __init__(self, parent: ProxyGUI):
+    def __init__(self, parent: MessageLogWindow):
         super().__init__()
 
         loadUi(ADDON_DIALOG_UI_PATH, self)
@@ -787,7 +823,7 @@ class AddonDialog(QtWidgets.QDialog):
 class FilterDialog(QtWidgets.QDialog):
     listFilters: QtWidgets.QListWidget
 
-    def __init__(self, parent: ProxyGUI):
+    def __init__(self, parent: MessageLogWindow):
         super().__init__()
 
         loadUi(FILTER_DIALOG_UI_PATH, self)
@@ -825,29 +861,16 @@ class FilterDialog(QtWidgets.QDialog):
             self.listFilters.takeItem(idx)
 
 
-class GUIProxySettings(ProxySettings):
-    """Persistent settings backed by QSettings"""
-    def __init__(self, settings: QtCore.QSettings):
-        super().__init__()
-        self._settings_obj = settings
-
-    def get_setting(self, name: str) -> Any:
-        val: Any = self._settings_obj.value(name, defaultValue=dataclasses.MISSING)
-        if val is dataclasses.MISSING:
-            return val
-        return json.loads(val)
-
-    def set_setting(self, name: str, val: Any):
-        self._settings_obj.setValue(name, json.dumps(val))
-
-
 def gui_main():
     multiprocessing.set_start_method('spawn')
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
     app = QtWidgets.QApplication(sys.argv)
     loop = QEventLoop(app)
     asyncio.set_event_loop(loop)
-    window = ProxyGUI()
+    settings = GUIProxySettings(QtCore.QSettings("SaladDais", "hippolyzer"))
+    session_manager = GUISessionManager(settings)
+    window = MessageLogWindow(settings, session_manager, log_live_messages=True)
+    AddonManager.UI = GUIInteractionManager(window)
     timer = QtCore.QTimer(app)
     timer.timeout.connect(window.sessionManager.checkRegions)
     timer.start(100)
