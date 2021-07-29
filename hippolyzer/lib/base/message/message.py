@@ -291,7 +291,7 @@ class Message:
         if self.raw_body and self.deserializer():
             self.deserializer().parse_message_body(self)
 
-    def to_dict(self):
+    def to_dict(self, extended=False):
         """ A dict representation of a message.
 
         This is the form used for templated messages sent via EQ.
@@ -307,6 +307,18 @@ class Message:
                     new_vars[var_name] = val
                 dict_blocks.append(new_vars)
 
+        if extended:
+            base_repr.update({
+                "packet_id": self.packet_id,
+                "meta": self.meta.copy(),
+                "dropped": self.dropped,
+                "injected": self.injected,
+                "direction": self.direction.name,
+                "send_flags": int(self.send_flags),
+                "extra": self.extra,
+                "acks": self.acks,
+            })
+
         return base_repr
 
     @classmethod
@@ -316,6 +328,17 @@ class Message:
             msg.create_block_list(block_type)
             for block in blocks:
                 msg.add_block(Block(block_type, **block))
+
+        if 'packet_id' in dict_val:
+            # extended format
+            msg.packet_id = dict_val['packet_id']
+            msg.meta = dict_val['meta']
+            msg.dropped = dict_val['dropped']
+            msg.injected = dict_val['injected']
+            msg.direction = Direction[dict_val['direction']]
+            msg.send_flags = dict_val['send_flags']
+            msg.extra = dict_val['extra']
+            msg.acks = dict_val['acks']
         return msg
 
     def invalidate_caches(self):

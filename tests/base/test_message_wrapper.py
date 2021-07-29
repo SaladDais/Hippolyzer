@@ -146,6 +146,12 @@ class TestMessage(unittest.TestCase):
         new_msg = Message.from_dict(self.chat_msg.to_dict())
         self.assertEqual(pickle.dumps(self.chat_msg), pickle.dumps(new_msg))
 
+    def test_todict_extended(self):
+        self.chat_msg.packet_id = 5
+        new_msg = Message.from_dict(self.chat_msg.to_dict(extended=True))
+        self.assertEqual(5, new_msg.packet_id)
+        self.assertEqual(pickle.dumps(self.chat_msg), pickle.dumps(new_msg))
+
     def test_todict_multiple_blocks(self):
         chat_msg = self.chat_msg
         # If we dupe the ChatData block it should survive to_dict()
