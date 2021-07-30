@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import enum
 import logging
 import hashlib
 import uuid
@@ -18,6 +17,7 @@ from hippolyzer.lib.base.objects import handle_to_global_pos
 from hippolyzer.lib.client.state import BaseClientRegion
 from hippolyzer.lib.proxy.caps_client import ProxyCapsClient
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
+from hippolyzer.lib.proxy.caps import CapType
 from hippolyzer.lib.proxy.object_manager import ProxyObjectManager
 from hippolyzer.lib.base.transfer_manager import TransferManager
 from hippolyzer.lib.base.xfer_manager import XferManager
@@ -25,13 +25,6 @@ from hippolyzer.lib.base.xfer_manager import XferManager
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.sessions import Session
     from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-
-
-class CapType(enum.Enum):
-    NORMAL = enum.auto()
-    TEMPORARY = enum.auto()
-    WRAPPER = enum.auto()
-    PROXY_ONLY = enum.auto()
 
 
 class CapsMultiDict(multidict.MultiDict[Tuple[CapType, str]]):

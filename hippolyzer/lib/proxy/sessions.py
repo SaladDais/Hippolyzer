@@ -16,10 +16,11 @@ from hippolyzer.lib.client.state import BaseClientSession
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.proxy.http_asset_repo import HTTPAssetRepo
-from hippolyzer.lib.proxy.http_proxy import HTTPFlowContext, is_asset_server_cap_name, SerializedCapData
+from hippolyzer.lib.proxy.http_proxy import HTTPFlowContext
+from hippolyzer.lib.proxy.caps import is_asset_server_cap_name, CapData, CapType
 from hippolyzer.lib.proxy.namecache import ProxyNameCache
 from hippolyzer.lib.proxy.object_manager import ProxyWorldObjectManager
-from hippolyzer.lib.proxy.region import ProxiedRegion, CapType
+from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.settings import ProxySettings
 
 if TYPE_CHECKING:
@@ -210,50 +211,6 @@ class SessionManager:
             if cap_data:
                 return cap_data
         return CapData()
-
-    def deserialize_cap_data(self, ser_cap_data: "SerializedCapData") -> "CapData":
-        cap_session = None
-        cap_region = None
-        if ser_cap_data.session_id:
-            for session in self.sessions:
-                if ser_cap_data.session_id == str(session.id):
-                    cap_session = session
-        if cap_session and ser_cap_data.region_addr:
-            for region in cap_session.regions:
-                if ser_cap_data.region_addr == str(region.circuit_addr):
-                    cap_region = region
-        return CapData(
-            cap_name=ser_cap_data.cap_name,
-            region=ref(cap_region) if cap_region else None,
-            session=ref(cap_session) if cap_session else None,
-            base_url=ser_cap_data.base_url,
-            type=CapType[ser_cap_data.type],
-        )
-
-
-class CapData(NamedTuple):
-    cap_name: Optional[str] = None
-    # Actually they're weakrefs but the type sigs suck.
-    region: Optional[Callable[[], Optional[ProxiedRegion]]] = None
-    session: Optional[Callable[[], Optional[Session]]] = None
-    base_url: Optional[str] = None
-    type: CapType = CapType.NORMAL
-
-    def __bool__(self):
-        return bool(self.cap_name or self.session)
-
-    def serialize(self) -> "SerializedCapData":
-        return SerializedCapData(
-            cap_name=self.cap_name,
-            region_addr=str(self.region().circuit_addr) if self.region and self.region() else None,
-            session_id=str(self.session().id) if self.session and self.session() else None,
-            base_url=self.base_url,
-            type=self.type.name,
-        )
-
-    @property
-    def asset_server_cap(self) -> bool:
-        return is_asset_server_cap_name(self.cap_name)
 
 
 @dataclasses.dataclass

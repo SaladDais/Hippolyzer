@@ -25,8 +25,9 @@ from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.proxy.addon_utils import BaseAddon, SessionProperty, show_message
 from hippolyzer.lib.proxy.commands import handle_command, Parameter, parse_bool
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-from hippolyzer.lib.proxy.region import ProxiedRegion, CapType
-from hippolyzer.lib.proxy.sessions import Session, CapData, SessionManager
+from hippolyzer.lib.proxy.caps import CapData, CapType
+from hippolyzer.lib.proxy.region import ProxiedRegion
+from hippolyzer.lib.proxy.sessions import Session, SessionManager
 
 # Things that make no sense to mirror, or will make everything explode if mirrored.
 SEND_NORMALLY = {

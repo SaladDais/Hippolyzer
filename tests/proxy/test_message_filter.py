@@ -1,3 +1,4 @@
+import ast
 import unittest
 
 from mitmproxy.test import tflow, tutils
@@ -7,7 +8,7 @@ from hippolyzer.lib.base.message.message import Block, Message as Message
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.settings import Settings
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-from hippolyzer.lib.proxy.http_proxy import SerializedCapData
+from hippolyzer.lib.proxy.caps import SerializedCapData
 from hippolyzer.lib.proxy.message_logger import LLUDPMessageLogEntry, HTTPMessageLogEntry
 from hippolyzer.lib.proxy.message_filter import compile_filter
 from hippolyzer.lib.proxy.sessions import SessionManager
@@ -118,6 +119,14 @@ class MessageFilterTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(self._filter_matches("ObjectUpdate.ObjectData.ObjectData.Position > (88, 41, 25)", entry))
         self.assertTrue(self._filter_matches("ObjectUpdate.ObjectData.ObjectData.Position < (90, 43, 27)", entry))
 
+    def test_import_export_message(self):
+        msg = LLUDPMessageLogEntry(Message("Foo", Block("Bar", Baz=1)), None, None)
+        msg.freeze()
+        # Make sure it's repr()able
+        msg_dict = ast.literal_eval(repr(msg.to_dict()))
+        msg = LLUDPMessageLogEntry.from_dict(msg_dict)
+        self.assertTrue(self._filter_matches("Foo.Bar.Baz == 1", msg))
+
     def test_http_flow(self):
         session_manager = SessionManager(ProxySettings())
         fake_flow = tflow.tflow(req=tutils.treq(), resp=tutils.tresp())
@@ -128,3 +137,14 @@ class MessageFilterTests(unittest.IsolatedAsyncioTestCase):
         entry = HTTPMessageLogEntry(flow)
         self.assertTrue(self._filter_matches("FakeCap", entry))
         self.assertFalse(self._filter_matches("NotFakeCap", entry))
+
+    def test_export_import_http_flow(self):
+        fake_flow = tflow.tflow(req=tutils.treq(), resp=tutils.tresp())
+        fake_flow.metadata["cap_data_ser"] = SerializedCapData(
+            cap_name="FakeCap",
+        )
+        flow = HippoHTTPFlow.from_state(fake_flow.get_state(), None)
+        # Make sure it's repr()able
+        flow_dict = ast.literal_eval(repr(HTTPMessageLogEntry(flow).to_dict()))
+        new_entry = HTTPMessageLogEntry.from_dict(flow_dict)
+        self.assertEqual("FakeCap", new_entry.name)

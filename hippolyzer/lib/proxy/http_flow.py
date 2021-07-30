@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import copy
 from typing import *
+from typing import Optional
 
 import mitmproxy.http
 from mitmproxy.http import HTTPFlow
 
+from hippolyzer.lib.proxy.caps import CapData
+
 if TYPE_CHECKING:
-    from hippolyzer.lib.proxy.sessions import CapData, SessionManager
+    from hippolyzer.lib.proxy.sessions import SessionManager
 
 
 class HippoHTTPFlow:
@@ -113,12 +116,12 @@ class HippoHTTPFlow:
         return state
 
     @classmethod
-    def from_state(cls, flow_state: Dict, session_manager: SessionManager) -> HippoHTTPFlow:
+    def from_state(cls, flow_state: Dict, session_manager: Optional[SessionManager]) -> HippoHTTPFlow:
         flow: Optional[HTTPFlow] = HTTPFlow.from_state(flow_state)
         assert flow is not None
         cap_data_ser = flow.metadata.get("cap_data_ser")
         if cap_data_ser is not None:
-            flow.metadata["cap_data"] = session_manager.deserialize_cap_data(cap_data_ser)
+            flow.metadata["cap_data"] = CapData.deserialize(cap_data_ser, session_manager)
         else:
             flow.metadata["cap_data"] = None
         return cls(flow)

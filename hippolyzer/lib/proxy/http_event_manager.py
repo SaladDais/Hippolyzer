@@ -18,8 +18,9 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.llsd_msg_serializer import LLSDMessageSerializer
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-from hippolyzer.lib.proxy.region import ProxiedRegion, CapType
-from hippolyzer.lib.proxy.sessions import SessionManager, CapData, Session
+from hippolyzer.lib.proxy.caps import CapData, CapType
+from hippolyzer.lib.proxy.region import ProxiedRegion
+from hippolyzer.lib.proxy.sessions import SessionManager, Session
 from hippolyzer.lib.proxy.http_proxy import HTTPFlowContext
 
 

@@ -22,6 +22,7 @@ import OpenSSL
 
 from hippolyzer.lib.base.helpers import get_resource_filename
 from hippolyzer.lib.base.multiprocessing_utils import ParentProcessWatcher
+from hippolyzer.lib.proxy.caps import SerializedCapData
 
 
 class SLCertStore(mitmproxy.certs.CertStore):
@@ -261,26 +262,3 @@ def create_proxy_master(host, port, flow_context: HTTPFlowContext):  # pragma: n
 def create_http_proxy(bind_host, port, flow_context: HTTPFlowContext):  # pragma: no cover
     master = create_proxy_master(bind_host, port, flow_context)
     return master
-
-
-def is_asset_server_cap_name(cap_name):
-    return cap_name and (
-        cap_name.startswith("GetMesh")
-        or cap_name.startswith("GetTexture")
-        or cap_name.startswith("ViewerAsset")
-    )
-
-
-class SerializedCapData(typing.NamedTuple):
-    cap_name: typing.Optional[str] = None
-    region_addr: typing.Optional[str] = None
-    session_id: typing.Optional[str] = None
-    base_url: typing.Optional[str] = None
-    type: str = "NORMAL"
-
-    def __bool__(self):
-        return bool(self.cap_name or self.session_id)
-
-    @property
-    def asset_server_cap(self):
-        return is_asset_server_cap_name(self.cap_name)

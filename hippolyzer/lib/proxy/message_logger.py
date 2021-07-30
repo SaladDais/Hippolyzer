@@ -14,16 +14,16 @@ import weakref
 from defusedxml import minidom
 
 from hippolyzer.lib.base import serialization as se, llsd
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.datatypes import TaggedUnion, UUID, TupleCoord
 from hippolyzer.lib.base.helpers import bytes_escape
 from hippolyzer.lib.base.message.message_formatting import HumanMessageSerializer
 from hippolyzer.lib.proxy.message_filter import MetaFieldSpecifier, compile_filter, BaseFilterNode, MessageFilterNode, \
     EnumFieldSpecifier
-from hippolyzer.lib.proxy.region import CapType
+from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
+from hippolyzer.lib.proxy.caps import CapType, SerializedCapData
 
 if typing.TYPE_CHECKING:
-    from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-    from hippolyzer.lib.base.message.message import Message
     from hippolyzer.lib.proxy.region import ProxiedRegion
     from hippolyzer.lib.proxy.sessions import Session
 
@@ -63,6 +63,9 @@ class FilteringMessageLogger(BaseMessageLogger):
         self._filtered_entries: typing.List[AbstractMessageLogEntry] = []
         self.paused = False
         self.filter: BaseFilterNode = compile_filter("")
+
+    def __iter__(self) -> typing.Iterator[AbstractMessageLogEntry]:
+        return iter(self._filtered_entries)
 
     def set_filter(self, filter_str: str):
         self.filter = compile_filter(filter_str)
@@ -135,7 +138,7 @@ class WrappingMessageLogger(BaseMessageLogger):
         entry.freeze()
 
 
-class AbstractMessageLogEntry:
+class AbstractMessageLogEntry(abc.ABC):
     region: typing.Optional[ProxiedRegion]
     session: typing.Optional[Session]
     name: str
@@ -143,7 +146,7 @@ class AbstractMessageLogEntry:
 
     __slots__ = ["_region", "_session", "_region_name", "_agent_id", "_summary", "meta"]
 
-    def __init__(self, region, session):
+    def __init__(self, region: typing.Optional[ProxiedRegion], session: typing.Optional[Session]):
         if region and not isinstance(region, weakref.ReferenceType):
             region = weakref.ref(region)
         if session and not isinstance(session, weakref.ReferenceType):
@@ -172,6 +175,26 @@ class AbstractMessageLogEntry:
             "SelectedLocal": self._current_selected_local(),
             "SelectedFull": self._current_selected_full(),
         }
+
+    def to_dict(self) -> dict:
+        return {
+            "type": self.type,
+            "region_name": self.region_name,
+            "agent_id": self.agent_id,
+            "summary": self.summary,
+            "meta": self.meta.copy(),
+        }
+
+    @classmethod
+    @abc.abstractmethod
+    def from_dict(cls, val: dict):
+        pass
+
+    def apply_dict(self, val: dict) -> None:
+        self._region_name = val['region_name']
+        self._agent_id = UUID(val['agent_id']) if val['agent_id'] else None
+        self._summary = val['summary']
+        self.meta = val['meta']
 
     def freeze(self):
         pass
@@ -497,6 +520,26 @@ class HTTPMessageLogEntry(AbstractMessageLogEntry):
             return "application/xml"
         return content_type
 
+    def to_dict(self):
+        val = super().to_dict()
+        val['flow'] = self.flow.get_state()
+        cap_data = val['flow'].get('metadata', {}).get('cap_data_ser')
+        if cap_data:
+            # Have to convert this from a namedtuple to a dict to make
+            # it importable
+            cap_dict = cap_data._asdict()  # noqa
+            val['flow']['metadata']['cap_data_ser'] = cap_dict
+        return val
+
+    @classmethod
+    def from_dict(cls, val: dict):
+        cap_data = val['flow'].get('metadata', {}).get('cap_data_ser')
+        if cap_data:
+            val['flow']['metadata']['cap_data_ser'] = SerializedCapData(**cap_data)
+        ev = cls(HippoHTTPFlow.from_state(val['flow'], None))
+        ev.apply_dict(val)
+        return ev
+
 
 class EQMessageLogEntry(AbstractMessageLogEntry):
     __slots__ = ["event"]
@@ -523,6 +566,17 @@ class EQMessageLogEntry(AbstractMessageLogEntry):
         self._summary = ""
         self._summary = llsd.format_notation(self.event["body"]).decode("utf8")[:500]
         return self._summary
+
+    def to_dict(self) -> dict:
+        val = super().to_dict()
+        val['event'] = self.event
+        return val
+
+    @classmethod
+    def from_dict(cls, val: dict):
+        ev = cls(val['event'], None, None)
+        ev.apply_dict(val)
+        return ev
 
 
 class LLUDPMessageLogEntry(AbstractMessageLogEntry):
@@ -656,3 +710,14 @@ class LLUDPMessageLogEntry(AbstractMessageLogEntry):
         if self._message:
             self._seq = self._message.packet_id
         return self._seq
+
+    def to_dict(self):
+        val = super().to_dict()
+        val['message'] = self.message.to_dict(extended=True)
+        return val
+
+    @classmethod
+    def from_dict(cls, val: dict):
+        ev = cls(Message.from_dict(val['message']), None, None)
+        ev.apply_dict(val)
+        return ev

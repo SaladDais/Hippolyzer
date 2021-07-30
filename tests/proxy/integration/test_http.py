@@ -16,7 +16,7 @@ from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.http_event_manager import MITMProxyEventManager
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
-from hippolyzer.lib.proxy.http_proxy import SerializedCapData
+from hippolyzer.lib.proxy.caps import SerializedCapData
 from hippolyzer.lib.proxy.sessions import SessionManager
 from hippolyzer.lib.proxy.test_utils import BaseProxyTest
 
