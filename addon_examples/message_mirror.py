@@ -160,9 +160,6 @@ class MessageMirrorAddon(BaseAddon):
         if flow.is_replay:
             return
 
-        if not self.mirror_target_agent:
-            return
-
         cap_data = flow.cap_data
         if not cap_data:
             return
@@ -182,6 +179,10 @@ class MessageMirrorAddon(BaseAddon):
 
         region: Optional[ProxiedRegion] = cap_data.region and cap_data.region()
         if not region:
+            return
+
+        # Session-scoped, so we need to know if we have a session before checking
+        if not self.mirror_target_agent:
             return
 
         target_session: Optional[Session] = None
