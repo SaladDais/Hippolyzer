@@ -52,7 +52,8 @@ class BaseInteractionManager:
         pass
 
     @abc.abstractmethod
-    async def save_file(self, caption: str = '', directory: str = '', filter_str: str = '') -> Optional[str]:
+    async def save_file(self, caption: str = '', directory: str = '', filter_str: str = '',
+                        default_suffix: str = '') -> Optional[str]:
         pass
 
     @abc.abstractmethod

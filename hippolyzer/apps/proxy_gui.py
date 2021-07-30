@@ -17,7 +17,7 @@ import urllib.parse
 from typing import *
 
 import multidict
-from qasync import QEventLoop
+from qasync import QEventLoop, asyncSlot
 from PySide2 import QtCore, QtWidgets, QtGui
 
 from hippolyzer.apps.model import MessageLogModel, MessageLogHeader, RegionListModel
@@ -42,7 +42,8 @@ from hippolyzer.lib.proxy.addons import BaseInteractionManager, AddonManager
 from hippolyzer.lib.proxy.ca_utils import setup_ca_everywhere
 from hippolyzer.lib.proxy.caps_client import ProxyCapsClient
 from hippolyzer.lib.proxy.http_proxy import create_proxy_master, HTTPFlowContext
-from hippolyzer.lib.proxy.message_logger import LLUDPMessageLogEntry, AbstractMessageLogEntry, WrappingMessageLogger
+from hippolyzer.lib.proxy.message_logger import LLUDPMessageLogEntry, AbstractMessageLogEntry, WrappingMessageLogger, \
+    import_log_entries, export_log_entries
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session, SessionManager
 from hippolyzer.lib.proxy.settings import ProxySettings
@@ -101,12 +102,16 @@ class GUIInteractionManager(BaseInteractionManager, QtCore.QObject):
         dialog.open()
         return future
 
-    async def _file_dialog(self, caption: str, directory: str, filter_str: str, mode: QtWidgets.QFileDialog.FileMode) \
-            -> Tuple[bool, QtWidgets.QFileDialog]:
+    async def _file_dialog(
+            self, caption: str, directory: str, filter_str: str, mode: QtWidgets.QFileDialog.FileMode,
+            default_suffix: str = '',
+    ) -> Tuple[bool, QtWidgets.QFileDialog]:
         dialog = QtWidgets.QFileDialog(self.parent(), caption=caption, directory=directory, filter=filter_str)
         dialog.setFileMode(mode)
         if mode == QtWidgets.QFileDialog.FileMode.AnyFile:
             dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptMode.AcceptSave)
+        if default_suffix:
+            dialog.setDefaultSuffix(default_suffix)
         res = await self._dialog_async_exec(dialog)
         return res, dialog
 
@@ -134,9 +139,10 @@ class GUIInteractionManager(BaseInteractionManager, QtCore.QObject):
             return None
         return dialog.selectedFiles()[0]
 
-    async def save_file(self, caption: str = '', directory: str = '', filter_str: str = '') -> Optional[str]:
+    async def save_file(self, caption: str = '', directory: str = '', filter_str: str = '',
+                        default_suffix: str = '') -> Optional[str]:
         res, dialog = await self._file_dialog(
-            caption, directory, filter_str, QtWidgets.QFileDialog.FileMode.AnyFile
+            caption, directory, filter_str, QtWidgets.QFileDialog.FileMode.AnyFile, default_suffix,
         )
         if not res or not dialog.selectedFiles():
             return None
@@ -271,6 +277,8 @@ class MessageLogWindow(QtWidgets.QMainWindow):
         self.actionUseViewerObjectCache.triggered.connect(self._setUseViewerObjectCache)
         self.actionRequestMissingObjects.triggered.connect(self._setRequestMissingObjects)
         self.actionOpenNewMessageLogWindow.triggered.connect(self._openNewMessageLogWindow)
+        self.actionImportLogEntries.triggered.connect(self._importLogEntries)
+        self.actionExportLogEntries.triggered.connect(self._exportLogEntries)
 
         self._filterMenu = QtWidgets.QMenu()
         self._populateFilterMenu()
@@ -404,6 +412,33 @@ class MessageLogWindow(QtWidgets.QMainWindow):
         win = MessageLogWindow(self.settings, self.sessionManager, log_live_messages=True, parent=self)
         win.setFilter(self.lineEditFilter.text())
         win.show()
+        win.focus()
+
+    @asyncSlot()
+    async def _importLogEntries(self):
+        log_file = await AddonManager.UI.open_file(
+            caption="Import Log Entries", filter_str="Hippolyzer Logs (*.hippolog)"
+        )
+        if not log_file:
+            return
+        win = MessageLogWindow(self.settings, self.sessionManager, log_live_messages=False, parent=self)
+        win.setFilter(self.lineEditFilter.text())
+        with open(log_file, "rb") as f:
+            entries = import_log_entries(f.read())
+        for entry in entries:
+            win.model.add_log_entry(entry)
+        win.show()
+        win.activateWindow()
+
+    @asyncSlot()
+    async def _exportLogEntries(self):
+        log_file = await AddonManager.UI.save_file(
+            caption="Export Log Entries", filter_str="Hippolyzer Logs (*.hippolog)", default_suffix="hippolog",
+        )
+        if not log_file:
+            return
+        with open(log_file, "wb") as f:
+            f.write(export_log_entries(self.model))
 
     def _installHTTPSCerts(self):
         msg = QtWidgets.QMessageBox()

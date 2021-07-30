@@ -258,6 +258,9 @@
     <addaction name="actionOpenMessageBuilder"/>
     <addaction name="actionOpenNewMessageLogWindow"/>
     <addaction name="separator"/>
+    <addaction name="actionImportLogEntries"/>
+    <addaction name="actionExportLogEntries"/>
+    <addaction name="separator"/>
     <addaction name="actionInstallHTTPSCerts"/>
     <addaction name="actionManageAddons"/>
     <addaction name="actionManageFilters"/>
@@ -327,6 +330,16 @@
   <action name="actionOpenNewMessageLogWindow">
    <property name="text">
     <string>Open New Message Log Window</string>
+   </property>
+  </action>
+  <action name="actionImportLogEntries">
+   <property name="text">
+    <string>Import Log Entries</string>
+   </property>
+  </action>
+  <action name="actionExportLogEntries">
+   <property name="text">
+    <string>Export Log Entries</string>
    </property>
   </action>
  </widget>

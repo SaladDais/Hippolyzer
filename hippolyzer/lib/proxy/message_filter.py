@@ -12,7 +12,7 @@ def literal():
         # https://stackoverflow.com/questions/14366401/#comment79795017_14366904
         RegExMatch(r'''b?(\"\"\"|\'\'\'|\"|\')((?<!\\)(\\\\)*\\\1|.)*?\1'''),
         # base16
-        RegExMatch(r'0x\d+'),
+        RegExMatch(r'0x[0-9a-fA-F]+'),
         # base10 int or float.
         RegExMatch(r'\d+(\.\d+)?'),
         "None",

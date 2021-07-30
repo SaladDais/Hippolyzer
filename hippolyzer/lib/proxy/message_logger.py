@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import abc
+import ast
 import collections
 import copy
 import fnmatch
+import gzip
 import io
 import logging
 import pickle
@@ -177,12 +179,22 @@ class AbstractMessageLogEntry(abc.ABC):
         }
 
     def to_dict(self) -> dict:
+        meta = self.meta.copy()
+
+        def _dehydrate_meta_uuid(key: str):
+            if meta[key]:
+                meta[key] = str(meta[key])
+
+        _dehydrate_meta_uuid("AgentID")
+        _dehydrate_meta_uuid("SelectedFull")
+        _dehydrate_meta_uuid("SessionID")
+
         return {
             "type": self.type,
             "region_name": self.region_name,
-            "agent_id": self.agent_id,
+            "agent_id": str(self.agent_id) if self.agent_id is not None else None,
             "summary": self.summary,
-            "meta": self.meta.copy(),
+            "meta": meta,
         }
 
     @classmethod
@@ -194,7 +206,16 @@ class AbstractMessageLogEntry(abc.ABC):
         self._region_name = val['region_name']
         self._agent_id = UUID(val['agent_id']) if val['agent_id'] else None
         self._summary = val['summary']
-        self.meta = val['meta']
+        meta = val['meta'].copy()
+
+        def _hydrate_meta_uuid(key: str):
+            if meta[key]:
+                meta[key] = UUID(meta[key])
+
+        _hydrate_meta_uuid("AgentID")
+        _hydrate_meta_uuid("SelectedFull")
+        _hydrate_meta_uuid("SessionID")
+        self.meta.update(meta)
 
     def freeze(self):
         pass
@@ -524,7 +545,7 @@ class HTTPMessageLogEntry(AbstractMessageLogEntry):
         val = super().to_dict()
         val['flow'] = self.flow.get_state()
         cap_data = val['flow'].get('metadata', {}).get('cap_data_ser')
-        if cap_data:
+        if cap_data is not None:
             # Have to convert this from a namedtuple to a dict to make
             # it importable
             cap_dict = cap_data._asdict()  # noqa
@@ -569,12 +590,12 @@ class EQMessageLogEntry(AbstractMessageLogEntry):
 
     def to_dict(self) -> dict:
         val = super().to_dict()
-        val['event'] = self.event
+        val['event'] = llsd.format_notation(self.event)
         return val
 
     @classmethod
     def from_dict(cls, val: dict):
-        ev = cls(val['event'], None, None)
+        ev = cls(llsd.parse_notation(val['event']), None, None)
         ev.apply_dict(val)
         return ev
 
@@ -713,11 +734,27 @@ class LLUDPMessageLogEntry(AbstractMessageLogEntry):
 
     def to_dict(self):
         val = super().to_dict()
-        val['message'] = self.message.to_dict(extended=True)
+        val['message'] = llsd.format_notation(self.message.to_dict(extended=True))
         return val
 
     @classmethod
     def from_dict(cls, val: dict):
-        ev = cls(Message.from_dict(val['message']), None, None)
+        ev = cls(Message.from_dict(llsd.parse_notation(val['message'])), None, None)
         ev.apply_dict(val)
         return ev
+
+
+def export_log_entries(entries: typing.Iterable[AbstractMessageLogEntry]) -> bytes:
+    return gzip.compress(repr([e.to_dict() for e in entries]).encode("utf8"))
+
+
+_TYPE_CLASSES = {
+    "HTTP": HTTPMessageLogEntry,
+    "LLUDP": LLUDPMessageLogEntry,
+    "EQ": EQMessageLogEntry,
+}
+
+
+def import_log_entries(data: bytes) -> typing.List[AbstractMessageLogEntry]:
+    entries = ast.literal_eval(gzip.decompress(data).decode("utf8"))
+    return [_TYPE_CLASSES[e['type']].from_dict(e) for e in entries]
