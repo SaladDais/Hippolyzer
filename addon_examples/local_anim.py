@@ -8,6 +8,14 @@ Local animations
 
 If you want to trigger the animation from an object to simulate llStartAnimation():
 llOwnerSay("@start_local_anim:something=force");
+
+Also includes a concept of "anim manglers" similar to the "mesh manglers" of the
+local mesh addon. This is useful if you want to test making procedural changes
+to animations before uploading them. The manglers will be applied to any uploaded
+animations as well.
+
+May also be useful if you need to make ad-hoc changes to a bunch of animations on
+bulk upload, like changing priority or removing a joint.
 """
 
 import asyncio
@@ -15,14 +23,18 @@ import os
 import pathlib
 from typing import *
 
+from hippolyzer.lib.base import serialization as se
 from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.llanim import Animation
 from hippolyzer.lib.base.message.message import Block, Message
+from hippolyzer.lib.proxy import addon_ctx
 from hippolyzer.lib.proxy.addons import AddonManager
-from hippolyzer.lib.proxy.addon_utils import BaseAddon, SessionProperty
+from hippolyzer.lib.proxy.addon_utils import BaseAddon, SessionProperty, GlobalProperty, show_message
 from hippolyzer.lib.proxy.commands import handle_command
 from hippolyzer.lib.proxy.http_asset_repo import HTTPAssetRepo
+from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.region import ProxiedRegion
-from hippolyzer.lib.proxy.sessions import Session
+from hippolyzer.lib.proxy.sessions import Session, SessionManager
 
 
 def _get_mtime(path: str):
@@ -39,8 +51,13 @@ class LocalAnimAddon(BaseAddon):
     local_anim_mtimes: Dict[str, Optional[float]] = SessionProperty(dict)
     # name -> current asset ID (changes each play)
     local_anim_playing_ids: Dict[str, UUID] = SessionProperty(dict)
+    anim_manglers: List[Callable[[Animation], Animation]] = GlobalProperty(list)
+
+    def handle_init(self, session_manager: SessionManager):
+        self.remangle_local_anims(session_manager)
 
     def handle_session_init(self, session: Session):
+        # Reload anims and reload any manglers if we have any
         self._schedule_task(self._try_reload_anims(session))
 
     @handle_command()
@@ -70,7 +87,7 @@ class LocalAnimAddon(BaseAddon):
         while True:
             region = session.main_region
             if not region:
-                await asyncio.sleep(2.0)
+                await asyncio.sleep(1.0)
                 continue
 
             # Loop over local anims we loaded
@@ -80,7 +97,7 @@ class LocalAnimAddon(BaseAddon):
                     continue
                 # is playing right now, check if there's a newer version
                 self.apply_local_anim_from_file(session, region, anim_name, only_if_changed=True)
-            await asyncio.sleep(2.0)
+            await asyncio.sleep(1.0)
 
     def handle_rlv_command(self, session: Session, region: ProxiedRegion, source: UUID,
                            cmd: str, options: List[str], param: str):
@@ -156,9 +173,64 @@ class LocalAnimAddon(BaseAddon):
 
                 with open(anim_path, "rb") as f:
                     anim_data = f.read()
+                anim_data = cls._mangle_anim(anim_data)
         else:
             print(f"Unknown anim {anim_name!r}")
         cls.apply_local_anim(session, region, anim_name, new_data=anim_data)
+
+    @classmethod
+    def _mangle_anim(cls, anim_data: bytes) -> bytes:
+        if not cls.anim_manglers:
+            return anim_data
+        reader = se.BufferReader("<", anim_data)
+        spec = se.Dataclass(Animation)
+        anim = reader.read(spec)
+        for mangler in cls.anim_manglers:
+            anim = mangler(anim)
+        writer = se.BufferWriter("<")
+        writer.write(spec, anim)
+        return writer.copy_buffer()
+
+    @classmethod
+    def remangle_local_anims(cls, session_manager: SessionManager):
+        # Anim manglers are global, so we need to re-mangle anims for all sessions
+        for session in session_manager.sessions:
+            # Push the context of this session onto the stack so we can access
+            # session-scoped properties
+            with addon_ctx.push(new_session=session, new_region=session.main_region):
+                cls.local_anim_mtimes.clear()
+
+    def handle_http_request(self, session_manager: SessionManager, flow: HippoHTTPFlow):
+        if flow.name == "NewFileAgentInventoryUploader":
+            # Don't bother looking at this if we have no manglers
+            if not self.anim_manglers:
+                return
+            # This is kind of a crappy match but these magic bytes shouldn't match anything that SL
+            # allows as an upload type but animations.
+            if not flow.request.content or not flow.request.content.startswith(b"\x01\x00\x00\x00"):
+                return
+
+            # Replace the uploaded anim with the mangled version
+            flow.request.content = self._mangle_anim(flow.request.content)
+            show_message("Mangled upload request")
+
+
+class BaseAnimManglerAddon(BaseAddon):
+    """Base class for addons that mangle uploaded or local animations"""
+    ANIM_MANGLERS: List[Callable[[Animation], Animation]]
+
+    def handle_init(self, session_manager: SessionManager):
+        # Add our manglers into the list
+        LocalAnimAddon.anim_manglers.extend(self.ANIM_MANGLERS)
+        LocalAnimAddon.remangle_local_anims(session_manager)
+
+    def handle_unload(self, session_manager: SessionManager):
+        # Clean up our manglers before we go away
+        mangler_list = LocalAnimAddon.anim_manglers
+        for mangler in self.ANIM_MANGLERS:
+            if mangler in mangler_list:
+                mangler_list.remove(mangler)
+        LocalAnimAddon.remangle_local_anims(session_manager)
 
 
 addons = [LocalAnimAddon()]
