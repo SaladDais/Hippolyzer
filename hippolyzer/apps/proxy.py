@@ -43,7 +43,7 @@ class SelectionManagerAddon(BaseAddon):
                     LOG.debug(f"Don't know about selected {local_id}, requesting object")
                     needed_objects.add(local_id)
 
-            if needed_objects:
+            if needed_objects and session.session_manager.settings.ALLOW_AUTO_REQUEST_OBJECTS:
                 region.objects.request_objects(needed_objects)
         # ParcelDwellRequests are sent whenever "about land" is opened. This gives us a
         # decent mechanism for selecting parcels.

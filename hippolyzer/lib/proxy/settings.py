@@ -28,6 +28,9 @@ class ProxySettings(Settings):
     PROXY_BIND_ADDR: str = EnvSettingDescriptor("127.0.0.1", "HIPPO_BIND_HOST", str)
     REMOTELY_ACCESSIBLE: bool = SettingDescriptor(False)
     USE_VIEWER_OBJECT_CACHE: bool = SettingDescriptor(False)
+    # Whether having the proxy do automatic internal requests objects is allowed at all
+    ALLOW_AUTO_REQUEST_OBJECTS: bool = SettingDescriptor(True)
+    # Whether the viewer should request any directly referenced objects it didn't know about.
     AUTOMATICALLY_REQUEST_MISSING_OBJECTS: bool = SettingDescriptor(False)
     ADDON_SCRIPTS: List[str] = SettingDescriptor(list)
     FILTERS: Dict[str, str] = SettingDescriptor(dict)
