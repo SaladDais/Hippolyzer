@@ -10,6 +10,7 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.circuit import ConnectionHolder
 from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
+from hippolyzer.lib.base.network.caps_client import CapsClient
 from hippolyzer.lib.base.network.transport import ADDR_TUPLE
 
 if TYPE_CHECKING:
@@ -18,10 +19,11 @@ if TYPE_CHECKING:
 
 class BaseClientRegion(ConnectionHolder, abc.ABC):
     """Represents a client's view of a remote region"""
-    # Actually a weakref
     handle: Optional[int]
+    # Actually a weakref
     session: Callable[[], BaseClientSession]
     objects: ClientObjectManager
+    caps_client: CapsClient
 
 
 class BaseClientSession(abc.ABC):
