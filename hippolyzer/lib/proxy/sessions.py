@@ -47,6 +47,8 @@ class Session(BaseClientSession):
         self.message_handler: MessageHandler[Message, str] = MessageHandler()
         self.http_message_handler: MessageHandler[HippoHTTPFlow, str] = MessageHandler()
         self.objects = ProxyWorldObjectManager(self, session_manager.settings, session_manager.name_cache)
+        # Base path of a newview type cache directory for this session
+        self.cache_dir: Optional[str] = None
         self._main_region = None
 
     @property

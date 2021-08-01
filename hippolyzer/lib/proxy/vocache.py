@@ -58,6 +58,7 @@ from __future__ import annotations
 
 import io
 import logging
+import pathlib
 from pathlib import Path
 from typing import *
 
@@ -82,6 +83,7 @@ class ViewerObjectCache:
 
     @classmethod
     def from_path(cls, base_path: Union[str, Path]):
+        base_path = pathlib.Path(base_path)
         cache = cls(base_path)
         with open(cache.base_path / "object.cache", "rb") as fh:
             reader = se.BufferReader("<", fh.read())
@@ -143,6 +145,10 @@ class ViewerObjectCacheEntry(recordclass.datatuple):   # type: ignore
     data: bytes
 
 
+def is_valid_vocache_dir(cache_dir):
+    return (pathlib.Path(cache_dir) / "objectcache" / "object.cache").exists()
+
+
 class RegionViewerObjectCache:
     """Parser and container for .slc files"""
     def __init__(self, cache_id: UUID, entries: List[ViewerObjectCacheEntry]):
@@ -201,7 +207,7 @@ class RegionViewerObjectCacheChain:
         return None
 
     @classmethod
-    def for_region(cls, handle: int, cache_id: UUID):
+    def for_region(cls, handle: int, cache_id: UUID, cache_dir: Optional[str] = None):
         """
         Get a cache chain for a specific region, called on region connection
 
@@ -209,8 +215,13 @@ class RegionViewerObjectCacheChain:
         so we have to try every region object cache file for every viewer installed.
         """
         caches = []
-        for cache_dir in iter_viewer_cache_dirs():
-            if not (cache_dir / "objectcache" / "object.cache").exists():
+        if cache_dir is None:
+            cache_dirs = iter_viewer_cache_dirs()
+        else:
+            cache_dirs = [pathlib.Path(cache_dir)]
+
+        for cache_dir in cache_dirs:
+            if not is_valid_vocache_dir(cache_dir):
                 continue
             cache = ViewerObjectCache.from_path(cache_dir / "objectcache")
             if cache:

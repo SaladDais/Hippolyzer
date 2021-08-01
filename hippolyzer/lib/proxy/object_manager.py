@@ -57,7 +57,11 @@ class ProxyObjectManager(ClientObjectManager):
             LOG.warning(f"Tried to load cache for {self._region} without a handle")
             return
         self.cache_loaded = True
-        self.object_cache = RegionViewerObjectCacheChain.for_region(handle, self._region.cache_id)
+        self.object_cache = RegionViewerObjectCacheChain.for_region(
+            handle=handle,
+            cache_id=self._region.cache_id,
+            cache_dir=self._region.session().cache_dir,
+        )
 
     def request_missed_cached_objects_soon(self):
         if self._cache_miss_timer:
