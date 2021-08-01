@@ -149,7 +149,7 @@ class MITMProxyEventManager:
             cached_resp = eq_manager.get_cached_poll_response(req_ack_id)
             if cached_resp:
                 logging.warning("Had to serve a cached EventQueueGet due to client desync")
-                flow.response = mitmproxy.http.HTTPResponse.make(
+                flow.response = mitmproxy.http.Response.make(
                     200,
                     llsd.format_xml(cached_resp),
                     {
