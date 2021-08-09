@@ -15,7 +15,6 @@ import mitmproxy.master
 import mitmproxy.options
 import mitmproxy.proxy
 from mitmproxy.addons import core, clientplayback, proxyserver, next_layer, disable_h2c
-from mitmproxy.connection import ConnectionState
 from mitmproxy.http import HTTPFlow
 from mitmproxy.proxy.layers import tls
 import OpenSSL
@@ -136,11 +135,6 @@ class IPCInterceptionAddon:
                     continue
                 if event_type == "callback":
                     orig_flow = self.intercepted_flows.pop(flow_id)
-                    # HACK: Have to temporarily lie and say that the connection is closed so
-                    # we can do a no-op assignment on server connection address inside `from_state()`.
-                    # Will need an upstream fix.
-                    if orig_flow.server_conn:
-                        orig_flow.server_conn.state = ConnectionState.CLOSED
                     orig_flow.set_state(flow_state)
                     # Remove the taken flag from the flow if present, the flow by definition
                     # isn't take()n anymore once it's been passed back to the proxy.
