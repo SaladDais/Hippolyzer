@@ -409,10 +409,11 @@ class MessageLogWindow(QtWidgets.QMainWindow):
         win.show()
 
     def _openNewMessageLogWindow(self):
-        win = MessageLogWindow(self.settings, self.sessionManager, log_live_messages=True, parent=self)
+        win: QtWidgets.QMainWindow = MessageLogWindow(
+            self.settings, self.sessionManager, log_live_messages=True, parent=self)
         win.setFilter(self.lineEditFilter.text())
         win.show()
-        win.focus()
+        win.activateWindow()
 
     @asyncSlot()
     async def _importLogEntries(self):
