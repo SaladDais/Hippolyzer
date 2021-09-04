@@ -82,7 +82,7 @@ setup(
         'llbase>=1.2.5',
         'defusedxml',
         'aiohttp<4.0.0',
-        'recordclass',
+        'recordclass<0.15',
         'lazy-object-proxy',
         'arpeggio',
         # requests breaks with newer idna
