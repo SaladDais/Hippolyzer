@@ -311,6 +311,9 @@ class MessageLogWindow(QtWidgets.QMainWindow):
         for preset_name, preset_filter in filters.items():
             _addFilterAction(preset_name, preset_filter)
 
+    def getFilterDict(self):
+        return self.settings.FILTERS
+
     def setFilterDict(self, val: dict):
         self.settings.FILTERS = val
         self._populateFilterMenu()
