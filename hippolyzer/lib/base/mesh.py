@@ -270,8 +270,8 @@ LOD_SEGMENT_SERIALIZER = SegmentSerializer({
     # Each position represents a single vert.
     "Position": se.Collection(None, se.Vector3U16(0.0, 1.0)),
     "TexCoord0": se.Collection(None, se.Vector2U16(0.0, 1.0)),
-    # Normals have a static domain between -1 and 1
-    "Normal": se.Collection(None, se.Vector3U16(0.0, 1.0)),
+    # Normals have a static domain between -1 and 1, so just use that.
+    "Normal": se.Collection(None, se.Vector3U16(-1.0, 1.0)),
     "Weights": se.Collection(None, VertexWeights)
 })
 
