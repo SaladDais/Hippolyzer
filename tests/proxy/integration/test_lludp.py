@@ -12,7 +12,6 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.objects import Object
-import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.message_logger import FilteringMessageLogger, LLUDPMessageLogEntry
@@ -262,11 +261,6 @@ class LLUDPIntegrationTests(BaseProxyTest):
                     # Don't have a serializer, onto the next field
                     continue
                 deser = serializer.deserialize(block, orig_val)
-                # For now we consider returning UNSERIALIZABLE to be acceptable.
-                # We should probably consider raising instead of returning that.
-                if deser is se.UNSERIALIZABLE:
-                    continue
-
                 new_val = serializer.serialize(block, deser)
                 if orig_val != new_val:
                     raise AssertionError(f"{block.name}.{var_name} didn't reserialize correctly,"
