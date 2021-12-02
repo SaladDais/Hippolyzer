@@ -83,8 +83,10 @@ class MITMProxyEventManager:
         finally:
             # If someone has taken this request out of the regular callback flow,
             # they'll manually send a callback at some later time.
-            if not flow.taken:
-                self.to_proxy_queue.put(("callback", flow.id, flow.get_state()))
+            if not flow.taken and not flow.resumed:
+                # Addon hasn't taken ownership of this flow, send it back to mitmproxy
+                # ourselves.
+                flow.resume()
 
     def _handle_request(self, flow: HippoHTTPFlow):
         url = flow.request.url

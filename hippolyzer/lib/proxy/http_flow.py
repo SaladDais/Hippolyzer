@@ -22,13 +22,14 @@ class HippoHTTPFlow:
     Hides the nastiness of writing to flow.metadata so we can pass
     state back and forth between the two proxies
     """
-    __slots__ = ("flow", "callback_queue")
+    __slots__ = ("flow", "callback_queue", "resumed", "taken")
 
     def __init__(self, flow: HTTPFlow, callback_queue: Optional[multiprocessing.Queue] = None):
         self.flow: HTTPFlow = flow
+        self.resumed = False
+        self.taken = False
         self.callback_queue = weakref.ref(callback_queue) if callback_queue else None
         meta = self.flow.metadata
-        meta.setdefault("taken", False)
         meta.setdefault("can_stream", True)
         meta.setdefault("response_injected", False)
         meta.setdefault("request_injected", False)
@@ -98,18 +99,17 @@ class HippoHTTPFlow:
         #  context is kind of janky. The HTTP callback handling code should probably
         #  be made totally async, including the addon hooks. Would coroutine per-callback
         #  be expensive?
-        self.metadata["taken"] = True
+        assert not self.taken and not self.resumed
+        self.taken = True
         return self
 
-    def release(self):
+    def resume(self):
         """Release the HTTP flow back to the normal processing flow"""
-        assert self.taken and self.callback_queue
-        self.metadata["taken"] = False
+        assert self.callback_queue
+        assert not self.resumed
+        self.taken = False
+        self.resumed = True
         self.callback_queue().put(("callback", self.flow.id, self.get_state()))
-
-    @property
-    def taken(self) -> bool:
-        return self.metadata["taken"]
 
     @property
     def is_replay(self) -> bool:

@@ -7,6 +7,7 @@ import sys
 import time
 from typing import Optional
 
+import mitmproxy.ctx
 import mitmproxy.exceptions
 
 from hippolyzer.lib.base import llsd
@@ -131,6 +132,9 @@ def start_proxy(session_manager: SessionManager, extra_addons: Optional[list] = 
         daemon=True,
     )
     http_proc.start()
+    # These need to be set for mitmproxy's ASGIApp serving code to work.
+    mitmproxy.ctx.master = None
+    mitmproxy.ctx.log = logging.getLogger("mitmproxy log")
 
     server = SLSOCKS5Server(session_manager)
     coro = asyncio.start_server(server.handle_connection, proxy_host, udp_proxy_port)

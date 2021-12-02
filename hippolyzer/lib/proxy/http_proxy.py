@@ -136,9 +136,6 @@ class IPCInterceptionAddon:
                 if event_type == "callback":
                     orig_flow = self.intercepted_flows.pop(flow_id)
                     orig_flow.set_state(flow_state)
-                    # Remove the taken flag from the flow if present, the flow by definition
-                    # isn't take()n anymore once it's been passed back to the proxy.
-                    orig_flow.metadata.pop("taken", None)
                 elif event_type == "replay":
                     flow: HTTPFlow = HTTPFlow.from_state(flow_state)
                     # mitmproxy won't replay intercepted flows, this is an old flow so
