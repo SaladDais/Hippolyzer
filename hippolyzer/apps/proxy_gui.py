@@ -568,7 +568,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
             else:
                 self.comboUntrusted.addItem(message_name)
 
-        cap_names = sorted(set(itertools.chain(*[r.caps.keys() for r in self.regionModel.regions])))
+        cap_names = sorted(set(itertools.chain(*[r.cap_urls.keys() for r in self.regionModel.regions])))
         for cap_name in cap_names:
             if cap_name.endswith("ProxyWrapper"):
                 continue
@@ -599,7 +599,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
                 break
         self.textRequest.setPlainText(
             f"""{method} [[{cap_name}]]{path}{params} HTTP/1.1
-# {region.caps.get(cap_name, "<unknown URI>")}
+# {region.cap_urls.get(cap_name, "<unknown URI>")}
 {headers}
 {body}"""
         )
@@ -700,7 +700,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
             else:
                 self._sendHTTPRequest(
                     "POST",
-                    region.caps["UntrustedSimulatorMessage"],
+                    region.cap_urls["UntrustedSimulatorMessage"],
                     {"Content-Type": "application/llsd+xml", "Accept": "application/llsd+xml"},
                     self.llsdSerializer.serialize(msg),
                 )
@@ -744,7 +744,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
             cap_name = match.group(1)
             cap_url = session.global_caps.get(cap_name)
             if not cap_url:
-                cap_url = region.caps.get(cap_name)
+                cap_url = region.cap_urls.get(cap_name)
             if not cap_url:
                 raise ValueError("Don't have a Cap for %s" % cap_name)
             uri = cap_url + match.group(2)

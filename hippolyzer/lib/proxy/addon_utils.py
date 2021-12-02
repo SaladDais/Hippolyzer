@@ -181,6 +181,9 @@ class BaseAddon(abc.ABC):
     def handle_region_changed(self, session: Session, region: ProxiedRegion):
         pass
 
+    def handle_region_registered(self, session: Session, region: ProxiedRegion):
+        pass
+
     def handle_circuit_created(self, session: Session, region: ProxiedRegion):
         pass
 

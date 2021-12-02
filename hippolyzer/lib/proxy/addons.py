@@ -528,6 +528,11 @@ class AddonManager:
             return cls._call_all_addon_hooks("handle_region_changed", session, region)
 
     @classmethod
+    def handle_region_registered(cls, session: Session, region: ProxiedRegion):
+        with addon_ctx.push(session, region):
+            return cls._call_all_addon_hooks("handle_region_registered", session, region)
+
+    @classmethod
     def handle_circuit_created(cls, session: Session, region: ProxiedRegion):
         with addon_ctx.push(session, region):
             return cls._call_all_addon_hooks("handle_circuit_created", session, region)

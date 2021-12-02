@@ -51,10 +51,11 @@ class ProxiedRegion(BaseClientRegion):
         self.cache_id: Optional[UUID] = None
         self.circuit: Optional[ProxiedCircuit] = None
         self.circuit_addr = circuit_addr
-        self._caps = CapsMultiDict()
+        self.caps = CapsMultiDict()
+        # Reverse lookup for URL -> cap data
         self._caps_url_lookup: Dict[str, Tuple[CapType, str]] = {}
         if seed_cap:
-            self._caps["Seed"] = (CapType.NORMAL, seed_cap)
+            self.caps["Seed"] = (CapType.NORMAL, seed_cap)
         self.session: Callable[[], Session] = weakref.ref(session)
         self.message_handler: MessageHandler[Message, str] = MessageHandler()
         self.http_message_handler: MessageHandler[HippoHTTPFlow, str] = MessageHandler()
@@ -77,8 +78,8 @@ class ProxiedRegion(BaseClientRegion):
         self._name = val
 
     @property
-    def caps(self):
-        return multidict.MultiDict((x, y[1]) for x, y in self._caps.items())
+    def cap_urls(self) -> multidict.MultiDict[str, str]:
+        return multidict.MultiDict((x, y[1]) for x, y in self.caps.items())
 
     @property
     def global_pos(self) -> Vector3:
@@ -95,12 +96,12 @@ class ProxiedRegion(BaseClientRegion):
     def update_caps(self, caps: Mapping[str, str]):
         for cap_name, cap_url in caps.items():
             if isinstance(cap_url, str) and cap_url.startswith('http'):
-                self._caps.add(cap_name, (CapType.NORMAL, cap_url))
+                self.caps.add(cap_name, (CapType.NORMAL, cap_url))
                 self._recalc_caps()
 
     def _recalc_caps(self):
         self._caps_url_lookup.clear()
-        for name, cap_info in self._caps.items():
+        for name, cap_info in self.caps.items():
             cap_type, cap_url = cap_info
             self._caps_url_lookup[cap_url] = (cap_type, name)
 
@@ -111,15 +112,15 @@ class ProxiedRegion(BaseClientRegion):
         caps like ViewerAsset may be the same globally and wouldn't let us infer
         which session / region the request was related to without a wrapper
         """
-        parsed = list(urllib.parse.urlsplit(self._caps[name][1]))
-        seed_id = self._caps["Seed"][1].split("/")[-1].encode("utf8")
+        parsed = list(urllib.parse.urlsplit(self.caps[name][1]))
+        seed_id = self.caps["Seed"][1].split("/")[-1].encode("utf8")
         # Give it a unique domain tied to the current Seed URI
         parsed[1] = f"{name.lower()}-{hashlib.sha256(seed_id).hexdigest()[:16]}.hippo-proxy.localhost"
         # Force the URL to HTTP, we're going to handle the request ourselves so it doesn't need
         # to be secure. This should save on expensive TLS context setup for each req.
         parsed[0] = "http"
         wrapper_url = urllib.parse.urlunsplit(parsed)
-        self._caps.add(name + "ProxyWrapper", (CapType.WRAPPER, wrapper_url))
+        self.caps.add(name + "ProxyWrapper", (CapType.WRAPPER, wrapper_url))
         self._recalc_caps()
         return wrapper_url
 
@@ -127,14 +128,14 @@ class ProxiedRegion(BaseClientRegion):
         """
         Register a cap to be completely handled by the proxy
         """
-        cap_url = f"https://caps.hippo-proxy.localhost/cap/{uuid.uuid4()!s}"
-        self._caps.add(name, (CapType.PROXY_ONLY, cap_url))
+        cap_url = f"http://{uuid.uuid4()!s}.caps.hippo-proxy.localhost"
+        self.caps.add(name, (CapType.PROXY_ONLY, cap_url))
         self._recalc_caps()
         return cap_url
 
     def register_temporary_cap(self, name: str, cap_url: str):
         """Register a Cap that only has meaning the first time it's used"""
-        self._caps.add(name, (CapType.TEMPORARY, cap_url))
+        self.caps.add(name, (CapType.TEMPORARY, cap_url))
         self._recalc_caps()
 
     def resolve_cap(self, url: str, consume=True) -> Optional[Tuple[str, str, CapType]]:
@@ -143,9 +144,9 @@ class ProxiedRegion(BaseClientRegion):
                 cap_type, name = self._caps_url_lookup[cap_url]
                 if cap_type == CapType.TEMPORARY and consume:
                     # Resolving a temporary cap pops it out of the dict
-                    temporary_caps = self._caps.popall(name)
+                    temporary_caps = self.caps.popall(name)
                     temporary_caps.remove((cap_type, cap_url))
-                    self._caps.extend((name, x) for x in temporary_caps)
+                    self.caps.extend((name, x) for x in temporary_caps)
                     self._recalc_caps()
                 return name, cap_url, cap_type
         return None

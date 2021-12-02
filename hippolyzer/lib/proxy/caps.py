@@ -24,6 +24,10 @@ class CapType(enum.Enum):
     WRAPPER = enum.auto()
     PROXY_ONLY = enum.auto()
 
+    @property
+    def fake(self) -> bool:
+        return self == CapType.PROXY_ONLY or self == CapType.WRAPPER
+
 
 class SerializedCapData(typing.NamedTuple):
     cap_name: typing.Optional[str] = None

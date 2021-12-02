@@ -20,7 +20,7 @@ class ProxyCapsClient(CapsClient):
     def _get_caps(self) -> Optional[CAPS_DICT]:
         if not self._region:
             return None
-        return self._region.caps
+        return self._region.cap_urls
 
     def _request_fixups(self, cap_or_url: str, headers: Dict, proxy: Optional[bool], ssl: Any):
         # We want to proxy this through Hippolyzer

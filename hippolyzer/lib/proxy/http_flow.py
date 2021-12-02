@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import copy
+import multiprocessing
+import weakref
 from typing import *
 from typing import Optional
 
@@ -20,10 +22,11 @@ class HippoHTTPFlow:
     Hides the nastiness of writing to flow.metadata so we can pass
     state back and forth between the two proxies
     """
-    __slots__ = ("flow",)
+    __slots__ = ("flow", "callback_queue")
 
-    def __init__(self, flow: HTTPFlow):
+    def __init__(self, flow: HTTPFlow, callback_queue: Optional[multiprocessing.Queue] = None):
         self.flow: HTTPFlow = flow
+        self.callback_queue = weakref.ref(callback_queue) if callback_queue else None
         meta = self.flow.metadata
         meta.setdefault("taken", False)
         meta.setdefault("can_stream", True)
@@ -91,8 +94,18 @@ class HippoHTTPFlow:
 
     def take(self) -> HippoHTTPFlow:
         """Don't automatically pass this flow back to mitmproxy"""
+        # TODO: Having to explicitly take / release Flows to use them in an async
+        #  context is kind of janky. The HTTP callback handling code should probably
+        #  be made totally async, including the addon hooks. Would coroutine per-callback
+        #  be expensive?
         self.metadata["taken"] = True
         return self
+
+    def release(self):
+        """Release the HTTP flow back to the normal processing flow"""
+        assert self.taken and self.callback_queue
+        self.metadata["taken"] = False
+        self.callback_queue().put(("callback", self.flow.id, self.get_state()))
 
     @property
     def taken(self) -> bool:
@@ -120,11 +133,14 @@ class HippoHTTPFlow:
         flow: Optional[HTTPFlow] = HTTPFlow.from_state(flow_state)
         assert flow is not None
         cap_data_ser = flow.metadata.get("cap_data_ser")
+        callback_queue = None
+        if session_manager:
+            callback_queue = session_manager.flow_context.to_proxy_queue
         if cap_data_ser is not None:
             flow.metadata["cap_data"] = CapData.deserialize(cap_data_ser, session_manager)
         else:
             flow.metadata["cap_data"] = None
-        return cls(flow)
+        return cls(flow, callback_queue)
 
     def copy(self) -> HippoHTTPFlow:
         # HACK: flow.copy() expects the flow to be fully JSON serializable, but

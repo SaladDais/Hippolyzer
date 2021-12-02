@@ -189,7 +189,10 @@ class IPCInterceptionAddon:
             flow.response.headers["Content-Encoding"] = "identity"
 
     def response(self, flow: HTTPFlow):
-        if flow.metadata["response_injected"]:
+        cap_data: typing.Optional[SerializedCapData] = flow.metadata.get("cap_data")
+        if flow.metadata["response_injected"] and cap_data and cap_data.asset_server_cap:
+            # Don't bother intercepting asset server requests where we injected a response.
+            # We don't want to log them and they don't need any more processing by user hooks.
             return
         self._queue_flow_interception("response", flow)
 

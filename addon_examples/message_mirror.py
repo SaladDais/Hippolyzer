@@ -206,7 +206,7 @@ class MessageMirrorAddon(BaseAddon):
                 return
             caps_source = target_region
 
-        new_base_url = caps_source.caps.get(cap_data.cap_name)
+        new_base_url = caps_source.cap_urls.get(cap_data.cap_name)
         if not new_base_url:
             print("No equiv cap?")
             return

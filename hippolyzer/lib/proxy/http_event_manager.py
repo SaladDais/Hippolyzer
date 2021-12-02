@@ -90,9 +90,10 @@ class MITMProxyEventManager:
         url = flow.request.url
         cap_data = self.session_manager.resolve_cap(url)
         flow.cap_data = cap_data
-        # Don't do anything special with the proxy's own requests,
-        # we only pass it through for logging purposes.
-        if flow.request_injected:
+        # Don't do anything special with the proxy's own requests unless the requested
+        # URL can only be handled by the proxy. Ideally we only pass the request through
+        # for logging purposes.
+        if flow.request_injected and (not cap_data or not cap_data.type.fake):
             return
 
         # The local asset repo gets first bite at the apple
@@ -104,7 +105,7 @@ class MITMProxyEventManager:
         AddonManager.handle_http_request(flow)
         if cap_data and cap_data.cap_name.endswith("ProxyWrapper"):
             orig_cap_name = cap_data.cap_name.rsplit("ProxyWrapper", 1)[0]
-            orig_cap_url = cap_data.region().caps[orig_cap_name]
+            orig_cap_url = cap_data.region().cap_urls[orig_cap_name]
             split_orig_url = urllib.parse.urlsplit(orig_cap_url)
             orig_cap_host = split_orig_url[1]
 
@@ -135,7 +136,7 @@ class MITMProxyEventManager:
                 )
         elif cap_data and cap_data.asset_server_cap:
             # Both the wrapper request and the actual asset server request went through
-            # the proxy
+            # the proxy. Don't bother trying the redirect strategy anymore.
             self._asset_server_proxied = True
             logging.warning("noproxy not used, switching to URI rewrite strategy")
         elif cap_data and cap_data.cap_name == "EventQueueGet":
@@ -159,6 +160,17 @@ class MITMProxyEventManager:
                         "Connection": "close",
                     },
                 )
+        elif cap_data and cap_data.cap_name == "Seed":
+            # Drop any proxy-only caps from the seed request we send to the server,
+            # add those cap names as metadata so we know to send their urls in the response
+            parsed_seed: List[str] = llsd.parse_xml(flow.request.content)
+            flow.metadata['needed_proxy_caps'] = []
+            for known_cap_name, (known_cap_type, known_cap_url) in cap_data.region().caps.items():
+                if known_cap_type == CapType.PROXY_ONLY and known_cap_name in parsed_seed:
+                    parsed_seed.remove(known_cap_name)
+                    flow.metadata['needed_proxy_caps'].append(known_cap_name)
+            if flow.metadata['needed_proxy_caps']:
+                flow.request.content = llsd.format_xml(parsed_seed)
         elif not cap_data:
             if self._is_login_request(flow):
                 # Not strictly a Cap, but makes it easier to filter on.
@@ -200,8 +212,9 @@ class MITMProxyEventManager:
         if message_logger:
             message_logger.log_http_response(flow)
 
-        # Don't handle responses for requests injected by the proxy
-        if flow.request_injected:
+        # Don't process responses for requests or responses injected by the proxy.
+        # We already processed it, it came from us!
+        if flow.request_injected or flow.response_injected:
             return
 
         status = flow.response.status_code
@@ -262,6 +275,9 @@ class MITMProxyEventManager:
                 for cap_name in wrappable_caps:
                     if cap_name in parsed:
                         parsed[cap_name] = region.register_wrapper_cap(cap_name)
+                # Send the client the URLs for any proxy-only caps it requested
+                for cap_name in flow.metadata['needed_proxy_caps']:
+                    parsed[cap_name] = region.cap_urls[cap_name]
                 flow.response.content = llsd.format_pretty_xml(parsed)
             elif cap_data.cap_name == "EventQueueGet":
                 parsed_eq_resp = llsd.parse_xml(flow.response.content)

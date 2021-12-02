@@ -99,12 +99,12 @@ class Session(BaseClientSession):
 
         for region in self.regions:
             if region.circuit_addr == circuit_addr:
-                if seed_url and region.caps.get("Seed") != seed_url:
+                if seed_url and region.cap_urls.get("Seed") != seed_url:
                     region.update_caps({"Seed": seed_url})
                 if handle:
                     region.handle = handle
                 return region
-            if seed_url and region.caps.get("Seed") == seed_url:
+            if seed_url and region.cap_urls.get("Seed") == seed_url:
                 return region
 
         if not circuit_addr:
@@ -113,6 +113,7 @@ class Session(BaseClientSession):
         logging.info("Registering region for %r" % (circuit_addr,))
         region = ProxiedRegion(circuit_addr, seed_url, self, handle=handle)
         self.regions.append(region)
+        AddonManager.handle_region_registered(self, region)
         return region
 
     def region_by_circuit_addr(self, circuit_addr) -> Optional[ProxiedRegion]:
