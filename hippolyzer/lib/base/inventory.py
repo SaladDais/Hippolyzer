@@ -9,6 +9,7 @@ import dataclasses
 import datetime as dt
 import itertools
 import logging
+import struct
 import weakref
 from io import StringIO
 from typing import *
@@ -31,6 +32,17 @@ from hippolyzer.lib.base.legacy_schema import (
 MAGIC_ID = UUID("3c115e51-04f4-523c-9fa6-98aff1034730")
 LOG = logging.getLogger(__name__)
 _T = TypeVar("_T")
+
+
+class SchemaFlagField(SchemaHexInt):
+    """Like a hex int, but must be serialized as bytes in LLSD due to being a U32"""
+    @classmethod
+    def from_llsd(cls, val: Any) -> int:
+        return struct.unpack("!I", val)[0]
+
+    @classmethod
+    def to_llsd(cls, val: int) -> Any:
+        return struct.pack("!I", val)
 
 
 def _yield_schema_tokens(reader: StringIO):
@@ -76,7 +88,7 @@ class InventoryBase(SchemaBase):
             if schema_name != cls.SCHEMA_NAME:
                 raise ValueError(f"Expected schema name {schema_name!r} to be {cls.SCHEMA_NAME!r}")
 
-        fields = cls._fields_dict()
+        fields = cls._get_fields_dict()
         obj_dict = {}
         for key, val in tok_iter:
             if key in fields:
@@ -100,7 +112,7 @@ class InventoryBase(SchemaBase):
     def to_writer(self, writer: StringIO):
         writer.write(f"\t{self.SCHEMA_NAME}\t0\n")
         writer.write("\t{\n")
-        for field_name, field in self._fields_dict().items():
+        for field_name, field in self._get_fields_dict().items():
             spec = field.metadata.get("spec")
             # Not meant to be serialized
             if not spec:
@@ -147,11 +159,37 @@ class InventoryModel(InventoryBase):
         model.reparent_nodes()
         return model
 
+    @classmethod
+    def from_llsd(cls, llsd_val: List[Dict]) -> InventoryModel:
+        model = cls()
+        for obj_dict in llsd_val:
+            if InventoryCategory.ID_ATTR in obj_dict:
+                if (obj := InventoryCategory.from_llsd(obj_dict)) is not None:
+                    model.add_container(obj)
+            elif InventoryObject.ID_ATTR in obj_dict:
+                if (obj := InventoryObject.from_llsd(obj_dict)) is not None:
+                    model.add_container(obj)
+            elif InventoryItem.ID_ATTR in obj_dict:
+                if (obj := InventoryItem.from_llsd(obj_dict)) is not None:
+                    model.add_item(obj)
+            else:
+                LOG.warning(f"Unknown object type {obj_dict!r}")
+        model.reparent_nodes()
+        return model
+
     def to_writer(self, writer: StringIO):
         for container in self.containers.values():
             container.to_writer(writer)
         for item in self.items.values():
             item.to_writer(writer)
+
+    def to_llsd(self):
+        vals = []
+        for container in self.containers.values():
+            vals.append(container.to_llsd())
+        for item in self.items.values():
+            vals.append(item.to_llsd())
+        return vals
 
     def add_container(self, container: InventoryContainerBase):
         self.containers[container.node_id] = container
@@ -246,7 +284,7 @@ class InventoryCategory(InventoryContainerBase):
     SCHEMA_NAME: ClassVar[str] = "inv_object"
 
     cat_id: UUID = schema_field(SchemaUUID)
-    pref_type: str = schema_field(SchemaStr)
+    pref_type: str = schema_field(SchemaStr, llsd_name="preferred_type")
     owner_id: UUID = schema_field(SchemaUUID)
     version: int = schema_field(SchemaInt)
 
@@ -259,10 +297,10 @@ class InventoryItem(InventoryNodeBase):
     item_id: UUID = schema_field(SchemaUUID)
     type: str = schema_field(SchemaStr)
     inv_type: str = schema_field(SchemaStr)
-    flags: int = schema_field(SchemaHexInt)
+    flags: int = schema_field(SchemaFlagField)
     name: str = schema_field(SchemaMultilineStr)
     desc: str = schema_field(SchemaMultilineStr)
-    creation_date: dt.datetime = schema_field(SchemaDate)
+    creation_date: dt.datetime = schema_field(SchemaDate, llsd_name="created_at")
     permissions: InventoryPermissions = schema_field(InventoryPermissions)
     sale_info: InventorySaleInfo = schema_field(InventorySaleInfo)
     asset_id: Optional[UUID] = schema_field(SchemaUUID, default=None)

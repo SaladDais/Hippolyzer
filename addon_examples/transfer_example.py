@@ -3,7 +3,7 @@ Example of how to request a Transfer
 """
 from typing import *
 
-from hippolyzer.lib.base.legacy_inv import InventoryModel, InventoryItem
+from hippolyzer.lib.base.inventory import InventoryModel, InventoryItem
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.templates import (
     AssetType,

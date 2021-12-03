@@ -2,7 +2,7 @@
 Example of how to request an Xfer
 """
 from hippolyzer.lib.base.datatypes import UUID
-from hippolyzer.lib.base.legacy_inv import InventoryModel
+from hippolyzer.lib.base.inventory import InventoryModel
 from hippolyzer.lib.base.templates import XferFilePath, AssetType, InventoryType, WearableType
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.proxy.addon_utils import BaseAddon, show_message

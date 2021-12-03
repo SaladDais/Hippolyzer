@@ -1,7 +1,7 @@
 import unittest
 
 from hippolyzer.lib.base.datatypes import *
-from hippolyzer.lib.base.legacy_inv import InventoryModel
+from hippolyzer.lib.base.inventory import InventoryModel
 from hippolyzer.lib.base.wearables import Wearable, VISUAL_PARAMS
 
 SIMPLE_INV = """\tinv_object\t0
@@ -60,6 +60,51 @@ class TestLegacyInv(unittest.TestCase):
         self.assertEqual(item.name, "New Script")
         self.assertEqual(item.sale_info.sale_type, "not")
         self.assertEqual(item.model, model)
+
+    def test_llsd_serialization(self):
+        model = InventoryModel.from_str(SIMPLE_INV)
+        self.assertEqual(
+            model.to_llsd(),
+            [
+                {
+                    'name': 'Contents',
+                    'obj_id': UUID('f4d91477-def1-487a-b4f3-6fa201c17376'),
+                    'parent_id': UUID('00000000-0000-0000-0000-000000000000'),
+                    'type': 'category'
+                },
+                {
+                    'asset_id': UUID('00000000-0000-0000-0000-000000000000'),
+                    'created_at': 1587367239,
+                    'desc': '2020-04-20 04:20:39 lsl2 script',
+                    'flags': b'\x00\x00\x00\x00',
+                    'inv_type': 'script',
+                    'item_id': UUID('dd163122-946b-44df-99f6-a6030e2b9597'),
+                    'name': 'New Script',
+                    'parent_id': UUID('f4d91477-def1-487a-b4f3-6fa201c17376'),
+                    'permissions': {
+                        'base_mask': 2147483647,
+                        'creator_id': UUID('a2e76fcd-9360-4f6d-a924-000000000003'),
+                        'everyone_mask': 0,
+                        'group_id': UUID('00000000-0000-0000-0000-000000000000'),
+                        'group_mask': 0,
+                        'last_owner_id': UUID('a2e76fcd-9360-4f6d-a924-000000000003'),
+                        'next_owner_mask': 581632,
+                        'owner_id': UUID('a2e76fcd-9360-4f6d-a924-000000000003'),
+                        'owner_mask': 2147483647
+                    },
+                    'sale_info': {
+                        'sale_price': 10,
+                        'sale_type': 'not'
+                    },
+                    'type': 'lsltext'
+                }
+            ]
+        )
+
+    def test_llsd_legacy_equality(self):
+        model = InventoryModel.from_str(SIMPLE_INV)
+        new_model = InventoryModel.from_llsd(model.to_llsd())
+        self.assertEqual(model, new_model)
 
 
 GIRL_NEXT_DOOR_SHAPE = """LLWearable version 22
