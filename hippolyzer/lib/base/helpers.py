@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import codecs
 import functools
+import os
+
 import pkg_resources
 import re
 import weakref
@@ -145,3 +147,10 @@ def to_chunks(chunkable: Sequence[_T], chunk_size: int) -> Generator[_T, None, N
     while chunkable:
         yield chunkable[:chunk_size]
         chunkable = chunkable[chunk_size:]
+
+
+def get_mtime(path):
+    try:
+        return os.stat(path).st_mtime
+    except:
+        return None

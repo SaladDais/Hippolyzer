@@ -20,13 +20,13 @@ bulk upload, like changing priority or removing a joint.
 """
 
 import asyncio
-import os
 import pathlib
 from abc import abstractmethod
 from typing import *
 
 from hippolyzer.lib.base import serialization as se
 from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.helpers import get_mtime
 from hippolyzer.lib.base.llanim import Animation
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.proxy import addon_ctx
@@ -37,13 +37,6 @@ from hippolyzer.lib.proxy.http_asset_repo import HTTPAssetRepo
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session, SessionManager
-
-
-def _get_mtime(path: str):
-    try:
-        return os.stat(path).st_mtime
-    except:
-        return None
 
 
 class LocalAnimAddon(BaseAddon):
@@ -176,7 +169,7 @@ class LocalAnimAddon(BaseAddon):
         anim_data = None
         if anim_path:
             old_mtime = cls.local_anim_mtimes.get(anim_name)
-            mtime = _get_mtime(anim_path)
+            mtime = get_mtime(anim_path)
             if only_if_changed and old_mtime == mtime:
                 return
 

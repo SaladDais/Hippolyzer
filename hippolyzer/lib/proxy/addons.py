@@ -16,6 +16,7 @@ from types import ModuleType
 from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.helpers import get_mtime
 from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.network.transport import UDPPacket
 from hippolyzer.lib.proxy import addon_ctx
@@ -29,13 +30,6 @@ if TYPE_CHECKING:
     from hippolyzer.lib.proxy.sessions import Session, SessionManager
 
 LOG = logging.getLogger(__name__)
-
-
-def _get_mtime(path):
-    try:
-        return os.stat(path).st_mtime
-    except:
-        return None
 
 
 class BaseInteractionManager:
@@ -187,7 +181,7 @@ class AddonManager:
     def _check_hotreloads(cls):
         """Mark addons that rely on changed files for reloading"""
         for filename, importers in cls.HOTRELOAD_IMPORTERS.items():
-            mtime = _get_mtime(filename)
+            mtime = get_mtime(filename)
             if not mtime or mtime == cls.FILE_MTIMES.get(filename, None):
                 continue
 
@@ -216,7 +210,7 @@ class AddonManager:
         # Mark the caller as having imported (and being dependent on) `module`
         stack = inspect.stack()[1]
         cls.HOTRELOAD_IMPORTERS[imported_file].add(stack.filename)
-        cls.FILE_MTIMES[imported_file] = _get_mtime(imported_file)
+        cls.FILE_MTIMES[imported_file] = get_mtime(imported_file)
 
         importing_spec = next((s for s in cls.BASE_ADDON_SPECS if s.origin == stack.filename), None)
         imported_spec = next((s for s in cls.BASE_ADDON_SPECS if s.origin == imported_file), None)
@@ -264,7 +258,7 @@ class AddonManager:
         for spec in cls.BASE_ADDON_SPECS[:]:
             had_mod = spec.name in cls.FRESH_ADDON_MODULES
             try:
-                mtime = _get_mtime(spec.origin)
+                mtime = get_mtime(spec.origin)
                 mtime_changed = mtime != cls.FILE_MTIMES.get(spec.origin, None)
                 if not mtime_changed and had_mod:
                     continue
