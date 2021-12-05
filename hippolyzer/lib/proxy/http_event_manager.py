@@ -280,7 +280,7 @@ class MITMProxyEventManager:
                 # Send the client the URLs for any proxy-only caps it requested
                 for cap_name in flow.metadata['needed_proxy_caps']:
                     parsed[cap_name] = region.cap_urls[cap_name]
-                flow.response.content = llsd.format_pretty_xml(parsed)
+                flow.response.content = llsd.format_xml(parsed)
             elif cap_data.cap_name == "EventQueueGet":
                 parsed_eq_resp = llsd.parse_xml(flow.response.content)
                 if parsed_eq_resp:
@@ -299,7 +299,7 @@ class MITMProxyEventManager:
                     # HACK: see note in above request handler for EventQueueGet
                     req_ack_id = llsd.parse_xml(flow.request.content)["ack"]
                     eq_manager.cache_last_poll_response(req_ack_id, parsed_eq_resp)
-                flow.response.content = llsd.format_pretty_xml(parsed_eq_resp)
+                flow.response.content = llsd.format_xml(parsed_eq_resp)
             elif cap_data.cap_name in self.UPLOAD_CREATING_CAPS:
                 if not region:
                     return
