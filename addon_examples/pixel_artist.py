@@ -9,7 +9,7 @@ import asyncio
 import struct
 from typing import *
 
-from PySide2.QtGui import QImage
+from PySide6.QtGui import QImage
 
 from hippolyzer.lib.base.datatypes import UUID, Vector3, Quaternion
 from hippolyzer.lib.base.helpers import to_chunks
@@ -42,7 +42,7 @@ class PixelArtistAddon(BaseAddon):
             return
         img = QImage()
         with open(filename, "rb") as f:
-            img.loadFromData(f.read(), aformat=None)
+            img.loadFromData(f.read(), format=None)
         img = img.convertToFormat(QImage.Format_RGBA8888)
         height = img.height()
         width = img.width()

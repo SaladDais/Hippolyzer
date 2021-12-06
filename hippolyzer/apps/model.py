@@ -2,7 +2,7 @@ import enum
 import logging
 import typing
 
-from PySide2 import QtCore, QtGui
+from PySide6 import QtCore, QtGui
 
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.message_logger import FilteringMessageLogger

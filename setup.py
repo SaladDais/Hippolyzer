@@ -44,6 +44,7 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: System :: Networking :: Monitoring",
         "Topic :: Software Development :: Libraries :: Python Modules",
@@ -92,10 +93,10 @@ setup(
         # For REPLs
         'ptpython<4.0',
         # JP2 codec
-        'Glymur<1.0',
+        'Glymur<0.9.7',
         'numpy<2.0',
         # These could be in extras_require if you don't want a GUI.
-        'pyside2<6.0',
+        'pyside6',
         'qasync',
     ],
     tests_require=[

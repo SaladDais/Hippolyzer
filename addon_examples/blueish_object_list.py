@@ -11,7 +11,7 @@ import enum
 import os.path
 from typing import *
 
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 
 from hippolyzer.lib.base.datatypes import Vector3
 from hippolyzer.lib.base.message.message import Block, Message

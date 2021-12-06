@@ -18,7 +18,7 @@ from typing import *
 
 import multidict
 from qasync import QEventLoop, asyncSlot
-from PySide2 import QtCore, QtWidgets, QtGui
+from PySide6 import QtCore, QtWidgets, QtGui
 
 from hippolyzer.apps.model import MessageLogModel, MessageLogHeader, RegionListModel
 from hippolyzer.apps.proxy import start_proxy
@@ -300,7 +300,7 @@ class MessageLogWindow(QtWidgets.QMainWindow):
 
     def _populateFilterMenu(self):
         def _addFilterAction(text, filter_str):
-            filter_action = QtWidgets.QAction(text, self)
+            filter_action = QtGui.QAction(text, self)
             filter_action.triggered.connect(lambda: self.setFilter(filter_str))
             self._filterMenu.addAction(filter_action)
 
