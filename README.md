@@ -377,6 +377,12 @@ To have your client's traffic proxied through Hippolyzer the general flow is:
 * The proxy needs to use content sniffing to figure out which requests are login requests,
   so make sure your request would pass `MITMProxyEventManager._is_login_request()`
 
+#### Do I have to do all that?
+
+You might be able to automate some of it on Linux by using
+[LinHippoAutoProxy](https://github.com/SaladDais/LinHippoAutoProxy). If you're on Windows or MacOS the
+above is your only option.
+
 ### Should I use this library to make an SL client in Python?
 
 No. If you just want to write a client in Python, you should instead look at using 
