@@ -212,7 +212,10 @@ class MITMProxyEventManager:
     def _handle_response(self, flow: HippoHTTPFlow):
         message_logger = self.session_manager.message_logger
         if message_logger:
-            message_logger.log_http_response(flow)
+            try:
+                message_logger.log_http_response(flow)
+            except:
+                logging.exception("Failed while logging HTTP flow")
 
         # Don't process responses for requests or responses injected by the proxy.
         # We already processed it, it came from us!
