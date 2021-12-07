@@ -35,6 +35,7 @@ from hippolyzer.lib.base.message.message_formatting import (
 )
 from hippolyzer.lib.base.message.msgtypes import MsgType
 from hippolyzer.lib.base.message.template_dict import DEFAULT_TEMPLATE_DICT
+from hippolyzer.lib.base.settings import SettingDescriptor
 from hippolyzer.lib.base.ui_helpers import loadUi
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base.network.transport import Direction, SocketUDPTransport
@@ -163,6 +164,8 @@ class GUIInteractionManager(BaseInteractionManager, QtCore.QObject):
 
 
 class GUIProxySettings(ProxySettings):
+    FIRST_RUN: bool = SettingDescriptor(True)
+
     """Persistent settings backed by QSettings"""
     def __init__(self, settings: QtCore.QSettings):
         super().__init__()
@@ -265,7 +268,7 @@ class MessageLogWindow(QtWidgets.QMainWindow):
         self.lineEditFilter.editingFinished.connect(self.setFilter)
         self.btnMessageBuilder.clicked.connect(self._sendToMessageBuilder)
         self.btnCopyRepr.clicked.connect(self._copyRepr)
-        self.actionInstallHTTPSCerts.triggered.connect(self._installHTTPSCerts)
+        self.actionInstallHTTPSCerts.triggered.connect(self.installHTTPSCerts)
         self.actionManageAddons.triggered.connect(self._manageAddons)
         self.actionManageFilters.triggered.connect(self._manageFilters)
         self.actionOpenMessageBuilder.triggered.connect(self._openMessageBuilder)
@@ -444,10 +447,10 @@ class MessageLogWindow(QtWidgets.QMainWindow):
         with open(log_file, "wb") as f:
             f.write(export_log_entries(self.model))
 
-    def _installHTTPSCerts(self):
+    def installHTTPSCerts(self):
         msg = QtWidgets.QMessageBox()
-        msg.setText("This will install the proxy's HTTPS certificate in the config dir"
-                    " of any installed viewers, continue?")
+        msg.setText("Would you like to install the proxy's HTTPS certificate in the config dir"
+                    " of any installed viewers so that HTTPS connections will work?")
         yes_btn = msg.addButton("Yes", QtWidgets.QMessageBox.NoRole)
         msg.addButton("No", QtWidgets.QMessageBox.NoRole)
         msg.exec()
@@ -918,6 +921,10 @@ def gui_main():
     http_host = None
     if window.sessionManager.settings.REMOTELY_ACCESSIBLE:
         http_host = "0.0.0.0"
+    if settings.FIRST_RUN:
+        settings.FIRST_RUN = False
+        # Automatically offer to install the HTTPS certs on first run.
+        window.installHTTPSCerts()
     start_proxy(
         session_manager=window.sessionManager,
         extra_addon_paths=window.getAddonList(),
