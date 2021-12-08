@@ -62,9 +62,16 @@ class HumanMessageSerializer:
                 continue
 
             if first_line:
-                direction, message_name = line.split(" ", 1)
+                first_split = [x for x in line.split(" ") if x]
+                direction, message_name = first_split[:2]
+                options = [x.strip("[]") for x in first_split[2:]]
                 msg = Message(message_name)
                 msg.direction = Direction[direction.upper()]
+                for option in options:
+                    if option in PacketFlags.__members__:
+                        msg.send_flags |= PacketFlags[option]
+                    elif re.match(r"^\d+$", option):
+                        msg.send_flags |= int(option)
                 first_line = False
                 continue
 
@@ -137,8 +144,16 @@ class HumanMessageSerializer:
         if msg.direction is not None:
             string += f'{msg.direction.name} '
         string += msg.name
+        flags = msg.send_flags
+        for poss_flag in iter(PacketFlags):
+            if flags & poss_flag:
+                flags &= ~poss_flag
+                string += f" [{poss_flag.name}]"
+        # Make sure flags with unknown meanings don't get lost
+        if flags:
+            string += f" [{int(flags)}]"
         if msg.packet_id is not None:
-            string += f'\n# {msg.packet_id}: {PacketFlags(msg.send_flags)!r}'
+            string += f'\n# ID: {msg.packet_id}'
             string += f'{", DROPPED" if msg.dropped else ""}{", INJECTED" if msg.injected else ""}'
         if msg.extra:
             string += f'\n# EXTRA: {msg.extra!r}'

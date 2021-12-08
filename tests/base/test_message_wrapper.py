@@ -300,3 +300,14 @@ class HumanReadableMessageTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             HumanMessageSerializer.from_human_string(val)
+
+    def test_flags(self):
+        val = """
+OUT FooMessage [ZEROCODED] [RELIABLE] [1]
+
+[SomeBlock]
+  foo = 1
+        """
+
+        msg = HumanMessageSerializer.from_human_string(val)
+        self.assertEqual(HumanMessageSerializer.to_human_string(msg).strip(), val.strip())
