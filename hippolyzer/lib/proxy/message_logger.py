@@ -21,7 +21,7 @@ from hippolyzer.lib.base.datatypes import TaggedUnion, UUID, TupleCoord
 from hippolyzer.lib.base.helpers import bytes_escape
 from hippolyzer.lib.base.message.message_formatting import HumanMessageSerializer
 from hippolyzer.lib.proxy.message_filter import MetaFieldSpecifier, compile_filter, BaseFilterNode, MessageFilterNode, \
-    EnumFieldSpecifier
+    EnumFieldSpecifier, MatchResult
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.caps import CapType, SerializedCapData
 
@@ -366,8 +366,8 @@ class AbstractMessageLogEntry(abc.ABC):
             return self._val_matches(matcher.operator, self._get_meta(matcher.selector[1]), matcher.value)
         return None
 
-    def matches(self, matcher: "MessageFilterNode"):
-        return self._base_matches(matcher) or False
+    def matches(self, matcher: "MessageFilterNode") -> "MatchResult":
+        return MatchResult(self._base_matches(matcher) or False, [])
 
     @property
     def seq(self):
@@ -671,20 +671,20 @@ class LLUDPMessageLogEntry(AbstractMessageLogEntry):
     def request(self, beautify=False, replacements=None):
         return HumanMessageSerializer.to_human_string(self.message, replacements, beautify)
 
-    def matches(self, matcher):
+    def matches(self, matcher) -> "MatchResult":
         base_matched = self._base_matches(matcher)
         if base_matched is not None:
-            return base_matched
+            return MatchResult(base_matched, [])
 
         if not self._packet_root_matches(matcher.selector[0]):
-            return False
+            return MatchResult(False, [])
 
         message = self.message
 
         selector_len = len(matcher.selector)
         # name, block_name, var_name(, subfield_name)?
         if selector_len not in (3, 4):
-            return False
+            return MatchResult(False, [])
         for block_name in message.blocks:
             if not fnmatch.fnmatchcase(block_name, matcher.selector[1]):
                 continue
@@ -693,13 +693,15 @@ class LLUDPMessageLogEntry(AbstractMessageLogEntry):
                     if not fnmatch.fnmatchcase(var_name, matcher.selector[2]):
                         continue
                     # So we know where the match happened
-                    span_key = (message.name, block_name, block_num, var_name)
+                    field_key = (message.name, block_name, block_num, var_name)
                     if selector_len == 3:
                         # We're just matching on the var existing, not having any particular value
                         if matcher.value is None:
-                            return span_key
+                            # TODO: Ability to disable short-circuiting when matching for display
+                            #  purposes, it's helpful to see every match in the message.
+                            return MatchResult(True, [field_key])
                         if self._val_matches(matcher.operator, block[var_name], matcher.value):
-                            return span_key
+                            return MatchResult(True, [field_key])
                     # Need to invoke a special unpacker
                     elif selector_len == 4:
                         try:
@@ -710,15 +712,15 @@ class LLUDPMessageLogEntry(AbstractMessageLogEntry):
                         if isinstance(deserialized, TaggedUnion):
                             deserialized = deserialized.value
                         if not isinstance(deserialized, dict):
-                            return False
+                            return MatchResult(False, [])
                         for key in deserialized.keys():
                             if fnmatch.fnmatchcase(str(key), matcher.selector[3]):
                                 if matcher.value is None:
-                                    return span_key
+                                    return MatchResult(True, [field_key])
                                 if self._val_matches(matcher.operator, deserialized[key], matcher.value):
-                                    return span_key
+                                    return MatchResult(True, [field_key])
 
-        return False
+        return MatchResult(False, [])
 
     @property
     def summary(self):

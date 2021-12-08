@@ -69,12 +69,17 @@ def message_filter():
     return expression, EOF
 
 
-MATCH_RESULT = typing.Union[bool, typing.Tuple]
+class MatchResult(typing.NamedTuple):
+    result: bool
+    fields: typing.List[typing.Tuple]
+
+    def __bool__(self):
+        return self.result
 
 
 class BaseFilterNode(abc.ABC):
     @abc.abstractmethod
-    def match(self, msg) -> MATCH_RESULT:
+    def match(self, msg) -> MatchResult:
         raise NotImplementedError()
 
     @property
@@ -104,18 +109,31 @@ class BinaryFilterNode(BaseFilterNode, abc.ABC):
 
 
 class UnaryNotFilterNode(UnaryFilterNode):
-    def match(self, msg) -> MATCH_RESULT:
-        return not self.node.match(msg)
+    def match(self, msg) -> MatchResult:
+        # Should we pass fields up here? Maybe not.
+        return MatchResult(not self.node.match(msg), [])
 
 
 class OrFilterNode(BinaryFilterNode):
-    def match(self, msg) -> MATCH_RESULT:
-        return self.left_node.match(msg) or self.right_node.match(msg)
+    def match(self, msg) -> MatchResult:
+        left_match = self.left_node.match(msg)
+        if left_match:
+            return MatchResult(True, left_match.fields)
+        right_match = self.right_node.match(msg)
+        if right_match:
+            return MatchResult(True, right_match.fields)
+        return MatchResult(False, [])
 
 
 class AndFilterNode(BinaryFilterNode):
-    def match(self, msg) -> MATCH_RESULT:
-        return self.left_node.match(msg) and self.right_node.match(msg)
+    def match(self, msg) -> MatchResult:
+        left_match = self.left_node.match(msg)
+        if not left_match:
+            return MatchResult(False, [])
+        right_match = self.right_node.match(msg)
+        if not right_match:
+            return MatchResult(False, [])
+        return MatchResult(True, left_match.fields + right_match.fields)
 
 
 class MessageFilterNode(BaseFilterNode):
@@ -124,7 +142,7 @@ class MessageFilterNode(BaseFilterNode):
         self.operator = operator
         self.value = value
 
-    def match(self, msg) -> MATCH_RESULT:
+    def match(self, msg) -> MatchResult:
         return msg.matches(self)
 
     @property

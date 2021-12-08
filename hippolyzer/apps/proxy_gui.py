@@ -360,21 +360,20 @@ class MessageLogWindow(QtWidgets.QMainWindow):
             beautify=self.checkBeautify.isChecked(),
             replacements=buildReplacements(entry.session, entry.region),
         )
-        highlight_range = None
-        if isinstance(req, SpannedString):
-            match_result = self.model.filter.match(entry)
-            # Match result was a tuple indicating what matched
-            if isinstance(match_result, tuple):
-                highlight_range = req.spans.get(match_result)
-
         self.textRequest.setPlainText(req)
-        if highlight_range:
-            cursor = self.textRequest.textCursor()
-            cursor.setPosition(highlight_range[0], QtGui.QTextCursor.MoveAnchor)
-            cursor.setPosition(highlight_range[1], QtGui.QTextCursor.KeepAnchor)
-            highlight_format = QtGui.QTextBlockFormat()
-            highlight_format.setBackground(QtCore.Qt.yellow)
-            cursor.setBlockFormat(highlight_format)
+        # The string has a map of fields and their associated positions within the string,
+        # use that to highlight any individual fields the filter matched on.
+        if isinstance(req, SpannedString):
+            for field in self.model.filter.match(entry).fields:
+                field_span = req.spans.get(field)
+                if not field_span:
+                    continue
+                cursor = self.textRequest.textCursor()
+                cursor.setPosition(field_span[0], QtGui.QTextCursor.MoveAnchor)
+                cursor.setPosition(field_span[1], QtGui.QTextCursor.KeepAnchor)
+                highlight_format = QtGui.QTextBlockFormat()
+                highlight_format.setBackground(QtCore.Qt.yellow)
+                cursor.setBlockFormat(highlight_format)
 
         resp = entry.response(beautify=self.checkBeautify.isChecked())
         if resp:
