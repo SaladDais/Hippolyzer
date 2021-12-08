@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import weakref
 from typing import Optional, Tuple
@@ -35,6 +36,17 @@ class InterceptingLLUDPProxyProtocol(UDPProxyProtocol):
         )
         self.message_xml = MessageDotXML()
         self.session: Optional[Session] = None
+        self.resend_task = asyncio.get_event_loop().create_task(self.attempt_resends())
+
+    async def attempt_resends(self):
+        while True:
+            await asyncio.sleep(0.1)
+            if self.session is None:
+                continue
+            for region in self.session.regions:
+                if not region.circuit or not region.circuit.is_alive:
+                    continue
+                region.circuit.resend_unacked()
 
     def _ensure_message_allowed(self, msg: Message):
         if not self.message_xml.validate_udp_msg(msg.name):
@@ -156,3 +168,4 @@ class InterceptingLLUDPProxyProtocol(UDPProxyProtocol):
             AddonManager.handle_session_closed(self.session)
             self.session_manager.close_session(self.session)
         self.session = None
+        self.resend_task.cancel()

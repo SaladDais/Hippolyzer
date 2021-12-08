@@ -247,3 +247,48 @@ class PacketIDTests(unittest.TestCase):
             # ended up getting the same packet ID when injected
             (2, "ChatFromViewer", Direction.OUT, True, ()),
         ])
+
+    def test_reliable_unacked_queueing(self):
+        self._send_message(Message('ChatFromViewer', flags=PacketFlags.RELIABLE))
+        self._send_message(Message('ChatFromViewer', flags=PacketFlags.RELIABLE, packet_id=2))
+        # Only the first, injected message should be queued for resends
+        self.assertEqual({1}, set(self.circuit.unacked_reliable))
+
+    def test_reliable_resend_cadence(self):
+        self._send_message(Message('ChatFromViewer', flags=PacketFlags.RELIABLE))
+        resend_info = self.circuit.unacked_reliable[1]
+        self.circuit.resend_unacked()
+        # Should have been too soon to retry
+        self.assertEqual(3, resend_info.tries_left)
+        # Switch to allowing resends every 0s
+        self.circuit.resend_every = 0.0
+        self.circuit.resend_unacked()
+        self.assertSequenceEqual(self.circuit.sent_simple, [
+            (1, "ChatFromViewer", Direction.OUT, True, ()),
+            # Should have resent
+            (1, "ChatFromViewer", Direction.OUT, True, ()),
+        ])
+        self.assertEqual(2, resend_info.tries_left)
+        for _ in range(3):
+            self.circuit.resend_unacked()
+        # Should have used up all the retry attempts and been kicked out of the retry queue
+        self.assertEqual(set(), set(self.circuit.unacked_reliable))
+
+    def test_start_ping_check(self):
+        # Should not break if no unacked
+        self._send_message(Message(
+            "StartPingCheck",
+            Block("PingID", PingID=0, OldestUnacked=20),
+            packet_id=5,
+        ))
+
+        injected_msg = Message('ChatFromViewer', flags=PacketFlags.RELIABLE)
+        self._send_message(injected_msg)
+
+        self._send_message(Message(
+            "StartPingCheck",
+            Block("PingID", PingID=0, OldestUnacked=20),
+            packet_id=8,
+        ))
+        # Oldest unacked should have been replaced with the injected packet's ID, it's older!
+        self.assertEqual(self.circuit.sent_msgs[2]["PingID"]["OldestUnacked"], injected_msg.packet_id)
