@@ -31,7 +31,7 @@ class Circuit:
         self.serializer = UDPMessageSerializer()
         self.last_packet_at = dt.datetime.now()
         self.packet_id_base = 0
-        self.unacked_reliable: Dict[int, ReliableResendInfo] = {}
+        self.unacked_reliable: Dict[Tuple[Direction, int], ReliableResendInfo] = {}
         self.resend_every: float = 5.0
 
     def _send_prepared_message(self, message: Message, transport=None):
@@ -57,8 +57,10 @@ class Circuit:
             raise RuntimeError(f"Trying to re-send finalized {message!r}")
         message.packet_id = self.packet_id_base
         self.packet_id_base += 1
-        if not message.acks:
-            message.send_flags &= PacketFlags.ACK
+        if message.acks:
+            message.send_flags |= PacketFlags.ACK
+        else:
+            message.send_flags &= ~PacketFlags.ACK
         # If it was queued, it's not anymore
         message.queued = False
         message.finalized = True
@@ -70,16 +72,18 @@ class Circuit:
         if self.prepare_message(message):
             # If we injected the message then we're responsible for resends.
             if message.reliable and message.injected:
-                self.unacked_reliable[message.packet_id] = ReliableResendInfo(
+                self.unacked_reliable[(message.direction, message.packet_id)] = ReliableResendInfo(
                     last_resent=dt.datetime.now(),
                     message=message,
                 )
             return self._send_prepared_message(message, transport)
 
-    def collect_ack(self, packet_id: int):
-        resend_info = self.unacked_reliable.pop(packet_id, None)
-        if resend_info is None:
-            logging.warning(f"Got ack for unknown packed {packet_id}")
+    def collect_acks(self, message: Message):
+        effective_acks = list(message.acks)
+        if message.name == "PacketAck":
+            effective_acks.extend(x["ID"] for x in message["Packets"])
+        for ack in effective_acks:
+            self.unacked_reliable.pop((~message.direction, ack), None)
 
     def resend_unacked(self):
         for resend_info in list(self.unacked_reliable.values()):
@@ -92,7 +96,7 @@ class Circuit:
             # We were on our last try and we never received an ack
             if not resend_info.tries_left:
                 logging.warning(f"Giving up on unacked {msg.packet_id}")
-                del self.unacked_reliable[msg.packet_id]
+                del self.unacked_reliable[(msg.direction, msg.packet_id)]
                 continue
             resend_info.last_resent = dt.datetime.now()
             msg.send_flags |= PacketFlags.RESENT

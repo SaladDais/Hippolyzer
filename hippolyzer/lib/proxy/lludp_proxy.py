@@ -111,6 +111,9 @@ class InterceptingLLUDPProxyProtocol(UDPProxyProtocol):
             LOG.error("No circuit for %r, dropping packet!" % (packet.far_addr,))
             return
 
+        # Process any ACKs for messages we injected first
+        region.circuit.collect_acks(message)
+
         if message.name == "AgentMovementComplete":
             self.session.main_region = region
             if region.handle is None:

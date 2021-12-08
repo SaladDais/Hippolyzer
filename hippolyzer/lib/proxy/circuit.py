@@ -58,17 +58,13 @@ class ProxiedCircuit(Circuit):
                                 (message.packet_id, message.name))
             message.packet_id = fwd_injections.get_effective_id(message.packet_id)
             fwd_injections.track_seen(message.packet_id)
-
-            new_acks = []
-            for ack in message.acks:
-                if reverse_injections.was_injected(ack):
-                    self.collect_ack(ack)
-                else:
-                    new_acks.append(reverse_injections.get_original_id(ack))
-            message.acks = tuple(new_acks)
+            message.acks = tuple(
+                reverse_injections.get_original_id(x) for x in message.acks
+                if not reverse_injections.was_injected(x)
+            )
 
             if message.name == "PacketAck":
-                if not self._rewrite_packet_ack(message, reverse_injections):
+                if not self._rewrite_packet_ack(message, reverse_injections) and not message.acks:
                     logging.debug(f"Dropping {direction} ack for injected packets!")
                     # Let caller know this shouldn't be sent at all, it's strictly ACKs for
                     # injected packets.
@@ -76,7 +72,9 @@ class ProxiedCircuit(Circuit):
             elif message.name == "StartPingCheck":
                 self._rewrite_start_ping_check(message, fwd_injections)
 
-        if not message.acks:
+        if message.acks:
+            message.send_flags |= PacketFlags.ACK
+        else:
             message.send_flags &= ~PacketFlags.ACK
         return True
 
@@ -87,7 +85,6 @@ class ProxiedCircuit(Circuit):
             # This is an ACK for one the proxy injected, don't confuse
             # the other side by sending through the ACK
             if reverse_injections.was_injected(packet_id):
-                self.collect_ack(packet_id)
                 continue
             block["ID"] = reverse_injections.get_original_id(packet_id)
             new_blocks.append(block)
@@ -103,8 +100,10 @@ class ProxiedCircuit(Circuit):
         new_id = fwd_injections.get_effective_id(orig_id)
         if orig_id != new_id:
             logging.debug("Rewrote oldest unacked %s -> %s" % (orig_id, new_id))
-        # Use the proxy's oldest unacked instead if it's older.
-        new_id = min((new_id, *self.unacked_reliable.keys()))
+        # Get a list of unacked IDs for the direction this StartPingCheck is heading
+        fwd_unacked = (a for (d, a) in self.unacked_reliable.keys() if d == message.direction)
+        # Use the proxy's oldest unacked ID if it's older than the client's
+        new_id = min((new_id, *fwd_unacked))
         message["PingID"]["OldestUnacked"] = new_id
 
     def drop_message(self, message: Message, orig_direction=None):

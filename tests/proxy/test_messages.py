@@ -252,11 +252,11 @@ class PacketIDTests(unittest.TestCase):
         self._send_message(Message('ChatFromViewer', flags=PacketFlags.RELIABLE))
         self._send_message(Message('ChatFromViewer', flags=PacketFlags.RELIABLE, packet_id=2))
         # Only the first, injected message should be queued for resends
-        self.assertEqual({1}, set(self.circuit.unacked_reliable))
+        self.assertEqual({(Direction.OUT, 1)}, set(self.circuit.unacked_reliable))
 
     def test_reliable_resend_cadence(self):
         self._send_message(Message('ChatFromViewer', flags=PacketFlags.RELIABLE))
-        resend_info = self.circuit.unacked_reliable[1]
+        resend_info = self.circuit.unacked_reliable[(Direction.OUT, 1)]
         self.circuit.resend_unacked()
         # Should have been too soon to retry
         self.assertEqual(3, resend_info.tries_left)
@@ -273,6 +273,19 @@ class PacketIDTests(unittest.TestCase):
             self.circuit.resend_unacked()
         # Should have used up all the retry attempts and been kicked out of the retry queue
         self.assertEqual(set(), set(self.circuit.unacked_reliable))
+
+    def test_reliable_ack_collection(self):
+        msg = Message('ChatFromViewer', flags=PacketFlags.RELIABLE)
+        self._send_message(msg)
+        self.assertEqual(1, len(self.circuit.unacked_reliable))
+        # Shouldn't count, this is an ACK going in the wrong direction!
+        ack_msg = Message("PacketAck", Block("Packets", ID=msg.packet_id))
+        self.circuit.collect_acks(ack_msg)
+        self.assertEqual(1, len(self.circuit.unacked_reliable))
+        # But it should count if the ACK message is heading in
+        ack_msg.direction = Direction.IN
+        self.circuit.collect_acks(ack_msg)
+        self.assertEqual(0, len(self.circuit.unacked_reliable))
 
     def test_start_ping_check(self):
         # Should not break if no unacked
