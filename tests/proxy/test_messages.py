@@ -276,16 +276,18 @@ class PacketIDTests(unittest.IsolatedAsyncioTestCase):
 
     def test_reliable_ack_collection(self):
         msg = Message('ChatFromViewer', flags=PacketFlags.RELIABLE)
-        self._send_message(msg)
+        fut = self.circuit.send_reliable(msg)
         self.assertEqual(1, len(self.circuit.unacked_reliable))
         # Shouldn't count, this is an ACK going in the wrong direction!
         ack_msg = Message("PacketAck", Block("Packets", ID=msg.packet_id))
         self.circuit.collect_acks(ack_msg)
         self.assertEqual(1, len(self.circuit.unacked_reliable))
+        self.assertFalse(fut.done())
         # But it should count if the ACK message is heading in
         ack_msg.direction = Direction.IN
         self.circuit.collect_acks(ack_msg)
         self.assertEqual(0, len(self.circuit.unacked_reliable))
+        self.assertTrue(fut.done())
 
     def test_start_ping_check(self):
         # Should not break if no unacked
