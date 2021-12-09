@@ -364,7 +364,7 @@ class MessageLogWindow(QtWidgets.QMainWindow):
         # The string has a map of fields and their associated positions within the string,
         # use that to highlight any individual fields the filter matched on.
         if isinstance(req, SpannedString):
-            for field in self.model.filter.match(entry).fields:
+            for field in self.model.filter.match(entry, short_circuit=False).fields:
                 field_span = req.spans.get(field)
                 if not field_span:
                     continue

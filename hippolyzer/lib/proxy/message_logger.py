@@ -366,7 +366,7 @@ class AbstractMessageLogEntry(abc.ABC):
             return self._val_matches(matcher.operator, self._get_meta(matcher.selector[1]), matcher.value)
         return None
 
-    def matches(self, matcher: "MessageFilterNode") -> "MatchResult":
+    def matches(self, matcher: "MessageFilterNode", short_circuit=True) -> "MatchResult":
         return MatchResult(self._base_matches(matcher) or False, [])
 
     @property
@@ -671,7 +671,7 @@ class LLUDPMessageLogEntry(AbstractMessageLogEntry):
     def request(self, beautify=False, replacements=None):
         return HumanMessageSerializer.to_human_string(self.message, replacements, beautify)
 
-    def matches(self, matcher) -> "MatchResult":
+    def matches(self, matcher, short_circuit=True) -> "MatchResult":
         base_matched = self._base_matches(matcher)
         if base_matched is not None:
             return MatchResult(base_matched, [])
@@ -685,6 +685,7 @@ class LLUDPMessageLogEntry(AbstractMessageLogEntry):
         # name, block_name, var_name(, subfield_name)?
         if selector_len not in (3, 4):
             return MatchResult(False, [])
+        found_field_keys = []
         for block_name in message.blocks:
             if not fnmatch.fnmatchcase(block_name, matcher.selector[1]):
                 continue
@@ -697,11 +698,9 @@ class LLUDPMessageLogEntry(AbstractMessageLogEntry):
                     if selector_len == 3:
                         # We're just matching on the var existing, not having any particular value
                         if matcher.value is None:
-                            # TODO: Ability to disable short-circuiting when matching for display
-                            #  purposes, it's helpful to see every match in the message.
-                            return MatchResult(True, [field_key])
-                        if self._val_matches(matcher.operator, block[var_name], matcher.value):
-                            return MatchResult(True, [field_key])
+                            found_field_keys.append(field_key)
+                        elif self._val_matches(matcher.operator, block[var_name], matcher.value):
+                            found_field_keys.append(field_key)
                     # Need to invoke a special unpacker
                     elif selector_len == 4:
                         try:
@@ -712,15 +711,21 @@ class LLUDPMessageLogEntry(AbstractMessageLogEntry):
                         if isinstance(deserialized, TaggedUnion):
                             deserialized = deserialized.value
                         if not isinstance(deserialized, dict):
-                            return MatchResult(False, [])
+                            continue
                         for key in deserialized.keys():
                             if fnmatch.fnmatchcase(str(key), matcher.selector[3]):
                                 if matcher.value is None:
-                                    return MatchResult(True, [field_key])
-                                if self._val_matches(matcher.operator, deserialized[key], matcher.value):
-                                    return MatchResult(True, [field_key])
+                                    # Short-circuiting checking individual subfields is fine since
+                                    # we only highlight fields anyway.
+                                    found_field_keys.append(field_key)
+                                    break
+                                elif self._val_matches(matcher.operator, deserialized[key], matcher.value):
+                                    found_field_keys.append(field_key)
+                                    break
 
-        return MatchResult(False, [])
+                    if short_circuit and found_field_keys:
+                        return MatchResult(True, found_field_keys)
+        return MatchResult(bool(found_field_keys), found_field_keys)
 
     @property
     def summary(self):

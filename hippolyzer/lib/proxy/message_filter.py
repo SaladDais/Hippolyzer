@@ -79,7 +79,7 @@ class MatchResult(typing.NamedTuple):
 
 class BaseFilterNode(abc.ABC):
     @abc.abstractmethod
-    def match(self, msg) -> MatchResult:
+    def match(self, msg, short_circuit=True) -> MatchResult:
         raise NotImplementedError()
 
     @property
@@ -109,28 +109,33 @@ class BinaryFilterNode(BaseFilterNode, abc.ABC):
 
 
 class UnaryNotFilterNode(UnaryFilterNode):
-    def match(self, msg) -> MatchResult:
+    def match(self, msg, short_circuit=True) -> MatchResult:
         # Should we pass fields up here? Maybe not.
-        return MatchResult(not self.node.match(msg), [])
+        return MatchResult(not self.node.match(msg, short_circuit), [])
 
 
 class OrFilterNode(BinaryFilterNode):
-    def match(self, msg) -> MatchResult:
-        left_match = self.left_node.match(msg)
-        if left_match:
+    def match(self, msg, short_circuit=True) -> MatchResult:
+        left_match = self.left_node.match(msg, short_circuit)
+        if left_match and short_circuit:
             return MatchResult(True, left_match.fields)
-        right_match = self.right_node.match(msg)
-        if right_match:
+
+        right_match = self.right_node.match(msg, short_circuit)
+        if right_match and short_circuit:
             return MatchResult(True, right_match.fields)
+
+        if left_match or right_match:
+            # Fine since fields should be empty when result=False
+            return MatchResult(True, left_match.fields + right_match.fields)
         return MatchResult(False, [])
 
 
 class AndFilterNode(BinaryFilterNode):
-    def match(self, msg) -> MatchResult:
-        left_match = self.left_node.match(msg)
+    def match(self, msg, short_circuit=True) -> MatchResult:
+        left_match = self.left_node.match(msg, short_circuit)
         if not left_match:
             return MatchResult(False, [])
-        right_match = self.right_node.match(msg)
+        right_match = self.right_node.match(msg, short_circuit)
         if not right_match:
             return MatchResult(False, [])
         return MatchResult(True, left_match.fields + right_match.fields)
@@ -142,8 +147,8 @@ class MessageFilterNode(BaseFilterNode):
         self.operator = operator
         self.value = value
 
-    def match(self, msg) -> MatchResult:
-        return msg.matches(self)
+    def match(self, msg, short_circuit=True) -> MatchResult:
+        return msg.matches(self, short_circuit)
 
     @property
     def children(self):
