@@ -273,7 +273,8 @@ class JankStringyBytes(bytes):
     Treat bytes as UTF8 if used in string context
 
     Sinful, but necessary evil for now since templates don't specify what's
-    binary and what's a string.
+    binary and what's a string. There are also certain fields where the value
+    may be either binary _or_ a string, depending on the context.
     """
     __slots__ = ()
 
@@ -287,6 +288,11 @@ class JankStringyBytes(bytes):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def __contains__(self, item):
+        if isinstance(item, str):
+            return item in str(self)
+        return item in bytes(self)
 
 
 class RawBytes(bytes):

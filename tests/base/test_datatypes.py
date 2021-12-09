@@ -134,3 +134,15 @@ class TestDatatypes(unittest.TestCase):
         val = llsd.parse_binary(llsd.format_binary(orig))
         self.assertIsInstance(val, UUID)
         self.assertEqual(orig, val)
+
+    def test_jank_stringy_bytes(self):
+        val = JankStringyBytes(b"foo\x00")
+        self.assertTrue("o" in val)
+        self.assertTrue(b"o" in val)
+        self.assertFalse(b"z" in val)
+        self.assertFalse("z" in val)
+        self.assertEqual("foo", val)
+        self.assertEqual(b"foo\x00", val)
+        self.assertNotEqual(b"foo", val)
+        self.assertEqual(b"foo", JankStringyBytes(b"foo"))
+        self.assertEqual("foo", JankStringyBytes(b"foo"))
