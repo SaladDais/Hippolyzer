@@ -62,7 +62,7 @@ def show_error_message(error_msg, parent=None):
     error_dialog = QtWidgets.QErrorMessage(parent=parent)
     # No obvious way to set this to plaintext, yuck...
     error_dialog.showMessage(html.escape(error_msg))
-    error_dialog.exec_()
+    error_dialog.exec()
     error_dialog.raise_()
 
 
@@ -89,13 +89,13 @@ class GUISessionManager(SessionManager, QtCore.QObject):
         self.all_regions = new_regions
 
 
-class GUIInteractionManager(BaseInteractionManager, QtCore.QObject):
-    def __init__(self, parent):
+class GUIInteractionManager(BaseInteractionManager):
+    def __init__(self, parent: QtWidgets.QWidget):
         BaseInteractionManager.__init__(self)
-        QtCore.QObject.__init__(self, parent=parent)
+        self._parent = parent
 
     def main_window_handle(self) -> Any:
-        return self.parent()
+        return self._parent
 
     def _dialog_async_exec(self, dialog: QtWidgets.QDialog):
         future = asyncio.Future()
@@ -107,7 +107,7 @@ class GUIInteractionManager(BaseInteractionManager, QtCore.QObject):
             self, caption: str, directory: str, filter_str: str, mode: QtWidgets.QFileDialog.FileMode,
             default_suffix: str = '',
     ) -> Tuple[bool, QtWidgets.QFileDialog]:
-        dialog = QtWidgets.QFileDialog(self.parent(), caption=caption, directory=directory, filter=filter_str)
+        dialog = QtWidgets.QFileDialog(self._parent, caption=caption, directory=directory, filter=filter_str)
         dialog.setFileMode(mode)
         if mode == QtWidgets.QFileDialog.FileMode.AnyFile:
             dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptMode.AcceptSave)
@@ -155,7 +155,7 @@ class GUIInteractionManager(BaseInteractionManager, QtCore.QObject):
             title,
             caption,
             QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel,
-            self.parent(),
+            self._parent,
         )
         fut = asyncio.Future()
         msg.finished.connect(lambda r: fut.set_result(r))
@@ -323,7 +323,7 @@ class MessageLogWindow(QtWidgets.QMainWindow):
 
     def _manageFilters(self):
         dialog = FilterDialog(self)
-        dialog.exec_()
+        dialog.exec()
 
     @nonFatalExceptions
     def setFilter(self, filter_str=None):
@@ -481,7 +481,7 @@ class MessageLogWindow(QtWidgets.QMainWindow):
 
     def _manageAddons(self):
         dialog = AddonDialog(self)
-        dialog.exec_()
+        dialog.exec()
 
     def getAddonList(self) -> List[str]:
         return self.sessionManager.settings.ADDON_SCRIPTS
