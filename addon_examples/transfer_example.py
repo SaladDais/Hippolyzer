@@ -35,7 +35,7 @@ class TransferExampleAddon(BaseAddon):
     async def get_first_script(self, session: Session, region: ProxiedRegion):
         """Get the contents of the first script in the selected object"""
         # Ask for the object inventory so we can find a script
-        region.circuit.send_message(Message(
+        region.circuit.send(Message(
             'RequestTaskInventory',
             Block('AgentData', AgentID=session.agent_id, SessionID=session.id),
             Block('InventoryData', LocalID=session.selected.object_local),

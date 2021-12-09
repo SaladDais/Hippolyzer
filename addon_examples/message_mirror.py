@@ -126,14 +126,14 @@ class MessageMirrorAddon(BaseAddon):
 
         # Send the message normally first if we're mirroring
         if message.name in MIRROR:
-            region.circuit.send_message(message)
+            region.circuit.send(message)
 
         # We're going to send the message on a new circuit, we need to take
         # it so we get a new packet ID and clean ACKs
         message = message.take()
 
         self._lludp_fixups(target_session, message)
-        target_region.circuit.send_message(message)
+        target_region.circuit.send(message)
         return True
 
     def _lludp_fixups(self, target_session: Session, message: Message):

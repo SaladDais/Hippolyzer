@@ -15,7 +15,7 @@ class XferExampleAddon(BaseAddon):
     @handle_command()
     async def get_mute_list(self, session: Session, region: ProxiedRegion):
         """Fetch the current user's mute list"""
-        region.circuit.send_message(Message(
+        region.circuit.send(Message(
             'MuteListRequest',
             Block('AgentData', AgentID=session.agent_id, SessionID=session.id),
             Block("MuteData", MuteCRC=0),
@@ -35,7 +35,7 @@ class XferExampleAddon(BaseAddon):
     @handle_command()
     async def get_task_inventory(self, session: Session, region: ProxiedRegion):
         """Get the inventory of the currently selected object"""
-        region.circuit.send_message(Message(
+        region.circuit.send(Message(
             'RequestTaskInventory',
             # If no session is passed in we'll use the active session when the coro was created
             Block('AgentData', AgentID=session.agent_id, SessionID=session.id),
@@ -98,7 +98,7 @@ textures 1
             data=asset_data,
             transaction_id=transaction_id
         )
-        region.circuit.send_message(Message(
+        region.circuit.send(Message(
             'CreateInventoryItem',
             Block('AgentData', AgentID=session.agent_id, SessionID=session.id),
             Block(

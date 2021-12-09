@@ -159,7 +159,7 @@ class LocalAnimAddon(BaseAddon):
             cls.local_anim_playing_ids.pop(anim_name, None)
             cls.local_anim_bytes.pop(anim_name, None)
 
-        region.circuit.send_message(new_msg)
+        region.circuit.send(new_msg)
         print(f"Changing {anim_name} to {next_id}")
 
     @classmethod

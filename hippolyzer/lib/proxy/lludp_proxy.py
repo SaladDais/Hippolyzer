@@ -163,7 +163,7 @@ class InterceptingLLUDPProxyProtocol(UDPProxyProtocol):
 
         # Send the message if it wasn't explicitly dropped or sent before
         if not message.finalized:
-            region.circuit.send_message(message)
+            region.circuit.send(message)
 
     def close(self):
         super().close()

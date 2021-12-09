@@ -110,7 +110,7 @@ class XferManager:
             direction: Direction = Direction.OUT,
     ) -> Xfer:
         xfer_id = xfer_id if xfer_id is not None else random.getrandbits(64)
-        self._connection_holder.circuit.send_message(Message(
+        self._connection_holder.circuit.send(Message(
             'RequestXfer',
             Block(
                 'XferID',
@@ -174,7 +174,7 @@ class XferManager:
             to_ack = range(xfer.next_ackable, ack_max)
             xfer.next_ackable = ack_max
         for ack_id in to_ack:
-            self._connection_holder.circuit.send_message(Message(
+            self._connection_holder.circuit.send(Message(
                 "ConfirmXferPacket",
                 Block("XferID", ID=xfer.xfer_id, Packet=ack_id),
                 direction=xfer.direction,
@@ -216,7 +216,7 @@ class XferManager:
         else:
             inline_data = data
 
-        self._connection_holder.circuit.send_message(Message(
+        self._connection_holder.circuit.send(Message(
             "AssetUploadRequest",
             Block(
                 "AssetBlock",
@@ -272,7 +272,7 @@ class XferManager:
             chunk = xfer.chunks.pop(packet_id)
             # EOF if there are no chunks left
             packet_val = XferPacket(PacketID=packet_id, IsEOF=not bool(xfer.chunks))
-            self._connection_holder.circuit.send_message(Message(
+            self._connection_holder.circuit.send(Message(
                 "SendXferPacket",
                 Block("XferID", ID=xfer.xfer_id, Packet_=packet_val),
                 Block("DataPacket", Data=chunk),

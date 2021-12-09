@@ -116,8 +116,8 @@ class ClientObjectManager:
                 *[Block("ObjectData", ObjectLocalID=x) for x in ids_to_req[:255]],
             ]
             # Selecting causes ObjectProperties to be sent
-            self._region.circuit.send_message(Message("ObjectSelect", blocks))
-            self._region.circuit.send_message(Message("ObjectDeselect", blocks))
+            self._region.circuit.send(Message("ObjectSelect", blocks))
+            self._region.circuit.send(Message("ObjectDeselect", blocks))
             ids_to_req = ids_to_req[255:]
 
         futures = []
@@ -150,7 +150,7 @@ class ClientObjectManager:
 
         ids_to_req = local_ids
         while ids_to_req:
-            self._region.circuit.send_message(Message(
+            self._region.circuit.send(Message(
                 "RequestMultipleObjects",
                 Block("AgentData", AgentID=session.agent_id, SessionID=session.id),
                 *[Block("ObjectData", CacheMissType=0, ID=x) for x in ids_to_req[:255]],

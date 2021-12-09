@@ -64,12 +64,12 @@ class TurboObjectInventoryAddon(BaseAddon):
             # Any previous requests will have triggered a delete of the inventory file
             # by marking it complete on the server-side. Re-send our RequestTaskInventory
             # To make sure there's a fresh copy.
-            region.circuit.send_message(request_msg.take())
+            region.circuit.send(request_msg.take())
             inv_message = await region.message_handler.wait_for(('ReplyTaskInventory',), timeout=5.0)
             # No task inventory, send the reply as-is
             file_name = inv_message["InventoryData"]["Filename"]
             if not file_name:
-                region.circuit.send_message(inv_message)
+                region.circuit.send(inv_message)
                 return
 
             xfer = region.xfer_manager.request(
@@ -87,7 +87,7 @@ class TurboObjectInventoryAddon(BaseAddon):
                 continue
 
             # Send the original ReplyTaskInventory to the viewer so it knows the file is ready
-            region.circuit.send_message(inv_message)
+            region.circuit.send(inv_message)
             proxied_xfer = Xfer(data=xfer.reassemble_chunks())
 
             # Wait for the viewer to request the inventory file

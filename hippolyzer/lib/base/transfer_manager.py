@@ -94,7 +94,7 @@ class TransferManager:
         if params_dict.get("SessionID", dataclasses.MISSING) is None:
             params.SessionID = self._session_id
 
-        self._connection_holder.circuit.send_message(Message(
+        self._connection_holder.circuit.send(Message(
             'TransferRequest',
             Block(
                 'TransferInfo',

@@ -68,7 +68,7 @@ class Circuit:
         # themselves created them.
         message.injected = True
 
-    def send_message(self, message: Message, transport=None):
+    def send(self, message: Message, transport=None) -> UDPPacket:
         if self.prepare_message(message):
             # If we injected the message then we're responsible for resends.
             if message.reliable and message.injected:
@@ -77,6 +77,9 @@ class Circuit:
                     message=message,
                 )
             return self._send_prepared_message(message, transport)
+
+    # Temporary alias
+    send_message = send
 
     def collect_acks(self, message: Message):
         effective_acks = list(message.acks)
@@ -109,7 +112,7 @@ class Circuit:
         message.packet_id = packet_id
         message.direction = direction
         message.injected = True
-        self.send_message(message)
+        self.send(message)
 
     def __repr__(self):
         return "<%s %r : %r>" % (self.__class__.__name__, self.near_host, self.host)

@@ -80,7 +80,7 @@ class BlueishObjectListGUIAddon(BaseAddon):
             raise
 
     def _highlight_object(self, session: Session, obj: Object):
-        session.main_region.circuit.send_message(Message(
+        session.main_region.circuit.send(Message(
             "ForceObjectSelect",
             Block("Header", ResetList=False),
             Block("Data", LocalID=obj.LocalID),
@@ -88,7 +88,7 @@ class BlueishObjectListGUIAddon(BaseAddon):
         ))
 
     def _teleport_to_object(self, session: Session, obj: Object):
-        session.main_region.circuit.send_message(Message(
+        session.main_region.circuit.send(Message(
             "TeleportLocationRequest",
             Block("AgentData", AgentID=session.agent_id, SessionID=session.id),
             Block(

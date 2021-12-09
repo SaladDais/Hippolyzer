@@ -70,7 +70,7 @@ class XferManagerTests(BaseTransferTests):
             manager = XferManager(self.server_connection)
             xfer = await manager.request(vfile_id=asset_id, vfile_type=AssetType.BODYPART)
             self.received_bytes = xfer.reassemble_chunks()
-        self.server_circuit.send_message(Message(
+        self.server_circuit.send(Message(
             "AssetUploadComplete",
             Block("AssetBlock", UUID=asset_id, Type=asset_block["Type"], Success=True),
             direction=Direction.IN,
@@ -109,7 +109,7 @@ class TestTransferManager(BaseTransferTests):
         self.assertEqual(EstateAssetType.COVENANT, params.EstateAssetType)
         data = self.LARGE_PAYLOAD
 
-        self.server_circuit.send_message(Message(
+        self.server_circuit.send(Message(
             'TransferInfo',
             Block(
                 'TransferInfo',
@@ -125,7 +125,7 @@ class TestTransferManager(BaseTransferTests):
         while True:
             chunk = data[:1000]
             data = data[1000:]
-            self.server_circuit.send_message(Message(
+            self.server_circuit.send(Message(
                 'TransferPacket',
                 Block(
                     'TransferData',

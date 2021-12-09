@@ -37,7 +37,7 @@ class PaydayAddon(BaseAddon):
             chat_type=ChatType.SHOUT,
         )
         # Do the traditional money dance.
-        session.main_region.circuit.send_message(Message(
+        session.main_region.circuit.send(Message(
             "AgentAnimation",
             Block("AgentData", AgentID=session.agent_id, SessionID=session.id),
             Block("AnimationList", AnimID=UUID("928cae18-e31d-76fd-9cc9-2f55160ff818"), StartAnim=True),

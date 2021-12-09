@@ -21,13 +21,13 @@ class MockedProxyCircuit(ProxiedCircuit):
         self.sent_msgs.append(msg)
 
 
-class PacketIDTests(unittest.TestCase):
+class PacketIDTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self) -> None:
         self.circuit = MockedProxyCircuit()
 
     def _send_message(self, msg, outgoing=True):
         msg.direction = Direction.OUT if outgoing else Direction.IN
-        return self.circuit.send_message(msg)
+        return self.circuit.send(msg)
 
     def test_basic(self):
         self._send_message(Message('ChatFromViewer', packet_id=1))
@@ -230,7 +230,7 @@ class PacketIDTests(unittest.TestCase):
         self.assertEqual(self.circuit.sent_msgs[4]["Packets"][0]["ID"], 3)
 
     def test_resending_or_dropping(self):
-        self.circuit.send_message(Message('ChatFromViewer', packet_id=1))
+        self.circuit.send(Message('ChatFromViewer', packet_id=1))
         to_drop = Message('ChatFromViewer', packet_id=2, flags=PacketFlags.RELIABLE)
         self.circuit.drop_message(to_drop)
         with self.assertRaises(RuntimeError):
@@ -238,9 +238,9 @@ class PacketIDTests(unittest.TestCase):
             self.circuit.drop_message(to_drop)
         # Returns a new message without finalized flag
         new_msg = to_drop.take()
-        self.circuit.send_message(new_msg)
+        self.circuit.send(new_msg)
         with self.assertRaises(RuntimeError):
-            self.circuit.send_message(new_msg)
+            self.circuit.send(new_msg)
         self.assertSequenceEqual(self.circuit.sent_simple, [
             (1, "ChatFromViewer", Direction.OUT, False, ()),
             (1, "PacketAck", Direction.IN, True, ()),

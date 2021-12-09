@@ -73,17 +73,17 @@ def show_message(text, session=None) -> None:
         direction=Direction.IN,
     )
     if session:
-        session.main_region.circuit.send_message(message)
+        session.main_region.circuit.send(message)
     else:
         for session in AddonManager.SESSION_MANAGER.sessions:
-            session.main_region.circuit.send_message(copy.copy(message))
+            session.main_region.circuit.send(copy.copy(message))
 
 
 def send_chat(message: Union[bytes, str], channel=0, chat_type=ChatType.NORMAL, session=None):
     session = session or addon_ctx.session.get(None) or None
     if not session:
         raise RuntimeError("Tried to send chat without session")
-    session.main_region.circuit.send_message(Message(
+    session.main_region.circuit.send(Message(
         "ChatFromViewer",
         Block(
             "AgentData",

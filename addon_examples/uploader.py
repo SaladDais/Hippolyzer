@@ -102,7 +102,7 @@ class UploaderAddon(BaseAddon):
             ais_item_to_inventory_data(ais_item),
             direction=Direction.IN
         )
-        region.circuit.send_message(message)
+        region.circuit.send(message)
 
 
 addons = [UploaderAddon()]

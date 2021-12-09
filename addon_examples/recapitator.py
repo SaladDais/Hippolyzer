@@ -116,7 +116,7 @@ class RecapitatorAddon(BaseAddon):
         except:
             logging.exception("Exception while recapitating")
         # Tell the viewer about the status of its original upload
-        region.circuit.send_message(Message(
+        region.circuit.send(Message(
             "AssetUploadComplete",
             Block("AssetBlock", UUID=asset_id, Type=asset_block["Type"], Success=success),
             direction=Direction.IN,

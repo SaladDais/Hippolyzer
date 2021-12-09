@@ -80,7 +80,7 @@ class PixelArtistAddon(BaseAddon):
                 # TODO: We don't track the land group or user's active group, so
                 #   "anyone can build" must be on for rezzing to work.
                 group_id = UUID()
-                region.circuit.send_message(Message(
+                region.circuit.send(Message(
                     'ObjectAdd',
                     Block('AgentData', AgentID=session.agent_id, SessionID=session.id, GroupID=group_id),
                     Block(
@@ -129,7 +129,7 @@ class PixelArtistAddon(BaseAddon):
             # Set the prim color to the color from the pixel
             te.Color[None] = pixel_color
             # Set the prim texture and color
-            region.circuit.send_message(Message(
+            region.circuit.send(Message(
                 'ObjectImage',
                 Block('AgentData', AgentID=session.agent_id, SessionID=session.id),
                 Block('ObjectData', ObjectLocalID=obj.LocalID, MediaURL=b'', TextureEntry_=te),
@@ -149,7 +149,7 @@ class PixelArtistAddon(BaseAddon):
 
         # Move the "pixels" to their correct position in chunks
         for chunk in to_chunks(positioning_blocks, 25):
-            region.circuit.send_message(Message(
+            region.circuit.send(Message(
                 'MultipleObjectUpdate',
                 Block('AgentData', AgentID=session.agent_id, SessionID=session.id),
                 *chunk,
