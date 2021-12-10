@@ -178,10 +178,7 @@ class PacketIDTests(unittest.IsolatedAsyncioTestCase):
 
     def test_drop_proxied_message(self):
         self._send_message(Message('ChatFromViewer', packet_id=1))
-        self.circuit.drop_message(
-            Message('ChatFromViewer', packet_id=2, flags=PacketFlags.RELIABLE),
-            Direction.OUT,
-        )
+        self.circuit.drop_message(Message('ChatFromViewer', packet_id=2, flags=PacketFlags.RELIABLE))
         self._send_message(Message('ChatFromViewer', packet_id=3))
 
         self.assertSequenceEqual(self.circuit.sent_simple, [
@@ -193,10 +190,7 @@ class PacketIDTests(unittest.IsolatedAsyncioTestCase):
 
     def test_unreliable_proxied_message(self):
         self._send_message(Message('ChatFromViewer', packet_id=1))
-        self.circuit.drop_message(
-            Message('ChatFromViewer', packet_id=2),
-            Direction.OUT,
-        )
+        self.circuit.drop_message(Message('ChatFromViewer', packet_id=2))
         self._send_message(Message('ChatFromViewer', packet_id=3))
 
         self.assertSequenceEqual(self.circuit.sent_simple, [
@@ -209,10 +203,7 @@ class PacketIDTests(unittest.IsolatedAsyncioTestCase):
         self._send_message(Message('ChatFromViewer', packet_id=2))
         self._send_message(Message('ChatFromViewer', packet_id=3))
         self._send_message(Message('ChatFromSimulator'), outgoing=False)
-        self.circuit.drop_message(
-            Message('ChatFromViewer', packet_id=4, acks=(4,)),
-            Direction.OUT,
-        )
+        self.circuit.drop_message(Message('ChatFromViewer', packet_id=4, acks=(4,)))
         self._send_message(Message('ChatFromViewer', packet_id=5))
 
         self.assertSequenceEqual(self.circuit.sent_simple, [
