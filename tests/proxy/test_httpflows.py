@@ -1,5 +1,6 @@
 from mitmproxy.test import tflow, tutils
 
+from hippolyzer.lib.proxy.caps import CapType
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.message_logger import HTTPMessageLogEntry
 from hippolyzer.lib.proxy.test_utils import BaseProxyTest
@@ -84,8 +85,8 @@ content-length: 33\r
         self.assertEqual(b"foobar", flow.response.content)
 
     def test_temporary_cap_resolution(self):
-        self.region.register_temporary_cap("TempExample", "http://not.example.com")
-        self.region.register_temporary_cap("TempExample", "http://not2.example.com")
+        self.region.register_cap("TempExample", "http://not.example.com", CapType.TEMPORARY)
+        self.region.register_cap("TempExample", "http://not2.example.com", CapType.TEMPORARY)
         # Resolving the cap should consume it
         cap_data = self.session_manager.resolve_cap("http://not.example.com")
         self.assertEqual(cap_data.cap_name, "TempExample")

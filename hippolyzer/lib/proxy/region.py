@@ -110,7 +110,8 @@ class ProxiedRegion(BaseClientRegion):
         Wrap an existing, non-unique cap with a unique URL
 
         caps like ViewerAsset may be the same globally and wouldn't let us infer
-        which session / region the request was related to without a wrapper
+        which session / region the request was related to without a wrapper URL
+        that we inject into the seed response sent to the viewer.
         """
         parsed = list(urllib.parse.urlsplit(self.caps[name][1]))
         seed_id = self.caps["Seed"][1].split("/")[-1].encode("utf8")
@@ -120,22 +121,20 @@ class ProxiedRegion(BaseClientRegion):
         # to be secure. This should save on expensive TLS context setup for each req.
         parsed[0] = "http"
         wrapper_url = urllib.parse.urlunsplit(parsed)
-        self.caps.add(name + "ProxyWrapper", (CapType.WRAPPER, wrapper_url))
-        self._recalc_caps()
+        # Register it with "ProxyWrapper" appended so we don't shadow the real cap URL
+        # in our own view of the caps
+        self.register_cap(name + "ProxyWrapper", wrapper_url, CapType.WRAPPER)
         return wrapper_url
 
     def register_proxy_cap(self, name: str):
-        """
-        Register a cap to be completely handled by the proxy
-        """
+        """Register a cap to be completely handled by the proxy"""
         cap_url = f"http://{uuid.uuid4()!s}.caps.hippo-proxy.localhost"
-        self.caps.add(name, (CapType.PROXY_ONLY, cap_url))
-        self._recalc_caps()
+        self.register_cap(name, cap_url, CapType.PROXY_ONLY)
         return cap_url
 
-    def register_temporary_cap(self, name: str, cap_url: str):
+    def register_cap(self, name: str, cap_url: str, cap_type: CapType = CapType.NORMAL):
         """Register a Cap that only has meaning the first time it's used"""
-        self.caps.add(name, (CapType.TEMPORARY, cap_url))
+        self.caps.add(name, (cap_type, cap_url))
         self._recalc_caps()
 
     def resolve_cap(self, url: str, consume=True) -> Optional[Tuple[str, str, CapType]]:

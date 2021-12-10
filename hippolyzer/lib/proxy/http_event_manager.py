@@ -308,7 +308,7 @@ class MITMProxyEventManager:
                     return
                 parsed = llsd.parse_xml(flow.response.content)
                 if "uploader" in parsed:
-                    region.register_temporary_cap(cap_data.cap_name + "Uploader", parsed["uploader"])
+                    region.register_cap(cap_data.cap_name + "Uploader", parsed["uploader"], CapType.TEMPORARY)
         except:
             logging.exception("OOPS, blew up in HTTP proxy!")
 
