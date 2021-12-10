@@ -69,7 +69,7 @@ class Circuit:
 
     def send(self, message: Message, transport=None) -> UDPPacket:
         if self.prepare_message(message):
-            # If we injected the message then we're responsible for resends.
+            # If the message originates from us then we're responsible for resends.
             if message.reliable and message.synthetic:
                 self.unacked_reliable[(message.direction, message.packet_id)] = ReliableResendInfo(
                     last_resent=dt.datetime.now(),
@@ -81,6 +81,7 @@ class Circuit:
     send_message = send
 
     def send_reliable(self, message: Message, transport=None) -> asyncio.Future:
+        """send() wrapper that always sends reliably and allows `await`ing ACK receipt"""
         if not message.synthetic:
             raise ValueError("Not able to send non-synthetic message reliably!")
         message.send_flags |= PacketFlags.RELIABLE
