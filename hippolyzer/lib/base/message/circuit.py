@@ -21,7 +21,7 @@ class ReliableResendInfo:
     last_resent: dt.datetime
     message: Message
     completed: asyncio.Future = dataclasses.field(default_factory=asyncio.Future)
-    tries_left: int = 3
+    tries_left: int = 10
 
 
 class Circuit:
@@ -34,7 +34,7 @@ class Circuit:
         self.last_packet_at = dt.datetime.now()
         self.packet_id_base = 0
         self.unacked_reliable: Dict[Tuple[Direction, int], ReliableResendInfo] = {}
-        self.resend_every: float = 5.0
+        self.resend_every: float = 3.0
 
     def _send_prepared_message(self, message: Message, transport=None):
         try:

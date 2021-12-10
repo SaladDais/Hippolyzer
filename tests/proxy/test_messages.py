@@ -250,7 +250,7 @@ class PacketIDTests(unittest.IsolatedAsyncioTestCase):
         resend_info = self.circuit.unacked_reliable[(Direction.OUT, 1)]
         self.circuit.resend_unacked()
         # Should have been too soon to retry
-        self.assertEqual(3, resend_info.tries_left)
+        self.assertEqual(10, resend_info.tries_left)
         # Switch to allowing resends every 0s
         self.circuit.resend_every = 0.0
         self.circuit.resend_unacked()
@@ -259,8 +259,8 @@ class PacketIDTests(unittest.IsolatedAsyncioTestCase):
             # Should have resent
             (1, "ChatFromViewer", Direction.OUT, True, ()),
         ])
-        self.assertEqual(2, resend_info.tries_left)
-        for _ in range(3):
+        self.assertEqual(9, resend_info.tries_left)
+        for _ in range(resend_info.tries_left):
             self.circuit.resend_unacked()
         # Should have used up all the retry attempts and been kicked out of the retry queue
         self.assertEqual(set(), set(self.circuit.unacked_reliable))
