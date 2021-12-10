@@ -68,7 +68,7 @@ class UDPMessageDeserializer:
         self.settings = settings or Settings()
         self.template_dict = self.DEFAULT_TEMPLATE
 
-    def deserialize(self, msg_buff: bytes):
+    def deserialize(self, msg_buff: bytes) -> Message:
         msg = self._parse_message_header(msg_buff)
         if not self.settings.ENABLE_DEFERRED_PACKET_PARSING:
             try:
@@ -85,6 +85,7 @@ class UDPMessageDeserializer:
         reader = se.BufferReader("!", data)
 
         msg: Message = Message("Placeholder")
+        msg.synthetic = False
         msg.send_flags = reader.read(se.U8)
         msg.packet_id = reader.read(se.U32)
 

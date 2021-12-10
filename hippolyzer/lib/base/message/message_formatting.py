@@ -154,7 +154,7 @@ class HumanMessageSerializer:
             string += f" [{int(flags)}]"
         if msg.packet_id is not None:
             string += f'\n# ID: {msg.packet_id}'
-            string += f'{", DROPPED" if msg.dropped else ""}{", INJECTED" if msg.injected else ""}'
+            string += f'{", DROPPED" if msg.dropped else ""}{", SYNTHETIC" if msg.synthetic else ""}'
         if msg.extra:
             string += f'\n# EXTRA: {msg.extra!r}'
         string += '\n\n'

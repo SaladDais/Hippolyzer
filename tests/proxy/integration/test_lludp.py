@@ -204,8 +204,8 @@ class LLUDPIntegrationTests(BaseProxyTest):
         self.protocol.datagram_received(obj_update, self.region_addr)
         await self._wait_drained()
         entries = message_logger.entries
-        self.assertEqual(len(entries), 1)
-        self.assertEqual(entries[0].name, "ObjectUpdateCompressed")
+        self.assertEqual(1, len(entries))
+        self.assertEqual("ObjectUpdateCompressed", entries[0].name)
 
     async def test_filtering_logged_messages(self):
         message_logger = SimpleMessageLogger()
@@ -222,8 +222,8 @@ class LLUDPIntegrationTests(BaseProxyTest):
         await self._wait_drained()
         message_logger.set_filter("ObjectUpdateCompressed")
         entries = message_logger.entries
-        self.assertEqual(len(entries), 1)
-        self.assertEqual(entries[0].name, "ObjectUpdateCompressed")
+        self.assertEqual(1, len(entries))
+        self.assertEqual("ObjectUpdateCompressed", entries[0].name)
 
     async def test_logging_taken_message(self):
         message_logger = SimpleMessageLogger()

@@ -400,7 +400,7 @@ class HTTPMessageLogEntry(AbstractMessageLogEntry):
 
         super().__init__(region, session)
         # This was a request the proxy made through itself
-        self.meta["Injected"] = flow.request_injected
+        self.meta["Synthetic"] = flow.request_injected
 
     @property
     def type(self):
@@ -613,7 +613,7 @@ class LLUDPMessageLogEntry(AbstractMessageLogEntry):
         super().__init__(region, session)
 
     _MESSAGE_META_ATTRS = {
-        "Injected", "Dropped", "Extra", "Resent", "Zerocoded", "Acks", "Reliable",
+        "Synthetic", "Dropped", "Extra", "Resent", "Zerocoded", "Acks", "Reliable",
     }
 
     def _get_meta(self, name: str):

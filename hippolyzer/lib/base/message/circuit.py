@@ -66,14 +66,11 @@ class Circuit:
         # If it was queued, it's not anymore
         message.queued = False
         message.finalized = True
-        # In typical client contexts all messages are "injected" in that the client
-        # themselves created them.
-        message.injected = True
 
     def send(self, message: Message, transport=None) -> UDPPacket:
         if self.prepare_message(message):
             # If we injected the message then we're responsible for resends.
-            if message.reliable and message.injected:
+            if message.reliable and message.synthetic:
                 self.unacked_reliable[(message.direction, message.packet_id)] = ReliableResendInfo(
                     last_resent=dt.datetime.now(),
                     message=message,
@@ -84,7 +81,7 @@ class Circuit:
     send_message = send
 
     def send_reliable(self, message: Message, transport=None) -> asyncio.Future:
-        if message.packet_id and not message.injected:
+        if not message.synthetic:
             raise ValueError("Not able to send non-synthetic message reliably!")
         message.send_flags |= PacketFlags.RELIABLE
         self.send(message, transport)
@@ -123,7 +120,6 @@ class Circuit:
         message = Message('PacketAck', *[Block('Packets', ID=x) for x in to_ack])
         message.packet_id = packet_id
         message.direction = direction
-        message.injected = True
         self.send(message)
 
     def __repr__(self):

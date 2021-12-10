@@ -25,7 +25,7 @@ class ProxiedCircuit(Circuit):
         except:
             logging.exception(f"Failed to serialize: {message.to_dict()!r}")
             raise
-        if self.logging_hook and message.injected:
+        if self.logging_hook and message.synthetic:
             self.logging_hook(message)
         return self.send_datagram(serialized, message.direction, transport=transport)
 
@@ -47,10 +47,10 @@ class ProxiedCircuit(Circuit):
         # Injected, let's gen an ID
         if message.packet_id is None:
             message.packet_id = fwd_injections.gen_injectable_id()
-            message.injected = True
+            message.synthetic = True
         # This message wasn't injected by the proxy so we need to rewrite packet IDs
         # to account for IDs the real creator of the packet couldn't have known about.
-        elif not message.injected:
+        elif not message.synthetic:
             # was_dropped needs the unmodified packet ID
             if fwd_injections.was_dropped(message.packet_id) and message.name != "PacketAck":
                 logging.warning("Attempting to re-send previously dropped %s:%s, did we ack?" %

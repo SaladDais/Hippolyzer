@@ -17,7 +17,7 @@ class MockedProxyCircuit(ProxiedCircuit):
         self.in_injections = InjectionTracker(0, maxlen=10)
 
     def _send_prepared_message(self, msg: Message, transport=None):
-        self.sent_simple.append((msg.packet_id, msg.name, msg.direction, msg.injected, msg.acks))
+        self.sent_simple.append((msg.packet_id, msg.name, msg.direction, msg.synthetic, msg.acks))
         self.sent_msgs.append(msg)
 
 

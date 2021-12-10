@@ -188,7 +188,7 @@ class MsgBlockList(List["Block"]):
 class Message:
     __slots__ = ("name", "send_flags", "packet_id", "acks", "body_boundaries", "queued",
                  "offset", "raw_extra", "raw_body", "deserializer", "_blocks", "finalized",
-                 "direction", "meta", "injected", "dropped", "sender")
+                 "direction", "meta", "synthetic", "dropped", "sender")
 
     def __init__(self, name, *args, packet_id=None, flags=0, acks=None, direction=None):
         # TODO: Do this on a timer or something.
@@ -213,7 +213,7 @@ class Message:
         self.queued: bool = False
         self._blocks: BLOCK_DICT = {}
         self.meta = {}
-        self.injected = False
+        self.synthetic = packet_id is None
         self.dropped = False
         self.sender: Optional[ADDR_TUPLE] = None
 
@@ -312,7 +312,7 @@ class Message:
                 "packet_id": self.packet_id,
                 "meta": self.meta.copy(),
                 "dropped": self.dropped,
-                "injected": self.injected,
+                "synthetic": self.synthetic,
                 "direction": self.direction.name,
                 "send_flags": int(self.send_flags),
                 "extra": self.extra,
@@ -334,7 +334,7 @@ class Message:
             msg.packet_id = dict_val['packet_id']
             msg.meta = dict_val['meta']
             msg.dropped = dict_val['dropped']
-            msg.injected = dict_val['injected']
+            msg.synthetic = dict_val['synthetic']
             msg.direction = Direction[dict_val['direction']]
             msg.send_flags = dict_val['send_flags']
             msg.extra = dict_val['extra']
