@@ -235,7 +235,7 @@ class AbstractMessageLogEntry(abc.ABC):
         obj = self.region.objects.lookup_localid(selected_local)
         return obj and obj.FullID
 
-    def _get_meta(self, name: str):
+    def _get_meta(self, name: str) -> typing.Any:
         # Slight difference in semantics. Filters are meant to return the same
         # thing no matter when they're run, so SelectedLocal and friends resolve
         # to the selected items _at the time the message was logged_. To handle
@@ -308,7 +308,9 @@ class AbstractMessageLogEntry(abc.ABC):
 
     def _val_matches(self, operator, val, expected):
         if isinstance(expected, MetaFieldSpecifier):
-            expected = self._get_meta(str(expected))
+            if len(expected) != 1:
+                raise ValueError(f"Can only support single-level Meta specifiers, not {expected!r}")
+            expected = self._get_meta(str(expected[0]))
             if not isinstance(expected, (int, float, bytes, str, type(None), tuple)):
                 if callable(expected):
                     expected = expected()
@@ -362,8 +364,14 @@ class AbstractMessageLogEntry(abc.ABC):
             if matcher.value or matcher.operator:
                 return False
             return self._packet_root_matches(matcher.selector[0])
-        if len(matcher.selector) == 2 and matcher.selector[0] == "Meta":
-            return self._val_matches(matcher.operator, self._get_meta(matcher.selector[1]), matcher.value)
+        if matcher.selector[0] == "Meta":
+            if len(matcher.selector) == 2:
+                return self._val_matches(matcher.operator, self._get_meta(matcher.selector[1]), matcher.value)
+            elif len(matcher.selector) == 3:
+                meta_dict = self._get_meta(matcher.selector[1])
+                if not meta_dict or not hasattr(meta_dict, 'get'):
+                    return False
+                return self._val_matches(matcher.operator, meta_dict.get(matcher.selector[2]), matcher.value)
         return None
 
     def matches(self, matcher: "MessageFilterNode", short_circuit=True) -> "MatchResult":
@@ -540,6 +548,18 @@ class HTTPMessageLogEntry(AbstractMessageLogEntry):
         if message.content.startswith(rb'<?xml '):
             return "application/xml"
         return content_type
+
+    def _get_meta(self, name: str) -> typing.Any:
+        lower_name = name.lower()
+        if lower_name == "url":
+            return self.flow.request.url
+        elif lower_name == "reqheaders":
+            return self.flow.request.headers
+        elif lower_name == "respheaders":
+            return self.flow.response.headers
+        elif lower_name == "host":
+            return self.flow.request.host.lower()
+        return super()._get_meta(name)
 
     def to_dict(self):
         val = super().to_dict()

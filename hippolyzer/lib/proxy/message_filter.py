@@ -3,7 +3,7 @@ import ast
 import typing
 
 from arpeggio import Optional, ZeroOrMore, EOF, \
-    ParserPython, PTNodeVisitor, visit_parse_tree, RegExMatch
+    ParserPython, PTNodeVisitor, visit_parse_tree, RegExMatch, OneOrMore
 
 
 def literal():
@@ -26,7 +26,9 @@ def literal():
 
 
 def identifier():
-    return RegExMatch(r'[a-zA-Z*]([a-zA-Z0-9_*]+)?')
+    # Identifiers are allowed to have "-". It's not a special character
+    # in our grammar, and we expect them to show up some places, like header names.
+    return RegExMatch(r'[a-zA-Z*]([a-zA-Z0-9_*-]+)?')
 
 
 def field_specifier():
@@ -42,7 +44,7 @@ def unary_expression():
 
 
 def meta_field_specifier():
-    return "Meta", ".", identifier
+    return "Meta", OneOrMore(".", identifier)
 
 
 def enum_field_specifier():
@@ -155,7 +157,7 @@ class MessageFilterNode(BaseFilterNode):
         return self.selector, self.operator, self.value
 
 
-class MetaFieldSpecifier(str):
+class MetaFieldSpecifier(tuple):
     pass
 
 
@@ -181,7 +183,7 @@ class MessageFilterVisitor(PTNodeVisitor):
         return LiteralValue(ast.literal_eval(node.value))
 
     def visit_meta_field_specifier(self, _node, children):
-        return MetaFieldSpecifier(children[0])
+        return MetaFieldSpecifier(children)
 
     def visit_enum_field_specifier(self, _node, children):
         return EnumFieldSpecifier(*children)
