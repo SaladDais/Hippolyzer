@@ -386,6 +386,7 @@ class Message:
         message_copy.packet_id = None
         message_copy.dropped = False
         message_copy.finalized = False
+        message_copy.queued = False
         return message_copy
 
     def to_summary(self):
