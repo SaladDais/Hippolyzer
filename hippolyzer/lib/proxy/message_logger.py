@@ -396,6 +396,14 @@ class AbstractMessageLogEntry(abc.ABC):
         xmlified = re.sub(rb" <key>", b"<key>", xmlified)
         return xmlified.decode("utf8", errors="replace")
 
+    @staticmethod
+    def _format_xml(content):
+        beautified = minidom.parseString(content).toprettyxml(indent="  ")
+        # kill blank lines. will break cdata sections. meh.
+        beautified = re.sub(r'\n\s*\n', '\n', beautified, flags=re.MULTILINE)
+        return re.sub(r'<([\w]+)>\s*</\1>', r'<\1></\1>',
+                      beautified, flags=re.MULTILINE)
+
 
 class HTTPMessageLogEntry(AbstractMessageLogEntry):
     __slots__ = ["flow"]
@@ -484,13 +492,17 @@ class HTTPMessageLogEntry(AbstractMessageLogEntry):
                 if not beautified:
                     content_type = self._guess_content_type(message)
                     if content_type.startswith("application/llsd"):
-                        beautified = self._format_llsd(llsd.parse(message.content))
+                        try:
+                            beautified = self._format_llsd(llsd.parse(message.content))
+                        except llsd.LLSDParseError:
+                            # Sometimes LL sends plain XML with a Content-Type of application/llsd+xml.
+                            # Try to detect that case and work around it
+                            if content_type == "application/llsd+xml" and message.content.startswith(b'<'):
+                                beautified = self._format_xml(message.content)
+                            else:
+                                raise
                     elif any(content_type.startswith(x) for x in ("application/xml", "text/xml")):
-                        beautified = minidom.parseString(message.content).toprettyxml(indent="  ")
-                        # kill blank lines. will break cdata sections. meh.
-                        beautified = re.sub(r'\n\s*\n', '\n', beautified, flags=re.MULTILINE)
-                        beautified = re.sub(r'<([\w]+)>\s*</\1>', r'<\1></\1>',
-                                            beautified, flags=re.MULTILINE)
+                        beautified = self._format_xml(message.content)
             except:
                 LOG.exception("Failed to beautify message")
 
