@@ -175,7 +175,7 @@ class IPCInterceptionAddon:
     def responseheaders(self, flow: HTTPFlow):
         # The response was injected earlier in an earlier handler,
         # we don't want to touch this anymore.
-        if flow.metadata["response_injected"]:
+        if flow.metadata.get("response_injected"):
             return
 
         # Someone fucked up and put a mimetype in Content-Encoding.
@@ -187,7 +187,7 @@ class IPCInterceptionAddon:
 
     def response(self, flow: HTTPFlow):
         cap_data: typing.Optional[SerializedCapData] = flow.metadata.get("cap_data")
-        if flow.metadata["response_injected"] and cap_data and cap_data.asset_server_cap:
+        if flow.metadata.get("response_injected") and cap_data and cap_data.asset_server_cap:
             # Don't bother intercepting asset server requests where we injected a response.
             # We don't want to log them and they don't need any more processing by user hooks.
             return
@@ -197,10 +197,10 @@ class IPCInterceptionAddon:
 class SLMITMAddon(IPCInterceptionAddon):
     def responseheaders(self, flow: HTTPFlow):
         super().responseheaders(flow)
-        cap_data: typing.Optional[SerializedCapData] = flow.metadata["cap_data_ser"]
+        cap_data: typing.Optional[SerializedCapData] = flow.metadata.get("cap_data_ser")
 
         # Request came from the proxy itself, don't touch it.
-        if flow.metadata["request_injected"]:
+        if flow.metadata.get("request_injected"):
             return
 
         # This is an asset server response that we're not interested in intercepting.
@@ -209,7 +209,7 @@ class SLMITMAddon(IPCInterceptionAddon):
             # Can't stream if we injected our own response or we were asked not to stream
             if not flow.metadata["response_injected"] and flow.metadata["can_stream"]:
                 flow.response.stream = True
-        elif not cap_data and not flow.metadata["from_browser"]:
+        elif not cap_data and not flow.metadata.get("from_browser"):
             object_name = flow.response.headers.get("X-SecondLife-Object-Name", "")
             # Meh. Add some fake Cap data for this so it can be matched on.
             if object_name.startswith("#Firestorm LSL Bridge"):
