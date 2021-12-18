@@ -33,7 +33,7 @@ class HippoHTTPFlow:
         meta.setdefault("can_stream", True)
         meta.setdefault("response_injected", False)
         meta.setdefault("request_injected", False)
-        meta.setdefault("cap_data", None)
+        meta.setdefault("cap_data", CapData())
         meta.setdefault("from_browser", False)
 
     @property
