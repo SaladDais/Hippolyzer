@@ -81,17 +81,16 @@ class MeshUploadInterceptingAddon(BaseAddon):
 
     @handle_command()
     async def set_local_mesh_target(self, session: Session, region: ProxiedRegion):
-        """Set the currently selected object as the target for local mesh"""
-        parent_object = region.objects.lookup_localid(session.selected.object_local)
-        if not parent_object:
+        """Set the currently selected objects as the target for local mesh"""
+        selected_links = [region.objects.lookup_localid(l_id) for l_id in session.selected.object_locals]
+        selected_links = [o for o in selected_links if o is not None]
+        if not selected_links:
             show_message("Nothing selected")
             return
-        linkset_objects = [parent_object] + parent_object.Children
-
         old_locals = self.local_mesh_target_locals
         self.local_mesh_target_locals = [
             x.LocalID
-            for x in linkset_objects
+            for x in selected_links
             if ExtraParamType.MESH in x.ExtraParams
         ]
 
