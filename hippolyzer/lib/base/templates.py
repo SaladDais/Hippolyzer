@@ -1600,6 +1600,7 @@ class RegionHandshakeReplyFlags(IntFlag):
 @se.flag_field_serializer("TeleportStart", "Info", "TeleportFlags")
 @se.flag_field_serializer("TeleportProgress", "Info", "TeleportFlags")
 @se.flag_field_serializer("TeleportFinish", "Info", "TeleportFlags")
+@se.flag_field_serializer("TeleportLocal", "Info", "TeleportFlags")
 @se.flag_field_serializer("TeleportLureRequest", "Info", "TeleportFlags")
 class TeleportFlags(IntFlag):
     SET_HOME_TO_TARGET = 1 << 0  # newbie leaving prelude (starter area)
@@ -1618,6 +1619,8 @@ class TeleportFlags(IntFlag):
     IS_FLYING = 1 << 13
     SHOW_RESET_HOME = 1 << 14
     FORCE_REDIRECT = 1 << 15
+    VIA_GLOBAL_COORDS = 1 << 16
+    WITHIN_REGION = 1 << 17
 
 
 @se.http_serializer("RenderMaterials")
