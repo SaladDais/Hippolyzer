@@ -571,6 +571,8 @@ class HTTPMessageLogEntry(AbstractMessageLogEntry):
             return self.flow.response.headers
         elif lower_name == "host":
             return self.flow.request.host.lower()
+        elif lower_name == "status":
+            return self.flow.response.status_code
         return super()._get_meta(name)
 
     def to_dict(self):
