@@ -145,25 +145,26 @@ class TestMITMProxy(BaseProxyTest):
         super().setUp()
         self._setup_default_circuit()
         self.caps_client = self.session.main_region.caps_client
-
-    def test_mitmproxy_works(self):
         proxy_port = 9905
         self.session_manager.settings.HTTP_PROXY_PORT = proxy_port
 
-        http_proc = multiprocessing.Process(
+        self.http_proc = multiprocessing.Process(
             target=run_http_proxy_process,
             args=("127.0.0.1", proxy_port, self.session_manager.flow_context),
             daemon=True,
         )
-        http_proc.start()
-
+        self.http_proc.start()
         self.session_manager.flow_context.mitmproxy_ready.wait(1.0)
 
-        http_event_manager = MITMProxyEventManager(self.session_manager, self.session_manager.flow_context)
+        self.http_event_manager = MITMProxyEventManager(
+            self.session_manager,
+            self.session_manager.flow_context
+        )
 
+    def test_mitmproxy_works(self):
         async def _request_example_com():
             # Pump callbacks from mitmproxy
-            asyncio.create_task(http_event_manager.run())
+            asyncio.create_task(self.http_event_manager.run())
             try:
                 async with self.caps_client.get("http://example.com/", timeout=0.5) as resp:
                     self.assertIn(b"Example Domain", await resp.read())
@@ -173,4 +174,4 @@ class TestMITMProxy(BaseProxyTest):
                 # Tell the event pump and mitmproxy they need to shut down
                 self.session_manager.flow_context.shutdown_signal.set()
         asyncio.run(_request_example_com())
-        http_proc.join()
+        self.http_proc.join()
