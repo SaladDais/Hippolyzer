@@ -130,9 +130,9 @@ class ProxyWorldObjectManager(ClientWorldObjectManager):
             if obj.PCode == PCode.AVATAR and "ParentID" in updated_props:
                 if obj.ParentID and not region.objects.lookup_localid(obj.ParentID):
                     # If an avatar just sat on an object we don't know about, add it to the queued
-                    # cache misses and request if if the viewer doesn't. This should happen
-                    # regardless of the auto-request object setting because otherwise we have no way
-                    # to get a sitting agent's true region location, even if it's ourself.
+                    # cache misses and request it if the viewer doesn't. This should happen
+                    # regardless of the auto-request missing objects setting because otherwise we
+                    # have no way to get a sitting agent's true region location, even if it's ourselves.
                     region.objects.queued_cache_misses.add(obj.ParentID)
                     region.objects.request_missed_cached_objects_soon()
         AddonManager.handle_object_updated(self._session, region, obj, updated_props)
