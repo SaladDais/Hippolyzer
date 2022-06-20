@@ -14,7 +14,7 @@ from hippolyzer.lib.proxy.transport import SOCKS5UDPTransport
 
 
 class BaseProxyTest(unittest.IsolatedAsyncioTestCase):
-    def setUp(self) -> None:
+    async def asyncSetUp(self) -> None:
         self.client_addr = ("127.0.0.1", 1)
         self.region_addr = ("127.0.0.1", 3)
         self.circuit_code = 1234

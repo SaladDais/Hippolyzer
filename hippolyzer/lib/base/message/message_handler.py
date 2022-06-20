@@ -107,7 +107,8 @@ class MessageHandler(Generic[_T, _K]):
             take = self.take_by_default
         notifiers = [self.register(name) for name in message_names]
 
-        fut = asyncio.get_event_loop().create_future()
+        loop = asyncio.get_event_loop_policy().get_event_loop()
+        fut = loop.create_future()
         timeout_task = None
 
         async def _canceller():

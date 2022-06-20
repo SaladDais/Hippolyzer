@@ -55,8 +55,8 @@ class ObjectTrackingAddon(BaseAddon):
 
 
 class ObjectManagerTestMixin(BaseProxyTest):
-    def setUp(self) -> None:
-        super().setUp()
+    async def asyncSetUp(self) -> None:
+        await super().asyncSetUp()
         self._setup_default_circuit()
         self.region = self.session.main_region
         self.message_handler = WrappingMessageHandler(self.region)
@@ -505,8 +505,8 @@ class RegionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioT
 
 
 class SessionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioTestCase):
-    def setUp(self) -> None:
-        super().setUp()
+    async def asyncSetUp(self) -> None:
+        await super().asyncSetUp()
         self.second_region = self.session.register_region(
             ("127.0.0.1", 9), "https://localhost:5", 124
         )

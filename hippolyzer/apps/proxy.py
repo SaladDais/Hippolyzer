@@ -105,7 +105,7 @@ def start_proxy(session_manager: SessionManager, extra_addons: Optional[list] = 
     root_log.setLevel(logging.INFO)
     logging.basicConfig()
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_event_loop_policy().get_event_loop()
 
     udp_proxy_port = session_manager.settings.SOCKS_PROXY_PORT
     http_proxy_port = session_manager.settings.HTTP_PROXY_PORT

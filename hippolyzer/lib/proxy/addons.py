@@ -282,8 +282,8 @@ class AddonManager:
 
                 # Make sure module initialization happens after any pending task cancellations
                 # due to module unloading.
-
-                asyncio.get_event_loop().call_soon(cls._init_module, mod)
+                loop = asyncio.get_event_loop_policy().get_event_loop()
+                loop.call_soon(cls._init_module, mod)
             except Exception as e:
                 if had_mod:
                     logging.exception("Exploded trying to reload addon %s" % spec.name)

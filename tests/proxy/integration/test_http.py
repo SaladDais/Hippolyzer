@@ -30,8 +30,8 @@ class MockAddon(BaseAddon):
 
 
 class HTTPIntegrationTests(BaseProxyTest):
-    def setUp(self) -> None:
-        super().setUp()
+    async def asyncSetUp(self) -> None:
+        await super().asyncSetUp()
         self.addon = MockAddon()
         AddonManager.init([], self.session_manager, [self.addon])
         self.flow_context = self.session_manager.flow_context
@@ -124,8 +124,8 @@ class HTTPIntegrationTests(BaseProxyTest):
 
 
 class TestCapsClient(BaseProxyTest):
-    def setUp(self) -> None:
-        super().setUp()
+    async def asyncSetUp(self) -> None:
+        await super().asyncSetUp()
         self._setup_default_circuit()
         self.caps_client = self.session.main_region.caps_client
 
@@ -141,8 +141,8 @@ class TestCapsClient(BaseProxyTest):
 
 
 class TestMITMProxy(BaseProxyTest):
-    def setUp(self) -> None:
-        super().setUp()
+    async def asyncSetUp(self) -> None:
+        await super().asyncSetUp()
         self._setup_default_circuit()
         self.caps_client = self.session.main_region.caps_client
         proxy_port = 9905

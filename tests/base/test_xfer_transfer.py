@@ -28,7 +28,8 @@ class MockHandlingCircuit(ProxiedCircuit):
         self.handler = handler
 
     def _send_prepared_message(self, message: Message, transport=None):
-        asyncio.get_event_loop().call_soon(self.handler.handle, message)
+        loop = asyncio.get_event_loop_policy().get_event_loop()
+        loop.call_soon(self.handler.handle, message)
 
 
 class MockConnectionHolder(ConnectionHolder):

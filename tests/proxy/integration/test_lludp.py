@@ -47,8 +47,8 @@ class SimpleMessageLogger(FilteringMessageLogger):
 
 
 class LLUDPIntegrationTests(BaseProxyTest):
-    def setUp(self) -> None:
-        super().setUp()
+    async def asyncSetUp(self) -> None:
+        await super().asyncSetUp()
         self.addon = MockAddon()
         self.deserializer = UDPMessageDeserializer()
         AddonManager.init([], self.session_manager, [self.addon])

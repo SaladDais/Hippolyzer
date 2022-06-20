@@ -64,7 +64,8 @@ class TaskScheduler:
         for task_data, task in self.tasks:
             task.cancel()
         await_all = asyncio.gather(*(task for task_data, task in self.tasks))
-        asyncio.get_event_loop().run_until_complete(await_all)
+        event_loop = asyncio.get_event_loop_policy().get_event_loop()
+        event_loop.run_until_complete(await_all)
 
     def _task_done(self, task: asyncio.Task):
         for task_details in reversed(self.tasks):

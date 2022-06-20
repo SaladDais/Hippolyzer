@@ -7,8 +7,8 @@ from hippolyzer.lib.proxy.test_utils import BaseProxyTest
 
 
 class TestHTTPFlows(BaseProxyTest):
-    def setUp(self) -> None:
-        super().setUp()
+    async def asyncSetUp(self) -> None:
+        await super().asyncSetUp()
         self.region = self.session.register_region(
             ("127.0.0.1", 2),
             "https://test.localhost:4/foo",

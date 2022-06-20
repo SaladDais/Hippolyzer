@@ -36,7 +36,8 @@ class InterceptingLLUDPProxyProtocol(UDPProxyProtocol):
         )
         self.message_xml = MessageDotXML()
         self.session: Optional[Session] = None
-        self.resend_task = asyncio.get_event_loop().create_task(self.attempt_resends())
+        loop = asyncio.get_event_loop_policy().get_event_loop()
+        self.resend_task = loop.create_task(self.attempt_resends())
 
     async def attempt_resends(self):
         while True:

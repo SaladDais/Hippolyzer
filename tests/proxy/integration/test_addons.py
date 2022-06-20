@@ -62,8 +62,8 @@ addons = [ChildAddon()]
 
 
 class AddonIntegrationTests(BaseProxyTest):
-    def setUp(self) -> None:
-        super().setUp()
+    async def asyncSetUp(self) -> None:
+        await super().asyncSetUp()
         self.addon = MockAddon()
         AddonManager.init([], self.session_manager, [self.addon], swallow_addon_exceptions=False)
         self.temp_dir = TemporaryDirectory(prefix="addon_test_sources")
