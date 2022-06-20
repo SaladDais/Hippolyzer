@@ -63,18 +63,21 @@ class ProxyObjectManager(ClientObjectManager):
             cache_dir=self._region.session().cache_dir,
         )
 
-    def request_missed_cached_objects_soon(self):
+    def request_missed_cached_objects_soon(self, report_only=False):
         if self._cache_miss_timer:
             self._cache_miss_timer.cancel()
         # Basically debounce. Will only trigger 0.2 seconds after the last time it's invoked to
         # deal with the initial flood of ObjectUpdateCached and the natural lag time between that
         # and the viewers' RequestMultipleObjects messages
-        self._cache_miss_timer = asyncio.get_event_loop().call_later(
-            0.2, self._request_missed_cached_objects)
+        loop = asyncio.get_event_loop_policy().get_event_loop()
+        self._cache_miss_timer = loop.call_later(0.2, self._request_missed_cached_objects, report_only)
 
-    def _request_missed_cached_objects(self):
+    def _request_missed_cached_objects(self, report_only: bool):
         self._cache_miss_timer = None
-        self.request_objects(self.queued_cache_misses)
+        if report_only:
+            print(f"Would have automatically requested {self.queued_cache_misses!r}")
+        else:
+            self.request_objects(self.queued_cache_misses)
         self.queued_cache_misses.clear()
 
     def clear(self):
@@ -111,8 +114,11 @@ class ProxyWorldObjectManager(ClientWorldObjectManager):
 
     def _handle_object_update_cached_misses(self, region_handle: int, missing_locals: Set[int]):
         if not self._settings.ALLOW_AUTO_REQUEST_OBJECTS:
-            return
-        if self._settings.AUTOMATICALLY_REQUEST_MISSING_OBJECTS:
+            if self._settings.USE_VIEWER_OBJECT_CACHE:
+                region_mgr: Optional[ProxyObjectManager] = self._get_region_manager(region_handle)
+                region_mgr.queued_cache_misses |= missing_locals
+                region_mgr.request_missed_cached_objects_soon(report_only=True)
+        elif self._settings.AUTOMATICALLY_REQUEST_MISSING_OBJECTS:
             # Schedule these local IDs to be requested soon if the viewer doesn't request
             # them itself. Ideally we could just mutate the CRC of the ObjectUpdateCached
             # to force a CRC cache miss in the viewer, but that appears to cause the viewer

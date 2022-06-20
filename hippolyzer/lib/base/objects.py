@@ -270,6 +270,9 @@ def normalize_object_update_compressed_data(data: bytes):
     # Only used for determining which sections are present
     del compressed["Flags"]
 
+    # Unlike other ObjectUpdate types, a null value in an ObjectUpdateCompressed
+    # always means that there is no value, not that the value hasn't changed
+    # from the client's view. Use the default value when that happens.
     ps_block = compressed.pop("PSBlockNew", None)
     if ps_block is None:
         ps_block = compressed.pop("PSBlock", None)
@@ -278,6 +281,20 @@ def normalize_object_update_compressed_data(data: bytes):
     compressed.pop("PSBlock", None)
     if compressed["NameValue"] is None:
         compressed["NameValue"] = NameValueCollection()
+    if compressed["Text"] is None:
+        compressed["Text"] = b""
+        compressed["TextColor"] = b""
+    if compressed["MediaURL"] is None:
+        compressed["MediaURL"] = b""
+    if compressed["AngularVelocity"] is None:
+        compressed["AngularVelocity"] = Vector3()
+    if compressed["SoundFlags"] is None:
+        compressed["SoundFlags"] = 0
+        compressed["SoundGain"] = 0.0
+        compressed["SoundRadius"] = 0.0
+        compressed["Sound"] = UUID()
+    if compressed["TextureEntry"] is None:
+        compressed["TextureEntry"] = tmpls.TextureEntry()
 
     object_data = {
         "PSBlock": ps_block.value,
@@ -286,9 +303,9 @@ def normalize_object_update_compressed_data(data: bytes):
         "LocalID": compressed.pop("ID"),
         **compressed,
     }
-    if object_data["TextureEntry"] is None:
-        object_data.pop("TextureEntry")
-    # Don't clobber OwnerID in case the object has a proper one.
+    # Don't clobber OwnerID in case the object has a proper one from
+    # a previous ObjectProperties. OwnerID isn't expected to be populated
+    # on ObjectUpdates unless an attached sound is playing.
     if object_data["OwnerID"] == UUID():
         del object_data["OwnerID"]
     return object_data
