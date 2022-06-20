@@ -19,7 +19,7 @@ class TestHTTPFlows(BaseProxyTest):
             "ViewerAsset": "http://assets.example.com",
         })
 
-    def test_request_formatting(self):
+    async def test_request_formatting(self):
         req = tutils.treq(host="example.com", port=80)
         fake_flow = tflow.tflow(req=req, resp=tutils.tresp())
         flow = HippoHTTPFlow.from_state(fake_flow.get_state(), self.session_manager)
@@ -33,7 +33,7 @@ content-length: 7\r
 \r
 content""")
 
-    def test_binary_request_formatting(self):
+    async def test_binary_request_formatting(self):
         req = tutils.treq(host="example.com", port=80)
         fake_flow = tflow.tflow(req=req, resp=tutils.tresp())
         flow = HippoHTTPFlow.from_state(fake_flow.get_state(), self.session_manager)
@@ -47,7 +47,7 @@ X-Hippo-Escaped-Body: 1\r
 \r
 c\\x00ntent""")
 
-    def test_llsd_response_formatting(self):
+    async def test_llsd_response_formatting(self):
         fake_flow = tflow.tflow(req=tutils.treq(), resp=tutils.tresp())
         flow = HippoHTTPFlow.from_state(fake_flow.get_state(), self.session_manager)
         # Half the time LLSD is sent with a random Content-Type and no PI indicating
@@ -64,7 +64,7 @@ content-length: 33\r
 </llsd>
 """)
 
-    def test_flow_state_serde(self):
+    async def test_flow_state_serde(self):
         fake_flow = tflow.tflow(req=tutils.treq(host="example.com"), resp=tutils.tresp())
         flow = HippoHTTPFlow.from_state(fake_flow.get_state(), self.session_manager)
         # Make sure cap resolution works correctly
@@ -73,7 +73,7 @@ content-length: 33\r
         new_flow = HippoHTTPFlow.from_state(flow_state, self.session_manager)
         self.assertIs(self.session, new_flow.cap_data.session())
 
-    def test_http_asset_repo(self):
+    async def test_http_asset_repo(self):
         asset_repo = self.session_manager.asset_repo
         asset_id = asset_repo.create_asset(b"foobar", one_shot=True)
         req = tutils.treq(host="assets.example.com", path=f"/?animatn_id={asset_id}")
@@ -84,7 +84,7 @@ content-length: 33\r
         self.assertTrue(asset_repo.try_serve_asset(flow))
         self.assertEqual(b"foobar", flow.response.content)
 
-    def test_temporary_cap_resolution(self):
+    async def test_temporary_cap_resolution(self):
         self.region.register_cap("TempExample", "http://not.example.com", CapType.TEMPORARY)
         self.region.register_cap("TempExample", "http://not2.example.com", CapType.TEMPORARY)
         # Resolving the cap should consume it

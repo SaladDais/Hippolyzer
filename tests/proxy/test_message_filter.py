@@ -130,7 +130,7 @@ class MessageFilterTests(unittest.IsolatedAsyncioTestCase):
         # Make sure numbers outside 32bit range come through
         self.assertTrue(self._filter_matches("Foo.Bar.Foo == 0xFFffFFffFF", msg))
 
-    def test_http_flow(self):
+    async def test_http_flow(self):
         session_manager = SessionManager(ProxySettings())
         fake_flow = tflow.tflow(req=tutils.treq(), resp=tutils.tresp())
         fake_flow.metadata["cap_data_ser"] = SerializedCapData(
@@ -141,7 +141,7 @@ class MessageFilterTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(self._filter_matches("FakeCap", entry))
         self.assertFalse(self._filter_matches("NotFakeCap", entry))
 
-    def test_http_header_filter(self):
+    async def test_http_header_filter(self):
         session_manager = SessionManager(ProxySettings())
         fake_flow = tflow.tflow(req=tutils.treq(), resp=tutils.tresp())
         fake_flow.request.headers["Cookie"] = 'foo="bar"'
@@ -151,7 +151,7 @@ class MessageFilterTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(self._filter_matches('Meta.ReqHeaders.cookie ~= "foo"', entry))
         self.assertFalse(self._filter_matches('Meta.ReqHeaders.foobar ~= "foo"', entry))
 
-    def test_export_import_http_flow(self):
+    async def test_export_import_http_flow(self):
         fake_flow = tflow.tflow(req=tutils.treq(), resp=tutils.tresp())
         fake_flow.metadata["cap_data_ser"] = SerializedCapData(
             cap_name="FakeCap",
