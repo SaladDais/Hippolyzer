@@ -89,7 +89,7 @@ setup(
         # requests breaks with newer idna
         'idna<3,>=2.5',
         # 7.x will be a major change.
-        'mitmproxy>=7.0.2,<8.0',
+        'mitmproxy>=8.0.0,<8.1',
         # For REPLs
         'ptpython<4.0',
         # JP2 codec

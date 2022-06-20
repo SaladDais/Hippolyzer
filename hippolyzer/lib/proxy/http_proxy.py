@@ -70,7 +70,7 @@ class SLTlsConfig(mitmproxy.addons.tlsconfig.TlsConfig):
         )
         self.certstore.certs = old_cert_store.certs
 
-    def tls_start_server(self, tls_start: tls.TlsStartData):
+    def tls_start_server(self, tls_start: tls.TlsData):
         super().tls_start_server(tls_start)
         # Since 2000 the recommendation per RFCs has been to only check SANs and not the CN field.
         # Most browsers do this, as does mitmproxy. The viewer does not, and the sim certs have no SAN
@@ -228,10 +228,6 @@ class SLMITMMaster(mitmproxy.master.Master):
             SLTlsConfig(),
             SLMITMAddon(flow_context),
         )
-
-    def start_server(self):
-        self.start()
-        asyncio.ensure_future(self.running())
 
 
 def create_proxy_master(host, port, flow_context: HTTPFlowContext):  # pragma: no cover

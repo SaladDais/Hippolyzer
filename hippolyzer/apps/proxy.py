@@ -87,10 +87,13 @@ class REPLAddon(BaseAddon):
 def run_http_proxy_process(proxy_host, http_proxy_port, flow_context: HTTPFlowContext):
     mitm_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(mitm_loop)
-    mitmproxy_master = create_http_proxy(proxy_host, http_proxy_port, flow_context)
-    mitmproxy_master.start_server()
-    gc.freeze()
-    mitm_loop.run_forever()
+
+    async def mitmproxy_loop():
+        mitmproxy_master = create_http_proxy(proxy_host, http_proxy_port, flow_context)
+        gc.freeze()
+        await mitmproxy_master.run()
+
+    asyncio.run(mitmproxy_loop())
 
 
 def start_proxy(session_manager: SessionManager, extra_addons: Optional[list] = None,

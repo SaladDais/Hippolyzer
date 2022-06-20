@@ -1,7 +1,6 @@
 import abc
 
 from mitmproxy.addons import asgiapp
-from mitmproxy.controller import DummyReply
 
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
@@ -11,13 +10,7 @@ from hippolyzer.lib.proxy.sessions import Session, SessionManager
 
 async def serve(app, flow: HippoHTTPFlow):
     """Serve a request based on a Hippolyzer HTTP flow using a provided app"""
-    # Shove this on mitmproxy's flow object so asgiapp doesn't explode when it tries
-    # to commit the flow reply. Our take / commit semantics are different than mitmproxy
-    # proper, so we ignore what mitmproxy sets here anyhow.
-    flow.flow.reply = DummyReply()
-    flow.flow.reply.take()
     await asgiapp.serve(app, flow.flow)
-    flow.flow.reply = None
     # Send the modified flow object back to mitmproxy
     flow.resume()
 
