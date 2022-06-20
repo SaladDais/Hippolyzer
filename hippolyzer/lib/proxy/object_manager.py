@@ -74,6 +74,10 @@ class ProxyObjectManager(ClientObjectManager):
 
     def _request_missed_cached_objects(self, report_only: bool):
         self._cache_miss_timer = None
+        if not self.queued_cache_misses:
+            # All the queued cache misses ended up being satisfied without us
+            # having to request them, no need to fire off a request.
+            return
         if report_only:
             print(f"Would have automatically requested {self.queued_cache_misses!r}")
         else:
@@ -113,9 +117,9 @@ class ProxyWorldObjectManager(ClientWorldObjectManager):
         )
 
     def _handle_object_update_cached_misses(self, region_handle: int, missing_locals: Set[int]):
+        region_mgr: Optional[ProxyObjectManager] = self._get_region_manager(region_handle)
         if not self._settings.ALLOW_AUTO_REQUEST_OBJECTS:
             if self._settings.USE_VIEWER_OBJECT_CACHE:
-                region_mgr: Optional[ProxyObjectManager] = self._get_region_manager(region_handle)
                 region_mgr.queued_cache_misses |= missing_locals
                 region_mgr.request_missed_cached_objects_soon(report_only=True)
         elif self._settings.AUTOMATICALLY_REQUEST_MISSING_OBJECTS:
