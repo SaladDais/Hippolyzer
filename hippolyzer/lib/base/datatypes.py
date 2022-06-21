@@ -59,7 +59,7 @@ class TupleCoord(recordclass.datatuple, _IterableStub):  # type: ignore
         return self.__class__(*(abs(x) for x in self))
 
     def __neg__(self):
-        return self.__class__(-x for x in self)
+        return self.__class__(*(-x for x in self))
 
     def __add__(self, other):
         return self.__class__(*(x + y for x, y in zip(self, other)))
