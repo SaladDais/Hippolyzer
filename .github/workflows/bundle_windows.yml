@@ -2,12 +2,15 @@
 # onto the release after it gets created. Don't want actions with repo write.
 name: Bundle Windows EXE
 
+
 on:
   # Only trigger on release creation
   release:
     types:
       - created
   workflow_dispatch:
+env:
+  target_tag: ${{ github.ref_name }}
 
 
 jobs:
@@ -43,15 +46,17 @@ jobs:
         pip-licenses --format=plain-vertical --with-license-file --no-license-path --output-file=lib_licenses.txt
         python setup_cxfreeze.py finalize_cxfreeze
         # Should only be one, but we don't know what it's named
-        mv ./dist/*.zip hippolyzer-windows-${{ github.ref_name }}.zip
+        mv ./dist/*.zip hippolyzer-windows-${{ env.target_tag }}.zip
 
     - name: Upload the artifact
       uses: actions/upload-artifact@v2
       with:
-        name: hippolyzer-windows-${{ github.ref_name }}
-        path: ./hippolyzer-windows-${{ github.ref_name }}.zip
+        name: hippolyzer-windows-${{ github.sha }}
+        path: ./hippolyzer-windows-${{ env.target_tag }}.zip
 
     - uses: ncipollo/release-action@v1.10.0
       with:
-        artifacts: hippolyzer-windows-${{ github.ref_name }}.zip
+        artifacts: hippolyzer-windows-${{ env.target_tag }}.zip
+        tag: ${{ env.target_tag }}
         token: ${{ secrets.GITHUB_TOKEN }}
+        allowUpdates: true
