@@ -42,6 +42,7 @@ ptpython==3.0.20
 publicsuffix2==2.20191221
 pyasn1==0.4.8
 pycparser==2.21
+pycollada==0.7.2
 Pygments==2.10.0
 pyOpenSSL==22.0.0
 pyparsing==2.4.7
@@ -56,6 +57,7 @@ shiboken6==6.2.2
 six==1.16.0
 sortedcontainers==2.4.0
 tornado==6.1
+transformations==2021.6.6
 typing-extensions==4.0.1
 urllib3==1.26.7
 urwid==2.1.2

@@ -67,6 +67,7 @@ setup(
             'lib/base/data/static_data.db2',
             'lib/base/data/static_index.db2',
             'lib/base/data/avatar_lad.xml',
+            'lib/base/data/male_collada_joints.xml',
             'lib/base/data/avatar_skeleton.xml',
             'lib/base/data/LICENSE-artwork.txt',
         ],
@@ -98,6 +99,9 @@ setup(
         # These could be in extras_require if you don't want a GUI.
         'pyside6',
         'qasync',
+        # Needed for mesh format conversion tooling
+        'pycollada',
+        'transformations',
     ],
     tests_require=[
         "pytest",

@@ -1,0 +1,485 @@
+<!-- from http://wiki.secondlife.com/wiki/Project_Bento_Resources_and_Information collada -->
+      <node id="Avatar" name="Avatar" type="NODE" xmlns="http://www.collada.org/2005/11/COLLADASchema">
+        <translate sid="location">0 0 0</translate>
+        <rotate sid="rotationZ">0 0 1 0</rotate>
+        <rotate sid="rotationY">0 1 0 0</rotate>
+        <rotate sid="rotationX">1 0 0 0</rotate>
+        <scale sid="scale">1 1 1</scale>
+        <node id="mPelvis" name="mPelvis" sid="mPelvis" type="JOINT">
+          <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 1.067 0 0 0 1</matrix>
+          <node id="PELVIS" name="PELVIS" sid="PELVIS" type="JOINT">
+            <matrix sid="transform">1 0 0 -0.01 0 1 0 0 0 0 1 -0.02 0 0 0 1</matrix>
+          </node>
+          <node id="BUTT" name="BUTT" sid="BUTT" type="JOINT">
+            <matrix sid="transform">1 0 0 -0.06 0 1 0 0 0 0 1 -0.1 0 0 0 1</matrix>
+          </node>
+          <node id="mSpine1" name="mSpine1" sid="mSpine1" type="JOINT">
+            <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0.084 0 0 0 1</matrix>
+            <node id="mSpine2" name="mSpine2" sid="mSpine2" type="JOINT">
+              <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 -0.084 0 0 0 1</matrix>
+              <node id="mTorso" name="mTorso" sid="mTorso" type="JOINT">
+                <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0.084 0 0 0 1</matrix>
+                <node id="BELLY" name="BELLY" sid="BELLY" type="JOINT">
+                  <matrix sid="transform">1 0 0 0.028 0 1 0 0 0 0 1 0.04 0 0 0 1</matrix>
+                </node>
+                <node id="LEFT_HANDLE" name="LEFT_HANDLE" sid="LEFT_HANDLE" type="JOINT">
+                  <matrix sid="transform">1 0 0 0 0 1 0 0.1 0 0 1 0.058 0 0 0 1</matrix>
+                </node>
+                <node id="RIGHT_HANDLE" name="RIGHT_HANDLE" sid="RIGHT_HANDLE" type="JOINT">
+                  <matrix sid="transform">1 0 0 0 0 1 0 -0.1 0 0 1 0.058 0 0 0 1</matrix>
+                </node>
+                <node id="LOWER_BACK" name="LOWER_BACK" sid="LOWER_BACK" type="JOINT">
+                  <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0.023 0 0 0 1</matrix>
+                </node>
+                <node id="mSpine3" name="mSpine3" sid="mSpine3" type="JOINT">
+                  <matrix sid="transform">1 0 0 -0.015 0 1 0 0 0 0 1 0.205 0 0 0 1</matrix>
+                  <node id="mSpine4" name="mSpine4" sid="mSpine4" type="JOINT">
+                    <matrix sid="transform">1 0 0 0.015 0 1 0 0 0 0 1 -0.205 0 0 0 1</matrix>
+                    <node id="mChest" name="mChest" sid="mChest" type="JOINT">
+                      <matrix sid="transform">1 0 0 -0.015 0 1 0 0 0 0 1 0.205 0 0 0 1</matrix>
+                      <node id="CHEST" name="CHEST" sid="CHEST" type="JOINT">
+                        <matrix sid="transform">1 0 0 0.028 0 1 0 0 0 0 1 0.07 0 0 0 1</matrix>
+                      </node>
+                      <node id="LEFT_PEC" name="LEFT_PEC" sid="LEFT_PEC" type="JOINT">
+                        <matrix sid="transform">1 0 0 0.119 0 1 0 0.082 0 0 1 0.042 0 0 0 1</matrix>
+                      </node>
+                      <node id="RIGHT_PEC" name="RIGHT_PEC" sid="RIGHT_PEC" type="JOINT">
+                        <matrix sid="transform">1 0 0 0.119 0 1 0 -0.082 0 0 1 0.042 0 0 0 1</matrix>
+                      </node>
+                      <node id="UPPER_BACK" name="UPPER_BACK" sid="UPPER_BACK" type="JOINT">
+                        <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0.017 0 0 0 1</matrix>
+                      </node>
+                      <node id="mNeck" name="mNeck" sid="mNeck" type="JOINT">
+                        <matrix sid="transform">1 0 0 -0.01 0 1 0 0 0 0 1 0.251 0 0 0 1</matrix>
+                        <node id="NECK" name="NECK" sid="NECK" type="JOINT">
+                          <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0.02 0 0 0 1</matrix>
+                        </node>
+                        <node id="mHead" name="mHead" sid="mHead" type="JOINT">
+                          <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0.076 0 0 0 1</matrix>
+                          <node id="HEAD" name="HEAD" sid="HEAD" type="JOINT">
+                            <matrix sid="transform">1 0 0 0.02 0 1 0 0 0 0 1 0.07 0 0 0 1</matrix>
+                          </node>
+                          <node id="mSkull" name="mSkull" sid="mSkull" type="JOINT">
+                            <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0.079 0 0 0 1</matrix>
+                          </node>
+                          <node id="mEyeRight" name="mEyeRight" sid="mEyeRight" type="JOINT">
+                            <matrix sid="transform">1 0 0 0.098 0 1 0 -0.036 0 0 1 0.079 0 0 0 1</matrix>
+                          </node>
+                          <node id="mEyeLeft" name="mEyeLeft" sid="mEyeLeft" type="JOINT">
+                            <matrix sid="transform">1 0 0 0.098 0 1 0 0.036 0 0 1 0.079 0 0 0 1</matrix>
+                          </node>
+                          <node id="mFaceRoot" name="mFaceRoot" sid="mFaceRoot" type="JOINT">
+                            <matrix sid="transform">1 0 0 0.025 0 1 0 0 0 0 1 0.045 0 0 0 1</matrix>
+                            <node id="mFaceEyeAltRight" name="mFaceEyeAltRight" sid="mFaceEyeAltRight" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.073 0 1 0 -0.036 0 0 1 0.034 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceEyeAltLeft" name="mFaceEyeAltLeft" sid="mFaceEyeAltLeft" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.073 0 1 0 0.036 0 0 1 0.034 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceForeheadLeft" name="mFaceForeheadLeft" sid="mFaceForeheadLeft" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.061 0 1 0 0.035 0 0 1 0.083 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceForeheadRight" name="mFaceForeheadRight" sid="mFaceForeheadRight" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.061 0 1 0 -0.035 0 0 1 0.083 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceEyebrowOuterLeft" name="mFaceEyebrowOuterLeft" sid="mFaceEyebrowOuterLeft" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.064 0 1 0 0.051 0 0 1 0.048 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceEyebrowCenterLeft" name="mFaceEyebrowCenterLeft" sid="mFaceEyebrowCenterLeft" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.07 0 1 0 0.043 0 0 1 0.056 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceEyebrowInnerLeft" name="mFaceEyebrowInnerLeft" sid="mFaceEyebrowInnerLeft" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.075 0 1 0 0.022 0 0 1 0.051 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceEyebrowOuterRight" name="mFaceEyebrowOuterRight" sid="mFaceEyebrowOuterRight" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.064 0 1 0 -0.051 0 0 1 0.048 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceEyebrowCenterRight" name="mFaceEyebrowCenterRight" sid="mFaceEyebrowCenterRight" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.07 0 1 0 -0.043 0 0 1 0.056 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceEyebrowInnerRight" name="mFaceEyebrowInnerRight" sid="mFaceEyebrowInnerRight" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.075 0 1 0 -0.022 0 0 1 0.051 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceEyeLidUpperLeft" name="mFaceEyeLidUpperLeft" sid="mFaceEyeLidUpperLeft" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.073 0 1 0 0.036 0 0 1 0.034 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceEyeLidLowerLeft" name="mFaceEyeLidLowerLeft" sid="mFaceEyeLidLowerLeft" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.073 0 1 0 0.036 0 0 1 0.034 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceEyeLidUpperRight" name="mFaceEyeLidUpperRight" sid="mFaceEyeLidUpperRight" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.073 0 1 0 -0.036 0 0 1 0.034 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceEyeLidLowerRight" name="mFaceEyeLidLowerRight" sid="mFaceEyeLidLowerRight" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.073 0 1 0 -0.036 0 0 1 0.034 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceEar1Left" name="mFaceEar1Left" sid="mFaceEar1Left" type="JOINT">
+                              <matrix sid="transform">1 0 0 0 0 1 0 0.08 0 0 1 0.002 0 0 0 1</matrix>
+                              <node id="mFaceEar2Left" name="mFaceEar2Left" sid="mFaceEar2Left" type="JOINT">
+                                <matrix sid="transform">1 0 0 -0.019 0 1 0 0.018 0 0 1 0.025 0 0 0 1</matrix>
+                              </node>
+                            </node>
+                            <node id="mFaceEar1Right" name="mFaceEar1Right" sid="mFaceEar1Right" type="JOINT">
+                              <matrix sid="transform">1 0 0 0 0 1 0 -0.08 0 0 1 0.002 0 0 0 1</matrix>
+                              <node id="mFaceEar2Right" name="mFaceEar2Right" sid="mFaceEar2Right" type="JOINT">
+                                <matrix sid="transform">1 0 0 -0.019 0 1 0 -0.018 0 0 1 0.025 0 0 0 1</matrix>
+                              </node>
+                            </node>
+                            <node id="mFaceNoseLeft" name="mFaceNoseLeft" sid="mFaceNoseLeft" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.086 0 1 0 0.015 0 0 1 -0.004 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceNoseCenter" name="mFaceNoseCenter" sid="mFaceNoseCenter" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.102 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceNoseRight" name="mFaceNoseRight" sid="mFaceNoseRight" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.086 0 1 0 -0.015 0 0 1 -0.004 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceCheekLowerLeft" name="mFaceCheekLowerLeft" sid="mFaceCheekLowerLeft" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.05 0 1 0 0.034 0 0 1 -0.031 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceCheekUpperLeft" name="mFaceCheekUpperLeft" sid="mFaceCheekUpperLeft" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.07 0 1 0 0.034 0 0 1 -0.005 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceCheekLowerRight" name="mFaceCheekLowerRight" sid="mFaceCheekLowerRight" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.05 0 1 0 -0.034 0 0 1 -0.031 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceCheekUpperRight" name="mFaceCheekUpperRight" sid="mFaceCheekUpperRight" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.07 0 1 0 -0.034 0 0 1 -0.005 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceJaw" name="mFaceJaw" sid="mFaceJaw" type="JOINT">
+                              <matrix sid="transform">1 0 0 -0.001 0 1 0 0 0 0 1 -0.015 0 0 0 1</matrix>
+                              <node id="mFaceChin" name="mFaceChin" sid="mFaceChin" type="JOINT">
+                                <matrix sid="transform">1 0 0 0.074 0 1 0 0 0 0 1 -0.054 0 0 0 1</matrix>
+                              </node>
+                              <node id="mFaceTeethLower" name="mFaceTeethLower" sid="mFaceTeethLower" type="JOINT">
+                                <matrix sid="transform">1 0 0 0.021 0 1 0 0 0 0 1 -0.039 0 0 0 1</matrix>
+                                <node id="mFaceLipLowerLeft" name="mFaceLipLowerLeft" sid="mFaceLipLowerLeft" type="JOINT">
+                                  <matrix sid="transform">1 0 0 0.045 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+                                </node>
+                                <node id="mFaceLipLowerRight" name="mFaceLipLowerRight" sid="mFaceLipLowerRight" type="JOINT">
+                                  <matrix sid="transform">1 0 0 0.045 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+                                </node>
+                                <node id="mFaceLipLowerCenter" name="mFaceLipLowerCenter" sid="mFaceLipLowerCenter" type="JOINT">
+                                  <matrix sid="transform">1 0 0 0.045 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+                                </node>
+                                <node id="mFaceTongueBase" name="mFaceTongueBase" sid="mFaceTongueBase" type="JOINT">
+                                  <matrix sid="transform">1 0 0 0.039 0 1 0 0 0 0 1 0.005 0 0 0 1</matrix>
+                                  <node id="mFaceTongueTip" name="mFaceTongueTip" sid="mFaceTongueTip" type="JOINT">
+                                    <matrix sid="transform">1 0 0 0.022 0 1 0 0 0 0 1 0.007 0 0 0 1</matrix>
+                                  </node>
+                                </node>
+                              </node>
+                            </node>
+                            <node id="mFaceJawShaper" name="mFaceJawShaper" sid="mFaceJawShaper" type="JOINT">
+                              <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceForeheadCenter" name="mFaceForeheadCenter" sid="mFaceForeheadCenter" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.069 0 1 0 0 0 0 1 0.065 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceNoseBase" name="mFaceNoseBase" sid="mFaceNoseBase" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.094 0 1 0 0 0 0 1 -0.016 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceTeethUpper" name="mFaceTeethUpper" sid="mFaceTeethUpper" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.02 0 1 0 0 0 0 1 -0.03 0 0 0 1</matrix>
+                              <node id="mFaceLipUpperLeft" name="mFaceLipUpperLeft" sid="mFaceLipUpperLeft" type="JOINT">
+                                <matrix sid="transform">1 0 0 0.045 0 1 0 0 0 0 1 -0.003 0 0 0 1</matrix>
+                              </node>
+                              <node id="mFaceLipUpperRight" name="mFaceLipUpperRight" sid="mFaceLipUpperRight" type="JOINT">
+                                <matrix sid="transform">1 0 0 0.045 0 1 0 0 0 0 1 -0.003 0 0 0 1</matrix>
+                              </node>
+                              <node id="mFaceLipCornerLeft" name="mFaceLipCornerLeft" sid="mFaceLipCornerLeft" type="JOINT">
+                                <matrix sid="transform">1 0 0 0.028 0 1 0 -0.019 0 0 1 -0.01 0 0 0 1</matrix>
+                              </node>
+                              <node id="mFaceLipCornerRight" name="mFaceLipCornerRight" sid="mFaceLipCornerRight" type="JOINT">
+                                <matrix sid="transform">1 0 0 0.028 0 1 0 0.019 0 0 1 -0.01 0 0 0 1</matrix>
+                              </node>
+                              <node id="mFaceLipUpperCenter" name="mFaceLipUpperCenter" sid="mFaceLipUpperCenter" type="JOINT">
+                                <matrix sid="transform">1 0 0 0.045 0 1 0 0 0 0 1 -0.003 0 0 0 1</matrix>
+                              </node>
+                            </node>
+                            <node id="mFaceEyecornerInnerLeft" name="mFaceEyecornerInnerLeft" sid="mFaceEyecornerInnerLeft" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.075 0 1 0 0.017 0 0 1 0.032 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceEyecornerInnerRight" name="mFaceEyecornerInnerRight" sid="mFaceEyecornerInnerRight" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.075 0 1 0 -0.017 0 0 1 0.032 0 0 0 1</matrix>
+                            </node>
+                            <node id="mFaceNoseBridge" name="mFaceNoseBridge" sid="mFaceNoseBridge" type="JOINT">
+                              <matrix sid="transform">1 0 0 0.091 0 1 0 0 0 0 1 0.02 0 0 0 1</matrix>
+                            </node>
+                          </node>
+                        </node>
+                      </node>
+                      <node id="mCollarLeft" name="mCollarLeft" sid="mCollarLeft" type="JOINT">
+                        <matrix sid="transform">1 0 0 -0.021 0 1 0 0.085 0 0 1 0.165 0 0 0 1</matrix>
+                        <node id="L_CLAVICLE" name="L_CLAVICLE" sid="L_CLAVICLE" type="JOINT">
+                          <matrix sid="transform">1 0 0 0.02 0 1 0 0 0 0 1 0.02 0 0 0 1</matrix>
+                        </node>
+                        <node id="mShoulderLeft" name="mShoulderLeft" sid="mShoulderLeft" type="JOINT">
+                          <matrix sid="transform">1 0 0 0 0 1 0 0.079 0 0 1 0 0 0 0 1</matrix>
+                          <node id="L_UPPER_ARM" name="L_UPPER_ARM" sid="L_UPPER_ARM" type="JOINT">
+                            <matrix sid="transform">1 0 0 0 0 1 0 0.12 0 0 1 0.01 0 0 0 1</matrix>
+                          </node>
+                          <node id="mElbowLeft" name="mElbowLeft" sid="mElbowLeft" type="JOINT">
+                            <matrix sid="transform">1 0 0 0 0 1 0 0.248 0 0 1 0 0 0 0 1</matrix>
+                            <node id="L_LOWER_ARM" name="L_LOWER_ARM" sid="L_LOWER_ARM" type="JOINT">
+                              <matrix sid="transform">1 0 0 0 0 1 0 0.1 0 0 1 0 0 0 0 1</matrix>
+                            </node>
+                            <node id="mWristLeft" name="mWristLeft" sid="mWristLeft" type="JOINT">
+                              <matrix sid="transform">1 0 0 0 0 1 0 0.205 0 0 1 0 0 0 0 1</matrix>
+                              <node id="L_HAND" name="L_HAND" sid="L_HAND" type="JOINT">
+                                <matrix sid="transform">1 0 0 0.01 0 1 0 0.05 0 0 1 0 0 0 0 1</matrix>
+                              </node>
+                              <node id="mHandMiddle1Left" name="mHandMiddle1Left" sid="mHandMiddle1Left" type="JOINT">
+                                <matrix sid="transform">1 0 0 0.013 0 1 0 0.101 0 0 1 0.015 0 0 0 1</matrix>
+                                <node id="mHandMiddle2Left" name="mHandMiddle2Left" sid="mHandMiddle2Left" type="JOINT">
+                                  <matrix sid="transform">1 0 0 -0.001 0 1 0 0.04 0 0 1 -0.006 0 0 0 1</matrix>
+                                  <node id="mHandMiddle3Left" name="mHandMiddle3Left" sid="mHandMiddle3Left" type="JOINT">
+                                    <matrix sid="transform">1 0 0 -0.001 0 1 0 0.049 0 0 1 -0.008 0 0 0 1</matrix>
+                                  </node>
+                                </node>
+                              </node>
+                              <node id="mHandIndex1Left" name="mHandIndex1Left" sid="mHandIndex1Left" type="JOINT">
+                                <matrix sid="transform">1 0 0 0.038 0 1 0 0.097 0 0 1 0.015 0 0 0 1</matrix>
+                                <node id="mHandIndex2Left" name="mHandIndex2Left" sid="mHandIndex2Left" type="JOINT">
+                                  <matrix sid="transform">1 0 0 0.017 0 1 0 0.036 0 0 1 -0.006 0 0 0 1</matrix>
+                                  <node id="mHandIndex3Left" name="mHandIndex3Left" sid="mHandIndex3Left" type="JOINT">
+                                    <matrix sid="transform">1 0 0 0.014 0 1 0 0.032 0 0 1 -0.006 0 0 0 1</matrix>
+                                  </node>
+                                </node>
+                              </node>
+                              <node id="mHandRing1Left" name="mHandRing1Left" sid="mHandRing1Left" type="JOINT">
+                                <matrix sid="transform">1 0 0 -0.01 0 1 0 0.099 0 0 1 0.009 0 0 0 1</matrix>
+                                <node id="mHandRing2Left" name="mHandRing2Left" sid="mHandRing2Left" type="JOINT">
+                                  <matrix sid="transform">1 0 0 -0.013 0 1 0 0.038 0 0 1 -0.008 0 0 0 1</matrix>
+                                  <node id="mHandRing3Left" name="mHandRing3Left" sid="mHandRing3Left" type="JOINT">
+                                    <matrix sid="transform">1 0 0 -0.013 0 1 0 0.04 0 0 1 -0.009 0 0 0 1</matrix>
+                                  </node>
+                                </node>
+                              </node>
+                              <node id="mHandPinky1Left" name="mHandPinky1Left" sid="mHandPinky1Left" type="JOINT">
+                                <matrix sid="transform">1 0 0 -0.031 0 1 0 0.095 0 0 1 0.003 0 0 0 1</matrix>
+                                <node id="mHandPinky2Left" name="mHandPinky2Left" sid="mHandPinky2Left" type="JOINT">
+                                  <matrix sid="transform">1 0 0 -0.024 0 1 0 0.025 0 0 1 -0.006 0 0 0 1</matrix>
+                                  <node id="mHandPinky3Left" name="mHandPinky3Left" sid="mHandPinky3Left" type="JOINT">
+                                    <matrix sid="transform">1 0 0 -0.015 0 1 0 0.018 0 0 1 -0.004 0 0 0 1</matrix>
+                                  </node>
+                                </node>
+                              </node>
+                              <node id="mHandThumb1Left" name="mHandThumb1Left" sid="mHandThumb1Left" type="JOINT">
+                                <matrix sid="transform">1 0 0 0.031 0 1 0 0.026 0 0 1 0.004 0 0 0 1</matrix>
+                                <node id="mHandThumb2Left" name="mHandThumb2Left" sid="mHandThumb2Left" type="JOINT">
+                                  <matrix sid="transform">1 0 0 0.028 0 1 0 0.032 0 0 1 -0.001 0 0 0 1</matrix>
+                                  <node id="mHandThumb3Left" name="mHandThumb3Left" sid="mHandThumb3Left" type="JOINT">
+                                    <matrix sid="transform">1 0 0 0.023 0 1 0 0.031 0 0 1 -0.001 0 0 0 1</matrix>
+                                  </node>
+                                </node>
+                              </node>
+                            </node>
+                          </node>
+                        </node>
+                      </node>
+                      <node id="mCollarRight" name="mCollarRight" sid="mCollarRight" type="JOINT">
+                        <matrix sid="transform">1 0 0 -0.021 0 1 0 -0.085 0 0 1 0.165 0 0 0 1</matrix>
+                        <node id="R_CLAVICLE" name="R_CLAVICLE" sid="R_CLAVICLE" type="JOINT">
+                          <matrix sid="transform">1 0 0 0.02 0 1 0 0 0 0 1 0.02 0 0 0 1</matrix>
+                        </node>
+                        <node id="mShoulderRight" name="mShoulderRight" sid="mShoulderRight" type="JOINT">
+                          <matrix sid="transform">1 0 0 0 0 1 0 -0.079 0 0 1 0 0 0 0 1</matrix>
+                          <node id="R_UPPER_ARM" name="R_UPPER_ARM" sid="R_UPPER_ARM" type="JOINT">
+                            <matrix sid="transform">1 0 0 0 0 1 0 -0.12 0 0 1 0.01 0 0 0 1</matrix>
+                          </node>
+                          <node id="mElbowRight" name="mElbowRight" sid="mElbowRight" type="JOINT">
+                            <matrix sid="transform">1 0 0 0 0 1 0 -0.248 0 0 1 0 0 0 0 1</matrix>
+                            <node id="R_LOWER_ARM" name="R_LOWER_ARM" sid="R_LOWER_ARM" type="JOINT">
+                              <matrix sid="transform">1 0 0 0 0 1 0 -0.1 0 0 1 0 0 0 0 1</matrix>
+                            </node>
+                            <node id="mWristRight" name="mWristRight" sid="mWristRight" type="JOINT">
+                              <matrix sid="transform">1 0 0 0 0 1 0 -0.205 0 0 1 0 0 0 0 1</matrix>
+                              <node id="R_HAND" name="R_HAND" sid="R_HAND" type="JOINT">
+                                <matrix sid="transform">1 0 0 0.01 0 1 0 -0.05 0 0 1 0 0 0 0 1</matrix>
+                              </node>
+                              <node id="mHandMiddle1Right" name="mHandMiddle1Right" sid="mHandMiddle1Right" type="JOINT">
+                                <matrix sid="transform">1 0 0 0.013 0 1 0 -0.101 0 0 1 0.015 0 0 0 1</matrix>
+                                <node id="mHandMiddle2Right" name="mHandMiddle2Right" sid="mHandMiddle2Right" type="JOINT">
+                                  <matrix sid="transform">1 0 0 -0.001 0 1 0 -0.04 0 0 1 -0.006 0 0 0 1</matrix>
+                                  <node id="mHandMiddle3Right" name="mHandMiddle3Right" sid="mHandMiddle3Right" type="JOINT">
+                                    <matrix sid="transform">1 0 0 -0.001 0 1 0 -0.049 0 0 1 -0.008 0 0 0 1</matrix>
+                                  </node>
+                                </node>
+                              </node>
+                              <node id="mHandIndex1Right" name="mHandIndex1Right" sid="mHandIndex1Right" type="JOINT">
+                                <matrix sid="transform">1 0 0 0.038 0 1 0 -0.097 0 0 1 0.015 0 0 0 1</matrix>
+                                <node id="mHandIndex2Right" name="mHandIndex2Right" sid="mHandIndex2Right" type="JOINT">
+                                  <matrix sid="transform">1 0 0 0.017 0 1 0 -0.036 0 0 1 -0.006 0 0 0 1</matrix>
+                                  <node id="mHandIndex3Right" name="mHandIndex3Right" sid="mHandIndex3Right" type="JOINT">
+                                    <matrix sid="transform">1 0 0 0.014 0 1 0 -0.032 0 0 1 -0.006 0 0 0 1</matrix>
+                                  </node>
+                                </node>
+                              </node>
+                              <node id="mHandRing1Right" name="mHandRing1Right" sid="mHandRing1Right" type="JOINT">
+                                <matrix sid="transform">1 0 0 -0.01 0 1 0 -0.099 0 0 1 0.009 0 0 0 1</matrix>
+                                <node id="mHandRing2Right" name="mHandRing2Right" sid="mHandRing2Right" type="JOINT">
+                                  <matrix sid="transform">1 0 0 -0.013 0 1 0 -0.038 0 0 1 -0.008 0 0 0 1</matrix>
+                                  <node id="mHandRing3Right" name="mHandRing3Right" sid="mHandRing3Right" type="JOINT">
+                                    <matrix sid="transform">1 0 0 -0.013 0 1 0 -0.04 0 0 1 -0.009 0 0 0 1</matrix>
+                                  </node>
+                                </node>
+                              </node>
+                              <node id="mHandPinky1Right" name="mHandPinky1Right" sid="mHandPinky1Right" type="JOINT">
+                                <matrix sid="transform">1 0 0 -0.031 0 1 0 -0.095 0 0 1 0.003 0 0 0 1</matrix>
+                                <node id="mHandPinky2Right" name="mHandPinky2Right" sid="mHandPinky2Right" type="JOINT">
+                                  <matrix sid="transform">1 0 0 -0.024 0 1 0 -0.025 0 0 1 -0.006 0 0 0 1</matrix>
+                                  <node id="mHandPinky3Right" name="mHandPinky3Right" sid="mHandPinky3Right" type="JOINT">
+                                    <matrix sid="transform">1 0 0 -0.015 0 1 0 -0.018 0 0 1 -0.004 0 0 0 1</matrix>
+                                  </node>
+                                </node>
+                              </node>
+                              <node id="mHandThumb1Right" name="mHandThumb1Right" sid="mHandThumb1Right" type="JOINT">
+                                <matrix sid="transform">1 0 0 0.031 0 1 0 -0.026 0 0 1 0.004 0 0 0 1</matrix>
+                                <node id="mHandThumb2Right" name="mHandThumb2Right" sid="mHandThumb2Right" type="JOINT">
+                                  <matrix sid="transform">1 0 0 0.028 0 1 0 -0.032 0 0 1 -0.001 0 0 0 1</matrix>
+                                  <node id="mHandThumb3Right" name="mHandThumb3Right" sid="mHandThumb3Right" type="JOINT">
+                                    <matrix sid="transform">1 0 0 0.023 0 1 0 -0.031 0 0 1 -0.001 0 0 0 1</matrix>
+                                  </node>
+                                </node>
+                              </node>
+                            </node>
+                          </node>
+                        </node>
+                      </node>
+                      <node id="mWingsRoot" name="mWingsRoot" sid="mWingsRoot" type="JOINT">
+                        <matrix sid="transform">1 0 0 -0.014 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+                        <node id="mWing1Left" name="mWing1Left" sid="mWing1Left" type="JOINT">
+                          <matrix sid="transform">1 0 0 -0.099 0 1 0 0.105 0 0 1 0.181 0 0 0 1</matrix>
+                          <node id="mWing2Left" name="mWing2Left" sid="mWing2Left" type="JOINT">
+                            <matrix sid="transform">1 0 0 -0.168 0 1 0 0.169 0 0 1 0.067 0 0 0 1</matrix>
+                            <node id="mWing3Left" name="mWing3Left" sid="mWing3Left" type="JOINT">
+                              <matrix sid="transform">1 0 0 -0.181 0 1 0 0.183 0 0 1 0 0 0 0 1</matrix>
+                              <node id="mWing4Left" name="mWing4Left" sid="mWing4Left" type="JOINT">
+                                <matrix sid="transform">1 0 0 -0.171 0 1 0 0.173 0 0 1 0 0 0 0 1</matrix>
+                              </node>
+                              <node id="mWing4FanLeft" name="mWing4FanLeft" sid="mWing4FanLeft" type="JOINT">
+                                <matrix sid="transform">1 0 0 -0.171 0 1 0 0.173 0 0 1 0 0 0 0 1</matrix>
+                              </node>
+                            </node>
+                          </node>
+                        </node>
+                        <node id="mWing1Right" name="mWing1Right" sid="mWing1Right" type="JOINT">
+                          <matrix sid="transform">1 0 0 -0.099 0 1 0 -0.105 0 0 1 0.181 0 0 0 1</matrix>
+                          <node id="mWing2Right" name="mWing2Right" sid="mWing2Right" type="JOINT">
+                            <matrix sid="transform">1 0 0 -0.168 0 1 0 -0.169 0 0 1 0.067 0 0 0 1</matrix>
+                            <node id="mWing3Right" name="mWing3Right" sid="mWing3Right" type="JOINT">
+                              <matrix sid="transform">1 0 0 -0.181 0 1 0 -0.183 0 0 1 0 0 0 0 1</matrix>
+                              <node id="mWing4Right" name="mWing4Right" sid="mWing4Right" type="JOINT">
+                                <matrix sid="transform">1 0 0 -0.171 0 1 0 -0.173 0 0 1 0 0 0 0 1</matrix>
+                              </node>
+                              <node id="mWing4FanRight" name="mWing4FanRight" sid="mWing4FanRight" type="JOINT">
+                                <matrix sid="transform">1 0 0 -0.171 0 1 0 -0.173 0 0 1 0 0 0 0 1</matrix>
+                              </node>
+                            </node>
+                          </node>
+                        </node>
+                      </node>
+                    </node>
+                  </node>
+                </node>
+              </node>
+            </node>
+          </node>
+          <node id="mHipRight" name="mHipRight" sid="mHipRight" type="JOINT">
+            <matrix sid="transform">1 0 0 0.034 0 1 0 -0.129 0 0 1 -0.041 0 0 0 1</matrix>
+            <node id="R_UPPER_LEG" name="R_UPPER_LEG" sid="R_UPPER_LEG" type="JOINT">
+              <matrix sid="transform">1 0 0 -0.02 0 1 0 0.05 0 0 1 -0.22 0 0 0 1</matrix>
+            </node>
+            <node id="mKneeRight" name="mKneeRight" sid="mKneeRight" type="JOINT">
+              <matrix sid="transform">1 0 0 -0.001 0 1 0 0.049 0 0 1 -0.491 0 0 0 1</matrix>
+              <node id="R_LOWER_LEG" name="R_LOWER_LEG" sid="R_LOWER_LEG" type="JOINT">
+                <matrix sid="transform">1 0 0 -0.02 0 1 0 0 0 0 1 -0.2 0 0 0 1</matrix>
+              </node>
+              <node id="mAnkleRight" name="mAnkleRight" sid="mAnkleRight" type="JOINT">
+                <matrix sid="transform">1 0 0 -0.029 0 1 0 0 0 0 1 -0.468 0 0 0 1</matrix>
+                <node id="R_FOOT" name="R_FOOT" sid="R_FOOT" type="JOINT">
+                  <matrix sid="transform">1 0 0 0.077 0 1 0 0 0 0 1 -0.041 0 0 0 1</matrix>
+                </node>
+                <node id="mFootRight" name="mFootRight" sid="mFootRight" type="JOINT">
+                  <matrix sid="transform">1 0 0 0.112 0 1 0 0 0 0 1 -0.061 0 0 0 1</matrix>
+                  <node id="mToeRight" name="mToeRight" sid="mToeRight" type="JOINT">
+                    <matrix sid="transform">1 0 0 0.109 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+                  </node>
+                </node>
+              </node>
+            </node>
+          </node>
+          <node id="mHipLeft" name="mHipLeft" sid="mHipLeft" type="JOINT">
+            <matrix sid="transform">1 0 0 0.034 0 1 0 0.127 0 0 1 -0.041 0 0 0 1</matrix>
+            <node id="L_UPPER_LEG" name="L_UPPER_LEG" sid="L_UPPER_LEG" type="JOINT">
+              <matrix sid="transform">1 0 0 -0.02 0 1 0 -0.05 0 0 1 -0.22 0 0 0 1</matrix>
+            </node>
+            <node id="mKneeLeft" name="mKneeLeft" sid="mKneeLeft" type="JOINT">
+              <matrix sid="transform">1 0 0 -0.001 0 1 0 -0.046 0 0 1 -0.491 0 0 0 1</matrix>
+              <node id="L_LOWER_LEG" name="L_LOWER_LEG" sid="L_LOWER_LEG" type="JOINT">
+                <matrix sid="transform">1 0 0 -0.02 0 1 0 0 0 0 1 -0.2 0 0 0 1</matrix>
+              </node>
+              <node id="mAnkleLeft" name="mAnkleLeft" sid="mAnkleLeft" type="JOINT">
+                <matrix sid="transform">1 0 0 -0.029 0 1 0 0.001 0 0 1 -0.468 0 0 0 1</matrix>
+                <node id="L_FOOT" name="L_FOOT" sid="L_FOOT" type="JOINT">
+                  <matrix sid="transform">1 0 0 0.077 0 1 0 0 0 0 1 -0.041 0 0 0 1</matrix>
+                </node>
+                <node id="mFootLeft" name="mFootLeft" sid="mFootLeft" type="JOINT">
+                  <matrix sid="transform">1 0 0 0.112 0 1 0 0 0 0 1 -0.061 0 0 0 1</matrix>
+                  <node id="mToeLeft" name="mToeLeft" sid="mToeLeft" type="JOINT">
+                    <matrix sid="transform">1 0 0 0.109 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+                  </node>
+                </node>
+              </node>
+            </node>
+          </node>
+          <node id="mTail1" name="mTail1" sid="mTail1" type="JOINT">
+            <matrix sid="transform">1 0 0 -0.116 0 1 0 0 0 0 1 0.047 0 0 0 1</matrix>
+            <node id="mTail2" name="mTail2" sid="mTail2" type="JOINT">
+              <matrix sid="transform">1 0 0 -0.197 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+              <node id="mTail3" name="mTail3" sid="mTail3" type="JOINT">
+                <matrix sid="transform">1 0 0 -0.168 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+                <node id="mTail4" name="mTail4" sid="mTail4" type="JOINT">
+                  <matrix sid="transform">1 0 0 -0.142 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+                  <node id="mTail5" name="mTail5" sid="mTail5" type="JOINT">
+                    <matrix sid="transform">1 0 0 -0.112 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+                    <node id="mTail6" name="mTail6" sid="mTail6" type="JOINT">
+                      <matrix sid="transform">1 0 0 -0.094 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+                    </node>
+                  </node>
+                </node>
+              </node>
+            </node>
+          </node>
+          <node id="mGroin" name="mGroin" sid="mGroin" type="JOINT">
+            <matrix sid="transform">1 0 0 0.064 0 1 0 0 0 0 1 -0.097 0 0 0 1</matrix>
+          </node>
+          <node id="mHindLimbsRoot" name="mHindLimbsRoot" sid="mHindLimbsRoot" type="JOINT">
+            <matrix sid="transform">1 0 0 -0.2 0 1 0 0 0 0 1 0.084 0 0 0 1</matrix>
+            <node id="mHindLimb1Left" name="mHindLimb1Left" sid="mHindLimb1Left" type="JOINT">
+              <matrix sid="transform">1 0 0 -0.204 0 1 0 0.129 0 0 1 -0.125 0 0 0 1</matrix>
+              <node id="mHindLimb2Left" name="mHindLimb2Left" sid="mHindLimb2Left" type="JOINT">
+                <matrix sid="transform">1 0 0 0.002 0 1 0 -0.046 0 0 1 -0.491 0 0 0 1</matrix>
+                <node id="mHindLimb3Left" name="mHindLimb3Left" sid="mHindLimb3Left" type="JOINT">
+                  <matrix sid="transform">1 0 0 -0.03 0 1 0 -0.003 0 0 1 -0.468 0 0 0 1</matrix>
+                  <node id="mHindLimb4Left" name="mHindLimb4Left" sid="mHindLimb4Left" type="JOINT">
+                    <matrix sid="transform">1 0 0 0.112 0 1 0 0 0 0 1 -0.061 0 0 0 1</matrix>
+                  </node>
+                </node>
+              </node>
+            </node>
+            <node id="mHindLimb1Right" name="mHindLimb1Right" sid="mHindLimb1Right" type="JOINT">
+              <matrix sid="transform">1 0 0 -0.204 0 1 0 -0.129 0 0 1 -0.125 0 0 0 1</matrix>
+              <node id="mHindLimb2Right" name="mHindLimb2Right" sid="mHindLimb2Right" type="JOINT">
+                <matrix sid="transform">1 0 0 0.002 0 1 0 0.046 0 0 1 -0.491 0 0 0 1</matrix>
+                <node id="mHindLimb3Right" name="mHindLimb3Right" sid="mHindLimb3Right" type="JOINT">
+                  <matrix sid="transform">1 0 0 -0.03 0 1 0 0.003 0 0 1 -0.468 0 0 0 1</matrix>
+                  <node id="mHindLimb4Right" name="mHindLimb4Right" sid="mHindLimb4Right" type="JOINT">
+                    <matrix sid="transform">1 0 0 0.112 0 1 0 0 0 0 1 -0.061 0 0 0 1</matrix>
+                  </node>
+                </node>
+              </node>
+            </node>
+          </node>
+        </node>
+      </node>
