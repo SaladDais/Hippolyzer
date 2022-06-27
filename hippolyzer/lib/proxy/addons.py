@@ -58,6 +58,14 @@ class BaseInteractionManager:
         return None
 
 
+# Used to initialize a REPL environment with commonly desired helpers
+REPL_INITIALIZER = r"""
+from hippolyzer.lib.base.datatypes import *
+from hippolyzer.lib.base.message.message import Block, Message, Direction
+from hippolyzer.lib.proxy.addon_utils import send_chat, show_message
+"""
+
+
 class AddonManager:
     COMMAND_CHANNEL = 524
 
@@ -132,6 +140,9 @@ class AddonManager:
             _globals = stack.frame.f_globals
         if _locals is None:
             _locals = stack.frame.f_locals
+
+        _globals = dict(_globals)
+        exec(REPL_INITIALIZER, _globals, None)
 
         async def _wrapper():
             coro: Coroutine = ptpython.repl.embed(  # noqa: the type signature lies

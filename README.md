@@ -333,6 +333,13 @@ If you are a viewer developer, please put them in a viewer.
   apply the mesh to the local mesh target. It works on attachments too. Useful for testing rigs before a 
   final, real upload.
 
+## REPL
+
+A quick and dirty REPL is also included for when you want to do ad-hoc introspection of proxy state.
+It can be launched at any time by typing `/524 spawn_repl` in chat.
+
+![Screenshot of REPL](https://github.com/SaladDais/Hippolyzer/blob/master/static/repl_screenshot.png?raw=true)
+
 ## Potential Changes
 
 * AISv3 wrapper?
