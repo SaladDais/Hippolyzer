@@ -28,7 +28,8 @@ class ProxyCapsClient(CapsClient):
             # We go through the proxy by default, tack on a header letting mitmproxy know the
             # request came from us so we can tag the request as injected. The header will be popped
             # off before passing through to the server.
-            headers["X-Hippo-Injected"] = "1"
+            if "X-Hippo-Injected" not in headers:
+                headers["X-Hippo-Injected"] = "1"
             proxy_port = self._settings.HTTP_PROXY_PORT
             proxy = f"http://127.0.0.1:{proxy_port}"
             # TODO: set up the SSLContext to validate mitmproxy's cert

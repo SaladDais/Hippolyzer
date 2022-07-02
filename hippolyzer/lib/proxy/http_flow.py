@@ -111,6 +111,12 @@ class HippoHTTPFlow:
         self.resumed = True
         self.callback_queue().put(("callback", self.flow.id, self.get_state()))
 
+    def preempt(self):
+        # Must be some flow that we previously resumed, we're racing
+        # the result from the server end.
+        assert not self.taken and self.resumed
+        self.callback_queue().put(("preempt", self.flow.id, self.get_state()))
+
     @property
     def is_replay(self) -> bool:
         return bool(self.flow.is_replay)

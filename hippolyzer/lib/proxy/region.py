@@ -11,7 +11,7 @@ import multidict
 
 from hippolyzer.lib.base.datatypes import Vector3, UUID
 from hippolyzer.lib.base.helpers import proxify
-from hippolyzer.lib.base.message.message import Message
+from hippolyzer.lib.base.message.message import Message, Block
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.objects import handle_to_global_pos
 from hippolyzer.lib.client.state import BaseClientRegion
@@ -171,6 +171,19 @@ class EventQueueManager:
 
     def inject_event(self, event: dict):
         self._queued_events.append(event)
+        if self._region:
+            circuit: ProxiedCircuit = self._region.circuit
+            session: Session = self._region.session()
+            # Inject an outbound PlacesQuery message so we can trigger an inbound PlacesReply
+            # over the EQ. That will allow us to shove our own event onto the response once it comes in,
+            # otherwise we have to wait until the EQ legitimately returns 200 due to a new event.
+            # May or may not work in OpenSim.
+            circuit.send_message(Message(
+                'PlacesQuery',
+                Block('AgentData', AgentID=session.agent_id, SessionID=session.id, QueryID=UUID()),
+                Block('TransactionData', TransactionID=UUID()),
+                Block('QueryData', QueryText=b'', QueryFlags=64, Category=-1, SimName=b''),
+            ))
 
     def take_injected_events(self):
         events = self._queued_events

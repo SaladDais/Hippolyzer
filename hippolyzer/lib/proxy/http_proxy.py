@@ -7,6 +7,7 @@ import sys
 import queue
 import typing
 import uuid
+import weakref
 
 import mitmproxy.certs
 import mitmproxy.ctx
@@ -99,7 +100,7 @@ class IPCInterceptionAddon:
     """
     def __init__(self, flow_context: HTTPFlowContext):
         self.mitmproxy_ready = flow_context.mitmproxy_ready
-        self.intercepted_flows: typing.Dict[str, HTTPFlow] = {}
+        self.flows: weakref.WeakValueDictionary[str, HTTPFlow] = weakref.WeakValueDictionary()
         self.from_proxy_queue: multiprocessing.Queue = flow_context.from_proxy_queue
         self.to_proxy_queue: multiprocessing.Queue = flow_context.to_proxy_queue
         self.shutdown_signal: multiprocessing.Event = flow_context.shutdown_signal
@@ -134,8 +135,13 @@ class IPCInterceptionAddon:
                     await asyncio.sleep(0.001)
                     continue
                 if event_type == "callback":
-                    orig_flow = self.intercepted_flows.pop(flow_id)
+                    orig_flow = self.flows[flow_id]
                     orig_flow.set_state(flow_state)
+                elif event_type == "preempt":
+                    orig_flow = self.flows.get(flow_id)
+                    if orig_flow:
+                        orig_flow.intercept()
+                        orig_flow.set_state(flow_state)
                 elif event_type == "replay":
                     flow: HTTPFlow = HTTPFlow.from_state(flow_state)
                     # mitmproxy won't replay intercepted flows, this is an old flow so
@@ -157,8 +163,8 @@ class IPCInterceptionAddon:
         from_browser = "Mozilla" in flow.request.headers.get("User-Agent", "")
         flow.metadata["from_browser"] = from_browser
         # Only trust the "injected" header if not from a browser
-        was_injected = flow.request.headers.pop("X-Hippo-Injected", False)
-        if was_injected and not from_browser:
+        was_injected = flow.request.headers.pop("X-Hippo-Injected", "")
+        if was_injected == "1" and not from_browser:
             flow.metadata["request_injected"] = True
 
         # Does this request need the stupid hack around aiohttp's windows proactor bug
@@ -169,7 +175,7 @@ class IPCInterceptionAddon:
 
     def _queue_flow_interception(self, event_type: str, flow: HTTPFlow):
         flow.intercept()
-        self.intercepted_flows[flow.id] = flow
+        self.flows[flow.id] = flow
         self.from_proxy_queue.put((event_type, flow.get_state()), True)
 
     def responseheaders(self, flow: HTTPFlow):
