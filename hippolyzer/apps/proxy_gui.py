@@ -715,14 +715,21 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
             if off_circuit:
                 transport.close()
 
-    def _sendEQMessage(self, session, region: Optional[ProxiedRegion], msg_text: str, _replacements: dict):
+    def _sendEQMessage(self, session, region: Optional[ProxiedRegion], msg_text: str, replacements: dict):
         if not session or not region:
             raise RuntimeError("Need a valid session and region to send EQ event")
         message_line, _, body = (x.strip() for x in msg_text.partition("\n"))
         message_name = message_line.rsplit(" ", 1)[-1]
+
+        env = self._buildEnv(session, region)
+
+        def directive_handler(m):
+            return self._handleHTTPDirective(env, replacements, False, m)
+        body = re.sub(rb"<!HIPPO(\w+)\[\[(.*?)]]>", directive_handler, body.encode("utf8"), flags=re.S)
+
         region.eq_manager.inject_event({
             "message": message_name,
-            "body": llsd.parse_xml(body.encode("utf8")),
+            "body": llsd.parse_xml(body),
         })
 
     def _sendHTTPMessage(self, session, region, msg_text: str, replacements: dict):
@@ -786,7 +793,10 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
             val = subfield_eval(contents.decode("utf8").strip(), globals_={**env, **replacements})
             val = _coerce_to_bytes(val)
         elif directive == b"REPL":
-            val = _coerce_to_bytes(replacements[contents.decode("utf8").strip()])
+            repl = replacements[contents.decode("utf8").strip()]
+            if callable(repl):
+                repl = repl()
+            val = _coerce_to_bytes(repl)
         else:
             raise ValueError(f"Unknown directive {directive}")
 
