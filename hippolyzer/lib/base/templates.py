@@ -1067,6 +1067,10 @@ class TextureEntry:
     Glow: Dict[_TE_FIELD_KEY, int] = _te_field(se.U8, default=0)
     Materials: Dict[_TE_FIELD_KEY, UUID] = _te_field(se.UUID, optional=True, default=UUID())
 
+    def unwrap(self):
+        """Return `self` regardless of whether this is lazy wrapped object or not"""
+        return self
+
 
 TE_SERIALIZER = se.Dataclass(TextureEntry)
 
