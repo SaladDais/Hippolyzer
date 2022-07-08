@@ -18,6 +18,8 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program; if not, write to the Free Software Foundation,
 Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import annotations
+
 import ast
 import enum
 import hashlib
@@ -247,6 +249,7 @@ class Quaternion(TupleCoord):
 
 class UUID(uuid.UUID):
     _NULL_UUID_STR = '00000000-0000-0000-0000-000000000000'
+    ZERO: UUID
     __slots__ = ()
 
     def __init__(self, val: Union[uuid.UUID, str, None] = None, bytes=None, int=None):
@@ -269,6 +272,9 @@ class UUID(uuid.UUID):
 
     def __xor__(self, other: "UUID"):
         return self.__class__(int=self.int ^ other.int)
+
+
+UUID.ZERO = UUID()
 
 
 class JankStringyBytes(bytes):

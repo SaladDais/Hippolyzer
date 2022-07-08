@@ -1,3 +1,4 @@
+import copy
 import unittest
 
 from hippolyzer.lib.base.datatypes import *
@@ -44,27 +45,59 @@ SIMPLE_INV = """\tinv_object\t0
 
 
 class TestLegacyInv(unittest.TestCase):
+    def setUp(self) -> None:
+        self.model = InventoryModel.from_str(SIMPLE_INV)
+
     def test_parse(self):
-        model = InventoryModel.from_str(SIMPLE_INV)
-        self.assertTrue(UUID('f4d91477-def1-487a-b4f3-6fa201c17376') in model.containers)
-        self.assertIsNotNone(model.root)
+        self.assertTrue(UUID('f4d91477-def1-487a-b4f3-6fa201c17376') in self.model.containers)
+        self.assertIsNotNone(self.model.root)
 
     def test_serialize(self):
-        model = InventoryModel.from_str(SIMPLE_INV)
-        new_model = InventoryModel.from_str(model.to_str())
-        self.assertEqual(model, new_model)
+        self.model = InventoryModel.from_str(SIMPLE_INV)
+        new_model = InventoryModel.from_str(self.model.to_str())
+        self.assertEqual(self.model, new_model)
 
     def test_item_access(self):
-        model = InventoryModel.from_str(SIMPLE_INV)
-        item = model.items[UUID('dd163122-946b-44df-99f6-a6030e2b9597')]
+
+        item = self.model.items[UUID('dd163122-946b-44df-99f6-a6030e2b9597')]
         self.assertEqual(item.name, "New Script")
         self.assertEqual(item.sale_info.sale_type, "not")
-        self.assertEqual(item.model, model)
+        self.assertEqual(item.model, self.model)
+
+    def test_access_children(self):
+        root = self.model.root
+        item = tuple(self.model.items.values())[0]
+        self.assertEqual((item,), root.children)
+
+    def test_access_parent(self):
+        root = self.model.root
+        item = tuple(self.model.items.values())[0]
+        self.assertEqual(root, item.parent)
+        self.assertEqual(None, root.parent)
+
+    def test_unlink(self):
+        self.assertEqual(1, len(self.model.root.children))
+        item = tuple(self.model.items.values())[0]
+        self.assertEqual([item], item.unlink())
+        self.assertEqual(0, len(self.model.root.children))
+        self.assertEqual(None, item.model)
+
+    def test_relink(self):
+        item = tuple(self.model.items.values())[0]
+        for unlinked in item.unlink():
+            self.model.add(unlinked)
+        self.assertEqual(self.model, item.model)
+        self.assertEqual(1, len(self.model.root.children))
+
+    def test_eq_excludes_model(self):
+        item = tuple(self.model.items.values())[0]
+        item_copy = copy.copy(item)
+        item_copy.model = None
+        self.assertEqual(item, item_copy)
 
     def test_llsd_serialization(self):
-        model = InventoryModel.from_str(SIMPLE_INV)
         self.assertEqual(
-            model.to_llsd(),
+            self.model.to_llsd(),
             [
                 {
                     'name': 'Contents',
@@ -102,9 +135,10 @@ class TestLegacyInv(unittest.TestCase):
         )
 
     def test_llsd_legacy_equality(self):
-        model = InventoryModel.from_str(SIMPLE_INV)
-        new_model = InventoryModel.from_llsd(model.to_llsd())
-        self.assertEqual(model, new_model)
+        new_model = InventoryModel.from_llsd(self.model.to_llsd())
+        self.assertEqual(self.model, new_model)
+        tuple(new_model.containers.values())[0].name = "foo"
+        self.assertNotEqual(self.model, new_model)
 
 
 GIRL_NEXT_DOOR_SHAPE = """LLWearable version 22

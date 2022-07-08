@@ -138,6 +138,11 @@ class InventoryModel(InventoryBase):
         self.items: Dict[UUID, InventoryItem] = {}
         self.root: Optional[InventoryContainerBase] = None
 
+    def __eq__(self, other):
+        if not isinstance(other, InventoryModel):
+            return False
+        return tuple(self.all_nodes) == tuple(other.all_nodes)
+
     @classmethod
     def from_reader(cls, reader: StringIO, read_header=False) -> InventoryModel:
         model = cls()
@@ -145,18 +150,17 @@ class InventoryModel(InventoryBase):
             if key == "inv_object":
                 obj = InventoryObject.from_reader(reader)
                 if obj is not None:
-                    model.add_container(obj)
+                    model.add(obj)
             elif key == "inv_category":
                 cat = InventoryCategory.from_reader(reader)
                 if cat is not None:
-                    model.add_container(cat)
+                    model.add(cat)
             elif key == "inv_item":
                 item = InventoryItem.from_reader(reader)
                 if item is not None:
-                    model.add_item(item)
+                    model.add(item)
             else:
                 LOG.warning("Unknown key {0}".format(key))
-        model.reparent_nodes()
         return model
 
     @classmethod
@@ -165,16 +169,15 @@ class InventoryModel(InventoryBase):
         for obj_dict in llsd_val:
             if InventoryCategory.ID_ATTR in obj_dict:
                 if (obj := InventoryCategory.from_llsd(obj_dict)) is not None:
-                    model.add_container(obj)
+                    model.add(obj)
             elif InventoryObject.ID_ATTR in obj_dict:
                 if (obj := InventoryObject.from_llsd(obj_dict)) is not None:
-                    model.add_container(obj)
+                    model.add(obj)
             elif InventoryItem.ID_ATTR in obj_dict:
                 if (obj := InventoryItem.from_llsd(obj_dict)) is not None:
-                    model.add_item(obj)
+                    model.add(obj)
             else:
                 LOG.warning(f"Unknown object type {obj_dict!r}")
-        model.reparent_nodes()
         return model
 
     def to_writer(self, writer: StringIO):
@@ -191,28 +194,40 @@ class InventoryModel(InventoryBase):
             vals.append(item.to_llsd())
         return vals
 
-    def add_container(self, container: InventoryContainerBase):
-        self.containers[container.node_id] = container
-        container.model = weakref.proxy(self)
+    def add(self, node: InventoryNodeBase):
+        if node.node_id in self.items or node.node_id in self.containers:
+            raise KeyError(f"{node.node_id} already exists in the inventory model")
 
-    def add_item(self, item: InventoryItem):
-        self.items[item.item_id] = item
-        item.model = weakref.proxy(self)
+        if isinstance(node, InventoryContainerBase):
+            self.containers[node.node_id] = node
+            if node.parent_id == UUID.ZERO:
+                self.root = node
+        elif isinstance(node, InventoryItem):
+            self.items[node.node_id] = node
+        else:
+            raise ValueError(f"Unknown node type for {node!r}")
+        node.model = weakref.proxy(self)
 
-    def reparent_nodes(self):
-        self.root = None
+    def unlink(self, node: InventoryNodeBase) -> Sequence[InventoryNodeBase]:
+        """Unlink a node and its descendants from the tree, returning the removed nodes"""
+        assert node.model == self
+        if node == self.root:
+            self.root = None
+        unlinked = [node]
+        if isinstance(node, InventoryContainerBase):
+            for child in node.children:
+                unlinked.extend(self.unlink(child))
+        self.items.pop(node.node_id, None)
+        self.containers.pop(node.node_id, None)
+        node.model = None
+        return unlinked
+
+    @property
+    def all_nodes(self) -> Iterable[InventoryNodeBase]:
         for container in self.containers.values():
-            container.children.clear()
-            if container.parent_id == UUID():
-                self.root = container
-        for obj in itertools.chain(self.items.values(), self.containers.values()):
-            if not obj.parent_id or obj.parent_id == UUID():
-                continue
-            parent_container = self.containers.get(obj.parent_id)
-            if not parent_container:
-                LOG.warning("{0} had an invalid parent {1}".format(obj, obj.parent_id))
-                continue
-            parent_container.children.append(obj)
+            yield container
+        for item in self.items.values():
+            yield item
 
 
 @dataclasses.dataclass
@@ -243,15 +258,20 @@ class InventoryNodeBase(InventoryBase):
     ID_ATTR: ClassVar[str]
 
     parent_id: Optional[UUID] = schema_field(SchemaUUID)
-    model: Optional[InventoryModel] = dataclasses.field(default=None, init=False)
+    model: Optional[InventoryModel] = dataclasses.field(
+        default=None, init=False, hash=False, compare=False, repr=False
+    )
 
     @property
     def node_id(self) -> UUID:
         return getattr(self, self.ID_ATTR)
 
     @property
-    def parent(self):
+    def parent(self) -> Optional[InventoryContainerBase]:
         return self.model.containers.get(self.parent_id)
+
+    def unlink(self) -> Sequence[InventoryNodeBase]:
+        return self.model.unlink(self)
 
     @classmethod
     def _obj_from_dict(cls, obj_dict):
@@ -267,7 +287,15 @@ class InventoryNodeBase(InventoryBase):
 class InventoryContainerBase(InventoryNodeBase):
     type: str = schema_field(SchemaStr)
     name: str = schema_field(SchemaMultilineStr)
-    children: List[InventoryNodeBase] = dataclasses.field(default_factory=list, init=False)
+
+    @property
+    def children(self) -> Sequence[InventoryNodeBase]:
+        return tuple(
+            x for x in (
+                itertools.chain(self.model.containers.values(), self.model.items.values())
+            )
+            if x.parent_id == self.node_id
+        )
 
 
 @dataclasses.dataclass
