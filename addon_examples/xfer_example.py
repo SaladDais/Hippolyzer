@@ -57,7 +57,7 @@ class XferExampleAddon(BaseAddon):
         await xfer
 
         inv_model = InventoryModel.from_bytes(xfer.reassemble_chunks())
-        item_names = [item.name for item in inv_model.items.values()]
+        item_names = [item.name for item in inv_model.all_items]
         show_message(item_names)
 
     @handle_command()

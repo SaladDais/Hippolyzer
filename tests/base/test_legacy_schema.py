@@ -49,7 +49,7 @@ class TestLegacyInv(unittest.TestCase):
         self.model = InventoryModel.from_str(SIMPLE_INV)
 
     def test_parse(self):
-        self.assertTrue(UUID('f4d91477-def1-487a-b4f3-6fa201c17376') in self.model.containers)
+        self.assertTrue(UUID('f4d91477-def1-487a-b4f3-6fa201c17376') in self.model.nodes)
         self.assertIsNotNone(self.model.root)
 
     def test_serialize(self):
@@ -58,39 +58,38 @@ class TestLegacyInv(unittest.TestCase):
         self.assertEqual(self.model, new_model)
 
     def test_item_access(self):
-
-        item = self.model.items[UUID('dd163122-946b-44df-99f6-a6030e2b9597')]
+        item = self.model.nodes[UUID('dd163122-946b-44df-99f6-a6030e2b9597')]
         self.assertEqual(item.name, "New Script")
         self.assertEqual(item.sale_info.sale_type, "not")
         self.assertEqual(item.model, self.model)
 
     def test_access_children(self):
         root = self.model.root
-        item = tuple(self.model.items.values())[0]
+        item = tuple(self.model.ordered_nodes)[1]
         self.assertEqual((item,), root.children)
 
     def test_access_parent(self):
         root = self.model.root
-        item = tuple(self.model.items.values())[0]
+        item = tuple(self.model.ordered_nodes)[1]
         self.assertEqual(root, item.parent)
         self.assertEqual(None, root.parent)
 
     def test_unlink(self):
         self.assertEqual(1, len(self.model.root.children))
-        item = tuple(self.model.items.values())[0]
+        item = tuple(self.model.ordered_nodes)[1]
         self.assertEqual([item], item.unlink())
         self.assertEqual(0, len(self.model.root.children))
         self.assertEqual(None, item.model)
 
     def test_relink(self):
-        item = tuple(self.model.items.values())[0]
+        item = tuple(self.model.ordered_nodes)[1]
         for unlinked in item.unlink():
             self.model.add(unlinked)
         self.assertEqual(self.model, item.model)
         self.assertEqual(1, len(self.model.root.children))
 
     def test_eq_excludes_model(self):
-        item = tuple(self.model.items.values())[0]
+        item = tuple(self.model.ordered_nodes)[1]
         item_copy = copy.copy(item)
         item_copy.model = None
         self.assertEqual(item, item_copy)
@@ -137,8 +136,32 @@ class TestLegacyInv(unittest.TestCase):
     def test_llsd_legacy_equality(self):
         new_model = InventoryModel.from_llsd(self.model.to_llsd())
         self.assertEqual(self.model, new_model)
-        tuple(new_model.containers.values())[0].name = "foo"
+        new_model.root.name = "foo"
         self.assertNotEqual(self.model, new_model)
+
+    def test_difference_added(self):
+        new_model = InventoryModel.from_llsd(self.model.to_llsd())
+        diff = self.model.get_differences(new_model)
+        self.assertEqual([], diff.changed)
+        self.assertEqual([], diff.removed)
+
+        new_model.root.name = "foo"
+        diff = self.model.get_differences(new_model)
+        self.assertEqual([new_model.root], diff.changed)
+        self.assertEqual([], diff.removed)
+
+        item = new_model.root.children[0]
+        item.unlink()
+        diff = self.model.get_differences(new_model)
+        self.assertEqual([new_model.root], diff.changed)
+        self.assertEqual([item], diff.removed)
+
+        new_item = copy.copy(item)
+        new_item.node_id = UUID.random()
+        new_model.add(new_item)
+        diff = self.model.get_differences(new_model)
+        self.assertEqual([new_model.root, new_item], diff.changed)
+        self.assertEqual([item], diff.removed)
 
 
 GIRL_NEXT_DOOR_SHAPE = """LLWearable version 22

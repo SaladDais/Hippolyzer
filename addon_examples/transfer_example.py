@@ -47,7 +47,7 @@ class TransferExampleAddon(BaseAddon):
             file_name=inv_message["InventoryData"]["Filename"], file_path=XferFilePath.CACHE)
         inv_model = InventoryModel.from_bytes(xfer.reassemble_chunks())
         first_script: Optional[InventoryItem] = None
-        for item in inv_model.items.values():
+        for item in inv_model.all_items:
             if item.type == "lsltext":
                 first_script = item
         if not first_script:

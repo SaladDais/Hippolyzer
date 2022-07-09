@@ -7,9 +7,9 @@ from __future__ import annotations
 
 import dataclasses
 import datetime as dt
-import itertools
 import logging
 import struct
+import typing
 import weakref
 from io import StringIO
 from typing import *
@@ -132,16 +132,15 @@ class InventoryBase(SchemaBase):
         writer.write("\t}\n")
 
 
+class InventoryDifferences(typing.NamedTuple):
+    changed: List[InventoryNodeBase]
+    removed: List[InventoryNodeBase]
+
+
 class InventoryModel(InventoryBase):
     def __init__(self):
-        self.containers: Dict[UUID, InventoryContainerBase] = {}
-        self.items: Dict[UUID, InventoryItem] = {}
+        self.nodes: Dict[UUID, InventoryNodeBase] = {}
         self.root: Optional[InventoryContainerBase] = None
-
-    def __eq__(self, other):
-        if not isinstance(other, InventoryModel):
-            return False
-        return tuple(self.all_nodes) == tuple(other.all_nodes)
 
     @classmethod
     def from_reader(cls, reader: StringIO, read_header=False) -> InventoryModel:
@@ -180,32 +179,43 @@ class InventoryModel(InventoryBase):
                 LOG.warning(f"Unknown object type {obj_dict!r}")
         return model
 
+    @property
+    def ordered_nodes(self) -> Iterable[InventoryNodeBase]:
+        yield from self.all_containers
+        yield from self.all_items
+
+    @property
+    def all_containers(self) -> Iterable[InventoryContainerBase]:
+        for node in self.nodes.values():
+            if isinstance(node, InventoryContainerBase):
+                yield node
+
+    @property
+    def all_items(self) -> Iterable[InventoryItem]:
+        for node in self.nodes.values():
+            if not isinstance(node, InventoryContainerBase):
+                yield node
+
+    def __eq__(self, other):
+        if not isinstance(other, InventoryModel):
+            return False
+        return set(self.nodes.values()) == set(other.nodes.values())
+
     def to_writer(self, writer: StringIO):
-        for container in self.containers.values():
-            container.to_writer(writer)
-        for item in self.items.values():
-            item.to_writer(writer)
+        for node in self.ordered_nodes:
+            node.to_writer(writer)
 
     def to_llsd(self):
-        vals = []
-        for container in self.containers.values():
-            vals.append(container.to_llsd())
-        for item in self.items.values():
-            vals.append(item.to_llsd())
-        return vals
+        return list(node.to_llsd() for node in self.ordered_nodes)
 
     def add(self, node: InventoryNodeBase):
-        if node.node_id in self.items or node.node_id in self.containers:
+        if node.node_id in self.nodes:
             raise KeyError(f"{node.node_id} already exists in the inventory model")
 
+        self.nodes[node.node_id] = node
         if isinstance(node, InventoryContainerBase):
-            self.containers[node.node_id] = node
             if node.parent_id == UUID.ZERO:
                 self.root = node
-        elif isinstance(node, InventoryItem):
-            self.items[node.node_id] = node
-        else:
-            raise ValueError(f"Unknown node type for {node!r}")
         node.model = weakref.proxy(self)
 
     def unlink(self, node: InventoryNodeBase) -> Sequence[InventoryNodeBase]:
@@ -217,17 +227,35 @@ class InventoryModel(InventoryBase):
         if isinstance(node, InventoryContainerBase):
             for child in node.children:
                 unlinked.extend(self.unlink(child))
-        self.items.pop(node.node_id, None)
-        self.containers.pop(node.node_id, None)
+        self.nodes.pop(node.node_id, None)
         node.model = None
         return unlinked
 
-    @property
-    def all_nodes(self) -> Iterable[InventoryNodeBase]:
-        for container in self.containers.values():
-            yield container
-        for item in self.items.values():
-            yield item
+    def get_differences(self, other: InventoryModel) -> InventoryDifferences:
+        # Includes modified things with the same ID
+        changed_in_other = []
+        removed_in_other = []
+
+        other_keys = set(other.nodes.keys())
+        our_keys = set(self.nodes.keys())
+
+        # Removed
+        for key in our_keys - other_keys:
+            removed_in_other.append(self.nodes[key])
+
+        # Updated
+        for key in other_keys.intersection(our_keys):
+            other_node = other.nodes[key]
+            if other_node != self.nodes[key]:
+                changed_in_other.append(other_node)
+
+        # Added
+        for key in other_keys - our_keys:
+            changed_in_other.append(other.nodes[key])
+        return InventoryDifferences(
+            changed=changed_in_other,
+            removed=removed_in_other,
+        )
 
 
 @dataclasses.dataclass
@@ -266,9 +294,13 @@ class InventoryNodeBase(InventoryBase):
     def node_id(self) -> UUID:
         return getattr(self, self.ID_ATTR)
 
+    @node_id.setter
+    def node_id(self, val: UUID):
+        setattr(self, self.ID_ATTR, val)
+
     @property
     def parent(self) -> Optional[InventoryContainerBase]:
-        return self.model.containers.get(self.parent_id)
+        return self.model.nodes.get(self.parent_id)
 
     def unlink(self) -> Sequence[InventoryNodeBase]:
         return self.model.unlink(self)
@@ -282,6 +314,9 @@ class InventoryNodeBase(InventoryBase):
             return None
         return super()._obj_from_dict(obj_dict)
 
+    def __hash__(self):
+        return hash(self.node_id)
+
 
 @dataclasses.dataclass
 class InventoryContainerBase(InventoryNodeBase):
@@ -291,11 +326,12 @@ class InventoryContainerBase(InventoryNodeBase):
     @property
     def children(self) -> Sequence[InventoryNodeBase]:
         return tuple(
-            x for x in (
-                itertools.chain(self.model.containers.values(), self.model.items.values())
-            )
+            x for x in self.model.nodes.values()
             if x.parent_id == self.node_id
         )
+
+    # So autogenerated __hash__ doesn't kill our inherited one
+    __hash__ = InventoryNodeBase.__hash__
 
 
 @dataclasses.dataclass
@@ -304,6 +340,8 @@ class InventoryObject(InventoryContainerBase):
     ID_ATTR: ClassVar[str] = "obj_id"
 
     obj_id: UUID = schema_field(SchemaUUID)
+
+    __hash__ = InventoryNodeBase.__hash__
 
 
 @dataclasses.dataclass
@@ -315,6 +353,8 @@ class InventoryCategory(InventoryContainerBase):
     pref_type: str = schema_field(SchemaStr, llsd_name="preferred_type")
     owner_id: UUID = schema_field(SchemaUUID)
     version: int = schema_field(SchemaInt)
+
+    __hash__ = InventoryNodeBase.__hash__
 
 
 @dataclasses.dataclass
@@ -333,6 +373,8 @@ class InventoryItem(InventoryNodeBase):
     sale_info: InventorySaleInfo = schema_field(InventorySaleInfo)
     asset_id: Optional[UUID] = schema_field(SchemaUUID, default=None)
     shadow_id: Optional[UUID] = schema_field(SchemaUUID, default=None)
+
+    __hash__ = InventoryNodeBase.__hash__
 
     @property
     def true_asset_id(self) -> UUID:
