@@ -128,6 +128,17 @@ def ais_item_to_inventory_data(ais_item: dict):
     )
 
 
+def ais_folder_to_inventory_data(ais_folder: dict):
+    return Block(
+        "FolderData",
+        FolderID=ais_folder["cat_id"],
+        ParentID=ais_folder["parent_id"],
+        CallbackID=0,
+        Type=ais_folder["type"],
+        Name=ais_folder["name"],
+    )
+
+
 class BaseAddon(abc.ABC):
     def _schedule_task(self, coro: Coroutine, session=None,
                        region_scoped=False, session_scoped=True, addon_scoped=True):

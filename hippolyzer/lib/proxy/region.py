@@ -11,6 +11,7 @@ import multidict
 
 from hippolyzer.lib.base.datatypes import Vector3, UUID
 from hippolyzer.lib.base.helpers import proxify
+from hippolyzer.lib.base.message.llsd_msg_serializer import LLSDMessageSerializer
 from hippolyzer.lib.base.message.message import Message, Block
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.objects import handle_to_global_pos
@@ -168,6 +169,10 @@ class EventQueueManager:
         self._region = weakref.proxy(region)
         self._last_ack: Optional[int] = None
         self._last_payload: Optional[Any] = None
+        self.llsd_message_serializer = LLSDMessageSerializer()
+
+    def inject_message(self, message: Message):
+        self.inject_event(self.llsd_message_serializer.serialize(message, True))
 
     def inject_event(self, event: dict):
         self._queued_events.append(event)

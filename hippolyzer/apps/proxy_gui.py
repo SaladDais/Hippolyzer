@@ -696,9 +696,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
         msg = HumanMessageSerializer.from_human_string(msg_text, replacements, env, safe=False)
         if self.checkLLUDPViaCaps.isChecked():
             if msg.direction == Direction.IN:
-                region.eq_manager.inject_event(
-                    self.llsdSerializer.serialize(msg, as_dict=True)
-                )
+                region.eq_manager.inject_message(msg)
             else:
                 self._sendHTTPRequest(
                     "POST",
