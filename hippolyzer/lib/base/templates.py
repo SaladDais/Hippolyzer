@@ -1042,7 +1042,7 @@ _TE_FIELD_KEY = Optional[Sequence[int]]
 # If this seems weird it's because it is. TE offsets are S16s with `0` as the actual 0
 # point, and LL divides by `0x7FFF` to convert back to float. Negative S16s can
 # actually go to -0x8000 due to two's complement, creating a larger range for negatives.
-TE_S16_COORD = se.QuantizedFloat(se.S16, -1.000030518509476, 1.0, True)
+TE_S16_COORD = se.QuantizedFloat(se.S16, -1.000030518509476, 1.0, False)
 
 
 @dataclasses.dataclass
@@ -1054,9 +1054,9 @@ class TextureEntry:
     Color: Dict[_TE_FIELD_KEY, bytes] = _te_field(Color4(invert_bytes=True), default=b"\xff\xff\xff\xff")
     ScalesS: Dict[_TE_FIELD_KEY, float] = _te_field(se.F32, default=1.0)
     ScalesT: Dict[_TE_FIELD_KEY, float] = _te_field(se.F32, default=1.0)
-    OffsetsS: Dict[_TE_FIELD_KEY, int] = _te_field(TE_S16_COORD, default=0.0)
-    OffsetsT: Dict[_TE_FIELD_KEY, int] = _te_field(TE_S16_COORD, default=0.0)
-    Rotation: Dict[_TE_FIELD_KEY, int] = _te_field(TE_S16_COORD, default=0.0)
+    OffsetsS: Dict[_TE_FIELD_KEY, float] = _te_field(TE_S16_COORD, default=0.0)
+    OffsetsT: Dict[_TE_FIELD_KEY, float] = _te_field(TE_S16_COORD, default=0.0)
+    Rotation: Dict[_TE_FIELD_KEY, float] = _te_field(TE_S16_COORD, default=0.0)
     BasicMaterials: Dict[_TE_FIELD_KEY, "BasicMaterials"] = _te_field(
         BUMP_SHINY_FULLBRIGHT, default_factory=lambda: BasicMaterials(Bump=0, FullBright=False, Shiny=0),
     )
