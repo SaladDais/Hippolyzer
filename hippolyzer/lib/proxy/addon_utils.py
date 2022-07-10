@@ -134,7 +134,7 @@ def ais_folder_to_inventory_data(ais_folder: dict):
         FolderID=ais_folder["cat_id"],
         ParentID=ais_folder["parent_id"],
         CallbackID=0,
-        Type=ais_folder["type"],
+        Type=ais_folder["preferred_type"],
         Name=ais_folder["name"],
     )
 
