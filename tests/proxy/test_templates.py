@@ -12,11 +12,17 @@ EXAMPLE_TE = b'\x89UgG$\xcbC\xed\x92\x0bG\xca\xed\x15F_\x08\xca*\x98:\x18\x02,\r
 
 
 class TemplateTests(unittest.TestCase):
-
     def test_te_round_trips(self):
         deserialized = TextureEntrySubfieldSerializer.deserialize(None, EXAMPLE_TE)
         serialized = TextureEntrySubfieldSerializer.serialize(None, deserialized)
         self.assertEqual(EXAMPLE_TE, serialized)
+
+    def test_realize_te(self):
+        deserialized: TextureEntry = TextureEntrySubfieldSerializer.deserialize(None, EXAMPLE_TE)
+        realized = deserialized.realize(num_faces=4)
+        self.assertEqual(UUID('ca2a983a-1802-2c0d-f41e-c6f591015d83'), realized["Textures"][3])
+        with self.assertRaises(ValueError):
+            deserialized.realize(3)
 
     def test_face_bitfield_round_trips(self):
         test_val = b"\x81\x03"

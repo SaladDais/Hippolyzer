@@ -1065,11 +1065,37 @@ class TextureEntry:
         default_factory=lambda: MediaFlags(WebPage=False, TexGen=TexGen.DEFAULT, _Unused=0),
     )
     Glow: Dict[_TE_FIELD_KEY, int] = _te_field(se.U8, default=0)
-    Materials: Dict[_TE_FIELD_KEY, UUID] = _te_field(se.UUID, optional=True, default=UUID())
+    Materials: Dict[_TE_FIELD_KEY, UUID] = _te_field(se.UUID, optional=True, default=UUID.ZERO)
 
     def unwrap(self):
         """Return `self` regardless of whether this is lazy wrapped object or not"""
         return self
+
+    def realize(self, num_faces: int):
+        """
+        Turn the "default" vs "exception cases" wire format TE representation to per-face lookups
+
+        Makes it easier to just index into a list of offsets with a face number.
+        Returns something like:
+        {
+            "OffsetsS": [0.5, 0.2, ...],
+            ...
+        }
+        """
+        as_dict = {}
+        for key, vals in dataclasses.asdict(self).items():
+            # Fill all of the faces in this key with the default value stored in the TE
+            key_arr = as_dict[key] = [vals[None]] * num_faces
+            # Walk over the exception cases and replace the default value
+            for face_nums, val in vals.items():
+                # Default case already handled
+                if face_nums is None:
+                    continue
+                for face_num in face_nums:
+                    if face_num >= num_faces:
+                        raise ValueError(f"Bad value for num_faces? {face_num} >= {num_faces}")
+                    key_arr[face_num] = val
+        return as_dict
 
 
 TE_SERIALIZER = se.Dataclass(TextureEntry)
