@@ -1,9 +1,10 @@
+import math
 import unittest
 
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message_formatting import HumanMessageSerializer
-from hippolyzer.lib.base.templates import TextureEntrySubfieldSerializer, TEFaceBitfield, TextureEntry
+from hippolyzer.lib.base.templates import TextureEntrySubfieldSerializer, TEFaceBitfield, TextureEntry, PackedTERotation
 
 EXAMPLE_TE = b'\x89UgG$\xcbC\xed\x92\x0bG\xca\xed\x15F_\x08\xca*\x98:\x18\x02,\r\xf4\x1e\xc6\xf5\x91\x01]\x83\x014' \
              b'\x00\x90i+\x10\x80\xa1\xaa\xa2g\x11o\xa8]\xc6\x00\x00\x00\x00\x00\x00\x00\x00\x80?\x00\x00\x00\x80?' \
@@ -68,8 +69,52 @@ class TemplateTests(unittest.TestCase):
         # Serialization order and format should match indra's exactly
         self.assertEqual(EXAMPLE_TE, data_field)
         deser = spec.deserialize(None, data_field, pod=True)
-        self.assertEqual(deser, pod_te)
+        self.assertEqual(pod_te, deser)
 
     def test_textureentry_defaults(self):
         te = TextureEntry()
         self.assertEqual(UUID('89556747-24cb-43ed-920b-47caed15465f'), te.Textures[None])
+
+    def test_textureentry_rotation_packing(self):
+        writer = se.BufferWriter("!")
+        writer.write(PackedTERotation(), math.pi * 2)
+        # fmod() makes this loop back around to 0
+        self.assertEqual(b"\x00\x00", writer.copy_buffer())
+        writer.clear()
+
+        writer.write(PackedTERotation(), -math.pi * 2)
+        # fmod() makes this loop back around to 0
+        self.assertEqual(b"\x00\x00", writer.copy_buffer())
+        writer.clear()
+
+        writer.write(PackedTERotation(), 0)
+        self.assertEqual(b"\x00\x00", writer.copy_buffer())
+        writer.clear()
+
+        # These both map to -32768 because of overflow in the positive case
+        # that isn't caught by exact equality to math.pi * 2
+        writer.write(PackedTERotation(), math.pi * 1.999999)
+        self.assertEqual(b"\x80\x00", writer.copy_buffer())
+        writer.clear()
+
+        writer.write(PackedTERotation(), math.pi * -1.999999)
+        self.assertEqual(b"\x80\x00", writer.copy_buffer())
+        writer.clear()
+
+    def test_textureentry_rotation_unpacking(self):
+        reader = se.BufferReader("!", b"\x00\x00")
+        self.assertEqual(0, reader.read(PackedTERotation()))
+
+        reader = se.BufferReader("!", b"\x80\x00")
+        self.assertEqual(-math.pi * 2, reader.read(PackedTERotation()))
+
+        # This quantization method does not allow for any representation of
+        # F_TWO_PI itself, just a value slightly below it! The float representation
+        # is ever so slightly different from the C++ version, but it should still
+        # round-trip correctly.
+        reader = se.BufferReader("!", b"\x7f\xff")
+        self.assertEqual(6.282993559581101, reader.read(PackedTERotation()))
+
+        writer = se.BufferWriter("!")
+        writer.write(PackedTERotation(), 6.282993559581101)
+        self.assertEqual(b"\x7f\xff", writer.copy_buffer())

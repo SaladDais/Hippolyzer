@@ -7,6 +7,7 @@ import dataclasses
 import enum
 import importlib
 import logging
+import math
 import zlib
 from typing import *
 
@@ -1045,6 +1046,21 @@ _TE_FIELD_KEY = Optional[Sequence[int]]
 TE_S16_COORD = se.QuantizedFloat(se.S16, -1.000030518509476, 1.0, False)
 
 
+class PackedTERotation(se.QuantizedFloat):
+    """Another weird one, packed TE rotations have their own special quantization"""
+
+    def __init__(self):
+        super().__init__(se.S16, math.pi * -2, math.pi * 2, zero_median=False)
+        self.step_mag = 1.0 / (se.U16.max_val + 1)
+
+    def _float_to_quantized(self, val: float, lower: float, upper: float):
+        val = math.fmod(val, upper)
+        val = super()._float_to_quantized(val, lower, upper)
+        if val == se.S16.max_val + 1:
+            val = self.prim_min
+        return val
+
+
 @dataclasses.dataclass
 class TextureEntry:
     Textures: Dict[_TE_FIELD_KEY, UUID] = _te_field(
@@ -1056,7 +1072,7 @@ class TextureEntry:
     ScalesT: Dict[_TE_FIELD_KEY, float] = _te_field(se.F32, default=1.0)
     OffsetsS: Dict[_TE_FIELD_KEY, float] = _te_field(TE_S16_COORD, default=0.0)
     OffsetsT: Dict[_TE_FIELD_KEY, float] = _te_field(TE_S16_COORD, default=0.0)
-    Rotation: Dict[_TE_FIELD_KEY, float] = _te_field(TE_S16_COORD, default=0.0)
+    Rotation: Dict[_TE_FIELD_KEY, float] = _te_field(PackedTERotation(), default=0.0)
     BasicMaterials: Dict[_TE_FIELD_KEY, "BasicMaterials"] = _te_field(
         BUMP_SHINY_FULLBRIGHT, default_factory=lambda: BasicMaterials(Bump=0, FullBright=False, Shiny=0),
     )
