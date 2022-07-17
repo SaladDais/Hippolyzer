@@ -14,7 +14,7 @@ from PySide6.QtGui import QImage
 from hippolyzer.lib.base.datatypes import UUID, Vector3, Quaternion
 from hippolyzer.lib.base.helpers import to_chunks
 from hippolyzer.lib.base.message.message import Block, Message
-from hippolyzer.lib.base.templates import ObjectUpdateFlags, PCode, MCode, MultipleObjectUpdateFlags, TextureEntry
+from hippolyzer.lib.base.templates import ObjectUpdateFlags, PCode, MCode, MultipleObjectUpdateFlags, TextureEntryCollection
 from hippolyzer.lib.client.object_manager import ObjectEvent, UpdateType
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.addons import AddonManager
@@ -124,7 +124,7 @@ class PixelArtistAddon(BaseAddon):
             y = i // width
             obj = created_prims[prim_idx]
             # Set a blank texture on all faces
-            te = TextureEntry()
+            te = TextureEntryCollection()
             te.Textures[None] = UUID('5748decc-f629-461c-9a36-a35a221fe21f')
             # Set the prim color to the color from the pixel
             te.Color[None] = pixel_color

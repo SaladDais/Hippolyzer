@@ -71,7 +71,7 @@ class Object(recordclass.datatuple):  # type: ignore
     ProfileBegin: Optional[int] = None
     ProfileEnd: Optional[int] = None
     ProfileHollow: Optional[int] = None
-    TextureEntry: Optional[tmpls.TextureEntry] = None
+    TextureEntry: Optional[tmpls.TextureEntryCollection] = None
     TextureAnim: Optional[tmpls.TextureAnim] = None
     NameValue: Optional[Any] = None
     Data: Optional[Any] = None
@@ -294,7 +294,7 @@ def normalize_object_update_compressed_data(data: bytes):
         compressed["SoundRadius"] = 0.0
         compressed["Sound"] = UUID()
     if compressed["TextureEntry"] is None:
-        compressed["TextureEntry"] = tmpls.TextureEntry()
+        compressed["TextureEntry"] = tmpls.TextureEntryCollection()
 
     object_data = {
         "PSBlock": ps_block.value,

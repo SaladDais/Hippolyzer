@@ -4,7 +4,7 @@ import unittest
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message_formatting import HumanMessageSerializer
-from hippolyzer.lib.base.templates import TextureEntrySubfieldSerializer, TEFaceBitfield, TextureEntry, PackedTERotation
+from hippolyzer.lib.base.templates import TextureEntrySubfieldSerializer, TEFaceBitfield, TextureEntryCollection, PackedTERotation
 
 EXAMPLE_TE = b'\x89UgG$\xcbC\xed\x92\x0bG\xca\xed\x15F_\x08\xca*\x98:\x18\x02,\r\xf4\x1e\xc6\xf5\x91\x01]\x83\x014' \
              b'\x00\x90i+\x10\x80\xa1\xaa\xa2g\x11o\xa8]\xc6\x00\x00\x00\x00\x00\x00\x00\x00\x80?\x00\x00\x00\x80?' \
@@ -19,9 +19,10 @@ class TemplateTests(unittest.TestCase):
         self.assertEqual(EXAMPLE_TE, serialized)
 
     def test_realize_te(self):
-        deserialized: TextureEntry = TextureEntrySubfieldSerializer.deserialize(None, EXAMPLE_TE)
-        realized = deserialized.realize(num_faces=4)
-        self.assertEqual(UUID('ca2a983a-1802-2c0d-f41e-c6f591015d83'), realized["Textures"][3])
+        deserialized: TextureEntryCollection = TextureEntrySubfieldSerializer.deserialize(None, EXAMPLE_TE)
+        realized = deserialized.realize(4)
+        self.assertEqual(UUID('ca2a983a-1802-2c0d-f41e-c6f591015d83'), realized[3].Textures)
+        self.assertEqual(UUID('89556747-24cb-43ed-920b-47caed15465f'), realized[1].Textures)
         with self.assertRaises(ValueError):
             deserialized.realize(3)
 
@@ -72,7 +73,7 @@ class TemplateTests(unittest.TestCase):
         self.assertEqual(pod_te, deser)
 
     def test_textureentry_defaults(self):
-        te = TextureEntry()
+        te = TextureEntryCollection()
         self.assertEqual(UUID('89556747-24cb-43ed-920b-47caed15465f'), te.Textures[None])
 
     def test_textureentry_rotation_packing(self):

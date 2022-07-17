@@ -27,7 +27,7 @@ from mitmproxy.http import HTTPFlow
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.jp2_utils import BufferedJp2k
 from hippolyzer.lib.base.multiprocessing_utils import ParentProcessWatcher
-from hippolyzer.lib.base.templates import TextureEntry
+from hippolyzer.lib.base.templates import TextureEntryCollection
 from hippolyzer.lib.proxy.addon_utils import AssetAliasTracker, BaseAddon, GlobalProperty, AddonProcess
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.base.message.message import Message
@@ -148,7 +148,7 @@ class MonochromeAddon(BaseAddon):
                     message["RegionInfo"][field_name] = tracker.get_alias_uuid(val)
 
     @staticmethod
-    def _make_te_monochrome(tracker: AssetAliasTracker, parsed_te: TextureEntry):
+    def _make_te_monochrome(tracker: AssetAliasTracker, parsed_te: TextureEntryCollection):
         # Need a deepcopy because TEs are owned by the ObjectManager
         # and we don't want to change the canonical view.
         parsed_te = copy.deepcopy(parsed_te)

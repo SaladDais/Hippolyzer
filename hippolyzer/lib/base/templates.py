@@ -1063,6 +1063,23 @@ class PackedTERotation(se.QuantizedFloat):
 
 @dataclasses.dataclass
 class TextureEntry:
+    """Representation of a TE for a single face. Not sent over the wire."""
+    Textures: UUID = UUID('89556747-24cb-43ed-920b-47caed15465f')
+    Color: bytes = b"\xff\xff\xff\xff"
+    ScalesS: float = 1.0
+    ScalesT: float = 1.0
+    OffsetsS: float = 0.0
+    OffsetsT: float = 0.0
+    # In radians
+    Rotation: float = 0.0
+    MediaFlags: Optional[MediaFlags] = None
+    BasicMaterials: Optional[BasicMaterials] = None
+    Glow: int = 0
+    Materials: UUID = UUID.ZERO
+
+
+@dataclasses.dataclass
+class TextureEntryCollection:
     Textures: Dict[_TE_FIELD_KEY, UUID] = _te_field(
         # Plywood texture
         se.UUID, first=True, default=UUID('89556747-24cb-43ed-920b-47caed15465f'))
@@ -1080,6 +1097,7 @@ class TextureEntry:
         MEDIA_FLAGS,
         default_factory=lambda: MediaFlags(WebPage=False, TexGen=TexGen.DEFAULT, _Unused=0),
     )
+    # TODO: dequantize
     Glow: Dict[_TE_FIELD_KEY, int] = _te_field(se.U8, default=0)
     Materials: Dict[_TE_FIELD_KEY, UUID] = _te_field(se.UUID, optional=True, default=UUID.ZERO)
 
@@ -1087,21 +1105,16 @@ class TextureEntry:
         """Return `self` regardless of whether this is lazy wrapped object or not"""
         return self
 
-    def realize(self, num_faces: int):
+    def realize(self, num_faces: int) -> List[TextureEntry]:
         """
         Turn the "default" vs "exception cases" wire format TE representation to per-face lookups
-
-        Makes it easier to just index into a list of offsets with a face number.
-        Returns something like:
-        {
-            "OffsetsS": [0.5, 0.2, ...],
-            ...
-        }
+        Makes it easier to get all TE details associated with a specific face
         """
-        as_dict = {}
+        as_dicts = [dict() for _ in range(num_faces)]
         for key, vals in dataclasses.asdict(self).items():
-            # Fill all of the faces in this key with the default value stored in the TE
-            key_arr = as_dict[key] = [vals[None]] * num_faces
+            # Fill give all faces the default value for this key
+            for te in as_dicts:
+                te[key] = vals[None]
             # Walk over the exception cases and replace the default value
             for face_nums, val in vals.items():
                 # Default case already handled
@@ -1110,11 +1123,11 @@ class TextureEntry:
                 for face_num in face_nums:
                     if face_num >= num_faces:
                         raise ValueError(f"Bad value for num_faces? {face_num} >= {num_faces}")
-                    key_arr[face_num] = val
-        return as_dict
+                    as_dicts[face_num][key] = val
+        return [TextureEntry(**x) for x in as_dicts]
 
 
-TE_SERIALIZER = se.Dataclass(TextureEntry)
+TE_SERIALIZER = se.Dataclass(TextureEntryCollection)
 
 
 @se.subfield_serializer("ObjectUpdate", "ObjectData", "TextureEntry")
