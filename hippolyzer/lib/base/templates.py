@@ -1078,6 +1078,12 @@ class TextureEntry:
     Materials: UUID = UUID.ZERO
 
 
+# Max number of TEs possible according to llprimitive (but not really true!)
+# Useful if you don't know how many faces / TEs an object really has because it's mesh
+# or something.
+MAX_TES = 45
+
+
 @dataclasses.dataclass
 class TextureEntryCollection:
     Textures: Dict[_TE_FIELD_KEY, UUID] = _te_field(
@@ -1105,7 +1111,7 @@ class TextureEntryCollection:
         """Return `self` regardless of whether this is lazy wrapped object or not"""
         return self
 
-    def realize(self, num_faces: int) -> List[TextureEntry]:
+    def realize(self, num_faces: int = MAX_TES) -> List[TextureEntry]:
         """
         Turn the "default" vs "exception cases" wire format TE representation to per-face lookups
         Makes it easier to get all TE details associated with a specific face
