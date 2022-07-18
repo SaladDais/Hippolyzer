@@ -867,9 +867,9 @@ class ShineLevel(IntEnum):
 @dataclasses.dataclass(unsafe_hash=True)
 class BasicMaterials:
     # Meaning is technically implementation-dependent, these are in LL data files
-    Bump: int = se.bitfield_field(bits=5)
-    FullBright: bool = se.bitfield_field(bits=1, adapter=se.BoolAdapter())
-    Shiny: int = se.bitfield_field(bits=2, adapter=se.IntEnum(ShineLevel))
+    Bump: int = se.bitfield_field(bits=5, default=0)
+    FullBright: bool = se.bitfield_field(bits=1, adapter=se.BoolAdapter(), default=False)
+    Shiny: int = se.bitfield_field(bits=2, adapter=se.IntEnum(ShineLevel), default=0)
 
 
 BUMP_SHINY_FULLBRIGHT = se.BitfieldDataclass(BasicMaterials, se.U8)
@@ -885,10 +885,10 @@ class TexGen(IntEnum):
 
 @dataclasses.dataclass(unsafe_hash=True)
 class MediaFlags:
-    WebPage: bool = se.bitfield_field(bits=1, adapter=se.BoolAdapter())
-    TexGen: "TexGen" = se.bitfield_field(bits=2, adapter=se.IntEnum(TexGen))
+    WebPage: bool = se.bitfield_field(bits=1, adapter=se.BoolAdapter(), default=False)
+    TexGen: "TexGen" = se.bitfield_field(bits=2, adapter=se.IntEnum(TexGen), default=TexGen.DEFAULT)
     # Probably unused but show it just in case
-    _Unused: int = se.bitfield_field(bits=5)
+    _Unused: int = se.bitfield_field(bits=5, default=0)
 
 
 # Not shifted so enum definitions can match indra
@@ -1073,8 +1073,8 @@ class TextureEntry:
     OffsetsT: float = 0.0
     # In radians
     Rotation: float = 0.0
-    MediaFlags: Optional[MediaFlags] = None
-    BasicMaterials: Optional[BasicMaterials] = None
+    MediaFlags: "MediaFlags" = dataclasses.field(default_factory=MediaFlags)
+    BasicMaterials: "BasicMaterials" = dataclasses.field(default_factory=BasicMaterials)
     Glow: int = 0
     Materials: UUID = UUID.ZERO
 
