@@ -27,6 +27,11 @@ class TemplateTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             deserialized.realize(3)
 
+    def test_tecollection_from_tes(self):
+        deserialized: TextureEntryCollection = TextureEntrySubfieldSerializer.deserialize(None, EXAMPLE_TE)
+        # The TE collection should re-serialize to the same collection when split up and regrouped
+        self.assertEqual(deserialized, TextureEntryCollection.from_tes(deserialized.realize(4)))
+
     def test_face_bitfield_round_trips(self):
         test_val = b"\x81\x03"
         reader = se.BufferReader("!", test_val)

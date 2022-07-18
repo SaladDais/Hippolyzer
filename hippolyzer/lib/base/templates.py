@@ -3,6 +3,7 @@ Serialization templates for structures used in LLUDP and HTTP bodies.
 """
 
 import abc
+import collections
 import dataclasses
 import enum
 import importlib
@@ -863,7 +864,7 @@ class ShineLevel(IntEnum):
     HIGH = 3
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(unsafe_hash=True)
 class BasicMaterials:
     # Meaning is technically implementation-dependent, these are in LL data files
     Bump: int = se.bitfield_field(bits=5)
@@ -882,7 +883,7 @@ class TexGen(IntEnum):
     CYLINDRICAL = 0x6
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(unsafe_hash=True)
 class MediaFlags:
     WebPage: bool = se.bitfield_field(bits=1, adapter=se.BoolAdapter())
     TexGen: "TexGen" = se.bitfield_field(bits=2, adapter=se.IntEnum(TexGen))
@@ -1129,7 +1130,9 @@ class TextureEntryCollection:
         Makes it easier to get all TE details associated with a specific face
         """
         as_dicts = [dict() for _ in range(num_faces)]
-        for key, vals in dataclasses.asdict(self).items():
+        for field in dataclasses.fields(self):
+            key = field.name
+            vals = getattr(self, key)
             # Fill give all faces the default value for this key
             for te in as_dicts:
                 te[key] = vals[None]
@@ -1143,6 +1146,26 @@ class TextureEntryCollection:
                         raise ValueError(f"Bad value for num_faces? {face_num} >= {num_faces}")
                     as_dicts[face_num][key] = val
         return [TextureEntry(**x) for x in as_dicts]
+
+    @classmethod
+    def from_tes(cls, tes: List[TextureEntry]) -> "TextureEntryCollection":
+        instance = cls()
+        if not tes:
+            return instance
+
+        for field in dataclasses.fields(cls):
+            te_vals: Dict[Any, List[int]] = collections.defaultdict(list)
+            for i, te in enumerate(tes):
+                # Group values by what face they occur on
+                te_vals[getattr(te, field.name)].append(i)
+            # Make most common value the "default", everything else is an exception
+            sorted_vals = sorted(te_vals.items(), key=lambda x: len(x[1]), reverse=True)
+            default_val = sorted_vals.pop(0)[0]
+            te_vals = {None: default_val}
+            for val, face_nums in sorted_vals:
+                te_vals[tuple(face_nums)] = val
+            setattr(instance, field.name, te_vals)
+        return instance
 
 
 TE_SERIALIZER = se.Dataclass(TextureEntryCollection)
