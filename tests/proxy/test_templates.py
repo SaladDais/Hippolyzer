@@ -2,9 +2,10 @@ import math
 import unittest
 
 import hippolyzer.lib.base.serialization as se
-from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.datatypes import UUID, Vector3
 from hippolyzer.lib.base.message.message_formatting import HumanMessageSerializer
-from hippolyzer.lib.base.templates import TextureEntrySubfieldSerializer, TEFaceBitfield, TextureEntryCollection, PackedTERotation
+from hippolyzer.lib.base.templates import TextureEntrySubfieldSerializer, TEFaceBitfield, TextureEntryCollection, \
+    PackedTERotation, TextureEntry
 
 EXAMPLE_TE = b'\x89UgG$\xcbC\xed\x92\x0bG\xca\xed\x15F_\x08\xca*\x98:\x18\x02,\r\xf4\x1e\xc6\xf5\x91\x01]\x83\x014' \
              b'\x00\x90i+\x10\x80\xa1\xaa\xa2g\x11o\xa8]\xc6\x00\x00\x00\x00\x00\x00\x00\x00\x80?\x00\x00\x00\x80?' \
@@ -119,3 +120,7 @@ class TemplateTests(unittest.TestCase):
         writer = se.BufferWriter("!")
         writer.write(PackedTERotation(), 6.282993559581101)
         self.assertEqual(b"\x7f\xff", writer.copy_buffer())
+
+    def test_textureentry_st_to_uv_coords(self):
+        te = TextureEntry(ScalesS=0.5, ScalesT=0.5, OffsetsS=-0.25, OffsetsT=0.25, Rotation=math.pi / 2)
+        self.assertEqual(Vector3(0.25, 0.75), te.st_to_uv(Vector3(0.5, 0.5)))

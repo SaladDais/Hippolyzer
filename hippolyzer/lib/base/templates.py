@@ -13,7 +13,7 @@ from typing import *
 
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base import llsd
-from hippolyzer.lib.base.datatypes import UUID, IntEnum, IntFlag
+from hippolyzer.lib.base.datatypes import UUID, IntEnum, IntFlag, Vector3
 from hippolyzer.lib.base.namevalue import NameValuesSerializer
 
 try:
@@ -1076,6 +1076,18 @@ class TextureEntry:
     BasicMaterials: Optional[BasicMaterials] = None
     Glow: int = 0
     Materials: UUID = UUID.ZERO
+
+    def st_to_uv(self, st_coord: Vector3) -> Vector3:
+        """Convert OpenGL ST coordinates to UV coordinates, accounting for mapping"""
+        uv = Vector3(st_coord.X - 0.5, st_coord.Y - 0.5)
+        cos_rot = math.cos(self.Rotation)
+        sin_rot = math.sin(self.Rotation)
+        uv = Vector3(
+            X=uv.X * cos_rot + uv.Y * sin_rot,
+            Y=-uv.X * sin_rot + uv.Y * cos_rot
+        )
+        uv *= Vector3(self.ScalesS, self.ScalesT)
+        return uv + Vector3(self.OffsetsS + 0.5, self.OffsetsT + 0.5)
 
 
 # Max number of TEs possible according to llprimitive (but not really true!)
