@@ -1075,7 +1075,7 @@ class TextureEntry:
     Rotation: float = 0.0
     MediaFlags: "MediaFlags" = dataclasses.field(default_factory=MediaFlags)
     BasicMaterials: "BasicMaterials" = dataclasses.field(default_factory=BasicMaterials)
-    Glow: int = 0
+    Glow: float = 0.0
     Materials: UUID = UUID.ZERO
 
     def st_to_uv(self, st_coord: Vector3) -> Vector3:
@@ -1110,14 +1110,10 @@ class TextureEntryCollection:
     OffsetsT: Dict[_TE_FIELD_KEY, float] = _te_field(TE_S16_COORD, default=0.0)
     Rotation: Dict[_TE_FIELD_KEY, float] = _te_field(PackedTERotation(), default=0.0)
     BasicMaterials: Dict[_TE_FIELD_KEY, "BasicMaterials"] = _te_field(
-        BUMP_SHINY_FULLBRIGHT, default_factory=lambda: BasicMaterials(Bump=0, FullBright=False, Shiny=0),
+        BUMP_SHINY_FULLBRIGHT, default_factory=BasicMaterials,
     )
-    MediaFlags: Dict[_TE_FIELD_KEY, "MediaFlags"] = _te_field(
-        MEDIA_FLAGS,
-        default_factory=lambda: MediaFlags(WebPage=False, TexGen=TexGen.DEFAULT, _Unused=0),
-    )
-    # TODO: dequantize
-    Glow: Dict[_TE_FIELD_KEY, int] = _te_field(se.U8, default=0)
+    MediaFlags: Dict[_TE_FIELD_KEY, "MediaFlags"] = _te_field(MEDIA_FLAGS, default_factory=MediaFlags)
+    Glow: Dict[_TE_FIELD_KEY, float] = _te_field(se.QuantizedFloat(se.U8, 0.0, 1.0), default=0.0)
     Materials: Dict[_TE_FIELD_KEY, UUID] = _te_field(se.UUID, optional=True, default=UUID.ZERO)
 
     def unwrap(self):
