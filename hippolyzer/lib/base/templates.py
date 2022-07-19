@@ -146,6 +146,50 @@ class InventoryType(IntEnum):
         }.get(lower, lower)
 
 
+class FolderType(IntEnum):
+    TEXTURE = 0
+    SOUND = 1
+    CALLINGCARD = 2
+    LANDMARK = 3
+    CLOTHING = 5
+    OBJECT = 6
+    NOTECARD = 7
+    # We'd really like to change this to 9 since AT_CATEGORY is 8,
+    # but "My Inventory" has been type 8 for a long time.
+    ROOT_INVENTORY = 8
+    LSL_TEXT = 10
+    BODYPART = 13
+    TRASH = 14
+    SNAPSHOT_CATEGORY = 15
+    LOST_AND_FOUND = 16
+    ANIMATION = 20
+    GESTURE = 21
+    FAVORITE = 23
+    ENSEMBLE_START = 26
+    ENSEMBLE_END = 45
+    # This range is reserved for special clothing folder types.
+    CURRENT_OUTFIT = 46
+    OUTFIT = 47
+    MY_OUTFITS = 48
+    MESH = 49
+    # "received items" for MP
+    INBOX = 50
+    OUTBOX = 51
+    BASIC_ROOT = 52
+    MARKETPLACE_LISTINGS = 53
+    MARKETPLACE_STOCK = 54
+    # Note: We actually *never* create folders with that type. This is used for icon override only.
+    MARKETPLACE_VERSION = 55
+    SETTINGS = 56
+    # Firestorm folders, may not actually exist
+    FIRESTORM = 57
+    PHOENIX = 58
+    RLV = 59
+    # Opensim folders
+    MY_SUITCASE = 100
+    NONE = -1
+
+
 @se.enum_field_serializer("AgentIsNowWearing", "WearableData", "WearableType")
 @se.enum_field_serializer("AgentWearablesUpdate", "WearableData", "WearableType")
 @se.enum_field_serializer("CreateInventoryItem", "InventoryBlock", "WearableType")
@@ -208,6 +252,7 @@ class Permissions(IntFlag):
 @se.flag_field_serializer("RezObject", "InventoryData", "Flags")
 @se.flag_field_serializer("UpdateCreateInventoryItem", "InventoryData", "Flags")
 @se.flag_field_serializer("UpdateTaskInventory", "InventoryData", "Flags")
+@se.flag_field_serializer("ChangeInventoryItemFlags", "InventoryData", "Flags")
 class InventoryItemFlags(IntFlag):
     # The asset has only one reference in the system. If the
     # inventory item is deleted, or the assetid updated, then we
@@ -234,7 +279,8 @@ class InventoryItemFlags(IntFlag):
     OBJECT_HAS_MULTIPLE_ITEMS = 0x200000
 
     @property
-    def attachment_point(self):
+    def subtype(self):
+        """Subtype of the given item type, could be an attachment point or setting type, etc."""
         return self & 0xFF
 
 
