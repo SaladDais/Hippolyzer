@@ -763,6 +763,7 @@ class MCode(IntEnum):
 @se.flag_field_serializer("ObjectUpdateCompressed", "ObjectData", "UpdateFlags")
 @se.flag_field_serializer("ObjectUpdateCached", "ObjectData", "UpdateFlags")
 @se.flag_field_serializer("ObjectAdd", "ObjectData", "AddFlags")
+@se.flag_field_serializer("ObjectDuplicate", "SharedData", "DuplicateFlags")
 class ObjectUpdateFlags(IntFlag):
     USE_PHYSICS = 1 << 0
     CREATE_SELECTED = 1 << 1
@@ -1731,6 +1732,105 @@ class TeleportFlags(IntFlag):
     FORCE_REDIRECT = 1 << 15
     VIA_GLOBAL_COORDS = 1 << 16
     WITHIN_REGION = 1 << 17
+
+
+@se.flag_field_serializer("AvatarPropertiesReply", "PropertiesData", "Flags")
+class AvatarPropertiesFlags(IntFlag):
+    ALLOW_PUBLISH = 1 << 0  # whether profile is externally visible or not
+    MATURE_PUBLISH = 1 << 1  # profile is "mature"
+    IDENTIFIED = 1 << 2  # whether avatar has provided payment info
+    TRANSACTED = 1 << 3  # whether avatar has actively used payment info
+    ONLINE = 1 << 4  # the online status of this avatar, if known.
+    AGEVERIFIED = 1 << 5  # whether avatar has been age-verified
+
+
+@se.flag_field_serializer("AvatarGroupsReply", "GroupData", "GroupPowers")
+@se.flag_field_serializer("AvatarGroupDataUpdate", "GroupData", "GroupPowers")
+@se.flag_field_serializer("AvatarDataUpdate", "AgentDataData", "GroupPowers")
+class GroupPowerFlags(IntFlag):
+    MEMBER_INVITE = 1 << 1  # Invite member
+    MEMBER_EJECT = 1 << 2  # Eject member from group
+    MEMBER_OPTIONS = 1 << 3  # Toggle "Open enrollment" and change "Signup Fee"
+    MEMBER_VISIBLE_IN_DIR = 1 << 47
+
+    # Roles
+    ROLE_CREATE = 1 << 4  # Create new roles
+    ROLE_DELETE = 1 << 5  # Delete roles
+    ROLE_PROPERTIES = 1 << 6  # Change Role Names, Titles, and Descriptions (Of roles the user is in, only, or any role in group?)
+    ROLE_ASSIGN_MEMBER_LIMITED = 1 << 7  # Assign Member to a Role that the assigner is in
+    ROLE_ASSIGN_MEMBER = 1 << 8  # Assign Member to Role
+    ROLE_REMOVE_MEMBER = 1 << 9  # Remove Member from Role
+    ROLE_CHANGE_ACTIONS = 1 << 10  # Change actions a role can perform
+
+    # Group Identity
+    GROUP_CHANGE_IDENTITY = 1 << 11  # Charter, insignia, 'Show In Group List', 'Publish on the web', 'Mature', all 'Show Member In Group Profile' checkboxes
+
+    # Parcel Management
+    LAND_DEED = 1 << 12  # Deed Land and Buy Land for Group
+    LAND_RELEASE = 1 << 13  # Release Land (to Gov. Linden)
+    LAND_SET_SALE_INFO = 1 << 14  # Set for sale info (Toggle "For Sale", Set Price, Set Target, Toggle "Sell objects with the land")
+    LAND_DIVIDE_JOIN = 1 << 15  # Divide and Join Parcels
+
+    # Parcel Identity
+    LAND_FIND_PLACES = 1 << 17  # Toggle "Show in Find Places" and Set Category.
+    LAND_CHANGE_IDENTITY = 1 << 18  # Change Parcel Identity: Parcel Name, Parcel Description, Snapshot, 'Publish on the web', and 'Mature' checkbox
+    LAND_SET_LANDING_POINT = 1 << 19  # Set Landing Point
+
+    # Parcel Settings
+    LAND_CHANGE_MEDIA = 1 << 20  # Change Media Settings
+    LAND_EDIT = 1 << 21  # Toggle Edit Land
+    LAND_OPTIONS = 1 << 22  # Toggle Set Home Point, Fly, Outside Scripts, Create/Edit Objects, Landmark, and Damage checkboxes
+
+    # Parcel Powers
+    LAND_ALLOW_EDIT_LAND = 1 << 23  # Bypass Edit Land Restriction
+    LAND_ALLOW_FLY = 1 << 24  # Bypass Fly Restriction
+    LAND_ALLOW_CREATE = 1 << 25  # Bypass Create/Edit Objects Restriction
+    LAND_ALLOW_LANDMARK = 1 << 26  # Bypass Landmark Restriction
+    LAND_ALLOW_SET_HOME = 1 << 28  # Bypass Set Home Point Restriction
+    LAND_ALLOW_HOLD_EVENT = 1 << 41  # Allowed to hold events on group-owned land
+    LAND_ALLOW_ENVIRONMENT = 1 << 46  # Allowed to change the environment
+
+    # Parcel Access
+    LAND_MANAGE_ALLOWED = 1 << 29  # Manage Allowed List
+    LAND_MANAGE_BANNED = 1 << 30  # Manage Banned List
+    LAND_MANAGE_PASSES = 1 << 31  # Change Sell Pass Settings
+    LAND_ADMIN = 1 << 32  # Eject and Freeze Users on the land
+
+    # Parcel Content
+    LAND_RETURN_GROUP_SET = 1 << 33  # Return objects on parcel that are set to group
+    LAND_RETURN_NON_GROUP = 1 << 34  # Return objects on parcel that are not set to group
+    LAND_RETURN_GROUP_OWNED = 1 << 48  # Return objects on parcel that are owned by the group
+
+    LAND_GARDENING = 1 << 35  # Parcel Gardening - plant and move linden trees
+
+    # Object Management
+    OBJECT_DEED = 1 << 36  # Deed Object
+    OBJECT_MANIPULATE = 1 << 38  # Manipulate Group Owned Objects (Move, Copy, Mod)
+    OBJECT_SET_SALE = 1 << 39  # Set Group Owned Object for Sale
+
+    # Accounting
+    ACCOUNTING_ACCOUNTABLE = 1 << 40  # Pay Group Liabilities and Receive Group Dividends
+
+    # Notices
+    NOTICES_SEND = 1 << 42  # Send Notices
+    NOTICES_RECEIVE = 1 << 43  # Receive Notices and View Notice History
+
+    # Proposals
+    # TODO: _DEPRECATED suffix as part of vote removal - DEV-24856:
+    PROPOSAL_START = 1 << 44  # Start Proposal
+    # TODO: _DEPRECATED suffix as part of vote removal - DEV-24856:
+    PROPOSAL_VOTE = 1 << 45  # Vote on Proposal
+
+    # Group chat moderation related
+    SESSION_JOIN = 1 << 16  # can join session
+    SESSION_VOICE = 1 << 27  # can hear/talk
+    SESSION_MODERATOR = 1 << 37  # can mute people's session
+
+    EXPERIENCE_ADMIN = 1 << 49  # has admin rights to any experiences owned by this group
+    EXPERIENCE_CREATOR = 1 << 50  # can sign scripts for experiences owned by this group
+
+    # Group Banning
+    GROUP_BAN_ACCESS = 1 << 51  # Allows access to ban / un-ban agents from a group.
 
 
 @se.http_serializer("RenderMaterials")
