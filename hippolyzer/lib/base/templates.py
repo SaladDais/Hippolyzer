@@ -842,6 +842,15 @@ class ObjectStateSerializer(se.AdapterSubfieldSerializer):
     ORIG_INLINE = True
 
 
+@se.subfield_serializer("ObjectUpdate", "RegionData", "TimeDilation")
+@se.subfield_serializer("ObjectUpdateCompressed", "RegionData", "TimeDilation")
+@se.subfield_serializer("ObjectUpdateCached", "RegionData", "TimeDilation")
+@se.subfield_serializer("ImprovedTerseObjectUpdate", "RegionData", "TimeDilation")
+class TimeDilationSerializer(se.AdapterSubfieldSerializer):
+    ADAPTER = se.QuantizedFloat(se.U16, 0.0, 1.0, False)
+    ORIG_INLINE = True
+
+
 @se.subfield_serializer("ImprovedTerseObjectUpdate", "ObjectData", "Data")
 class ImprovedTerseObjectUpdateDataSerializer(se.SimpleSubfieldSerializer):
     TEMPLATE = se.Template({
