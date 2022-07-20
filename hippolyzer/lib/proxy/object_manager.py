@@ -11,7 +11,7 @@ from hippolyzer.lib.base.templates import PCode
 from hippolyzer.lib.client.namecache import NameCache
 from hippolyzer.lib.client.object_manager import (
     ClientObjectManager,
-    UpdateType, ClientWorldObjectManager,
+    ObjectUpdateType, ClientWorldObjectManager,
 )
 
 from hippolyzer.lib.base.objects import Object
@@ -133,7 +133,7 @@ class ProxyWorldObjectManager(ClientWorldObjectManager):
             region_mgr.queued_cache_misses |= missing_locals
             region_mgr.request_missed_cached_objects_soon()
 
-    def _run_object_update_hooks(self, obj: Object, updated_props: Set[str], update_type: UpdateType):
+    def _run_object_update_hooks(self, obj: Object, updated_props: Set[str], update_type: ObjectUpdateType):
         super()._run_object_update_hooks(obj, updated_props, update_type)
         region = self._session.region_by_handle(obj.RegionHandle)
         if self._settings.ALLOW_AUTO_REQUEST_OBJECTS:

@@ -34,7 +34,7 @@ LOG = logging.getLogger(__name__)
 OBJECT_OR_LOCAL = Union[Object, int]
 
 
-class UpdateType(enum.IntEnum):
+class ObjectUpdateType(enum.IntEnum):
     OBJECT_UPDATE = enum.auto()
     PROPERTIES = enum.auto()
     FAMILY = enum.auto()
@@ -124,7 +124,7 @@ class ClientObjectManager:
         for local_id in local_ids:
             if local_id in unselected_ids:
                 # Need to wait until we get our reply
-                fut = self.state.register_future(local_id, UpdateType.PROPERTIES)
+                fut = self.state.register_future(local_id, ObjectUpdateType.PROPERTIES)
             else:
                 # This was selected so we should already have up to date info
                 fut = asyncio.Future()
@@ -159,7 +159,7 @@ class ClientObjectManager:
 
         futures = []
         for local_id in local_ids:
-            futures.append(self.state.register_future(local_id, UpdateType.OBJECT_UPDATE))
+            futures.append(self.state.register_future(local_id, ObjectUpdateType.OBJECT_UPDATE))
         return futures
 
 
@@ -168,15 +168,15 @@ class ObjectEvent:
 
     object: Object
     updated: Set[str]
-    update_type: UpdateType
+    update_type: ObjectUpdateType
 
-    def __init__(self, obj: Object, updated: Set[str], update_type: UpdateType):
+    def __init__(self, obj: Object, updated: Set[str], update_type: ObjectUpdateType):
         self.object = obj
         self.updated = updated
         self.update_type = update_type
 
     @property
-    def name(self) -> UpdateType:
+    def name(self) -> ObjectUpdateType:
         return self.update_type
 
 
@@ -186,7 +186,7 @@ class ClientWorldObjectManager:
         self._session: BaseClientSession = session
         self._settings = settings
         self.name_cache = name_cache or NameCache()
-        self.events: MessageHandler[ObjectEvent, UpdateType] = MessageHandler(take_by_default=False)
+        self.events: MessageHandler[ObjectEvent, ObjectUpdateType] = MessageHandler(take_by_default=False)
         self._fullid_lookup: Dict[UUID, Object] = {}
         self._avatars: Dict[UUID, Avatar] = {}
         self._avatar_objects: Dict[UUID, Object] = {}
@@ -295,7 +295,7 @@ class ClientWorldObjectManager:
         self._rebuild_avatar_objects()
         self._region_managers.clear()
 
-    def _update_existing_object(self, obj: Object, new_properties: dict, update_type: UpdateType):
+    def _update_existing_object(self, obj: Object, new_properties: dict, update_type: ObjectUpdateType):
         old_parent_id = obj.ParentID
         new_parent_id = new_properties.get("ParentID", obj.ParentID)
         old_local_id = obj.LocalID
@@ -354,7 +354,7 @@ class ClientWorldObjectManager:
         if obj.PCode == PCode.AVATAR:
             self._avatar_objects[obj.FullID] = obj
             self._rebuild_avatar_objects()
-        self._run_object_update_hooks(obj, set(obj.to_dict().keys()), UpdateType.OBJECT_UPDATE)
+        self._run_object_update_hooks(obj, set(obj.to_dict().keys()), ObjectUpdateType.OBJECT_UPDATE)
 
     def _kill_object_by_local_id(self, region_state: RegionObjectsState, local_id: int):
         obj = region_state.lookup_localid(local_id)
@@ -406,7 +406,7 @@ class ClientWorldObjectManager:
             # our view of the world then we want to move it to this region.
             obj = self.lookup_fullid(object_data["FullID"])
             if obj:
-                self._update_existing_object(obj, object_data, UpdateType.OBJECT_UPDATE)
+                self._update_existing_object(obj, object_data, ObjectUpdateType.OBJECT_UPDATE)
             else:
                 if region_state is None:
                     continue
@@ -430,7 +430,7 @@ class ClientWorldObjectManager:
                 # Need the Object as context because decoding state requires PCode.
                 state_deserializer = ObjectStateSerializer.deserialize
                 object_data["State"] = state_deserializer(ctx_obj=obj, val=object_data["State"])
-                self._update_existing_object(obj, object_data, UpdateType.OBJECT_UPDATE)
+                self._update_existing_object(obj, object_data, ObjectUpdateType.OBJECT_UPDATE)
             else:
                 if region_state:
                     region_state.missing_locals.add(object_data["LocalID"])
@@ -458,7 +458,7 @@ class ClientWorldObjectManager:
                 self._update_existing_object(obj, {
                     "UpdateFlags": update_flags,
                     "RegionHandle": handle,
-                }, UpdateType.OBJECT_UPDATE)
+                }, ObjectUpdateType.OBJECT_UPDATE)
                 continue
 
             cached_obj_data = self._lookup_cache_entry(handle, block["ID"], block["CRC"])
@@ -497,7 +497,7 @@ class ClientWorldObjectManager:
                 LOG.warning(f"Got ObjectUpdateCompressed for unknown region {handle}: {object_data!r}")
             obj = self.lookup_fullid(object_data["FullID"])
             if obj:
-                self._update_existing_object(obj, object_data, UpdateType.OBJECT_UPDATE)
+                self._update_existing_object(obj, object_data, ObjectUpdateType.OBJECT_UPDATE)
             else:
                 if region_state is None:
                     continue
@@ -514,7 +514,7 @@ class ClientWorldObjectManager:
             obj = self.lookup_fullid(block["ObjectID"])
             if obj:
                 seen_locals.append(obj.LocalID)
-                self._update_existing_object(obj, object_properties, UpdateType.PROPERTIES)
+                self._update_existing_object(obj, object_properties, ObjectUpdateType.PROPERTIES)
             else:
                 LOG.debug(f"Received {packet.name} for unknown {block['ObjectID']}")
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
@@ -561,9 +561,9 @@ class ClientWorldObjectManager:
                 LOG.debug(f"Received ObjectCost for unknown {object_id}")
                 continue
             obj.ObjectCosts.update(object_costs)
-            self._run_object_update_hooks(obj, {"ObjectCosts"}, UpdateType.COSTS)
+            self._run_object_update_hooks(obj, {"ObjectCosts"}, ObjectUpdateType.COSTS)
 
-    def _run_object_update_hooks(self, obj: Object, updated_props: Set[str], update_type: UpdateType):
+    def _run_object_update_hooks(self, obj: Object, updated_props: Set[str], update_type: ObjectUpdateType):
         region_state = self._get_region_state(obj.RegionHandle)
         region_state.resolve_futures(obj, update_type)
         if obj.PCode == PCode.AVATAR and "NameValue" in updated_props:
@@ -572,7 +572,7 @@ class ClientWorldObjectManager:
         self.events.handle(ObjectEvent(obj, updated_props, update_type))
 
     def _run_kill_object_hooks(self, obj: Object):
-        self.events.handle(ObjectEvent(obj, set(), UpdateType.KILL))
+        self.events.handle(ObjectEvent(obj, set(), ObjectUpdateType.KILL))
 
     def _rebuild_avatar_objects(self):
         # Get all avatars known through coarse locations and which region the location was in
@@ -779,7 +779,7 @@ class RegionObjectsState:
             del self._orphans[parent_id]
         return removed
 
-    def register_future(self, local_id: int, future_type: UpdateType) -> asyncio.Future[Object]:
+    def register_future(self, local_id: int, future_type: ObjectUpdateType) -> asyncio.Future[Object]:
         fut = asyncio.Future()
         fut_key = (local_id, future_type)
         local_futs = self._object_futures.get(fut_key, [])
@@ -788,7 +788,7 @@ class RegionObjectsState:
         fut.add_done_callback(local_futs.remove)
         return fut
 
-    def resolve_futures(self, obj: Object, update_type: UpdateType):
+    def resolve_futures(self, obj: Object, update_type: ObjectUpdateType):
         futures = self._object_futures.get((obj.LocalID, update_type), [])
         for fut in futures[:]:
             fut.set_result(obj)

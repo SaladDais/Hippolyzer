@@ -340,6 +340,15 @@ It can be launched at any time by typing `/524 spawn_repl` in chat.
 
 ![Screenshot of REPL](https://github.com/SaladDais/Hippolyzer/blob/master/static/repl_screenshot.png?raw=true)
 
+The REPL is fully async aware and allows awaiting events without blocking:
+
+```python
+>>> from hippolyzer.lib.client.object_manager import ObjectUpdateType
+>>> evt = await session.objects.events.wait_for((ObjectUpdateType.OBJECT_UPDATE,), timeout=2.0)
+>>> evt.updated
+{'Position'}
+```
+
 ## Potential Changes
 
 * AISv3 wrapper?

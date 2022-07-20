@@ -16,7 +16,7 @@ from hippolyzer.lib.base.helpers import to_chunks
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.templates import ObjectUpdateFlags, PCode, MCode, MultipleObjectUpdateFlags, \
     TextureEntryCollection, JUST_CREATED_FLAGS
-from hippolyzer.lib.client.object_manager import ObjectEvent, UpdateType
+from hippolyzer.lib.client.object_manager import ObjectEvent, ObjectUpdateType
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.commands import handle_command
@@ -72,7 +72,7 @@ class PixelArtistAddon(BaseAddon):
         # Watch for any newly created prims, this is basically what the viewer does to find
         # prims that it just created with the build tool.
         with session.objects.events.subscribe_async(
-                (UpdateType.OBJECT_UPDATE,),
+                (ObjectUpdateType.OBJECT_UPDATE,),
                 predicate=lambda e: e.object.UpdateFlags & JUST_CREATED_FLAGS and "LocalID" in e.updated
         ) as get_events:
             # Create a pool of prims to use for building the pixel art
