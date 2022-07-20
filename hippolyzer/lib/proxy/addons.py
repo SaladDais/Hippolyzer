@@ -61,6 +61,7 @@ class BaseInteractionManager:
 # Used to initialize a REPL environment with commonly desired helpers
 REPL_INITIALIZER = r"""
 from hippolyzer.lib.base.datatypes import *
+from hippolyzer.lib.base.templates import *
 from hippolyzer.lib.base.message.message import Block, Message, Direction
 from hippolyzer.lib.proxy.addon_utils import send_chat, show_message
 """
@@ -141,8 +142,15 @@ class AddonManager:
         if _locals is None:
             _locals = stack.frame.f_locals
 
-        _globals = dict(_globals)
-        exec(REPL_INITIALIZER, _globals, None)
+        init_globals = {}
+        exec(REPL_INITIALIZER, init_globals, None)
+        # We're modifying the globals of the caller, be careful of things we imported
+        # for the REPL initializer clobber things that already exist in the caller's globals.
+        # Making our own mutable copy of the globals dict, mutating that and then passing it
+        # to embed() is not an option due to https://github.com/prompt-toolkit/ptpython/issues/279
+        for global_name, global_val in init_globals.items():
+            if global_name not in _globals:
+                _globals[global_name] = global_val
 
         async def _wrapper():
             coro: Coroutine = ptpython.repl.embed(  # noqa: the type signature lies
