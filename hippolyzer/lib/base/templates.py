@@ -296,7 +296,6 @@ class SimAccess(IntEnum):
 @se.enum_field_serializer("MapItemRequest", "RequestData", "ItemType")
 @se.enum_field_serializer("MapItemReply", "RequestData", "ItemType")
 class MapItemType(IntEnum):
-    # Treated as 'unknown', usually ends up being SIM_ACCESS_PG
     TELEHUB = 0x01
     PG_EVENT = 0x02
     MATURE_EVENT = 0x03
