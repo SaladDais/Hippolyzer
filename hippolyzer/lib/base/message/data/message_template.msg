@@ -3002,6 +3002,16 @@ version 2.0
 		RegionInfo3		Variable
 		{	RegionFlagsExtended	U64			}
 	}
+	{
+		RegionInfo5     Variable
+		{	ChatWhisperRange	F32 		}
+		{	ChatNormalRange		F32 		}
+		{	ChatShoutRange		F32 		}
+		{	ChatWhisperOffset	F32 		}
+		{	ChatNormalOffset	F32 		}
+		{	ChatShoutOffset		F32 		}
+		{	ChatFlags			U32			}
+	}
 }
 
 // GodUpdateRegionInfo
@@ -5790,6 +5800,28 @@ version 2.0
 		ParamList		Variable
 		{	Parameter	Variable 1 }
 	}
+}
+
+// LargeGenericMessage
+// Similar to the above messages, but can handle larger payloads and serialized
+// LLSD.  Uses HTTP transport
+{
+    LargeGenericMessage Low 430 NotTrusted Unencoded UDPDeprecated
+    {
+		AgentData 		Single
+		{   AgentID     LLUUID  	}
+		{	SessionID	LLUUID		}
+		{	TransactionID	LLUUID	}
+    }
+    {
+        MethodData Single
+		{	Method		Variable 1 }
+		{	Invoice		LLUUID	}
+    }
+    {
+		ParamList		Variable
+		{	Parameter	Variable 2 }
+    }
 }
 
 // ***************************************************************************

@@ -283,6 +283,7 @@ class MapImageFlags(IntFlag):
 
 
 @se.enum_field_serializer("MapBlockReply", "Data", "Access")
+@se.enum_field_serializer("RegionInfo", "RegionInfo", "SimAccess")
 class SimAccess(IntEnum):
     # Treated as 'unknown', usually ends up being SIM_ACCESS_PG
     MIN = 0
