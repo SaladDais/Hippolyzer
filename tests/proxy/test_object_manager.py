@@ -10,7 +10,8 @@ from hippolyzer.lib.base.message.message import Block, Message as Message
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.message.udpserializer import UDPMessageSerializer
 from hippolyzer.lib.base.objects import Object, normalize_object_update_compressed_data
-from hippolyzer.lib.base.templates import ExtraParamType, PCode
+from hippolyzer.lib.base.templates import ExtraParamType, PCode, JUST_CREATED_FLAGS
+from hippolyzer.lib.client.object_manager import UpdateType
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.region import ProxiedRegion
@@ -663,3 +664,45 @@ class SessionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncio
         self._create_object(local_id=av.LocalID, full_id=av.FullID,
                             pcode=PCode.AVATAR, parent_id=seat_id, pos=(1, 2, 9))
         self.assertEqual(set(), self.region_object_manager.queued_cache_misses)
+
+    async def test_handle_object_update_event(self):
+        with self.session.objects.events.subscribe_async(
+            message_names=(UpdateType.OBJECT_UPDATE,),
+            predicate=lambda e: e.object.UpdateFlags & JUST_CREATED_FLAGS and "LocalID" in e.updated,
+        ) as get_events:
+            self._create_object(local_id=999)
+            evt = await asyncio.wait_for(get_events(), 1.0)
+            self.assertEqual(999, evt.object.LocalID)
+
+    async def test_handle_object_update_predicate(self):
+        with self.session.objects.events.subscribe_async(
+            message_names=(UpdateType.OBJECT_UPDATE,),
+        ) as get_events:
+            self._create_object(local_id=999)
+            evt = await asyncio.wait_for(get_events(), 1.0)
+            self.assertEqual(999, evt.object.LocalID)
+
+    async def test_handle_object_update_events_two_subscribers(self):
+        with self.session.objects.events.subscribe_async(
+            message_names=(UpdateType.OBJECT_UPDATE,),
+        ) as get_events:
+            with self.session.objects.events.subscribe_async(
+                    message_names=(UpdateType.OBJECT_UPDATE,),
+            ) as get_events2:
+                self._create_object(local_id=999)
+                evt = await asyncio.wait_for(get_events(), 1.0)
+                evt2 = await asyncio.wait_for(get_events2(), 1.0)
+                self.assertEqual(999, evt.object.LocalID)
+                self.assertEqual(evt, evt2)
+
+    async def test_handle_object_update_events_two_subscribers_timeout(self):
+        with self.session.objects.events.subscribe_async(
+            message_names=(UpdateType.OBJECT_UPDATE,),
+        ) as get_events:
+            with self.session.objects.events.subscribe_async(
+                    message_names=(UpdateType.OBJECT_UPDATE,),
+            ) as get_events2:
+                self._create_object(local_id=999)
+                evt = asyncio.wait_for(get_events(), 0.01)
+                evt2 = asyncio.wait_for(get_events2(), 0.01)
+                await asyncio.gather(evt, evt2)

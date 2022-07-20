@@ -14,7 +14,8 @@ from PySide6.QtGui import QImage
 from hippolyzer.lib.base.datatypes import UUID, Vector3, Quaternion
 from hippolyzer.lib.base.helpers import to_chunks
 from hippolyzer.lib.base.message.message import Block, Message
-from hippolyzer.lib.base.templates import ObjectUpdateFlags, PCode, MCode, MultipleObjectUpdateFlags, TextureEntryCollection
+from hippolyzer.lib.base.templates import ObjectUpdateFlags, PCode, MCode, MultipleObjectUpdateFlags, \
+    TextureEntryCollection, JUST_CREATED_FLAGS
 from hippolyzer.lib.client.object_manager import ObjectEvent, UpdateType
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.addons import AddonManager
@@ -24,7 +25,6 @@ from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import Session
 
 
-JUST_CREATED_FLAGS = (ObjectUpdateFlags.CREATE_SELECTED | ObjectUpdateFlags.OBJECT_YOU_OWNER)
 PRIM_SCALE = 0.2
 
 

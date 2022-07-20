@@ -845,6 +845,9 @@ class ObjectUpdateFlags(IntFlag):
     ZLIB_COMPRESSED_REPRECATED = 1 << 31
 
 
+JUST_CREATED_FLAGS = (ObjectUpdateFlags.CREATE_SELECTED | ObjectUpdateFlags.OBJECT_YOU_OWNER)
+
+
 class AttachmentStateAdapter(se.Adapter):
     # Encoded attachment point ID for attached objects
     # nibbles are swapped around because old attachment nums only used to live

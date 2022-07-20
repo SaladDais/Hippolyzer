@@ -113,7 +113,8 @@ class MessageHandler(Generic[_T, _K]):
 
         async def _canceller():
             await asyncio.sleep(timeout)
-            fut.set_exception(asyncio.exceptions.TimeoutError("Timed out waiting for packet"))
+            if not fut.done():
+                fut.set_exception(asyncio.exceptions.TimeoutError("Timed out waiting for packet"))
             for n in notifiers:
                 n.unsubscribe(_handler)
 
@@ -126,7 +127,8 @@ class MessageHandler(Generic[_T, _K]):
             # Whatever was awaiting this future now owns this message
             if take:
                 message = message.take()
-            fut.set_result(message)
+            if not fut.done():
+                fut.set_result(message)
             # Make sure to unregister this handler for all message types
             for n in notifiers:
                 n.unsubscribe(_handler)
