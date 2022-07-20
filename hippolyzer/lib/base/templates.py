@@ -223,6 +223,7 @@ def _register_permissions_flags(message_name, block_name):
 
 @se.flag_field_serializer("ObjectPermissions", "ObjectData", "Mask")
 @_register_permissions_flags("ObjectProperties", "ObjectData")
+@_register_permissions_flags("ObjectPropertiesFamily", "ObjectData")
 @_register_permissions_flags("UpdateCreateInventoryItem", "InventoryData")
 @_register_permissions_flags("UpdateTaskInventory", "InventoryData")
 @_register_permissions_flags("CreateInventoryItem", "InventoryBlock")
@@ -247,9 +248,71 @@ class Permissions(IntFlag):
     RESERVED = 1 << 31
 
 
+@se.enum_field_serializer("ObjectSaleInfo", "ObjectData", "SaleType")
+@se.enum_field_serializer("ObjectProperties", "ObjectData", "SaleType")
+@se.enum_field_serializer("ObjectPropertiesFamily", "ObjectData", "SaleType")
+@se.enum_field_serializer("ObjectBuy", "ObjectData", "SaleType")
+@se.enum_field_serializer("RezScript", "InventoryBlock", "SaleType")
+@se.enum_field_serializer("RezObject", "InventoryData", "SaleType")
+@se.enum_field_serializer("UpdateTaskInventory", "InventoryData", "SaleType")
+@se.enum_field_serializer("UpdateCreateInventoryItem", "InventoryData", "SaleType")
+class SaleInfo(IntEnum):
+    NOT = 0
+    ORIGINAL = 1
+    COPY = 2
+    CONTENTS = 3
+
+
+@se.flag_field_serializer("ParcelInfoReply", "Data", "Flags")
+class ParcelInfoFlags(IntFlag):
+    MATURE = 1 << 0
+    # You should never see adult without mature
+    ADULT = 1 << 1
+    GROUP_OWNED = 1 << 2
+
+
+@se.flag_field_serializer("MapItemRequest", "AgentData", "Flags")
+@se.flag_field_serializer("MapNameRequest", "AgentData", "Flags")
+@se.flag_field_serializer("MapBlockRequest", "AgentData", "Flags")
+@se.flag_field_serializer("MapItemReply", "AgentData", "Flags")
+@se.flag_field_serializer("MapNameReply", "AgentData", "Flags")
+@se.flag_field_serializer("MapBlockReply", "AgentData", "Flags")
+class MapImageFlags(IntFlag):
+    # No clue, honestly. I guess there's potentially different image types you could request.
+    LAYER = 1 << 1
+
+
+@se.enum_field_serializer("MapBlockReply", "Data", "Access")
+class SimAccess(IntEnum):
+    # Treated as 'unknown', usually ends up being SIM_ACCESS_PG
+    MIN = 0
+    PG = 13
+    MATURE = 21
+    ADULT = 42
+    DOWN = 254
+
+
+@se.enum_field_serializer("MapItemRequest", "RequestData", "ItemType")
+@se.enum_field_serializer("MapItemReply", "RequestData", "ItemType")
+class MapItemType(IntEnum):
+    # Treated as 'unknown', usually ends up being SIM_ACCESS_PG
+    TELEHUB = 0x01
+    PG_EVENT = 0x02
+    MATURE_EVENT = 0x03
+    # No longer supported, 2009-03-02 KLW
+    DEPRECATED_POPULAR = 0x04
+    DEPRECATED_AGENT_COUNT = 0x05
+    AGENT_LOCATIONS = 0x06
+    LAND_FOR_SALE = 0x07
+    CLASSIFIED = 0x08
+    ADULT_EVENT = 0x09
+    LAND_FOR_SALE_ADULT = 0x0a
+
+
 @se.flag_field_serializer("RezObject", "RezData", "ItemFlags")
 @se.flag_field_serializer("RezMultipleAttachmentsFromInv", "ObjectData", "ItemFlags")
 @se.flag_field_serializer("RezObject", "InventoryData", "Flags")
+@se.flag_field_serializer("RezScript", "InventoryBlock", "Flags")
 @se.flag_field_serializer("UpdateCreateInventoryItem", "InventoryData", "Flags")
 @se.flag_field_serializer("UpdateTaskInventory", "InventoryData", "Flags")
 @se.flag_field_serializer("ChangeInventoryItemFlags", "InventoryData", "Flags")
@@ -1715,6 +1778,7 @@ class DeRezObjectDestination(IntEnum):
 @se.flag_field_serializer("SimStats", "RegionInfo", "RegionFlagsExtended")
 @se.flag_field_serializer("RegionInfo", "RegionInfo", "RegionFlags")
 @se.flag_field_serializer("RegionInfo", "RegionInfo3", "RegionFlagsExtended")
+@se.flag_field_serializer("MapBlockReply", "Data", "RegionFlags")
 class RegionFlags(IntFlag):
     ALLOW_DAMAGE = 1 << 0
     ALLOW_LANDMARK = 1 << 1
@@ -1880,6 +1944,32 @@ class GroupPowerFlags(IntFlag):
 
     # Group Banning
     GROUP_BAN_ACCESS = 1 << 51  # Allows access to ban / un-ban agents from a group.
+
+
+@se.flag_field_serializer("RequestObjectPropertiesFamily", "ObjectData", "RequestFlags")
+@se.flag_field_serializer("ObjectPropertiesFamily", "ObjectData", "RequestFlags")
+class ObjectPropertiesFamilyRequestFlags(IntFlag):
+    BUG_REPORT = 1 << 0
+    COMPLAINT_REPORT = 1 << 1
+    OBJECT_PAY = 1 << 2
+
+
+@se.enum_field_serializer("RequestImage", "RequestImage", "Type")
+class RequestImageType(IntEnum):
+    NORMAL = 0
+    AVATAR_BAKE = 1
+
+
+@se.enum_field_serializer("ImageData", "ImageID", "Codec")
+class ImageCodec(IntEnum):
+    INVALID = 0
+    RGB = 1
+    J2C = 2
+    BMP = 3
+    TGA = 4
+    JPEG = 5
+    DXT = 6
+    PNG = 7
 
 
 @se.http_serializer("RenderMaterials")
