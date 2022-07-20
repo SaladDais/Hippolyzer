@@ -27,7 +27,10 @@ class WebAppCapAddon(BaseAddon, abc.ABC):
     def handle_region_registered(self, session: Session, region: ProxiedRegion):
         # Register a fake URL for our cap. This will add the cap URL to the Seed
         # response that gets sent back to the client if that cap name was requested.
-        if self.CAP_NAME not in region.cap_urls:
+        region.register_proxy_cap(self.CAP_NAME)
+
+    def handle_session_init(self, session: Session):
+        for region in session.regions:
             region.register_proxy_cap(self.CAP_NAME)
 
     def handle_http_request(self, session_manager: SessionManager, flow: HippoHTTPFlow):

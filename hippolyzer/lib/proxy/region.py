@@ -129,12 +129,16 @@ class ProxiedRegion(BaseClientRegion):
 
     def register_proxy_cap(self, name: str):
         """Register a cap to be completely handled by the proxy"""
+        if name in self.caps:
+            # If we have an existing cap then we should just use that.
+            cap_data = self.caps[name]
+            if cap_data[1] == CapType.PROXY_ONLY:
+                return cap_data[0]
         cap_url = f"http://{uuid.uuid4()!s}.caps.hippo-proxy.localhost"
         self.register_cap(name, cap_url, CapType.PROXY_ONLY)
         return cap_url
 
     def register_cap(self, name: str, cap_url: str, cap_type: CapType = CapType.NORMAL):
-        """Register a Cap that only has meaning the first time it's used"""
         self.caps.add(name, (cap_type, cap_url))
         self._recalc_caps()
 
