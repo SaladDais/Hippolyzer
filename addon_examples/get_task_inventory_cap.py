@@ -58,7 +58,10 @@ async def get_task_inventory():
         if not file_name:
             return Response("", status=204)
 
-        if inv_message["InventoryData"]["Serial"] == int(request.args.get("last_serial", None)):
+        last_serial = request.args.get("last_serial", None)
+        if last_serial:
+            last_serial = int(last_serial)
+        if inv_message["InventoryData"]["Serial"] == last_serial:
             # Nothing has changed since the version of the inventory they say they have, say so.
             return Response("", status=304)
 
