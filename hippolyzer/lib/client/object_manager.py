@@ -17,6 +17,7 @@ from hippolyzer.lib.base.datatypes import UUID, Vector3
 from hippolyzer.lib.base.helpers import proxify
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
+from hippolyzer.lib.base.message.msgtypes import PacketFlags
 from hippolyzer.lib.base.objects import (
     normalize_object_update,
     normalize_terse_object_update,
@@ -116,8 +117,8 @@ class ClientObjectManager:
                 *[Block("ObjectData", ObjectLocalID=x) for x in ids_to_req[:255]],
             ]
             # Selecting causes ObjectProperties to be sent
-            self._region.circuit.send(Message("ObjectSelect", blocks))
-            self._region.circuit.send(Message("ObjectDeselect", blocks))
+            self._region.circuit.send(Message("ObjectSelect", blocks, flags=PacketFlags.RELIABLE))
+            self._region.circuit.send(Message("ObjectDeselect", blocks, flags=PacketFlags.RELIABLE))
             ids_to_req = ids_to_req[255:]
 
         futures = []
@@ -154,6 +155,7 @@ class ClientObjectManager:
                 "RequestMultipleObjects",
                 Block("AgentData", AgentID=session.agent_id, SessionID=session.id),
                 *[Block("ObjectData", CacheMissType=0, ID=x) for x in ids_to_req[:255]],
+                flags=PacketFlags.RELIABLE,
             ))
             ids_to_req = ids_to_req[255:]
 

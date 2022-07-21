@@ -11,7 +11,7 @@ from typing import *
 from hippolyzer.lib.base.datatypes import UUID, RawBytes
 from hippolyzer.lib.base.message.data_packer import TemplateDataPacker
 from hippolyzer.lib.base.message.message import Block, Message
-from hippolyzer.lib.base.message.msgtypes import MsgType
+from hippolyzer.lib.base.message.msgtypes import MsgType, PacketFlags
 from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.base.message.circuit import ConnectionHolder
 from hippolyzer.lib.base.templates import XferPacket, XferFilePath, AssetType, XferError
@@ -174,10 +174,11 @@ class XferManager:
             to_ack = range(xfer.next_ackable, ack_max)
             xfer.next_ackable = ack_max
         for ack_id in to_ack:
-            self._connection_holder.circuit.send(Message(
+            self._connection_holder.circuit.send_reliable(Message(
                 "ConfirmXferPacket",
                 Block("XferID", ID=xfer.xfer_id, Packet=ack_id),
                 direction=xfer.direction,
+                flags=PacketFlags.RELIABLE,
             ))
 
         xfer.chunks[packet_id.PacketID] = packet_data
@@ -225,7 +226,8 @@ class XferManager:
                 Tempfile=temp_file,
                 StoreLocal=store_local,
                 AssetData=inline_data,
-            )
+            ),
+            flags=PacketFlags.RELIABLE
         ))
         fut = asyncio.Future()
         asyncio.create_task(self._pump_asset_upload(xfer, transaction_id, fut))
@@ -278,6 +280,7 @@ class XferManager:
                 Block("DataPacket", Data=chunk),
                 # Send this towards the sender of the RequestXfer
                 direction=~request_msg.direction,
+                flags=PacketFlags.RELIABLE,
             ))
             # Don't care about the value, just want to know it was confirmed.
             if wait_for_confirm:

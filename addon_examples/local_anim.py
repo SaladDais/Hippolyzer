@@ -29,6 +29,7 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.helpers import get_mtime
 from hippolyzer.lib.base.llanim import Animation
 from hippolyzer.lib.base.message.message import Block, Message
+from hippolyzer.lib.base.message.msgtypes import PacketFlags
 from hippolyzer.lib.proxy import addon_ctx
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.addon_utils import BaseAddon, SessionProperty, GlobalProperty, show_message
@@ -133,6 +134,7 @@ class LocalAnimAddon(BaseAddon):
                 AgentID=session.agent_id,
                 SessionID=session.id,
             ),
+            flags=PacketFlags.RELIABLE,
         )
 
         # Stop any old version of the anim that might be playing first

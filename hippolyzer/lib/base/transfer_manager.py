@@ -10,6 +10,7 @@ from typing import *
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.circuit import ConnectionHolder
+from hippolyzer.lib.base.message.msgtypes import PacketFlags
 from hippolyzer.lib.base.templates import (
     TransferRequestParamsBase,
     TransferChannelType,
@@ -104,6 +105,7 @@ class TransferManager:
                 Priority=priority,
                 Params_=params,
             ),
+            flags=PacketFlags.RELIABLE,
         ))
         transfer = Transfer(transfer_id)
         asyncio.create_task(self._pump_transfer_replies(transfer))
