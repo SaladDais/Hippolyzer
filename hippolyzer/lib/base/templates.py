@@ -1972,6 +1972,31 @@ class ImageCodec(IntEnum):
     PNG = 7
 
 
+@se.enum_field_serializer("LayerData", "LayerID", "Type")
+class LayerDataType(IntEnum):
+    LAND_LAYER_CODE = ord('L')
+    WIND_LAYER_CODE = ord('7')
+    CLOUD_LAYER_CODE = ord('8')
+    WATER_LAYER_CODE = ord('W')
+
+    # <FS:CR> Aurora Sim
+    # Extended land layer for Aurora Sim
+    AURORA_LAND_LAYER_CODE = ord('M')
+    AURORA_WATER_LAYER_CODE = ord('X')
+    AURORA_WIND_LAYER_CODE = ord('9')
+    AURORA_CLOUD_LAYER_CODE = ord(':')
+
+
+@se.enum_field_serializer("ModifyLand", "ModifyBlock", "Action")
+class ModifyLandAction(IntEnum):
+    LEVEL = 0
+    RAISE = 1
+    LOWER = 2
+    SMOOTH = 3
+    NOISE = 4
+    REVERT = 5
+
+
 @se.http_serializer("RenderMaterials")
 class RenderMaterialsSerializer(se.BaseHTTPSerializer):
     @classmethod
