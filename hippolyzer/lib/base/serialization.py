@@ -1339,6 +1339,12 @@ class TypedBytesBase(SerializableBase, abc.ABC):
         return self._spec.default_value()
 
 
+class TypedBytesGreedy(TypedBytesBase):
+    def __init__(self, spec, empty_is_none=False, check_trailing_bytes=True, lazy=False):
+        self._bytes_tmpl = BytesGreedy()
+        super().__init__(spec, empty_is_none, check_trailing_bytes, lazy=lazy)
+
+
 class TypedByteArray(TypedBytesBase):
     def __init__(self, len_spec, spec, empty_is_none=False, check_trailing_bytes=True, lazy=False):
         self._bytes_tmpl = ByteArray(len_spec)

@@ -289,7 +289,7 @@ class RegionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncioT
         self.message_handler.handle(msg)
         events = self.object_addon.events
         self.assertEqual(2, len(events))
-        self.assertEqual({"Position"}, events[1][2])
+        self.assertEqual({"Position", "TextureEntry"}, events[1][2])
 
     def test_region_position(self):
         parent = self._create_object(pos=(0.0, 1.0, 0.0))

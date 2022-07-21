@@ -1295,7 +1295,7 @@ TE_SERIALIZER = se.Dataclass(TextureEntryCollection)
 @se.subfield_serializer("ObjectImage", "ObjectData", "TextureEntry")
 class TextureEntrySubfieldSerializer(se.SimpleSubfieldSerializer):
     EMPTY_IS_NONE = True
-    TEMPLATE = TE_SERIALIZER
+    TEMPLATE = se.TypedBytesGreedy(TE_SERIALIZER, empty_is_none=True, lazy=True)
 
 
 DATA_PACKER_TE_TEMPLATE = se.TypedByteArray(

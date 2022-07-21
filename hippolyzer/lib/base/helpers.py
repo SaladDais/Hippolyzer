@@ -4,6 +4,7 @@ import codecs
 import functools
 import os
 
+import lazy_object_proxy
 import pkg_resources
 import re
 import weakref
@@ -19,7 +20,7 @@ def _with_patched_multidict(f):
         # There's no way to tell pprint "hey, this is a dict,
         # this is how you access its items." A lot of the formatting logic
         # is in the module-level `_safe_repr()` which we don't want to mess with.
-        # Instead, pretend our MultiDict has dict's __repr__ and while we're inside
+        # Instead, pretend our MultiDict has dict's __repr__ while we're inside
         # calls to pprint. Hooray.
         orig_repr = MultiDict.__repr__
         if orig_repr is dict.__repr__:
@@ -67,6 +68,9 @@ class HippoPrettyPrinter(PrettyPrinter):
         return f"({reprs})"
 
     def pformat(self, obj: object, *args, **kwargs) -> str:
+        # Unwrap lazy object proxies before pprinting them
+        if isinstance(obj, lazy_object_proxy.Proxy):
+            obj = obj.__wrapped__
         if isinstance(obj, (bytes, str)):
             return self._str_format(obj)
         return self._base_pformat(obj, *args, **kwargs)
