@@ -15,7 +15,7 @@ from flask import Flask, Response, request
 
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
-from hippolyzer.lib.base.inventory import InventoryModel
+from hippolyzer.lib.base.inventory import InventoryModel, InventoryObject
 from hippolyzer.lib.base.message.message import Message, Block
 from hippolyzer.lib.base.templates import XferFilePath
 from hippolyzer.lib.proxy import addon_ctx
@@ -24,7 +24,7 @@ from hippolyzer.lib.proxy.webapp_cap_addon import WebAppCapAddon
 app = Flask("GetTaskInventoryCapApp")
 
 
-@app.route('/', methods=["POST"])
+@app.route('/', methods=["GET"])
 async def get_task_inventory():
     # Should always have the current region, the cap handler is bound to one.
     # Just need to pull it from the `addon_ctx` module's global.
@@ -56,7 +56,23 @@ async def get_task_inventory():
         # No task inventory, send the reply as-is
         file_name = inv_message["InventoryData"]["Filename"]
         if not file_name:
-            return Response("", status=204)
+            # The "Contents" folder always has to be there, if we don't put it here
+            # then the viewer will have to lie about it being there itself.
+            return Response(
+                llsd.format_xml({
+                    "inventory": [
+                        InventoryObject(
+                            name="Contents",
+                            parent_id=UUID.ZERO,
+                            type="category",
+                            obj_id=obj_id
+                        ).to_llsd()
+                    ],
+                    "inv_serial": inv_message["InventoryData"]["Serial"],
+                }),
+                headers={"Content-Type": "application/llsd+xml"},
+                status=200,
+            )
 
         last_serial = request.args.get("last_serial", None)
         if last_serial:
@@ -82,11 +98,11 @@ async def get_task_inventory():
         inv_model = InventoryModel.from_str(xfer.reassemble_chunks().decode("utf8"))
 
         return Response(
-            llsd.format_notation({
+            llsd.format_xml({
                 "inventory": inv_model.to_llsd(),
                 "inv_serial": inv_message["InventoryData"]["Serial"],
             }),
-            headers={"Content-Type": "application/llsd+notation"},
+            headers={"Content-Type": "application/llsd+xml"},
         )
     raise asyncio.TimeoutError("Failed to get inventory after 3 tries")
 
