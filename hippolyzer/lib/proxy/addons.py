@@ -275,6 +275,9 @@ class AddonManager:
 
         new_addons = {}
         for spec in cls.BASE_ADDON_SPECS[:]:
+            previous_mod = cls.FRESH_ADDON_MODULES.get(spec.name)
+            # Whether we've EVER successfully loaded this module,
+            # There may be a `None` entry in the dict if that's the case.
             had_mod = spec.name in cls.FRESH_ADDON_MODULES
             try:
                 mtime = get_mtime(spec.origin)
@@ -289,13 +292,14 @@ class AddonManager:
                         # Keep module loaded even if file went away.
                         continue
 
+                if previous_mod:
+                    cls._unload_module(previous_mod)
+
                 logging.info("(Re)compiling addon %s" % spec.origin)
-                old_mod = cls.FRESH_ADDON_MODULES.get(spec.name)
                 mod = importlib.util.module_from_spec(spec)
                 sys.modules[spec.name] = mod
                 spec.loader.exec_module(mod)
                 cls.FILE_MTIMES[spec.origin] = mtime
-                cls._unload_module(old_mod)
 
                 new_addons[spec.name] = mod
 
