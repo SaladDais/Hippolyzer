@@ -26,6 +26,50 @@ class MeshAsset:
     segments: MeshSegmentDict = dataclasses.field(default_factory=dict)
     raw_segments: Dict[str, bytes] = dataclasses.field(default_factory=dict)
 
+    @classmethod
+    def make_triangle(cls) -> MeshAsset:
+        """Make an asset representing unrigged single-sided mesh triangle"""
+        inst = cls()
+        inst.header = {
+            "version": 1,
+            "high_lod": {"offset": 0, "size": 0},
+            "physics_mesh": {"offset": 0, "size": 0},
+            "physics_convex": {"offset": 0, "size": 0},
+        }
+        base_lod: LODSegmentDict = {
+            'Normal': [
+                Vector3(-0.0, -0.0, -1.0),
+                Vector3(-0.0, -0.0, -1.0),
+                Vector3(-0.0, -0.0, -1.0)
+            ],
+            'PositionDomain': {'Max': [0.5, 0.5, 0.0], 'Min': [-0.5, -0.5, 0.0]},
+            'Position': [
+                Vector3(0.0, 0.0, 0.0),
+                Vector3(1.0, 0.0, 0.0),
+                Vector3(0.5, 1.0, 0.0)
+            ],
+            'TexCoord0Domain': {'Max': [1.0, 1.0], 'Min': [0.0, 0.0]},
+            'TexCoord0': [
+                Vector2(0.0, 0.0),
+                Vector2(1.0, 0.0),
+                Vector2(0.5, 1.0)
+            ],
+            'TriangleList': [[0, 1, 2]],
+        }
+        inst.segments['physics_mesh'] = [deepcopy(base_lod)]
+        inst.segments['high_lod'] = [deepcopy(base_lod)]
+        convex_segment: PhysicsConvexSegmentDict = {
+            'BoundingVerts': [
+                Vector3(-0.0, 1.0, -1.0),
+                Vector3(-1.0, -1.0, -1.0),
+                Vector3(1.0, -1.0, -1.0)
+            ],
+            'Max': [0.5, 0.5, 0.0],
+            'Min': [-0.5, -0.5, 0.0]
+        }
+        inst.segments['physics_convex'] = convex_segment
+        return inst
+
     def iter_lods(self) -> Generator[List[LODSegmentDict], None, None]:
         for lod_name, lod_val in self.segments.items():
             if lod_name.endswith("_lod"):

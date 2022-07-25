@@ -62,3 +62,8 @@ class TestMesh(unittest.TestCase):
         mat_list = list(mesh.iter_lod_materials())
         self.assertEqual(4, len(mat_list))
         self.assertIsInstance(mat_list[0], dict)
+
+    def test_make_default_triangle(self):
+        tri = MeshAsset.make_triangle()
+        self.assertEqual(0.5, tri.segments['high_lod'][0]['Position'][2].X)
+        self.assertEqual(1, tri.header['version'])

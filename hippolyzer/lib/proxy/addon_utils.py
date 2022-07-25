@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import *
+
 import abc
 import copy
 import dataclasses
@@ -5,7 +9,6 @@ import multiprocessing
 import pickle
 import secrets
 import warnings
-from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID, Vector3
 from hippolyzer.lib.base.message.message import Block, Message
@@ -14,10 +17,11 @@ from hippolyzer.lib.proxy import addon_ctx
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.base.network.transport import UDPPacket, Direction
-from hippolyzer.lib.proxy.region import ProxiedRegion
-from hippolyzer.lib.proxy.sessions import SessionManager, Session
 from hippolyzer.lib.proxy.task_scheduler import TaskLifeScope
 from hippolyzer.lib.base.templates import ChatSourceType, ChatType
+if TYPE_CHECKING:
+    from hippolyzer.lib.proxy.sessions import SessionManager, Session
+    from hippolyzer.lib.proxy.region import ProxiedRegion
 
 
 class AssetAliasTracker:
@@ -208,7 +212,7 @@ class BaseAddon(abc.ABC):
 
 
 _T = TypeVar("_T")
-_U = TypeVar("_U", Session, SessionManager)
+_U = TypeVar("_U", "Session", "SessionManager")
 
 
 class BaseAddonProperty(abc.ABC, Generic[_T, _U]):
@@ -257,7 +261,7 @@ class BaseAddonProperty(abc.ABC, Generic[_T, _U]):
         self._get_context_obj().addon_ctx[self.name] = value
 
 
-class SessionProperty(BaseAddonProperty[_T, Session]):
+class SessionProperty(BaseAddonProperty[_T, "Session"]):
     """
     Property tied to the current session context
 
@@ -267,7 +271,7 @@ class SessionProperty(BaseAddonProperty[_T, Session]):
         return addon_ctx.session.get()
 
 
-class GlobalProperty(BaseAddonProperty[_T, SessionManager]):
+class GlobalProperty(BaseAddonProperty[_T, "SessionManager"]):
     """
     Property tied to the global SessionManager context
 
