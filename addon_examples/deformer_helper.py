@@ -4,8 +4,12 @@ Helper for making deformer anims. This could have a GUI I guess.
 import dataclasses
 from typing import *
 
+import numpy as np
+import transformations
+
 from hippolyzer.lib.base.datatypes import Vector3, Quaternion, UUID
 from hippolyzer.lib.base.llanim import Joint, Animation, PosKeyframe, RotKeyframe
+from hippolyzer.lib.base.mesh import MeshAsset, SegmentHeaderDict, SkinSegmentDict
 from hippolyzer.lib.proxy.addon_utils import show_message, BaseAddon, SessionProperty
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.commands import handle_command, Parameter
@@ -43,6 +47,16 @@ def build_deformer(joints: Dict[str, DeformerJoint]) -> bytes:
             pos_keyframes=[PosKeyframe(time=0.0, pos=joint.pos)] if joint.pos else [],
         )
     return anim.to_bytes()
+
+
+def identity_mat4() -> List[float]:
+    """
+    Return an "Identity" mat4
+
+    Effectively represents a transform of no rot, no translation, no shear, no perspective
+    and scaling by 1.0 on every axis.
+    """
+    return list(np.identity(4).flatten('F'))
 
 
 class DeformerAddon(BaseAddon):
@@ -117,6 +131,62 @@ class DeformerAddon(BaseAddon):
 
         self._reapply_deformer(session, region)
         return True
+
+    @handle_command()
+    async def upload_mesh_deformer(self, _session: Session, region: ProxiedRegion):
+        """
+        Export the deformer as a crafted rigged mesh rather than an animation
+
+        Mesh deformers have the advantage that they don't cause your joints to "stick"
+        like animations do when using animations with pos keyframes.
+        """
+        skin_seg = SkinSegmentDict(
+            joint_names=[],
+            bind_shape_matrix=identity_mat4(),
+            inverse_bind_matrix=[],
+            alt_inverse_bind_matrix=[],
+            pelvis_offset=0.0,
+            lock_scale_if_joint_position=False
+        )
+        for joint_name, joint in self.deform_joints.items():
+            # We can only represent joint translations, ignore this joint if it doesn't have any.
+            if not joint.pos:
+                continue
+            skin_seg['joint_names'].append(joint_name)
+            # Inverse bind matrix isn't actually used, so we can just give it a placeholder value of the
+            # identity mat4. This might break things in weird ways because the matrix isn't actually sensible.
+            skin_seg['inverse_bind_matrix'].append(identity_mat4())
+            # Create a flattened mat4 that only has a translation component of our joint pos
+            # The viewer ignores any other component of these matrices so no point putting shear
+            # or perspective or whatever :)
+            joint_mat = list(transformations.compose_matrix(translate=tuple(joint.pos)).flatten('F'))
+            # Ask the viewer to override this joint's usual parent-relative position with our matrix
+            skin_seg['alt_inverse_bind_matrix'].append(joint_mat)
+
+        # Make a dummy mesh and shove our skin segment onto it. None of the tris are rigged, so the
+        # viewer will freak out and refuse to display the tri, only the joint translations will be used.
+        # Supposedly a mesh with a `skin` segment but no weights on the material should just result in an
+        # effectively unrigged material, but that's not the case. Oh well.
+        mesh = MeshAsset.make_triangle()
+        mesh.header['skin'] = SegmentHeaderDict(offset=0, size=0)
+        mesh.segments['skin'] = skin_seg
+
+        # Send off mesh to calculate upload cost
+        try:
+            upload_token = await region.asset_uploader.initiate_mesh_upload("deformer", mesh)
+        except Exception as e:
+            show_message(e)
+            raise
+
+        if not await AddonManager.UI.confirm("Upload", f"Spend {upload_token.linden_cost}L on upload?"):
+            return
+
+        # Do the actual upload
+        try:
+            await region.asset_uploader.complete_mesh_upload(upload_token)
+        except Exception as e:
+            show_message(e)
+            raise
 
 
 addons = [DeformerAddon()]
