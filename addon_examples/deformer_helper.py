@@ -50,6 +50,43 @@ def build_deformer(joints: Dict[str, DeformerJoint]) -> bytes:
     return anim.to_bytes()
 
 
+def build_mesh_deformer(joints: Dict[str, DeformerJoint]) -> bytes:
+    skin_seg = SkinSegmentDict(
+        joint_names=[],
+        bind_shape_matrix=identity_mat4(),
+        inverse_bind_matrix=[],
+        alt_inverse_bind_matrix=[],
+        pelvis_offset=0.0,
+        lock_scale_if_joint_position=False
+    )
+    for joint_name, joint in joints.items():
+        # We can only represent joint translations, ignore this joint if it doesn't have any.
+        if not joint.pos:
+            continue
+        skin_seg['joint_names'].append(joint_name)
+        # Inverse bind matrix isn't actually used, so we can just give it a placeholder value of the
+        # identity mat4. This might break things in weird ways because the matrix isn't actually sensible.
+        skin_seg['inverse_bind_matrix'].append(identity_mat4())
+        # Create a flattened mat4 that only has a translation component of our joint pos
+        # The viewer ignores any other component of these matrices so no point putting shear
+        # or perspective or whatever :)
+        joint_mat4 = pos_to_mat4(joint.pos)
+        # Ask the viewer to override this joint's usual parent-relative position with our matrix
+        skin_seg['alt_inverse_bind_matrix'].append(joint_mat4)
+
+    # Make a dummy mesh and shove our skin segment onto it. None of the tris are rigged, so the
+    # viewer will freak out and refuse to display the tri, only the joint translations will be used.
+    # Supposedly a mesh with a `skin` segment but no weights on the material should just result in an
+    # effectively unrigged material, but that's not the case. Oh well.
+    mesh = MeshAsset.make_triangle()
+    mesh.header['skin'] = SegmentHeaderDict(offset=0, size=0)
+    mesh.segments['skin'] = skin_seg
+
+    writer = BufferWriter("!")
+    writer.write(LLMeshSerializer(), mesh)
+    return writer.copy_buffer()
+
+
 def identity_mat4() -> List[float]:
     """
     Return an "Identity" mat4
@@ -146,46 +183,33 @@ class DeformerAddon(BaseAddon):
         Mesh deformers have the advantage that they don't cause your joints to "stick"
         like animations do when using animations with pos keyframes.
         """
-        skin_seg = SkinSegmentDict(
-            joint_names=[],
-            bind_shape_matrix=identity_mat4(),
-            inverse_bind_matrix=[],
-            alt_inverse_bind_matrix=[],
-            pelvis_offset=0.0,
-            lock_scale_if_joint_position=False
-        )
-        for joint_name, joint in self.deform_joints.items():
-            # We can only represent joint translations, ignore this joint if it doesn't have any.
-            if not joint.pos:
-                continue
-            skin_seg['joint_names'].append(joint_name)
-            # Inverse bind matrix isn't actually used, so we can just give it a placeholder value of the
-            # identity mat4. This might break things in weird ways because the matrix isn't actually sensible.
-            skin_seg['inverse_bind_matrix'].append(identity_mat4())
-            # Create a flattened mat4 that only has a translation component of our joint pos
-            # The viewer ignores any other component of these matrices so no point putting shear
-            # or perspective or whatever :)
-            joint_mat4 = pos_to_mat4(joint.pos)
-            # Ask the viewer to override this joint's usual parent-relative position with our matrix
-            skin_seg['alt_inverse_bind_matrix'].append(joint_mat4)
-
-        # Make a dummy mesh and shove our skin segment onto it. None of the tris are rigged, so the
-        # viewer will freak out and refuse to display the tri, only the joint translations will be used.
-        # Supposedly a mesh with a `skin` segment but no weights on the material should just result in an
-        # effectively unrigged material, but that's not the case. Oh well.
-        mesh = MeshAsset.make_triangle()
-        mesh.header['skin'] = SegmentHeaderDict(offset=0, size=0)
-        mesh.segments['skin'] = skin_seg
-
-        writer = BufferWriter("!")
-        writer.write(LLMeshSerializer(), mesh)
-        mesh_bytes = writer.copy_buffer()
-
         filename = await AddonManager.UI.save_file(filter_str="LL Mesh (*.llmesh)")
         if not filename:
             return
         with open(filename, "wb") as f:
-            f.write(mesh_bytes)
+            f.write(build_mesh_deformer(self.deform_joints))
+
+    @handle_command()
+    async def upload_deformer_as_mesh(self, _session: Session, region: ProxiedRegion):
+        """Same as save_deformer_as_mesh, but uploads the mesh directly to SL."""
+
+        mesh_bytes = build_mesh_deformer(self.deform_joints)
+        try:
+            # Send off mesh to calculate upload cost
+            upload_token = await region.asset_uploader.initiate_mesh_upload("deformer", mesh_bytes)
+        except Exception as e:
+            show_message(e)
+            raise
+
+        if not await AddonManager.UI.confirm("Upload", f"Spend {upload_token.linden_cost}L on upload?"):
+            return
+
+        # Do the actual upload
+        try:
+            await region.asset_uploader.complete_upload(upload_token)
+        except Exception as e:
+            show_message(e)
+            raise
 
 
 addons = [DeformerAddon()]
