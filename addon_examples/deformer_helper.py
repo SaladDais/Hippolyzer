@@ -60,6 +60,11 @@ def identity_mat4() -> List[float]:
     return list(np.identity(4).flatten('F'))
 
 
+def pos_to_mat4(pos: Vector3) -> List[float]:
+    """Convert a position Vector3 to a Translation Mat4"""
+    return list(transformations.compose_matrix(translate=tuple(pos)).flatten('F'))
+
+
 class DeformerAddon(BaseAddon):
     deform_joints: Dict[str, DeformerJoint] = SessionProperty(dict)
 
@@ -160,9 +165,9 @@ class DeformerAddon(BaseAddon):
             # Create a flattened mat4 that only has a translation component of our joint pos
             # The viewer ignores any other component of these matrices so no point putting shear
             # or perspective or whatever :)
-            joint_mat = list(transformations.compose_matrix(translate=tuple(joint.pos)).flatten('F'))
+            joint_mat4 = pos_to_mat4(joint.pos)
             # Ask the viewer to override this joint's usual parent-relative position with our matrix
-            skin_seg['alt_inverse_bind_matrix'].append(joint_mat)
+            skin_seg['alt_inverse_bind_matrix'].append(joint_mat4)
 
         # Make a dummy mesh and shove our skin segment onto it. None of the tris are rigged, so the
         # viewer will freak out and refuse to display the tri, only the joint translations will be used.
@@ -174,12 +179,13 @@ class DeformerAddon(BaseAddon):
 
         writer = BufferWriter("!")
         writer.write(LLMeshSerializer(), mesh)
+        mesh_bytes = writer.copy_buffer()
 
         filename = await AddonManager.UI.save_file(filter_str="LL Mesh (*.llmesh)")
         if not filename:
             return
         with open(filename, "wb") as f:
-            f.write(writer.copy_buffer())
+            f.write(mesh_bytes)
 
 
 addons = [DeformerAddon()]
