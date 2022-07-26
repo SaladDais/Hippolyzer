@@ -1997,6 +1997,35 @@ class ModifyLandAction(IntEnum):
     REVERT = 5
 
 
+@se.flag_field_serializer("RevokePermissions", "Data", "ObjectPermissions")
+@se.flag_field_serializer("ScriptQuestion", "Data", "Questions")
+@se.flag_field_serializer("ScriptAnswerYes", "Data", "Questions")
+class ScriptPermissions(IntFlag):
+    # "1" itself seems to be unused?
+    TAKE_MONEY = 1 << 1
+    TAKE_CONTROLS = 1 << 2
+    # Doesn't seem to be used?
+    REMAP_CONTROLS = 1 << 3
+    TRIGGER_ANIMATIONS = 1 << 4
+    ATTACH = 1 << 5
+    # Doesn't seem to be used?
+    RELEASE_OWNERSHIP = 1 << 6
+    CHANGE_LINKS = 1 << 7
+    # Object joints don't exist anymore
+    CHANGE_JOINTS = 1 << 8
+    # Change its own permissions? Doesn't seem to be used.
+    CHANGE_PERMISSIONS = 1 << 9
+    TRACK_CAMERA = 1 << 10
+    CONTROL_CAMERA = 1 << 11
+    TELEPORT = 1 << 12
+    JOIN_EXPERIENCE = 1 << 13
+    MANAGE_ESTATE_ACCESS = 1 << 14
+    ANIMATION_OVERRIDE = 1 << 15
+    RETURN_OBJECTS = 1 << 16
+    FORCE_SIT = 1 << 17
+    CHANGE_ENVIRONMENT = 1 << 18
+
+
 @se.http_serializer("RenderMaterials")
 class RenderMaterialsSerializer(se.BaseHTTPSerializer):
     @classmethod

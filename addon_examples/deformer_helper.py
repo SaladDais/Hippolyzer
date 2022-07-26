@@ -9,7 +9,8 @@ import transformations
 
 from hippolyzer.lib.base.datatypes import Vector3, Quaternion, UUID
 from hippolyzer.lib.base.llanim import Joint, Animation, PosKeyframe, RotKeyframe
-from hippolyzer.lib.base.mesh import MeshAsset, SegmentHeaderDict, SkinSegmentDict
+from hippolyzer.lib.base.mesh import MeshAsset, SegmentHeaderDict, SkinSegmentDict, LLMeshSerializer
+from hippolyzer.lib.base.serialization import BufferWriter
 from hippolyzer.lib.proxy.addon_utils import show_message, BaseAddon, SessionProperty
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.commands import handle_command, Parameter
@@ -133,7 +134,7 @@ class DeformerAddon(BaseAddon):
         return True
 
     @handle_command()
-    async def upload_mesh_deformer(self, _session: Session, region: ProxiedRegion):
+    async def save_deformer_as_mesh(self, _session: Session, _region: ProxiedRegion):
         """
         Export the deformer as a crafted rigged mesh rather than an animation
 
@@ -171,22 +172,14 @@ class DeformerAddon(BaseAddon):
         mesh.header['skin'] = SegmentHeaderDict(offset=0, size=0)
         mesh.segments['skin'] = skin_seg
 
-        # Send off mesh to calculate upload cost
-        try:
-            upload_token = await region.asset_uploader.initiate_mesh_upload("deformer", mesh)
-        except Exception as e:
-            show_message(e)
-            raise
+        writer = BufferWriter("!")
+        writer.write(LLMeshSerializer(), mesh)
 
-        if not await AddonManager.UI.confirm("Upload", f"Spend {upload_token.linden_cost}L on upload?"):
+        filename = await AddonManager.UI.save_file(filter_str="LL Mesh (*.llmesh)")
+        if not filename:
             return
-
-        # Do the actual upload
-        try:
-            await region.asset_uploader.complete_upload(upload_token)
-        except Exception as e:
-            show_message(e)
-            raise
+        with open(filename, "wb") as f:
+            f.write(writer.copy_buffer())
 
 
 addons = [DeformerAddon()]
