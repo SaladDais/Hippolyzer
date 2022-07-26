@@ -183,7 +183,7 @@ class DeformerAddon(BaseAddon):
 
         # Do the actual upload
         try:
-            await region.asset_uploader.complete_mesh_upload(upload_token)
+            await region.asset_uploader.complete_upload(upload_token)
         except Exception as e:
             show_message(e)
             raise

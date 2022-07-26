@@ -1,6 +1,7 @@
-from typing import NamedTuple, Union, Any, Optional
+from typing import NamedTuple, Union, Optional
 
 import hippolyzer.lib.base.serialization as se
+from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.mesh import MeshAsset, LLMeshSerializer
 from hippolyzer.lib.base.templates import AssetType
@@ -11,14 +12,7 @@ class UploadError(Exception):
     pass
 
 
-class MeshUploadToken(NamedTuple):
-    linden_cost: int
-    uploader_url: str
-    name: str
-    mesh: bytes
-
-
-class AssetUploadToken(NamedTuple):
+class UploadToken(NamedTuple):
     linden_cost: int
     uploader_url: str
     payload: bytes
@@ -29,7 +23,7 @@ class AssetUploader:
         self._region = region
 
     async def initiate_asset_upload(self, name: str, asset_type: AssetType,
-                                    body: bytes, flags: Optional[int] = None) -> AssetUploadToken:
+                                    body: bytes, flags: Optional[int] = None) -> UploadToken:
         payload = {
             "asset_type": asset_type.human_name,
             "description": "(No Description)",
@@ -44,7 +38,7 @@ class AssetUploader:
             payload['flags'] = flags
         resp_payload = await self._make_newfileagentinventory_req(payload)
 
-        return AssetUploadToken(resp_payload["upload_price"], resp_payload["uploader"], body)
+        return UploadToken(resp_payload["upload_price"], resp_payload["uploader"], body)
 
     async def _make_newfileagentinventory_req(self, payload: dict):
         async with self._region.caps_client.post("NewFileAgentInventory", llsd=payload) as resp:
@@ -55,12 +49,16 @@ class AssetUploader:
             raise UploadError(resp_payload)
         return resp_payload
 
-    async def complete_asset_upload(self, token: AssetUploadToken) -> dict:
+    async def complete_upload(self, token: UploadToken) -> dict:
         async with self._region.caps_client.post(token.uploader_url, data=token.payload) as resp:
             resp.raise_for_status()
             resp_payload = await resp.read_llsd()
-            await self._handle_upload_complete(resp_payload)
-            return resp_payload
+        # The actual upload endpoints return 200 on error, have to sniff the payload to figure
+        # out if it actually failed...
+        if "error" in resp_payload:
+            raise UploadError(resp_payload)
+        await self._handle_upload_complete(resp_payload)
+        return resp_payload
 
     async def _handle_upload_complete(self, resp_payload: dict):
         """
@@ -69,13 +67,11 @@ class AssetUploader:
         Could trigger an AIS fetch to send the viewer details about the item we just created,
         assuming we were in proxy context.
         """
-        # The actual upload endpoints return 200 on error, have to sniff the payload to figure
-        # out if it actually failed...
-        if "error" in resp_payload:
-            raise UploadError(resp_payload)
+        pass
 
     # The mesh upload flow is a little special, so it gets its own methods
-    async def initiate_mesh_upload(self, name: str, mesh: Union[bytes, MeshAsset]) -> MeshUploadToken:
+    async def initiate_mesh_upload(self, name: str, mesh: Union[bytes, MeshAsset],
+                                   flags: Optional[int] = None) -> UploadToken:
         """
         Very basic LL-serialized mesh uploader
 
@@ -86,8 +82,9 @@ class AssetUploader:
             writer.write(LLMeshSerializer(), mesh)
             mesh = writer.copy_buffer()
 
+        asset_resources = self._build_asset_resources(name, mesh)
         payload = {
-            'asset_resources': self._build_asset_resources(name, mesh),
+            'asset_resources': asset_resources,
             'asset_type': 'mesh',
             'description': '(No Description)',
             'everyone_mask': 0,
@@ -98,17 +95,12 @@ class AssetUploader:
             'next_owner_mask': 581632,
             'texture_folder_id': UUID.ZERO
         }
+        if flags is not None:
+            payload['flags'] = flags
         resp_payload = await self._make_newfileagentinventory_req(payload)
 
-        return MeshUploadToken(resp_payload["upload_price"], resp_payload["uploader"], name, mesh)
-
-    async def complete_mesh_upload(self, token: MeshUploadToken) -> Any:
-        payload = self._build_asset_resources(token.name, token.mesh)
-        async with self._region.caps_client.post(token.uploader_url, llsd=payload) as resp:
-            resp.raise_for_status()
-            resp_payload = await resp.read_llsd()
-            await self._handle_upload_complete(resp_payload)
-            return resp_payload
+        upload_body = llsd.format_xml(asset_resources)
+        return UploadToken(resp_payload["upload_price"], resp_payload["uploader"], upload_body)
 
     def _build_asset_resources(self, name: str, mesh: bytes) -> dict:
         return {
