@@ -83,27 +83,9 @@ SOCKS 5 works correctly on these platforms, so you can just configure it through
   the `no_proxy` env var appropriately. For ex. `no_proxy="asset-cdn.glb.agni.lindenlab.com" ./firestorm`.
 * Log in!
 
-##### Firestorm
-
-The proxy selection dialog in the most recent Firestorm release is non-functional, as
-https://bitbucket.org/lindenlab/viewer/commits/454c7f4543688126b2fa5c0560710f5a1733702e was not pulled in.
-
-As a workaround, you can go to `Debug -> Show Debug Settings` and enter the following values:
-
-| Name                | Value     |
-|---------------------|-----------|
-| HttpProxyType       | Web       |
-| BrowserProxyAddress | 127.0.0.1 |
-| BrowserProxyEnabled | TRUE      |
-| BrowserProxyPort    | 9062      |
-| Socks5ProxyEnabled  | TRUE      |
-| Socks5ProxyHost     | 127.0.0.1 |
-| Socks5ProxyPort     | 9061      |
-
-Or, if you're on Linux, you can also use [LinHippoAutoProxy](https://github.com/SaladDais/LinHippoAutoProxy).
-
-Connections from the in-viewer browser will likely _not_ be run through Hippolyzer when using either of
-these workarounds.
+Or, if you're on Linux, you can instead use [LinHippoAutoProxy](https://github.com/SaladDais/LinHippoAutoProxy)
+to launch your viewer, which will configure everything for you. Note that connections from the in-viewer browser will
+likely _not_ be run through Hippolyzer when using LinHippoAutoProxy.
 
 ### Filtering
 
