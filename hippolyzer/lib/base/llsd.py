@@ -1,3 +1,4 @@
+import datetime
 import typing
 import zlib
 
@@ -52,16 +53,93 @@ def format_notation(val: typing.Any):
 
 
 def format_binary(val: typing.Any, with_header=True):
-    val = llbase.llsd.format_binary(val)
-    if not with_header:
-        return val.split(b"\n", 1)[1]
+    val = _format_binary_recurse(val)
+    if with_header:
+        return b'<?llsd/binary?>\n' + val
     return val
+
+
+# This is copied almost wholesale from https://bitbucket.org/lindenlab/llbase/src/master/llbase/llsd.py
+# With a few minor changes to make serialization round-trip correctly. It's evil.
+def _format_binary_recurse(something) -> bytes:
+    """Binary formatter workhorse."""
+    def _format_list(something):
+        array_builder = []
+        array_builder.append(b'[' + struct.pack('!i', len(something)))
+        for item in something:
+            array_builder.append(_format_binary_recurse(item))
+        array_builder.append(b']')
+        return b''.join(array_builder)
+
+    if something is None:
+        return b'!'
+    elif isinstance(something, LLSD):
+        return _format_binary_recurse(something.thing)
+    elif isinstance(something, bool):
+        if something:
+            return b'1'
+        else:
+            return b'0'
+    elif is_integer(something):
+        try:
+            return b'i' + struct.pack('!i', something)
+        except (OverflowError, struct.error) as exc:
+            raise LLSDSerializationError(str(exc), something)
+    elif isinstance(something, float):
+        try:
+            return b'r' + struct.pack('!d', something)
+        except SystemError as exc:
+            raise LLSDSerializationError(str(exc), something)
+    elif isinstance(something, uuid.UUID):
+        return b'u' + something.bytes
+    elif isinstance(something, binary):
+        return b'b' + struct.pack('!i', len(something)) + something
+    elif is_string(something):
+        if is_unicode(something):
+            something = something.encode("utf8")
+        return b's' + struct.pack('!i', len(something)) + something
+    elif isinstance(something, uri):
+        return b'l' + struct.pack('!i', len(something)) + something.encode("utf8")
+    elif isinstance(something, datetime.datetime):
+        return b'd' + struct.pack('<d', something.timestamp())
+    elif isinstance(something, datetime.date):
+        seconds_since_epoch = calendar.timegm(something.timetuple())
+        return b'd' + struct.pack('<d', seconds_since_epoch)
+    elif isinstance(something, (list, tuple)):
+        return _format_list(something)
+    elif isinstance(something, dict):
+        map_builder = []
+        map_builder.append(b'{' + struct.pack('!i', len(something)))
+        for key, value in something.items():
+            if isinstance(key, str):
+                key = key.encode("utf8")
+            map_builder.append(b'k' + struct.pack('!i', len(key)) + key)
+            map_builder.append(_format_binary_recurse(value))
+        map_builder.append(b'}')
+        return b''.join(map_builder)
+    else:
+        try:
+            return _format_list(list(something))
+        except TypeError:
+            raise LLSDSerializationError(
+                "Cannot serialize unknown type: %s (%s)" %
+                (type(something), something))
 
 
 class HippoLLSDBinaryParser(llbase.llsd.LLSDBinaryParser):
     def __init__(self):
         super().__init__()
         self._dispatch[ord('u')] = lambda: UUID(bytes=self._getc(16))
+        self._dispatch[ord('d')] = self._parse_date
+
+    def _parse_date(self):
+        seconds = struct.unpack("<d", self._getc(8))[0]
+        try:
+            return datetime.datetime.fromtimestamp(seconds, tz=datetime.timezone.utc)
+        except OverflowError as exc:
+            # A garbage seconds value can cause utcfromtimestamp() to raise
+            # OverflowError: timestamp out of range for platform time_t
+            self._error(exc, -8)
 
     def _parse_string(self):
         # LLSD's C++ API lets you stuff binary in a string field even though it's only
