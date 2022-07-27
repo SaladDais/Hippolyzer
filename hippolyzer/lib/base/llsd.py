@@ -89,7 +89,7 @@ def parse_notation(data: bytes):
 
 
 def zip_llsd(val: typing.Any):
-    return zlib.compress(format_binary(val, with_header=False))
+    return zlib.compress(format_binary(val, with_header=False), level=zlib.Z_BEST_COMPRESSION)
 
 
 def unzip_llsd(data: bytes):
