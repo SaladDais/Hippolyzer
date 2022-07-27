@@ -28,7 +28,7 @@ class MeshAsset:
 
     @classmethod
     def make_triangle(cls) -> MeshAsset:
-        """Make an asset representing unrigged single-sided mesh triangle"""
+        """Make an asset representing an un-rigged single-sided mesh triangle"""
         inst = cls()
         inst.header = {
             "version": 1,
@@ -179,20 +179,26 @@ class VertexWeight(recordclass.datatuple):  # type: ignore
 class SkinSegmentDict(TypedDict, total=False):
     """Rigging information"""
     joint_names: List[str]
-    # model -> world transform matrix for model
+    # model -> world transform mat4 for model
     bind_shape_matrix: List[float]
-    # world -> joint local transform matrices
+    # world -> joint local transform mat4s
     inverse_bind_matrix: List[List[float]]
-    # offset matrices for joints, translation-only.
-    # Not sure what these are relative to, base joint or model <0,0,0>.
+    # Transform mat4s for the joint nodes themselves.
+    # The matrices may have scale or other components, but only the
+    # translation component will be used by the viewer.
+    # All translations are relative to the joint's parent.
     alt_inverse_bind_matrix: List[List[float]]
     lock_scale_if_joint_position: bool
     pelvis_offset: float
 
 
 class PhysicsConvexSegmentDict(DomainDict, total=False):
-    """Data for convex hull collisions, populated by the client"""
-    # Min / Max domain vals are inline, unlike for LODs
+    """
+    Data for convex hull collisions, populated by the client
+
+    Min / Max pos domain vals are inline, unlike for LODs, so this inherits from DomainDict
+    """
+    # Indices into the Positions list
     HullList: List[int]
     # -1.0 - 1.0, dequantized from binary field of U16s
     Positions: List[Vector3]
@@ -202,13 +208,13 @@ class PhysicsConvexSegmentDict(DomainDict, total=False):
 
 class PhysicsHavokSegmentDict(TypedDict, total=False):
     """Cached data for Havok collisions, populated by sim and not used by client."""
-    HullMassProps: MassPropsDict
-    MOPP: MOPPDict
-    MeshDecompMassProps: MassPropsDict
+    HullMassProps: HavokMassPropsDict
+    MOPP: HavokMOPPDict
+    MeshDecompMassProps: HavokMassPropsDict
     WeldingData: bytes
 
 
-class MassPropsDict(TypedDict, total=False):
+class HavokMassPropsDict(TypedDict, total=False):
     # Vec, center of mass
     CoM: List[float]
     # 9 floats, Mat3?
@@ -217,7 +223,7 @@ class MassPropsDict(TypedDict, total=False):
     volume: float
 
 
-class MOPPDict(TypedDict, total=False):
+class HavokMOPPDict(TypedDict, total=False):
     """Memory Optimized Partial Polytope"""
     BuildType: int
     MoppData: bytes
