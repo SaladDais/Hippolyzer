@@ -143,7 +143,34 @@ def ais_folder_to_inventory_data(ais_folder: dict):
     )
 
 
-class BaseAddon(abc.ABC):
+class MetaBaseAddon(abc.ABCMeta):
+    """
+    Metaclass for BaseAddon that prevents class member assignments from clobbering descriptors
+
+    Without this things like:
+
+        class Foo(BaseAddon):
+            bar: int = GlobalProperty(0)
+
+        Foo.bar = 2
+
+    Won't work as you expect!
+    """
+    def __setattr__(self, key: str, value):
+        # TODO: Keep track of AddonProperties in __new__ or something?
+        try:
+            existing = object.__getattribute__(self, key)
+        except AttributeError:
+            # If the attribute doesn't exist then it's fine to use the base setattr.
+            super().__setattr__(key, value)
+            return
+        if existing and isinstance(existing, BaseAddonProperty):
+            existing.__set__(self, value)
+            return
+        super().__setattr__(key, value)
+
+
+class BaseAddon(metaclass=MetaBaseAddon):
     def _schedule_task(self, coro: Coroutine, session=None,
                        region_scoped=False, session_scoped=True, addon_scoped=True):
         session = session or addon_ctx.session.get(None) or None

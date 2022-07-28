@@ -33,10 +33,11 @@ class MockAddon(BaseAddon):
 
 
 PARENT_ADDON_SOURCE = """
-from hippolyzer.lib.proxy.addon_utils import BaseAddon
+from hippolyzer.lib.proxy.addon_utils import BaseAddon, GlobalProperty
 
 class ParentAddon(BaseAddon):
     baz = None
+    quux: int = GlobalProperty(0)
 
     @classmethod
     def foo(cls):
@@ -136,3 +137,16 @@ class AddonIntegrationTests(BaseProxyTest):
         AddonManager.unload_addon_from_path(str(self.parent_path), reload=True)
         await asyncio.sleep(0.001)
         self.assertNotIn('hippolyzer.user_addon_parent_addon', sys.modules)
+
+    async def test_global_property_access_and_set(self):
+        with open(self.parent_path, "w") as f:
+            f.write(PARENT_ADDON_SOURCE)
+        AddonManager.load_addon_from_path(str(self.parent_path), reload=True)
+        # Wait for the init hooks to run
+        await asyncio.sleep(0.001)
+        self.assertFalse("quux" in self.session_manager.addon_ctx)
+        parent_addon_mod = AddonManager.FRESH_ADDON_MODULES['hippolyzer.user_addon_parent_addon']
+        self.assertEqual(0, parent_addon_mod.ParentAddon.quux)
+        self.assertEqual(0, self.session_manager.addon_ctx["quux"])
+        parent_addon_mod.ParentAddon.quux = 1
+        self.assertEqual(1, self.session_manager.addon_ctx["quux"])
