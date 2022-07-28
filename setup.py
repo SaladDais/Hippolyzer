@@ -25,7 +25,7 @@ from setuptools import setup, find_packages
 
 here = path.abspath(path.dirname(__file__))
 
-version = '0.11.2'
+version = '0.11.3'
 
 with open(path.join(here, 'README.md')) as readme_fh:
     readme = readme_fh.read()
