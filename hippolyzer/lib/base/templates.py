@@ -5,9 +5,6 @@ Serialization templates for structures used in LLUDP and HTTP bodies.
 import abc
 import collections
 import dataclasses
-import enum
-import importlib
-import logging
 import math
 import zlib
 from typing import *
@@ -16,11 +13,6 @@ import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID, IntEnum, IntFlag, Vector3
 from hippolyzer.lib.base.namevalue import NameValuesSerializer
-
-try:
-    importlib.reload(se)  # type: ignore
-except:
-    logging.exception("Failed to reload serialization lib")
 
 
 @se.enum_field_serializer("RequestXfer", "XferID", "VFileType")
@@ -359,10 +351,10 @@ class PermissionType(IntEnum):
 @se.enum_field_serializer("TransferRequest", "TransferInfo", "SourceType")
 class TransferSourceType(IntEnum):
     UNKNOWN = 0
-    FILE = enum.auto()
-    ASSET = enum.auto()
-    SIM_INV_ITEM = enum.auto()
-    SIM_ESTATE = enum.auto()
+    FILE = 1
+    ASSET = 2
+    SIM_INV_ITEM = 3
+    SIM_ESTATE = 4
 
 
 class EstateAssetType(IntEnum):
@@ -425,15 +417,15 @@ class TransferParamsSerializer(se.EnumSwitchedSubfieldSerializer):
 @se.enum_field_serializer("TransferInfo", "TransferInfo", "ChannelType")
 class TransferChannelType(IntEnum):
     UNKNOWN = 0
-    MISC = enum.auto()
-    ASSET = enum.auto()
+    MISC = 1
+    ASSET = 2
 
 
 @se.enum_field_serializer("TransferInfo", "TransferInfo", "TargetType")
 class TransferTargetType(IntEnum):
     UNKNOWN = 0
-    FILE = enum.auto()
-    VFILE = enum.auto()
+    FILE = 1
+    VFILE = 2
 
 
 @se.enum_field_serializer("TransferInfo", "TransferInfo", "Status")
@@ -540,45 +532,45 @@ class SendXferPacketIDSerializer(se.AdapterSubfieldSerializer):
 @se.enum_field_serializer("ViewerEffect", "Effect", "Type")
 class ViewerEffectType(IntEnum):
     TEXT = 0
-    ICON = enum.auto()
-    CONNECTOR = enum.auto()
-    FLEXIBLE_OBJECT = enum.auto()
-    ANIMAL_CONTROLS = enum.auto()
-    LOCAL_ANIMATION_OBJECT = enum.auto()
-    CLOTH = enum.auto()
-    EFFECT_BEAM = enum.auto()
-    EFFECT_GLOW = enum.auto()
-    EFFECT_POINT = enum.auto()
-    EFFECT_TRAIL = enum.auto()
-    EFFECT_SPHERE = enum.auto()
-    EFFECT_SPIRAL = enum.auto()
-    EFFECT_EDIT = enum.auto()
-    EFFECT_LOOKAT = enum.auto()
-    EFFECT_POINTAT = enum.auto()
-    EFFECT_VOICE_VISUALIZER = enum.auto()
-    NAME_TAG = enum.auto()
-    EFFECT_BLOB = enum.auto()
+    ICON = 1
+    CONNECTOR = 2
+    FLEXIBLE_OBJECT = 3
+    ANIMAL_CONTROLS = 4
+    LOCAL_ANIMATION_OBJECT = 5
+    CLOTH = 6
+    EFFECT_BEAM = 7
+    EFFECT_GLOW = 8
+    EFFECT_POINT = 9
+    EFFECT_TRAIL = 10
+    EFFECT_SPHERE = 11
+    EFFECT_SPIRAL = 12
+    EFFECT_EDIT = 13
+    EFFECT_LOOKAT = 14
+    EFFECT_POINTAT = 15
+    EFFECT_VOICE_VISUALIZER = 16
+    NAME_TAG = 17
+    EFFECT_BLOB = 18
 
 
 class LookAtTarget(IntEnum):
     NONE = 0
-    IDLE = enum.auto()
-    AUTO_LISTEN = enum.auto()
-    FREELOOK = enum.auto()
-    RESPOND = enum.auto()
-    HOVER = enum.auto()
-    CONVERSATION = enum.auto()
-    SELECT = enum.auto()
-    FOCUS = enum.auto()
-    MOUSELOOK = enum.auto()
-    CLEAR = enum.auto()
+    IDLE = 1
+    AUTO_LISTEN = 2
+    FREELOOK = 3
+    RESPOND = 4
+    HOVER = 5
+    CONVERSATION = 6
+    SELECT = 7
+    FOCUS = 8
+    MOUSELOOK = 9
+    CLEAR = 10
 
 
 class PointAtTarget(IntEnum):
     NONE = 0
-    SELECT = enum.auto()
-    GRAB = enum.auto()
-    CLEAR = enum.auto()
+    SELECT = 1
+    GRAB = 2
+    CLEAR = 3
 
 
 @se.subfield_serializer("ViewerEffect", "Effect", "TypeData")
@@ -943,7 +935,7 @@ class ObjectStateAdapter(se.ContextAdapter):
                 PCode.AVATAR: se.IntFlag(AgentState),
                 PCode.PRIMITIVE: AttachmentStateAdapter(None),
                 # Other cases are probably just a number (tree species ID or something.)
-                dataclasses.MISSING: se.IdentityAdapter(),
+                se.MISSING: se.IdentityAdapter(),
             }
         )
 
@@ -1146,9 +1138,15 @@ class TEExceptionField(se.SerializableBase):
         return dict
 
 
+_T = TypeVar("_T")
+_TE_FIELD_KEY = Optional[Sequence[int]]
+_TE_DICT = Dict[_TE_FIELD_KEY, _T]
+
+
 def _te_field(spec: se.SERIALIZABLE_TYPE, first=False, optional=False,
-              default_factory=dataclasses.MISSING, default=dataclasses.MISSING):
-    if default_factory is not dataclasses.MISSING:
+              default_factory: Union[se.MissingType, Callable[[], _T]] = se.MISSING,
+              default: Union[se.MissingType, _T] = se.MISSING):
+    if default_factory is not se.MISSING:
         new_default_factory = lambda: {None: default_factory()}
     elif default is not None:
         new_default_factory = lambda: {None: default}
@@ -1159,9 +1157,6 @@ def _te_field(spec: se.SERIALIZABLE_TYPE, first=False, optional=False,
         default_factory=new_default_factory,
     )
 
-
-_T = TypeVar("_T")
-_TE_FIELD_KEY = Optional[Sequence[int]]
 
 # If this seems weird it's because it is. TE offsets are S16s with `0` as the actual 0
 # point, and LL divides by `0x7FFF` to convert back to float. Negative S16s can
@@ -1221,22 +1216,22 @@ MAX_TES = 45
 
 @dataclasses.dataclass
 class TextureEntryCollection:
-    Textures: Dict[_TE_FIELD_KEY, UUID] = _te_field(
+    Textures: _TE_DICT[UUID] = _te_field(
         # Plywood texture
         se.UUID, first=True, default=UUID('89556747-24cb-43ed-920b-47caed15465f'))
     # Bytes are inverted so fully opaque white is \x00\x00\x00\x00
-    Color: Dict[_TE_FIELD_KEY, bytes] = _te_field(Color4(invert_bytes=True), default=b"\xff\xff\xff\xff")
-    ScalesS: Dict[_TE_FIELD_KEY, float] = _te_field(se.F32, default=1.0)
-    ScalesT: Dict[_TE_FIELD_KEY, float] = _te_field(se.F32, default=1.0)
-    OffsetsS: Dict[_TE_FIELD_KEY, float] = _te_field(TE_S16_COORD, default=0.0)
-    OffsetsT: Dict[_TE_FIELD_KEY, float] = _te_field(TE_S16_COORD, default=0.0)
-    Rotation: Dict[_TE_FIELD_KEY, float] = _te_field(PackedTERotation(), default=0.0)
-    BasicMaterials: Dict[_TE_FIELD_KEY, "BasicMaterials"] = _te_field(
+    Color: _TE_DICT[bytes] = _te_field(Color4(invert_bytes=True), default=b"\xff\xff\xff\xff")
+    ScalesS: _TE_DICT[float] = _te_field(se.F32, default=1.0)
+    ScalesT: _TE_DICT[float] = _te_field(se.F32, default=1.0)
+    OffsetsS: _TE_DICT[float] = _te_field(TE_S16_COORD, default=0.0)
+    OffsetsT: _TE_DICT[float] = _te_field(TE_S16_COORD, default=0.0)
+    Rotation: _TE_DICT[float] = _te_field(PackedTERotation(), default=0.0)
+    BasicMaterials: _TE_DICT["BasicMaterials"] = _te_field(
         BUMP_SHINY_FULLBRIGHT, default_factory=BasicMaterials,
     )
-    MediaFlags: Dict[_TE_FIELD_KEY, "MediaFlags"] = _te_field(MEDIA_FLAGS, default_factory=MediaFlags)
-    Glow: Dict[_TE_FIELD_KEY, float] = _te_field(se.QuantizedFloat(se.U8, 0.0, 1.0), default=0.0)
-    Materials: Dict[_TE_FIELD_KEY, UUID] = _te_field(se.UUID, optional=True, default=UUID.ZERO)
+    MediaFlags: _TE_DICT["MediaFlags"] = _te_field(MEDIA_FLAGS, default_factory=MediaFlags)
+    Glow: _TE_DICT[float] = _te_field(se.QuantizedFloat(se.U8, 0.0, 1.0), default=0.0)
+    Materials: _TE_DICT[UUID] = _te_field(se.UUID, optional=True, default=UUID.ZERO)
 
     def unwrap(self):
         """Return `self` regardless of whether this is lazy wrapped object or not"""
@@ -1733,28 +1728,28 @@ class NameValueSerializer(se.SimpleSubfieldSerializer):
 @se.enum_field_serializer("SetFollowCamProperties", "CameraProperty", "Type")
 class CameraPropertyType(IntEnum):
     PITCH = 0
-    FOCUS_OFFSET = enum.auto()
-    FOCUS_OFFSET_X = enum.auto()
-    FOCUS_OFFSET_Y = enum.auto()
-    FOCUS_OFFSET_Z = enum.auto()
-    POSITION_LAG = enum.auto()
-    FOCUS_LAG = enum.auto()
-    DISTANCE = enum.auto()
-    BEHINDNESS_ANGLE = enum.auto()
-    BEHINDNESS_LAG = enum.auto()
-    POSITION_THRESHOLD = enum.auto()
-    FOCUS_THRESHOLD = enum.auto()
-    ACTIVE = enum.auto()
-    POSITION = enum.auto()
-    POSITION_X = enum.auto()
-    POSITION_Y = enum.auto()
-    POSITION_Z = enum.auto()
-    FOCUS = enum.auto()
-    FOCUS_X = enum.auto()
-    FOCUS_Y = enum.auto()
-    FOCUS_Z = enum.auto()
-    POSITION_LOCKED = enum.auto()
-    FOCUS_LOCKED = enum.auto()
+    FOCUS_OFFSET = 1
+    FOCUS_OFFSET_X = 2
+    FOCUS_OFFSET_Y = 3
+    FOCUS_OFFSET_Z = 4
+    POSITION_LAG = 5
+    FOCUS_LAG = 6
+    DISTANCE = 7
+    BEHINDNESS_ANGLE = 8
+    BEHINDNESS_LAG = 9
+    POSITION_THRESHOLD = 10
+    FOCUS_THRESHOLD = 11
+    ACTIVE = 12
+    POSITION = 13
+    POSITION_X = 14
+    POSITION_Y = 15
+    POSITION_Z = 16
+    FOCUS = 17
+    FOCUS_X = 18
+    FOCUS_Y = 19
+    FOCUS_Z = 20
+    POSITION_LOCKED = 21
+    FOCUS_LOCKED = 22
 
 
 @se.enum_field_serializer("DeRezObject", "AgentBlock", "Destination")
@@ -1869,30 +1864,33 @@ class GroupPowerFlags(IntFlag):
     # Roles
     ROLE_CREATE = 1 << 4  # Create new roles
     ROLE_DELETE = 1 << 5  # Delete roles
-    ROLE_PROPERTIES = 1 << 6  # Change Role Names, Titles, and Descriptions (Of roles the user is in, only, or any role in group?)
+    ROLE_PROPERTIES = 1 << 6  # Change Role Names, Titles, and Descriptions
     ROLE_ASSIGN_MEMBER_LIMITED = 1 << 7  # Assign Member to a Role that the assigner is in
     ROLE_ASSIGN_MEMBER = 1 << 8  # Assign Member to Role
     ROLE_REMOVE_MEMBER = 1 << 9  # Remove Member from Role
     ROLE_CHANGE_ACTIONS = 1 << 10  # Change actions a role can perform
 
     # Group Identity
-    GROUP_CHANGE_IDENTITY = 1 << 11  # Charter, insignia, 'Show In Group List', 'Publish on the web', 'Mature', all 'Show Member In Group Profile' checkboxes
+    GROUP_CHANGE_IDENTITY = 1 << 11  # Charter, insignia, 'Show In Group List', 'Publish on the web', 'Mature', etc.
 
     # Parcel Management
     LAND_DEED = 1 << 12  # Deed Land and Buy Land for Group
     LAND_RELEASE = 1 << 13  # Release Land (to Gov. Linden)
-    LAND_SET_SALE_INFO = 1 << 14  # Set for sale info (Toggle "For Sale", Set Price, Set Target, Toggle "Sell objects with the land")
+    # Set for sale info (Toggle "For Sale", Set Price, Set Target, Toggle "Sell objects with the land")
+    LAND_SET_SALE_INFO = 1 << 14
     LAND_DIVIDE_JOIN = 1 << 15  # Divide and Join Parcels
 
     # Parcel Identity
     LAND_FIND_PLACES = 1 << 17  # Toggle "Show in Find Places" and Set Category.
-    LAND_CHANGE_IDENTITY = 1 << 18  # Change Parcel Identity: Parcel Name, Parcel Description, Snapshot, 'Publish on the web', and 'Mature' checkbox
+    # Change Parcel Identity: Parcel Name, Parcel Description, Snapshot, 'Publish on the web', and 'Mature' checkbox
+    LAND_CHANGE_IDENTITY = 1 << 18
     LAND_SET_LANDING_POINT = 1 << 19  # Set Landing Point
 
     # Parcel Settings
     LAND_CHANGE_MEDIA = 1 << 20  # Change Media Settings
     LAND_EDIT = 1 << 21  # Toggle Edit Land
-    LAND_OPTIONS = 1 << 22  # Toggle Set Home Point, Fly, Outside Scripts, Create/Edit Objects, Landmark, and Damage checkboxes
+    # Toggle Set Home Point, Fly, Outside Scripts, Create/Edit Objects, Landmark, and Damage checkboxes
+    LAND_OPTIONS = 1 << 22
 
     # Parcel Powers
     LAND_ALLOW_EDIT_LAND = 1 << 23  # Bypass Edit Land Restriction

@@ -27,6 +27,14 @@ class _Unserializable:
         return False
 
 
+class MissingType:
+    """Simple sentinel type like dataclasses._MISSING_TYPE"""
+    pass
+
+
+MISSING = MissingType()
+
+
 UNSERIALIZABLE = _Unserializable()
 _T = TypeVar("_T")
 
@@ -288,7 +296,7 @@ class SerializableBase(abc.ABC):
     @classmethod
     def default_value(cls) -> Any:
         # None may be a valid default, so return MISSING as a sentinel val
-        return dataclasses.MISSING
+        return MISSING
 
 
 class Adapter(SerializableBase, abc.ABC):
@@ -328,18 +336,18 @@ class ForwardSerializable(SerializableBase):
     def __init__(self, func: Callable[[], SERIALIZABLE_TYPE]):
         super().__init__()
         self._func = func
-        self._wrapped = dataclasses.MISSING
+        self._wrapped: Union[MissingType, SERIALIZABLE_TYPE] = MISSING
 
     def _ensure_evaled(self):
-        if self._wrapped is dataclasses.MISSING:
+        if self._wrapped is MISSING:
             self._wrapped = self._func()
 
     def __getattr__(self, attr):
         return getattr(self._wrapped, attr)
 
     def default_value(self) -> Any:
-        if self._wrapped is dataclasses.MISSING:
-            return dataclasses.MISSING
+        if self._wrapped is MISSING:
+            return MISSING
         return self._wrapped.default_value()
 
     def serialize(self, val, writer: BufferWriter, ctx: Optional[ParseContext]):
@@ -357,10 +365,10 @@ class Template(SerializableBase):
     def __init__(self, template_spec: Dict[str, SERIALIZABLE_TYPE], skip_missing=False):
         self._template_spec = template_spec
         self._skip_missing = skip_missing
-        self._size = dataclasses.MISSING
+        self._size = MISSING
 
     def calc_size(self):
-        if self._size is not dataclasses.MISSING:
+        if self._size is not MISSING:
             return self._size
         sum_bytes = 0
         for _, field_type in self._template_spec.items():
@@ -1196,9 +1204,9 @@ class ContextMixin(Generic[_T]):
     def _choose_option(self, ctx: Optional[ParseContext]) -> _T:
         idx = self._fun(ctx)
         if idx not in self._options:
-            if dataclasses.MISSING not in self._options:
+            if MISSING not in self._options:
                 raise KeyError(f"{idx!r} not found in {self._options!r}")
-            idx = dataclasses.MISSING
+            idx = MISSING
         return self._options[idx]
 
 
@@ -1482,8 +1490,8 @@ def _make_undefined_raiser():
     return f
 
 
-def dataclass_field(spec: Union[SERIALIZABLE_TYPE, Callable], *, default=dataclasses.MISSING,
-                    default_factory=dataclasses.MISSING, init=True, repr=True,  # noqa
+def dataclass_field(spec: Union[SERIALIZABLE_TYPE, Callable], *, default: Any = dataclasses.MISSING,
+                    default_factory: Any = dataclasses.MISSING, init=True, repr=True,  # noqa
                     hash=None, compare=True) -> dataclasses.Field:  # noqa
     enrich_factory = False
     # Lambda, need to defer evaluation of spec until it's actually used.
@@ -1504,7 +1512,7 @@ def dataclass_field(spec: Union[SERIALIZABLE_TYPE, Callable], *, default=datacla
         metadata={"spec": spec}, default=default, default_factory=default_factory, init=init,
         repr=repr, hash=hash, compare=compare
     )
-    # Need to stuff this on so it knows which field went unspecified.
+    # Need to stuff this on, so it knows which field went unspecified.
     if enrich_factory:
         default_factory.field = field
     return field
