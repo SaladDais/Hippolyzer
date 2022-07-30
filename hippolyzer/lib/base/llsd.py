@@ -1,4 +1,3 @@
-import datetime
 import typing
 import zlib
 
@@ -47,6 +46,12 @@ class HippoLLSDNotationFormatter(llbase.llsd.LLSDNotationFormatter, HippoLLSDBas
     def __init__(self):
         super().__init__()
 
+    def STRING(self, v):
+        # llbase's notation LLSD encoder isn't suitable for generating line-delimited
+        # LLSD because the string formatter leaves \n unencoded, unlike indra's llcommon.
+        # Add our own escaping rule.
+        return super().STRING(v).replace(b"\n", b"\\n")
+
 
 def format_notation(val: typing.Any):
     return HippoLLSDNotationFormatter().format(val)
@@ -63,10 +68,9 @@ def format_binary(val: typing.Any, with_header=True):
 # With a few minor changes to make serialization round-trip correctly. It's evil.
 def _format_binary_recurse(something) -> bytes:
     """Binary formatter workhorse."""
-    def _format_list(something):
-        array_builder = []
-        array_builder.append(b'[' + struct.pack('!i', len(something)))
-        for item in something:
+    def _format_list(list_something):
+        array_builder = [b'[' + struct.pack('!i', len(list_something))]
+        for item in list_something:
             array_builder.append(_format_binary_recurse(item))
         array_builder.append(b']')
         return b''.join(array_builder)
@@ -108,8 +112,7 @@ def _format_binary_recurse(something) -> bytes:
     elif isinstance(something, (list, tuple)):
         return _format_list(something)
     elif isinstance(something, dict):
-        map_builder = []
-        map_builder.append(b'{' + struct.pack('!i', len(something)))
+        map_builder = [b'{' + struct.pack('!i', len(something))]
         for key, value in something.items():
             if isinstance(key, str):
                 key = key.encode("utf8")

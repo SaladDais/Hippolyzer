@@ -135,6 +135,9 @@ class TestDatatypes(unittest.TestCase):
         self.assertIsInstance(val, UUID)
         self.assertEqual(orig, val)
 
+    def test_str_llsd_serialization(self):
+        self.assertEqual(b"'foo\\nbar'", llsd.format_notation("foo\nbar"))
+
     def test_jank_stringy_bytes(self):
         val = JankStringyBytes(b"foo\x00")
         self.assertTrue("o" in val)
