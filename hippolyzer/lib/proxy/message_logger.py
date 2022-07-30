@@ -401,7 +401,7 @@ class AbstractMessageLogEntry(abc.ABC):
         beautified = minidom.parseString(content).toprettyxml(indent="  ")
         # kill blank lines. will break cdata sections. meh.
         beautified = re.sub(r'\n\s*\n', '\n', beautified, flags=re.MULTILINE)
-        return re.sub(r'<([\w]+)>\s*</\1>', r'<\1></\1>',
+        return re.sub(r'<(\w+)>\s*</\1>', r'<\1></\1>',
                       beautified, flags=re.MULTILINE)
 
 
@@ -522,7 +522,7 @@ class HTTPMessageLogEntry(AbstractMessageLogEntry):
         buf.write(bytes(headers).decode("utf8", errors="replace"))
         buf.write("\r\n")
 
-        buf.write(message_body)
+        buf.write(message_body or "")
         return buf.getvalue()
 
     def request(self, beautify=False, replacements=None):
