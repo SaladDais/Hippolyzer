@@ -10,6 +10,7 @@ from typing import *
 from weakref import ref
 
 from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.helpers import proxify
 from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.client.state import BaseClientSession
@@ -18,6 +19,7 @@ from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.proxy.http_asset_repo import HTTPAssetRepo
 from hippolyzer.lib.proxy.http_proxy import HTTPFlowContext
 from hippolyzer.lib.proxy.caps import is_asset_server_cap_name, CapData, CapType
+from hippolyzer.lib.proxy.inventory_manager import ProxyInventoryManager
 from hippolyzer.lib.proxy.namecache import ProxyNameCache
 from hippolyzer.lib.proxy.object_manager import ProxyWorldObjectManager
 from hippolyzer.lib.proxy.region import ProxiedRegion
@@ -47,6 +49,7 @@ class Session(BaseClientSession):
         self.message_handler: MessageHandler[Message, str] = MessageHandler()
         self.http_message_handler: MessageHandler[HippoHTTPFlow, str] = MessageHandler()
         self.objects = ProxyWorldObjectManager(self, session_manager.settings, session_manager.name_cache)
+        self.inventory = ProxyInventoryManager(proxify(self))
         # Base path of a newview type cache directory for this session
         self.cache_dir: Optional[str] = None
         self._main_region = None

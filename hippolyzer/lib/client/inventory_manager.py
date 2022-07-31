@@ -16,6 +16,23 @@ class InventoryManager:
     def __init__(self, session: BaseClientSession):
         self._session = session
         self.model: InventoryModel = InventoryModel()
+        self._load_skeleton()
+
+    def _load_skeleton(self):
+        assert not self.model.nodes
+        skel_cats: List[dict] = self._session.login_data.get('inventory-skeleton', [])
+        for skel_cat in skel_cats:
+            self.model.add(InventoryCategory(
+                name=skel_cat["name"],
+                cat_id=UUID(skel_cat["folder_id"]),
+                parent_id=UUID(skel_cat["parent_id"]),
+                # Don't use the version from the skeleton, this flags the inventory as needing
+                # completion from the inventory cache. This matches indra's behavior.
+                version=InventoryCategory.VERSION_NONE,
+                type="category",
+                pref_type="-1",
+                owner_id=self._session.agent_id,
+            ))
 
     def load_cache(self, path: Union[str, Path]):
         # Per indra, rough flow for loading inv on login is:
@@ -34,7 +51,9 @@ class InventoryManager:
         skel_cats: List[dict] = self._session.login_data['inventory-skeleton']
         # UUID -> version map for inventory skeleton
         skel_versions = {UUID(cat["folder_id"]): cat["version"] for cat in skel_cats}
+        LOG.info(f"Parsing inv cache at {path}")
         cached_categories, cached_items = self._parse_cache(path)
+        LOG.info(f"Done parsing inv cache at {path}")
         loaded_cat_ids: Set[UUID] = set()
 
         for cached_cat in cached_categories:
@@ -71,6 +90,7 @@ class InventoryManager:
         with gzip.open(path, "rb") as f:
             # Line-delimited LLSD notation!
             for line in f.readlines():
+                # TODO: Parsing of invcache is dominated by `parse_notation()`. It's stupidly inefficient.
                 node_llsd = llsd.parse_notation(line)
                 if first_line:
                     # First line is the file header
