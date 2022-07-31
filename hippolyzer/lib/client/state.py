@@ -36,3 +36,4 @@ class BaseClientSession(abc.ABC):
     region_by_handle: Callable[[int], Optional[BaseClientRegion]]
     region_by_circuit_addr: Callable[[ADDR_TUPLE], Optional[BaseClientRegion]]
     objects: ClientWorldObjectManager
+    login_data: Dict[str, Any]

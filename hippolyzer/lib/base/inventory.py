@@ -117,6 +117,8 @@ class InventoryBase(SchemaBase):
             # Not meant to be serialized
             if not spec:
                 continue
+            if field.metadata.get("llsd_only"):
+                continue
 
             val = getattr(self, field_name)
             if val is None:
@@ -166,16 +168,11 @@ class InventoryModel(InventoryBase):
     def from_llsd(cls, llsd_val: List[Dict]) -> InventoryModel:
         model = cls()
         for obj_dict in llsd_val:
-            if InventoryCategory.ID_ATTR in obj_dict:
-                if (obj := InventoryCategory.from_llsd(obj_dict)) is not None:
-                    model.add(obj)
-            elif InventoryObject.ID_ATTR in obj_dict:
-                if (obj := InventoryObject.from_llsd(obj_dict)) is not None:
-                    model.add(obj)
-            elif InventoryItem.ID_ATTR in obj_dict:
-                if (obj := InventoryItem.from_llsd(obj_dict)) is not None:
-                    model.add(obj)
-            else:
+            for inv_type in INVENTORY_TYPES:
+                if inv_type.ID_ATTR in obj_dict:
+                    if (obj := inv_type.from_llsd(obj_dict)) is not None:
+                        model.add(obj)
+                    break
                 LOG.warning(f"Unknown object type {obj_dict!r}")
         return model
 
@@ -218,13 +215,13 @@ class InventoryModel(InventoryBase):
                 self.root = node
         node.model = weakref.proxy(self)
 
-    def unlink(self, node: InventoryNodeBase) -> Sequence[InventoryNodeBase]:
+    def unlink(self, node: InventoryNodeBase, single_only: bool = False) -> Sequence[InventoryNodeBase]:
         """Unlink a node and its descendants from the tree, returning the removed nodes"""
         assert node.model == self
         if node == self.root:
             self.root = None
         unlinked = [node]
-        if isinstance(node, InventoryContainerBase):
+        if isinstance(node, InventoryContainerBase) and not single_only:
             for child in node.children:
                 unlinked.extend(self.unlink(child))
         self.nodes.pop(node.node_id, None)
@@ -257,6 +254,15 @@ class InventoryModel(InventoryBase):
             removed=removed_in_other,
         )
 
+    def __getitem__(self, item: UUID) -> InventoryNodeBase:
+        return self.nodes[item]
+
+    def __contains__(self, item: UUID):
+        return item in self.nodes
+
+    def get(self, item: UUID) -> Optional[InventoryNodeBase]:
+        return self.nodes.get(item)
+
 
 @dataclasses.dataclass
 class InventoryPermissions(InventoryBase):
@@ -271,6 +277,9 @@ class InventoryPermissions(InventoryBase):
     owner_id: UUID = schema_field(SchemaUUID)
     last_owner_id: UUID = schema_field(SchemaUUID)
     group_id: UUID = schema_field(SchemaUUID)
+    # Nothing actually cares about this, but it could be there.
+    # It's kind of redundant since it just means owner_id == NULL_KEY && group_id != NULL_KEY.
+    is_owner_group: int = schema_field(SchemaInt, default=0, llsd_only=True)
 
 
 @dataclasses.dataclass
@@ -384,6 +393,7 @@ class InventoryObject(InventoryContainerBase):
 class InventoryCategory(InventoryContainerBase):
     ID_ATTR: ClassVar[str] = "cat_id"
     SCHEMA_NAME: ClassVar[str] = "inv_category"
+    VERSION_NONE: ClassVar[int] = -1
 
     cat_id: UUID = schema_field(SchemaUUID)
     pref_type: str = schema_field(SchemaStr, llsd_name="preferred_type")
@@ -417,3 +427,6 @@ class InventoryItem(InventoryNodeBase):
         if self.asset_id is not None:
             return self.asset_id
         return self.shadow_id ^ MAGIC_ID
+
+
+INVENTORY_TYPES: Tuple[Type[InventoryNodeBase], ...] = (InventoryCategory, InventoryObject, InventoryItem)

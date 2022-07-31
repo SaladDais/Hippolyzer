@@ -111,10 +111,10 @@ class SchemaUUID(SchemaFieldSerializer[UUID]):
 
 
 def schema_field(spec: Type[Union[SchemaBase, SchemaFieldSerializer]], *, default=dataclasses.MISSING, init=True,
-                 repr=True, hash=None, compare=True, llsd_name=None) -> dataclasses.Field:  # noqa
+                 repr=True, hash=None, compare=True, llsd_name=None, llsd_only=False) -> dataclasses.Field:  # noqa
     """Describe a field in the inventory schema and the shape of its value"""
     return dataclasses.field(
-        metadata={"spec": spec, "llsd_name": llsd_name}, default=default,
+        metadata={"spec": spec, "llsd_name": llsd_name, "llsd_only": llsd_only}, default=default,
         init=init, repr=repr, hash=hash, compare=compare,
     )
 
