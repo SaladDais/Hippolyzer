@@ -1450,7 +1450,7 @@ class StringEnumAdapter(Adapter):
 class FixedPoint(SerializableBase):
     def __init__(self, ser_spec, int_bits, frac_bits, signed=False):
         # Should never be used due to how this handles signs :/
-        assert(not ser_spec.is_signed)
+        assert (not ser_spec.is_signed)
 
         self._ser_spec: SerializablePrimitive = ser_spec
         self._signed = signed
@@ -1460,7 +1460,7 @@ class FixedPoint(SerializableBase):
         self._min_val = ((1 << int_bits) * -1) if signed else 0
         self._max_val = 1 << int_bits
 
-        assert(required_bits == (ser_spec.calc_size() * 8))
+        assert (required_bits == (ser_spec.calc_size() * 8))
 
     def deserialize(self, reader: Reader, ctx):
         fixed_val = float(self._ser_spec.deserialize(reader, ctx))
