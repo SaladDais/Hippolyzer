@@ -432,22 +432,34 @@ class AddonManager:
             chat_type: int = message["ChatData"]["ChatType"]
             # RLV-style OwnerSay?
             if chat and chat.startswith("@") and chat_type == 8:
-                # RLV-style command, `@<cmd>(:<option1>;<option2>)?(=<param>)?`
-                options, _, param = chat.rpartition("=")
-                cmd, _, options = options.lstrip("@").partition(":")
-                options = options.split(";")
-                source = message["ChatData"]["SourceID"]
-                try:
-                    with addon_ctx.push(session, region):
-                        handled = cls._call_all_addon_hooks("handle_rlv_command",
-                                                            session, region, source, cmd, options, param)
-                    if handled:
-                        region.circuit.drop_message(message)
-                        return True
-                except:
-                    LOG.exception(f"Failed while handling command {chat!r}")
-                    if not cls._SWALLOW_ADDON_EXCEPTIONS:
-                        raise
+                # RLV allows putting multiple commands into one message, blindly splitting on ",".
+                chat = chat.lstrip("@")
+                all_cmds_handled = True
+                for command_str in chat.split(","):
+                    if not command_str:
+                        continue
+                    # RLV-style command, `@<cmd>(:<option1>;<option2>)?(=<param>)?`
+                    options, _, param = command_str.partition("=")
+                    cmd, _, options = options.partition(":")
+                    # TODO: Not always correct, commands can specify their own parsing for the option field
+                    options = options.split(";") if options else []
+                    source = message["ChatData"]["SourceID"]
+                    try:
+                        with addon_ctx.push(session, region):
+                            handled = cls._call_all_addon_hooks("handle_rlv_command",
+                                                                session, region, source, cmd, options, param)
+                        if handled:
+                            region.circuit.drop_message(message)
+                        else:
+                            all_cmds_handled = False
+                    except:
+                        LOG.exception(f"Failed while handling command {command_str!r}")
+                        all_cmds_handled = False
+                        if not cls._SWALLOW_ADDON_EXCEPTIONS:
+                            raise
+                # Drop the chat message if all commands it contained were handled by an addon
+                if all_cmds_handled:
+                    return True
 
         with addon_ctx.push(session, region):
             return cls._call_all_addon_hooks("handle_lludp_message", session, region, message)
