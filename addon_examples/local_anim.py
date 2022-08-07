@@ -20,6 +20,7 @@ bulk upload, like changing priority or removing a joint.
 """
 
 import asyncio
+import logging
 import pathlib
 from abc import abstractmethod
 from typing import *
@@ -106,7 +107,10 @@ class LocalAnimAddon(BaseAddon):
                 if not anim_id:
                     continue
                 # is playing right now, check if there's a newer version
-                self.apply_local_anim_from_file(session, region, anim_name, only_if_changed=True)
+                try:
+                    self.apply_local_anim_from_file(session, region, anim_name, only_if_changed=True)
+                except Exception:
+                    logging.exception("Exploded while replaying animation")
             await asyncio.sleep(1.0)
 
     def handle_rlv_command(self, session: Session, region: ProxiedRegion, source: UUID,
@@ -175,7 +179,6 @@ class LocalAnimAddon(BaseAddon):
             if only_if_changed and old_mtime == mtime:
                 return
 
-            cls.local_anim_mtimes[anim_name] = mtime
             # file might not even exist anymore if mtime is `None`,
             # anim will automatically stop if that happens.
             if mtime:
@@ -187,6 +190,7 @@ class LocalAnimAddon(BaseAddon):
                 with open(anim_path, "rb") as f:
                     anim_data = f.read()
                 anim_data = cls._mangle_anim(anim_data)
+            cls.local_anim_mtimes[anim_name] = mtime
         else:
             print(f"Unknown anim {anim_name!r}")
         cls.apply_local_anim(session, region, anim_name, new_data=anim_data)
