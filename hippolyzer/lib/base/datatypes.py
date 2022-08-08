@@ -29,6 +29,7 @@ import math
 from typing import *
 
 import recordclass
+import transformations
 
 logger = getLogger('hippolyzer.lib.base.datatypes')
 
@@ -221,6 +222,15 @@ class Quaternion(TupleCoord):
         return super().__mul__(other)
 
     @classmethod
+    def from_transformations(cls, coord) -> Quaternion:
+        """Convert to W (S) last form"""
+        return cls(coord[1], coord[2], coord[3], coord[0])
+
+    def to_transformations(self) -> Tuple[float, float, float, float]:
+        """Convert to W (S) first form for use with the transformations lib"""
+        return self.W, self.X, self.Y, self.Z
+
+    @classmethod
     def from_euler(cls, roll, pitch, yaw, degrees=False):
         if degrees:
             roll *= math.pi / 180
@@ -240,6 +250,9 @@ class Quaternion(TupleCoord):
         z = sy * cr * cp - cy * sr * sp
 
         return cls(X=x, Y=y, Z=z, W=w)
+
+    def to_euler(self) -> Vector3:
+        return Vector3(*transformations.euler_from_quaternion(self.to_transformations()))
 
     def data(self, wanted_components=None):
         if wanted_components == 3:

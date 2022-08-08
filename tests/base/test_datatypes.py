@@ -79,6 +79,20 @@ class TestDatatypes(unittest.TestCase):
         quat = Quaternion(X=128.0, Y=128.0, Z=22.0)
         self.assertEqual(quat, (128.0, 128.0, 22.0, 0.0))
 
+    def test_quaternion_euler_roundtrip(self):
+        orig_vec = Vector3(0.0, -1.0, 2.0)
+        quat = Quaternion.from_euler(*orig_vec)
+        for orig_comp, new_comp in zip(orig_vec, quat.to_euler()):
+            self.assertAlmostEqual(orig_comp, new_comp)
+
+    def test_quaternion_transformations(self):
+        quat = Quaternion(0.4034226801113349, -0.2590347239999257, 0.7384602626041288, 0.4741598817790379)
+        expected_trans = (0.4741598817790379, 0.4034226801113349, -0.2590347239999257, 0.7384602626041288)
+        trans_quat = quat.to_transformations()
+        self.assertSequenceEqual(expected_trans, trans_quat)
+        new_quat = Quaternion.from_transformations(trans_quat)
+        self.assertEqual(quat, new_quat)
+
     def test_uuid_from_bytes(self):
         tmp_uuid = uuid.UUID('2b7f7a6e-32c5-dbfd-e2c7-926d1a9f0aca')
         tmp_uuid2 = uuid.UUID('1dd5efe2-faaf-1864-5ac9-bc61c5d8d7ea')
