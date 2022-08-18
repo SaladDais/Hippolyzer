@@ -2,7 +2,7 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message import Message, Block
 from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.client.asset_uploader import AssetUploader
-from hippolyzer.lib.proxy.addon_utils import ais_item_to_inventory_data
+from hippolyzer.lib.client.inventory_manager import ais_item_to_inventory_data
 
 
 class ProxyAssetUploader(AssetUploader):

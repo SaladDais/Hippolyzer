@@ -135,6 +135,7 @@ class InventoryType(IntEnum):
         lower = self.name.lower()
         return {
             "callingcard": "callcard",
+            "none": "-1",
         }.get(lower, lower)
 
 

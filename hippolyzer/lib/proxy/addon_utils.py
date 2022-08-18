@@ -7,7 +7,6 @@ import copy
 import dataclasses
 import multiprocessing
 import pickle
-import secrets
 import warnings
 
 from hippolyzer.lib.base.datatypes import UUID, Vector3
@@ -101,46 +100,6 @@ def send_chat(message: Union[bytes, str], channel=0, chat_type=ChatType.NORMAL, 
             Type=chat_type,
         ),
     ))
-
-
-def ais_item_to_inventory_data(ais_item: dict):
-    return Block(
-        "InventoryData",
-        ItemID=ais_item["item_id"],
-        FolderID=ais_item["parent_id"],
-        CallbackID=0,
-        CreatorID=ais_item["permissions"]["creator_id"],
-        OwnerID=ais_item["permissions"]["owner_id"],
-        GroupID=ais_item["permissions"]["group_id"],
-        BaseMask=ais_item["permissions"]["base_mask"],
-        OwnerMask=ais_item["permissions"]["owner_mask"],
-        GroupMask=ais_item["permissions"]["group_mask"],
-        EveryoneMask=ais_item["permissions"]["everyone_mask"],
-        NextOwnerMask=ais_item["permissions"]["next_owner_mask"],
-        GroupOwned=0,
-        AssetID=ais_item["asset_id"],
-        Type=ais_item["type"],
-        InvType=ais_item["inv_type"],
-        Flags=ais_item["flags"],
-        SaleType=ais_item["sale_info"]["sale_type"],
-        SalePrice=ais_item["sale_info"]["sale_price"],
-        Name=ais_item["name"],
-        Description=ais_item["desc"],
-        CreationDate=ais_item["created_at"],
-        # Meaningless here
-        CRC=secrets.randbits(32),
-    )
-
-
-def ais_folder_to_inventory_data(ais_folder: dict):
-    return Block(
-        "FolderData",
-        FolderID=ais_folder["cat_id"],
-        ParentID=ais_folder["parent_id"],
-        CallbackID=0,
-        Type=ais_folder["preferred_type"],
-        Name=ais_folder["name"],
-    )
 
 
 class MetaBaseAddon(abc.ABCMeta):
