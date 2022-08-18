@@ -11,12 +11,11 @@
 #  * * Collada tooling sucks and even LL is moving away from it
 #  * * Ensuring LLMesh->Collada and LLMesh->GLTF conversion don't differ semantically is easy via assimp.
 
-import collections
+import logging
 import os.path
 import secrets
-import statistics
 import sys
-from typing import Dict, List, Iterable, Optional
+from typing import Dict, List, Optional, Union, Sequence
 
 import collada
 import collada.source
@@ -25,11 +24,25 @@ from lxml import etree
 import numpy as np
 import transformations
 
+from hippolyzer.lib.base.datatypes import Vector3
 from hippolyzer.lib.base.helpers import get_resource_filename
 from hippolyzer.lib.base.serialization import BufferReader
 from hippolyzer.lib.base.mesh import LLMeshSerializer, MeshAsset, positions_from_domain, SkinSegmentDict
 
+LOG = logging.getLogger(__name__)
 DIR = os.path.dirname(os.path.realpath(__file__))
+
+
+def llsd_to_mat4(mat: Union[np.ndarray, Sequence[float]]) -> np.ndarray:
+    return np.array(mat).reshape((4, 4), order='F')
+
+
+def mat4_to_llsd(mat: np.ndarray) -> List[float]:
+    return list(mat.flatten(order='F'))
+
+
+def mat4_to_collada(mat: np.ndarray) -> np.ndarray:
+    return mat.flatten(order='C')
 
 
 def mesh_to_collada(ll_mesh: MeshAsset, include_skin=True) -> collada.Collada:
@@ -52,7 +65,7 @@ def llmesh_to_node(ll_mesh: MeshAsset, dae: collada.Collada, uniq=None,
     skin_seg = ll_mesh.segments.get('skin')
     bind_shape_matrix = None
     if include_skin and skin_seg:
-        bind_shape_matrix = np.array(skin_seg["bind_shape_matrix"]).reshape((4, 4))
+        bind_shape_matrix = llsd_to_mat4(skin_seg["bind_shape_matrix"])
         should_skin = True
         # Transform from the skin will be applied on the controller, not the node
         node_transform = np.identity(4)
@@ -119,9 +132,8 @@ def llmesh_to_node(ll_mesh: MeshAsset, dae: collada.Collada, uniq=None,
                 accessor.set('source', f"#{accessor.get('source')}")
 
             flattened_bind_poses = []
-            # LLMesh matrices are row-major, convert to col-major for Collada.
             for bind_pose in skin_seg['inverse_bind_matrix']:
-                flattened_bind_poses.append(np.array(bind_pose).reshape((4, 4)).flatten('F'))
+                flattened_bind_poses.append(mat4_to_collada(llsd_to_mat4(bind_pose)))
             flattened_bind_poses = np.array(flattened_bind_poses)
             inv_bind_source = _create_mat4_source(f"bind-poses{sub_uniq}", flattened_bind_poses, "TRANSFORM")
 
@@ -142,7 +154,7 @@ def llmesh_to_node(ll_mesh: MeshAsset, dae: collada.Collada, uniq=None,
             # in SL, with their own distinct sets of weights and vertex data.
             controller_node = E.controller(
                 E.skin(
-                    E.bind_shape_matrix(' '.join(str(x) for x in bind_shape_matrix.flatten('F'))),
+                    E.bind_shape_matrix(' '.join(str(x) for x in mat4_to_collada(bind_shape_matrix))),
                     joints_source.xmlnode,
                     inv_bind_source.xmlnode,
                     weights_source.xmlnode,
@@ -173,7 +185,7 @@ def llmesh_to_node(ll_mesh: MeshAsset, dae: collada.Collada, uniq=None,
     node = collada.scene.Node(
         node_name,
         children=geom_nodes,
-        transforms=[collada.scene.MatrixTransform(np.array(node_transform.flatten('F')))],
+        transforms=[collada.scene.MatrixTransform(mat4_to_collada(node_transform))],
     )
     if should_skin:
         # We need a skeleton per _mesh asset_ because you could have incongruous skeletons
@@ -208,7 +220,8 @@ def transform_skeleton(skel_root: etree.ElementBase, dae: collada.Collada, skin_
         joint_nodes[skel_node.get('name')] = collada.scene.Node.load(dae, skel_node, {})
     for joint_name, matrix in zip(skin_seg['joint_names'], skin_seg.get('alt_inverse_bind_matrix', [])):
         joint_node = joint_nodes[joint_name]
-        joint_node.matrix = np.array(matrix).reshape((4, 4)).flatten('F')
+        joint_decomp = transformations.decompose_matrix(llsd_to_mat4(matrix))
+        joint_node.matrix = mat4_to_collada(transformations.compose_matrix(translate=joint_decomp[3]))
         # Update the underlying XML element with the new transform matrix
         joint_node.save()
 
@@ -251,7 +264,7 @@ def _create_mat4_source(name: str, data: np.ndarray, semantic: str):
 
 def fix_weird_bind_matrices(skin_seg: SkinSegmentDict):
     """
-    Fix weird-looking bind matrices to have normal scaling
+    Fix weird-looking bind matrices to have normal scaling and rotations
 
     Not sure why these even happen (weird mesh authoring programs?)
     Sometimes get enormous inverse bind matrices (each component 10k+) and tiny
@@ -259,38 +272,38 @@ def fix_weird_bind_matrices(skin_seg: SkinSegmentDict):
     with weird scales and tries to set them to what they "should" be without
     the weird inverted scaling.
     """
-    axis_counters = [collections.Counter() for _ in range(3)]
-    for joint_inv in skin_seg['inverse_bind_matrix']:
-        joint_mat = np.array(joint_inv).reshape((4, 4))
-        joint_scale = transformations.decompose_matrix(joint_mat)[0]
-        for axis_counter, axis_val in zip(axis_counters, joint_scale):
-            axis_counter[axis_val] += 1
-    most_common_inv_scale = []
-    for axis_counter in axis_counters:
-        most_common_inv_scale.append(axis_counter.most_common(1)[0][0])
+    scale_fixup = Vector3(1, 1, 1)
+    angle_fixup = Vector3(0, 0, 0)
+    have_fixups = False
+    # Totally non-scientific method of detecting odd bind matrices based on squinting very,
+    # very hard at a random sample of assets.
+    for joint_name, joint_inv in zip(skin_seg['joint_names'], skin_seg['inverse_bind_matrix']):
+        if not joint_name.startswith("m"):
+            # We can't make very good guesses based on collision volume scales and rotations,
+            # skip anything but the "m" joints.
+            continue
+        joint_mat = llsd_to_mat4(joint_inv)
+        joint_scale, _, joint_angle, _, _ = transformations.decompose_matrix(joint_mat)
+        # If the scale component of an mJointName joint isn't roughly <1,1,1>, we likely have
+        # scaling applied to the inverse bind matrices rather than the bind matrix. Figure out
+        # what the fixup should be so that we can reverse it.
+        if abs(3.0 - sum(joint_scale)) > 0.5:
+            scale_fixup = Vector3(1, 1, 1) / Vector3(*joint_scale)
+            have_fixups = True
+        # I wouldn't expect mJointName joints to be rotated at all in their inverse bind matrices.
+        # Is this a rotation that should've been applied to the bind shape matrix instead?
+        # In any event, all joints are likely rotated by this amount, so calculate the inverse.
+        if abs(sum(joint_angle)) > 0.05:
+            angle_fixup = -Vector3(*joint_angle)
+            have_fixups = True
 
-    if abs(1.0 - statistics.fmean(most_common_inv_scale)) > 1.0:
+    if have_fixups:
+        LOG.warning("Detected weird matrices in mesh!", scale_fixup, angle_fixup)
         # The magnitude of the scales in the inverse bind matrices look very strange.
         # The bind matrix itself is probably messed up as well, try to fix it.
-        skin_seg['bind_shape_matrix'] = fix_llsd_matrix_scale(skin_seg['bind_shape_matrix'], most_common_inv_scale)
-        if joint_positions := skin_seg.get('alt_inverse_bind_matrix', None):
-            fix_matrix_list_scale(joint_positions, most_common_inv_scale)
-        rev_scale = tuple(1.0 / x for x in most_common_inv_scale)
-        fix_matrix_list_scale(skin_seg['inverse_bind_matrix'], rev_scale)
-
-
-def fix_matrix_list_scale(source: List[List[float]], scale_fixup: Iterable[float]):
-    for i, alt_inv_matrix in enumerate(source):
-        source[i] = fix_llsd_matrix_scale(alt_inv_matrix, scale_fixup)
-
-
-def fix_llsd_matrix_scale(source: List[float], scale_fixup: Iterable[float]):
-    matrix = np.array(source).reshape((4, 4))
-    decomposed = list(transformations.decompose_matrix(matrix))
-    # Need to handle both the scale and translation matrices
-    for idx in (0, 3):
-        decomposed[idx] = tuple(x * y for x, y in zip(decomposed[idx], scale_fixup))
-    return list(transformations.compose_matrix(*decomposed).flatten('C'))
+        # TODO: DON'T MESS WITH INVERSE TRANSLATION!!!! Only bind shape gets its translation scaled.
+        # TODO: put this back in, the previous logic was totally wrong-headed..
+        pass
 
 
 def main():
