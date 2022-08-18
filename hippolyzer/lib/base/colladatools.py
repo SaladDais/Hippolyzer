@@ -190,6 +190,8 @@ def llmesh_to_node(ll_mesh: MeshAsset, dae: collada.Collada, uniq=None,
     if should_skin:
         # We need a skeleton per _mesh asset_ because you could have incongruous skeletons
         # within the same linkset.
+        # TODO: can we maintain some kind of skeleton cache, where if this skeleton has no conflicts
+        #  with another skeleton in the cache, we just use that skeleton and add any additional joints?
         skel_root = load_skeleton_nodes()
         transform_skeleton(skel_root, dae, skin_seg)
         skel = collada.scene.Node.load(dae, skel_root, {})
@@ -211,7 +213,6 @@ def load_skeleton_nodes() -> etree.ElementBase:
 def transform_skeleton(skel_root: etree.ElementBase, dae: collada.Collada, skin_seg: SkinSegmentDict,
                        include_unreferenced_bones=False):
     """Update skeleton XML nodes to account for joint translations in the mesh"""
-    # TODO: Use translation component only.
     joint_nodes: Dict[str, collada.scene.Node] = {}
     for skel_node in skel_root.iter():
         # xpath is loathsome so this is easier.
@@ -301,8 +302,8 @@ def fix_weird_bind_matrices(skin_seg: SkinSegmentDict):
         LOG.warning("Detected weird matrices in mesh!", scale_fixup, angle_fixup)
         # The magnitude of the scales in the inverse bind matrices look very strange.
         # The bind matrix itself is probably messed up as well, try to fix it.
-        # TODO: DON'T MESS WITH INVERSE TRANSLATION!!!! Only bind shape gets its translation scaled.
-        # TODO: put this back in, the previous logic was totally wrong-headed..
+        # TODO: put this back in, the previous logic was totally wrong-headed.
+        #  DON'T MESS WITH INVERSE TRANSLATION!!!! Only bind shape gets its translation scaled.
         pass
 
 
