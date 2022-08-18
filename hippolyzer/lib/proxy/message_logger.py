@@ -549,6 +549,12 @@ class HTTPMessageLogEntry(AbstractMessageLogEntry):
         return self._summary
 
     def _guess_content_type(self, message):
+        # SL's login service lies and says that its XML-RPC response is LLSD+XML.
+        # It is not, and it blows up the parser. It's been broken ever since the
+        # login rewrite and a fix is likely not forthcoming. I'm sick of seeing
+        # the traceback, so just hack around it.
+        if self.name == "LoginRequest":
+            return "application/xml"
         content_type = message.headers.get("Content-Type", "")
         if not message.content or content_type.startswith("application/llsd"):
             return content_type
