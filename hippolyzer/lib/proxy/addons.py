@@ -199,9 +199,9 @@ class AddonManager:
     @classmethod
     def _check_hotreloads(cls):
         """Mark addons that rely on changed files for reloading"""
-        for filename, importers in cls.HOTRELOAD_IMPORTERS.items():
-            mtime = get_mtime(filename)
-            if not mtime or mtime == cls.FILE_MTIMES.get(filename, None):
+        for file_path, importers in cls.HOTRELOAD_IMPORTERS.items():
+            mtime = get_mtime(file_path)
+            if not mtime or mtime == cls.FILE_MTIMES.get(file_path, None):
                 continue
 
             # Mark anything that imported this as dirty too, handling circular
@@ -220,10 +220,15 @@ class AddonManager:
 
             _dirty_importers(importers)
 
+            if file_path not in cls.BASE_ADDON_SPECS:
+                # Make sure we won't reload importers in a loop if this is actually something
+                # that was dynamically imported, where `hot_reload()` might not be called again!
+                cls.FILE_MTIMES[file_path] = mtime
+
     @classmethod
     def hot_reload(cls, mod: Any, require_addons_loaded=False):
         # Solely to trick the type checker because ModuleType doesn't apply where it should
-        # and Protocols aren't well supported yet.
+        # and Protocols aren't well-supported yet.
         imported_mod: ModuleType = mod
         imported_file = imported_mod.__file__
         # Mark the caller as having imported (and being dependent on) `module`
