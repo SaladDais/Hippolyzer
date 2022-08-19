@@ -299,7 +299,7 @@ def fix_weird_bind_matrices(skin_seg: SkinSegmentDict):
             have_fixups = True
 
     if have_fixups:
-        LOG.warning("Detected weird matrices in mesh!", scale_fixup, angle_fixup)
+        LOG.warning(f"Detected weird matrices in mesh! {scale_fixup!r}, {angle_fixup!r}")
         # The magnitude of the scales in the inverse bind matrices look very strange.
         # The bind matrix itself is probably messed up as well, try to fix it.
         # TODO: put this back in, the previous logic was totally wrong-headed.
