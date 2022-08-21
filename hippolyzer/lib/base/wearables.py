@@ -35,9 +35,8 @@ class VisualParam:
 
 
 class VisualParams(List[VisualParam]):
-    def __init__(self):
+    def __init__(self, lad_path):
         super().__init__()
-        lad_path = get_resource_filename("lib/base/data/avatar_lad.xml")
         with open(lad_path, "rb") as f:
             doc = parse_etree(f)
         for param in doc.findall(".//param"):
@@ -59,8 +58,11 @@ class VisualParams(List[VisualParam]):
     def by_wearable(self, wearable: str) -> List[VisualParam]:
         return [x for x in self if x.wearable == wearable]
 
+    def by_id(self, vparam_id: int) -> VisualParam:
+        return [x for x in self if x.id == vparam_id][0]
 
-VISUAL_PARAMS = VisualParams()
+
+VISUAL_PARAMS = VisualParams(get_resource_filename("lib/base/data/avatar_lad.xml"))
 
 
 @dataclasses.dataclass
