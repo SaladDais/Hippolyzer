@@ -263,19 +263,60 @@ def _create_mat4_source(name: str, data: np.ndarray, semantic: str):
     return source
 
 
-def fix_weird_bind_matrices(skin_seg: SkinSegmentDict):
+def fix_weird_bind_matrices(skin_seg: SkinSegmentDict) -> None:
     """
-    Fix weird-looking bind matrices to have normal scaling and rotations
+    Fix weird-looking bind matrices to have sensible scaling and rotations
 
-    Not sure why these even happen (weird mesh authoring programs?)
-    Sometimes get enormous inverse bind matrices (each component 10k+) and tiny
+    Sometimes we get enormous inverse bind matrices (each component 10k+) and tiny
     bind shape matrix components. This detects inverse bind shape matrices
     with weird scales and tries to set them to what they "should" be without
     the weird inverted scaling.
     """
+
+    # Sometimes we get mesh assets that have the vertex data naturally in y-up orientation,
+    # and get re-oriented to z-up not through the bind shape matrix, but through the
+    # transforms in the inverse bind matrices!
+    #
+    # Blender, for one, does not like this very much, and generally won't generate mesh
+    # assets like this, as explained here https://developer.blender.org/T38660.
+    # In vanilla Blender, these mesh assets will show up scaled and rotated _only_ according
+    # to the bind shape matrix, which may end up with the model 25 meters tall and sitting
+    # on its side.
+    #
+    # https://avalab.org/avastar/292/knowledge/compare-workbench/, while somewhat outdated,
+    # has some information on rest pose vs default pose and scaling that I believe is relevant.
+    # https://github.com/KhronosGroup/glTF-Blender-IO/issues/994 as well.
+    #
+    # While trying to figure out what was going on, I searched for something like
+    # "inverse bind matrix scale collada", "bind pose scale blender", etc. Pretty much every
+    # result was either a bug filed by, or a question asked by the creator of Avastar, or an SL user.
+    # I think that says a lot about how annoying it is to author mesh for SL in particular.
+    #
+    # I spent a good month or so tearing my hair out over this wondering how these values could
+    # even be possible. I wasn't sure how I should write mesh import code if I don't understand
+    # how to interpret existing data, or how it even ended up the way it did. Turns out I wasn't
+    # misinterpreting the data, the data really is just weird.
+    #
+    # I'd also had the idea that you could sniff which body a given rigged asset was meant
+    # for by doing trivial matching on the inverse bind matrices, but obviously that isn't true!
+    #
+    # Basically:
+    # 1) Maya is evil and generates evil, this evil bleeds into SL's assets through transforms.
+    # 2) Blender is also evil, but in a manner that doesn't agree with Maya's evil.
+    # 3) Collada was a valiant effort, but is evil in practice. Seemingly simple Collada
+    #    files are interpreted completely differently by Blender, Maya, and sometimes SL.
+    # 4) Those three evils collude to make an interop nightmare for everyone like "oh my rigger
+    #    rigs using Maya and now my model is huge and all my normals are fucked on reimport"
+    # 5) Yes, there's still good reasons to be using Avastar in 2022 even though nobody authoring
+    #    rigged mesh for any other use has to use something similar.
+
+    if not skin_seg['joint_names']:
+        return
+
     scale_fixup = Vector3(1, 1, 1)
     angle_fixup = Vector3(0, 0, 0)
     have_fixups = False
+
     # Totally non-scientific method of detecting odd bind matrices based on squinting very,
     # very hard at a random sample of assets.
     for joint_name, joint_inv in zip(skin_seg['joint_names'], skin_seg['inverse_bind_matrix']):
