@@ -7,6 +7,8 @@ in the appropriate format.
 from pathlib import Path
 from typing import *
 
+from hippolyzer.lib.base.mesh import LLMeshSerializer
+from hippolyzer.lib.base.serialization import BufferReader
 from hippolyzer.lib.base.templates import AssetType
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.addon_utils import show_message, BaseAddon
@@ -38,8 +40,11 @@ class UploaderAddon(BaseAddon):
         try:
             if asset_type == AssetType.MESH:
                 # Kicking off a mesh upload works a little differently internally
+                # Half-parse the mesh so that we can figure out how many faces it has
+                reader = BufferReader("!", file_body)
+                mesh = reader.read(LLMeshSerializer(parse_segment_contents=False))
                 upload_token = await region.asset_uploader.initiate_mesh_upload(
-                    name, file_body, flags=flags
+                    name, mesh, flags=flags
                 )
             else:
                 upload_token = await region.asset_uploader.initiate_asset_upload(

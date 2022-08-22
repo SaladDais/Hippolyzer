@@ -1,4 +1,4 @@
-from typing import NamedTuple, Union, Optional
+from typing import NamedTuple, Union, Optional, List
 
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base import llsd
@@ -16,6 +16,11 @@ class UploadToken(NamedTuple):
     linden_cost: int
     uploader_url: str
     payload: bytes
+
+
+class MeshUploadDetails(NamedTuple):
+    mesh_bytes: bytes
+    num_faces: int
 
 
 class AssetUploader:
@@ -69,20 +74,15 @@ class AssetUploader:
         """
         pass
 
-    # The mesh upload flow is a little special, so it gets its own methods
-    async def initiate_mesh_upload(self, name: str, mesh: Union[bytes, MeshAsset],
+    # The mesh upload flow is a little special, so it gets its own method
+    async def initiate_mesh_upload(self, name: str, mesh: Union[MeshUploadDetails, MeshAsset],
                                    flags: Optional[int] = None) -> UploadToken:
-        """
-        Very basic LL-serialized mesh uploader
-
-        Currently only handles a single mesh with a single face and no associated textures.
-        """
         if isinstance(mesh, MeshAsset):
             writer = se.BufferWriter("!")
             writer.write(LLMeshSerializer(), mesh)
-            mesh = writer.copy_buffer()
+            mesh = MeshUploadDetails(writer.copy_buffer(), len(mesh.segments['high_lod']))
 
-        asset_resources = self._build_asset_resources(name, mesh)
+        asset_resources = self._build_asset_resources(name, [mesh])
         payload = {
             'asset_resources': asset_resources,
             'asset_type': 'mesh',
@@ -102,26 +102,26 @@ class AssetUploader:
         upload_body = llsd.format_xml(asset_resources)
         return UploadToken(resp_payload["upload_price"], resp_payload["uploader"], upload_body)
 
-    def _build_asset_resources(self, name: str, mesh: bytes) -> dict:
+    def _build_asset_resources(self, name: str, meshes: List[MeshUploadDetails]) -> dict:
+        instances = []
+        for mesh in meshes:
+            instances.append({
+                'face_list': [{
+                    'diffuse_color': [1.0, 1.0, 1.0, 1.0],
+                    'fullbright': False
+                }] * mesh.num_faces,
+                'material': 3,
+                'mesh': 0,
+                'mesh_name': name,
+                'physics_shape_type': 2,
+                'position': [0.0, 0.0, 0.0],
+                'rotation': [0.7071067690849304, 0.0, 0.0, 0.7071067690849304],
+                'scale': [1.0, 1.0, 1.0]
+            })
+
         return {
-            'instance_list': [
-                {
-                    'face_list': [
-                        {
-                            'diffuse_color': [1.0, 1.0, 1.0, 1.0],
-                            'fullbright': False
-                        }
-                    ],
-                    'material': 3,
-                    'mesh': 0,
-                    'mesh_name': name,
-                    'physics_shape_type': 2,
-                    'position': [0.0, 0.0, 0.0],
-                    'rotation': [0.7071067690849304, 0.0, 0.0, 0.7071067690849304],
-                    'scale': [1.0, 1.0, 1.0]
-                }
-            ],
-            'mesh_list': [mesh],
+            'instance_list': instances,
+            'mesh_list': [mesh.mesh_bytes for mesh in meshes],
             'metric': 'MUT_Unspecified',
             'texture_list': []
         }
