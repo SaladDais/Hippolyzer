@@ -15,7 +15,7 @@ import logging
 import os.path
 import secrets
 import sys
-from typing import Dict, List, Optional, Union, Sequence
+from typing import Dict, Optional
 
 import collada
 import collada.source
@@ -27,18 +27,16 @@ import transformations
 from hippolyzer.lib.base.datatypes import Vector3
 from hippolyzer.lib.base.helpers import get_resource_filename
 from hippolyzer.lib.base.serialization import BufferReader
-from hippolyzer.lib.base.mesh import LLMeshSerializer, MeshAsset, positions_from_domain, SkinSegmentDict
+from hippolyzer.lib.base.mesh import (
+    LLMeshSerializer,
+    MeshAsset,
+    positions_from_domain,
+    SkinSegmentDict,
+    llsd_to_mat4,
+)
 
 LOG = logging.getLogger(__name__)
 DIR = os.path.dirname(os.path.realpath(__file__))
-
-
-def llsd_to_mat4(mat: Union[np.ndarray, Sequence[float]]) -> np.ndarray:
-    return np.array(mat).reshape((4, 4), order='F')
-
-
-def mat4_to_llsd(mat: np.ndarray) -> List[float]:
-    return list(mat.flatten(order='F'))
 
 
 def mat4_to_collada(mat: np.ndarray) -> np.ndarray:

@@ -11,6 +11,7 @@ from typing import *
 import zlib
 from copy import deepcopy
 
+import numpy as np
 import recordclass
 
 from hippolyzer.lib.base import serialization as se
@@ -18,6 +19,14 @@ from hippolyzer.lib.base.datatypes import Vector3, Vector2, UUID, TupleCoord
 from hippolyzer.lib.base.llsd import zip_llsd, unzip_llsd
 
 LOG = logging.getLogger(__name__)
+
+
+def llsd_to_mat4(mat: Union[np.ndarray, Sequence[float]]) -> np.ndarray:
+    return np.array(mat).reshape((4, 4), order='F')
+
+
+def mat4_to_llsd(mat: np.ndarray) -> List[float]:
+    return list(mat.flatten(order='F'))
 
 
 @dataclasses.dataclass
