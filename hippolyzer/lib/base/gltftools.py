@@ -7,10 +7,6 @@ WIP LLMesh -> glTF converter, for testing eventual glTF -> LLMesh conversion log
 #  * * The weird scaling on the collision volumes / fitted mesh bones will clearly be a problem.
 #      Blender's Collada importer / export stuff appears to sidestep these problems (by only applying
 #      the bind shape matrix to the model in the viewport?)
-#  * Do we actually need to convert to GLTF coordinates space, or is it enough to parent everything
-#    to a correctly rotated scene node? That would definitely be less nasty. I wasn't totally sure
-#    how that would affect coordinates on re-exports if you did export selected without selecting the
-#    scene root, though. This seems to be what assimp does so maybe it's fine?
 
 import math
 import pprint
@@ -25,7 +21,7 @@ import transformations
 
 from hippolyzer.lib.base.colladatools import llsd_to_mat4
 from hippolyzer.lib.base.mesh import LLMeshSerializer, MeshAsset, positions_from_domain, SkinSegmentDict, VertexWeight
-from hippolyzer.lib.base.mesh_skeleton import required_joint_hierarchy, SKELETON_JOINTS
+from hippolyzer.lib.base.mesh_skeleton import AVATAR_SKELETON
 from hippolyzer.lib.base.serialization import BufferReader
 
 
@@ -70,7 +66,11 @@ def sl_mat4_to_gltf(mat: np.ndarray) -> List[float]:
 
     This should only be done immediately before storing the matrix in a glTF structure!
     """
+    # TODO: This is probably not correct. We definitely need to flip Z but there's
+    #  probably a better way to do it.
     decomp = [sl_to_gltf_coords(x) for x in transformations.decompose_matrix(mat)]
+    trans = decomp[3]
+    decomp[3] = (trans[0], trans[1], -trans[2])
     return list(transformations.compose_matrix(*decomp).flatten(order='F'))
 
 
@@ -91,9 +91,15 @@ def sl_weights_to_gltf(sl_weights: List[List[VertexWeight]]) -> Tuple[np.ndarray
     weights = np.zeros((len(sl_weights), 4), dtype=np.float32)
 
     for i, vert_weights in enumerate(sl_weights):
+        # We need to re-normalize these since the quantization can mess them up
+        collected_weights = []
         for j, vert_weight in enumerate(vert_weights):
             joints[i, j] = vert_weight.joint_idx
-            weights[i, j] = vert_weight.weight
+            collected_weights.append(vert_weight.weight)
+        weight_sum = sum(collected_weights)
+        if weight_sum:
+            for j, weight in enumerate(collected_weights):
+                weights[i, j] = weight / weight_sum
 
     return joints, weights
 
@@ -124,12 +130,10 @@ class GLTFBuilder:
             mesh: Optional[gltflib.Mesh] = None,
             transform: Optional[np.ndarray] = None,
     ) -> gltflib.Node:
-        if transform is None:
-            transform = np.identity(4)
         node = gltflib.Node(
             name=name,
             mesh=self.model.meshes.index(mesh) if mesh else None,
-            matrix=sl_mat4_to_gltf(transform),
+            matrix=sl_mat4_to_gltf(transform) if transform is not None else None,
             children=[],
         )
         self.model.nodes.append(node)
@@ -264,7 +268,7 @@ class GLTFBuilder:
         #  that expect to be able to reorient the entire mesh through the
         #  inverse bind matrices.
         joints: Dict[str, gltflib.Node] = {}
-        required_joints = required_joint_hierarchy(skin['joint_names'])
+        required_joints = AVATAR_SKELETON.get_required_joints(skin['joint_names'])
         # If this is present, it overrides the joint position from the skeleton definition
         if 'alt_inverse_bind_matrix' in skin:
             joint_overrides = dict(zip(skin['joint_names'], skin['alt_inverse_bind_matrix']))
@@ -272,19 +276,22 @@ class GLTFBuilder:
             joint_overrides = {}
 
         for joint_name in required_joints:
-            joint_pos = SKELETON_JOINTS[joint_name].translation
+            joint = AVATAR_SKELETON[joint_name]
+            joint_matrix = joint.matrix
             override = joint_overrides.get(joint_name)
+            decomp = list(transformations.decompose_matrix(joint_matrix))
             if override:
                 # We specifically only want the translation from the override!
-                joint_pos = transformations.translation_from_matrix(llsd_to_mat4(override))
-            node = self.add_node(joint_name, transform=transformations.compose_matrix(translate=tuple(joint_pos)))
+                decomp_override = transformations.decompose_matrix(llsd_to_mat4(override))
+                decomp[3] = decomp_override[3]
+                joint_matrix = transformations.compose_matrix(*decomp)
+            node = self.add_node(joint_name, transform=joint_matrix)
             joints[joint_name] = node
 
         # Add each joint to the child list of their respective parents
         for joint_name, joint_node in joints.items():
-            parent_name = SKELETON_JOINTS[joint_name].parent
-            if parent_name:
-                joints[parent_name].children.append(self.model.nodes.index(joint_node))
+            if parent := AVATAR_SKELETON[joint_name].parent:
+                joints[parent().name].children.append(self.model.nodes.index(joint_node))
         return joints
 
     def add_skin(self, name: str, joint_nodes: Dict[str, gltflib.Node], skin_seg: SkinSegmentDict) -> gltflib.Skin:
@@ -292,11 +299,14 @@ class GLTFBuilder:
         for joint_name in skin_seg['joint_names']:
             joints_arr.append(self.model.nodes.index(joint_nodes[joint_name]))
 
-        # TODO: glTF also doesn't have a concept of a "bind shape matrix" per its skinning docs,
-        #  so we may have to mix that into the mesh data or inverse bind matrices somehow.
+        # glTF also doesn't have a concept of a "bind shape matrix" like Collada does
+        # per its skinning docs, so we have to mix it into the inverse bind matrices.
+        # See https://github.com/KhronosGroup/glTF-Tutorials/blob/master/gltfTutorial/gltfTutorial_020_Skins.md
+        # TODO: apply the bind shape matrix to the mesh data instead?
         inv_binds = []
-        for inv_bind in skin_seg['inverse_bind_matrix']:
-            inv_bind = llsd_to_mat4(inv_bind)
+        bind_shape_matrix = llsd_to_mat4(skin_seg['bind_shape_matrix'])
+        for joint_name, inv_bind in zip(skin_seg['joint_names'], skin_seg['inverse_bind_matrix']):
+            inv_bind = np.matmul(llsd_to_mat4(inv_bind), bind_shape_matrix)
             inv_binds.append(sl_mat4_to_gltf(inv_bind))
         inv_binds_data = np.array(inv_binds, dtype=np.float32).tobytes()
         buffer_view = self.add_buffer_view(inv_binds_data, target=None)
@@ -340,7 +350,6 @@ def build_gltf_mesh(builder: GLTFBuilder, mesh: MeshAsset, name: str):
 
     skin_seg: Optional[SkinSegmentDict] = mesh.segments.get('skin')
     skin = None
-    armature_node = None
     mesh_transform = np.identity(4)
     if skin_seg:
         mesh_transform = llsd_to_mat4(skin_seg['bind_shape_matrix'])
@@ -351,6 +360,7 @@ def build_gltf_mesh(builder: GLTFBuilder, mesh: MeshAsset, name: str):
         builder.scene.nodes.append(gltf_model.nodes.index(armature_node))
         armature_node.children.append(gltf_model.nodes.index(joint_nodes['mPelvis']))
         skin = builder.add_skin("Armature", joint_nodes, skin_seg)
+        # skin = None
 
     mesh_node = builder.add_node(
         name,
@@ -359,15 +369,32 @@ def build_gltf_mesh(builder: GLTFBuilder, mesh: MeshAsset, name: str):
     )
     if skin and False:
         # TODO: This badly mangles up the mesh right now, especially given the
-        #  collision volume scales. Investigate using a more accurate skeleton def.
+        #  collision volume scales. This is an issue in blender where it doesn't
+        #  apply the inverse bind matrices relative to the scale and rotation of
+        #  the bones themselves, as it should. Blender's glTF loader tries to recover
+        #  from this by applying certain transforms as a pose, but the damage has
+        #  been done by that point. Nobody else runs really runs into this because
+        #  they have the good sense to not use some nightmare abomination rig with
+        #  scaling and rotation on the skeleton like SL does.
+        #
+        #  I can't see any way to properly support this without changing how Blender
+        #  handles armatures to make inverse bind matrices relative to bone scale and rot
+        #  (which they probably won't and shouldn't do, since there's no internal concept
+        #  of bone scale or rot in Blender right now.)
+        #
+        #  Should investigate an Avastar-style approach of optionally retargeting
+        #  to a Blender-compatible rig with translation-only bones, and modify
+        #  the bind matrices to accommodate. The glTF importer supports metadata through
+        #  the "extras" fields, so we can potentially abuse the "bind_mat" metadata field
+        #  that Blender already uses for the "Keep Bind Info" Collada import / export hack.
+        mesh_node.matrix = None
         mesh_node.skin = gltf_model.skins.index(skin)
-        armature_node.children.append(gltf_model.nodes.index(mesh_node))
-        builder.scene.nodes.append(gltf_model.nodes.index(armature_node))
-    else:
-        # Add a root node that will re-orient our scene into GLTF coords.
-        # scene_node = builder.add_node("scene")
-        # scene_node.children.append(gltf_model.nodes.index(mesh_node))
-        builder.scene.nodes.append(gltf_model.nodes.index(mesh_node))
+
+    builder.scene.nodes.append(gltf_model.nodes.index(mesh_node))
+
+    for node in builder.model.nodes:
+        if not node.children:
+            node.children = None
 
 
 def main():

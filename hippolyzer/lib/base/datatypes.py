@@ -39,6 +39,9 @@ class _IterableStub:
     __iter__: Callable
 
 
+RAD_TO_DEG = 180 / math.pi
+
+
 class TupleCoord(recordclass.datatuple, _IterableStub):  # type: ignore
     __options__ = {
         "fast_new": False,
@@ -372,5 +375,5 @@ class TaggedUnion(recordclass.datatuple):  # type: ignore
 __all__ = [
     "Vector3", "Vector4", "Vector2", "Quaternion", "TupleCoord",
     "UUID", "RawBytes", "StringEnum", "JankStringyBytes", "TaggedUnion",
-    "IntEnum", "IntFlag", "flags_to_pod", "Pretty"
+    "IntEnum", "IntFlag", "flags_to_pod", "Pretty", "RAD_TO_DEG"
 ]
