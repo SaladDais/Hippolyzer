@@ -8,6 +8,7 @@ WIP LLMesh -> glTF converter, for testing eventual glTF -> LLMesh conversion log
 #      Blender's Collada importer / export stuff appears to sidestep these problems (by only applying
 #      the bind shape matrix to the model in the viewport?)
 
+import dataclasses
 import math
 import pprint
 import sys
@@ -106,7 +107,7 @@ def sl_weights_to_gltf(sl_weights: List[List[VertexWeight]]) -> Tuple[np.ndarray
 
 class GLTFBuilder:
     def __init__(self):
-        self.scene = gltflib.Scene(nodes=[])
+        self.scene = gltflib.Scene(nodes=IdentityList())
         self.model = gltflib.GLTFModel(
             asset=gltflib.Asset(version="2.0"),
             accessors=IdentityList(),
@@ -123,6 +124,79 @@ class GLTFBuilder:
             model=self.model,
             resources=IdentityList(),
         )
+
+    def add_nodes_from_llmesh(self, mesh: MeshAsset, name: str, mesh_transform: Optional[np.ndarray] = None):
+        """Build a glTF version of a mesh asset, appending it and its armature to the scene root"""
+        # TODO: mesh data instancing?
+        if mesh_transform is None:
+            mesh_transform = np.identity(4)
+
+        primitives = []
+        # Just the high LOD for now
+        for submesh in mesh.segments['high_lod']:
+            range_xyz = np.array(positions_from_domain(submesh['Position'], submesh['PositionDomain']))
+            norms = np.array(submesh['Normal'])
+            tris = np.array(submesh['TriangleList'])
+            joints = np.array([])
+            weights = np.array([])
+            range_uv = np.array([])
+            if "TexCoord0" in submesh:
+                range_uv = np.array(positions_from_domain(submesh['TexCoord0'], submesh['TexCoord0Domain']))
+            if 'Weights' in submesh:
+                joints, weights = sl_weights_to_gltf(submesh['Weights'])
+            primitives.append(self.add_primitive(
+                tris=tris,
+                positions=range_xyz,
+                normals=norms,
+                uvs=range_uv,
+                joints=joints,
+                weights=weights,
+            ))
+
+        skin_seg: Optional[SkinSegmentDict] = mesh.segments.get('skin')
+        skin = None
+        if skin_seg:
+            mesh_transform = llsd_to_mat4(skin_seg['bind_shape_matrix'])
+            joint_nodes = self.add_joint_nodes(skin_seg)
+
+            # Give our armature a root node and parent the pelvis to it
+            armature_node = self.add_node("Armature")
+            self.scene.nodes.append(self.model.nodes.index(armature_node))
+            armature_node.children.append(self.model.nodes.index(joint_nodes['mPelvis']))
+            skin = self.add_skin("Armature", joint_nodes, skin_seg)
+            skin.skeleton = self.model.nodes.index(armature_node)
+
+        mesh_node = self.add_node(
+            name,
+            self.add_mesh(name, primitives),
+            transform=mesh_transform,
+        )
+        if skin and False:
+            # Node translation isn't relevant, we're going to use the bind matrices
+            mesh_node.matrix = None
+
+            # TODO: This badly mangles up the mesh right now, especially given the
+            #  collision volume scales. This is an issue in blender where it doesn't
+            #  apply the inverse bind matrices relative to the scale and rotation of
+            #  the bones themselves, as it should. Blender's glTF loader tries to recover
+            #  from this by applying certain transforms as a pose, but the damage has
+            #  been done by that point. Nobody else runs really runs into this because
+            #  they have the good sense to not use some nightmare abomination rig with
+            #  scaling and rotation on the skeleton like SL does.
+            #
+            #  I can't see any way to properly support this without changing how Blender
+            #  handles armatures to make inverse bind matrices relative to bone scale and rot
+            #  (which they probably won't and shouldn't do, since there's no internal concept
+            #  of bone scale or rot in Blender right now.)
+            #
+            #  Should investigate an Avastar-style approach of optionally retargeting
+            #  to a Blender-compatible rig with translation-only bones, and modify
+            #  the bind matrices to accommodate. The glTF importer supports metadata through
+            #  the "extras" fields, so we can potentially abuse the "bind_mat" metadata field
+            #  that Blender already uses for the "Keep Bind Info" Collada import / export hack.
+            mesh_node.skin = self.model.skins.index(skin)
+
+        self.scene.nodes.append(self.model.nodes.index(mesh_node))
 
     def add_node(
             self,
@@ -323,78 +397,18 @@ class GLTFBuilder:
         self.model.skins.append(skin)
         return skin
 
+    def finalize(self):
+        """Clean up the mesh to pass the glTF smell test, should be done last"""
+        def _nullify_empty_lists(dc):
+            for field in dataclasses.fields(dc):
+                # Empty lists should be replaced with None
+                if getattr(dc, field.name) == []:
+                    setattr(dc, field.name, None)
 
-def build_gltf_mesh(builder: GLTFBuilder, mesh: MeshAsset, name: str):
-    """Build a glTF version of a mesh, appending it and its armature to the scene root"""
-    gltf_model = builder.model
-    # Just the high LOD for now
-    high_lod = mesh.segments['high_lod']
-    primitives = []
-    for submesh in high_lod:
-        range_xyz = np.array(positions_from_domain(submesh['Position'], submesh['PositionDomain']))
-        range_uv = np.array(positions_from_domain(submesh['TexCoord0'], submesh['TexCoord0Domain']))
-        norms = np.array(submesh['Normal'])
-        tris = np.array(submesh['TriangleList'])
-        joints = np.array([])
-        weights = np.array([])
-        if 'Weights' in submesh:
-            joints, weights = sl_weights_to_gltf(submesh['Weights'])
-        primitives.append(builder.add_primitive(
-            tris=tris,
-            positions=range_xyz,
-            normals=norms,
-            uvs=range_uv,
-            joints=joints,
-            weights=weights,
-        ))
-
-    skin_seg: Optional[SkinSegmentDict] = mesh.segments.get('skin')
-    skin = None
-    mesh_transform = np.identity(4)
-    if skin_seg:
-        mesh_transform = llsd_to_mat4(skin_seg['bind_shape_matrix'])
-        joint_nodes = builder.add_joint_nodes(skin_seg)
-
-        # Give our armature a root node and parent the pelvis to it
-        armature_node = builder.add_node("Armature")
-        builder.scene.nodes.append(gltf_model.nodes.index(armature_node))
-        armature_node.children.append(gltf_model.nodes.index(joint_nodes['mPelvis']))
-        skin = builder.add_skin("Armature", joint_nodes, skin_seg)
-        # skin = None
-
-    mesh_node = builder.add_node(
-        name,
-        builder.add_mesh(name, primitives),
-        transform=mesh_transform,
-    )
-    if skin and False:
-        # TODO: This badly mangles up the mesh right now, especially given the
-        #  collision volume scales. This is an issue in blender where it doesn't
-        #  apply the inverse bind matrices relative to the scale and rotation of
-        #  the bones themselves, as it should. Blender's glTF loader tries to recover
-        #  from this by applying certain transforms as a pose, but the damage has
-        #  been done by that point. Nobody else runs really runs into this because
-        #  they have the good sense to not use some nightmare abomination rig with
-        #  scaling and rotation on the skeleton like SL does.
-        #
-        #  I can't see any way to properly support this without changing how Blender
-        #  handles armatures to make inverse bind matrices relative to bone scale and rot
-        #  (which they probably won't and shouldn't do, since there's no internal concept
-        #  of bone scale or rot in Blender right now.)
-        #
-        #  Should investigate an Avastar-style approach of optionally retargeting
-        #  to a Blender-compatible rig with translation-only bones, and modify
-        #  the bind matrices to accommodate. The glTF importer supports metadata through
-        #  the "extras" fields, so we can potentially abuse the "bind_mat" metadata field
-        #  that Blender already uses for the "Keep Bind Info" Collada import / export hack.
-        mesh_node.matrix = None
-        mesh_node.skin = gltf_model.skins.index(skin)
-
-    builder.scene.nodes.append(gltf_model.nodes.index(mesh_node))
-
-    for node in builder.model.nodes:
-        if not node.children:
-            node.children = None
+        for node in self.model.nodes:
+            _nullify_empty_lists(node)
+        _nullify_empty_lists(self.model)
+        return self.gltf
 
 
 def main():
@@ -406,10 +420,11 @@ def main():
     mesh: MeshAsset = reader.read(LLMeshSerializer(parse_segment_contents=True))
 
     builder = GLTFBuilder()
-    build_gltf_mesh(builder, mesh, filename)
+    builder.add_nodes_from_llmesh(mesh, filename)
+    gltf = builder.finalize()
 
-    pprint.pprint(builder.model)
-    builder.gltf.export_glb(sys.argv[1].rsplit(".", 1)[0] + "-converted.gltf")
+    pprint.pprint(gltf.model)
+    gltf.export_glb(sys.argv[1].rsplit(".", 1)[0] + "-converted.gltf")
 
 
 if __name__ == "__main__":
