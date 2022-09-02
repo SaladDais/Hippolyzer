@@ -21,6 +21,7 @@ import numpy as np
 import transformations
 
 from hippolyzer.lib.base.colladatools import llsd_to_mat4
+from hippolyzer.lib.base.datatypes import Vector3
 from hippolyzer.lib.base.mesh import LLMeshSerializer, MeshAsset, positions_from_domain, SkinSegmentDict, VertexWeight
 from hippolyzer.lib.base.mesh_skeleton import AVATAR_SKELETON
 from hippolyzer.lib.base.serialization import BufferReader
@@ -105,8 +106,20 @@ def sl_weights_to_gltf(sl_weights: List[List[VertexWeight]]) -> Tuple[np.ndarray
     return joints, weights
 
 
+@dataclasses.dataclass
+class JointContext:
+    node: gltflib.Node
+    # Original matrix for the bone, may have custom translation, but otherwise the same.
+    orig_matrix: np.ndarray
+    # xform that must be applied to inverse bind matrices to account for the changed bone
+    fixup_matrix: np.ndarray
+
+
+JOINT_CONTEXT_DICT = Dict[str, JointContext]
+
+
 class GLTFBuilder:
-    def __init__(self):
+    def __init__(self, blender_compatibility=False):
         self.scene = gltflib.Scene(nodes=IdentityList())
         self.model = gltflib.GLTFModel(
             asset=gltflib.Asset(version="2.0"),
@@ -124,10 +137,12 @@ class GLTFBuilder:
             model=self.model,
             resources=IdentityList(),
         )
+        self.blender_compatibility = blender_compatibility
 
     def add_nodes_from_llmesh(self, mesh: MeshAsset, name: str, mesh_transform: Optional[np.ndarray] = None):
         """Build a glTF version of a mesh asset, appending it and its armature to the scene root"""
         # TODO: mesh data instancing?
+        #  consider https://github.com/KhronosGroup/glTF-Blender-IO/issues/1634.
         if mesh_transform is None:
             mesh_transform = np.identity(4)
 
@@ -157,13 +172,13 @@ class GLTFBuilder:
         skin = None
         if skin_seg:
             mesh_transform = llsd_to_mat4(skin_seg['bind_shape_matrix'])
-            joint_nodes = self.add_joint_nodes(skin_seg)
+            joint_ctxs = self.add_joints(skin_seg)
 
             # Give our armature a root node and parent the pelvis to it
             armature_node = self.add_node("Armature")
             self.scene.nodes.append(self.model.nodes.index(armature_node))
-            armature_node.children.append(self.model.nodes.index(joint_nodes['mPelvis']))
-            skin = self.add_skin("Armature", joint_nodes, skin_seg)
+            armature_node.children.append(self.model.nodes.index(joint_ctxs['mPelvis'].node))
+            skin = self.add_skin("Armature", joint_ctxs, skin_seg)
             skin.skeleton = self.model.nodes.index(armature_node)
 
         mesh_node = self.add_node(
@@ -174,26 +189,7 @@ class GLTFBuilder:
         if skin and False:
             # Node translation isn't relevant, we're going to use the bind matrices
             mesh_node.matrix = None
-
-            # TODO: This badly mangles up the mesh right now, especially given the
-            #  collision volume scales. This is an issue in blender where it doesn't
-            #  apply the inverse bind matrices relative to the scale and rotation of
-            #  the bones themselves, as it should. Blender's glTF loader tries to recover
-            #  from this by applying certain transforms as a pose, but the damage has
-            #  been done by that point. Nobody else runs really runs into this because
-            #  they have the good sense to not use some nightmare abomination rig with
-            #  scaling and rotation on the skeleton like SL does.
-            #
-            #  I can't see any way to properly support this without changing how Blender
-            #  handles armatures to make inverse bind matrices relative to bone scale and rot
-            #  (which they probably won't and shouldn't do, since there's no internal concept
-            #  of bone scale or rot in Blender right now.)
-            #
-            #  Should investigate an Avastar-style approach of optionally retargeting
-            #  to a Blender-compatible rig with translation-only bones, and modify
-            #  the bind matrices to accommodate. The glTF importer supports metadata through
-            #  the "extras" fields, so we can potentially abuse the "bind_mat" metadata field
-            #  that Blender already uses for the "Keep Bind Info" Collada import / export hack.
+            # TODO: still disabled for now, messes up normals for some reason?
             mesh_node.skin = self.model.skins.index(skin)
 
         self.scene.nodes.append(self.model.nodes.index(mesh_node))
@@ -335,15 +331,12 @@ class GLTFBuilder:
         self.model.bufferViews.append(buffer_view)
         return buffer_view
 
-    def add_joint_nodes(self, skin: SkinSegmentDict) -> Dict[str, gltflib.Node]:
-        # TODO: Maybe this is smelly and we should instead just apply the chain's
-        #  computed transform in the event of missing links along the way to root?
-        #  It's not clear to me whether this will cause problems with mesh assets
-        #  that expect to be able to reorient the entire mesh through the
-        #  inverse bind matrices.
-        joints: Dict[str, gltflib.Node] = {}
+    def add_joints(self, skin: SkinSegmentDict) -> JOINT_CONTEXT_DICT:
+        joints: JOINT_CONTEXT_DICT = {}
+        # There may be some joints not present in the mesh that we need to add to reach the mPelvis root
         required_joints = AVATAR_SKELETON.get_required_joints(skin['joint_names'])
-        # If this is present, it overrides the joint position from the skeleton definition
+
+        # If this is present, it may override the joint positions from the skeleton definition
         if 'alt_inverse_bind_matrix' in skin:
             joint_overrides = dict(zip(skin['joint_names'], skin['alt_inverse_bind_matrix']))
         else:
@@ -352,35 +345,88 @@ class GLTFBuilder:
         for joint_name in required_joints:
             joint = AVATAR_SKELETON[joint_name]
             joint_matrix = joint.matrix
+
+            # Do we have a joint position override that would affect joint_matrix?
             override = joint_overrides.get(joint_name)
-            decomp = list(transformations.decompose_matrix(joint_matrix))
             if override:
+                decomp = list(transformations.decompose_matrix(joint_matrix))
                 # We specifically only want the translation from the override!
-                decomp_override = transformations.decompose_matrix(llsd_to_mat4(override))
-                decomp[3] = decomp_override[3]
-                joint_matrix = transformations.compose_matrix(*decomp)
+                translation = transformations.translation_from_matrix(llsd_to_mat4(override))
+                # Only do it if the difference is over 0.1mm though
+                if Vector3.dist(Vector3(*translation), joint.translation) > 0.0001:
+                    decomp[3] = translation
+                    joint_matrix = transformations.compose_matrix(*decomp)
+
+            # Do we need to mess with the bone's matrices to make Blender cooperate?
+            orig_matrix = joint_matrix
+            fixup_matrix = np.identity(4)
+            if self.blender_compatibility:
+                joint_matrix, fixup_matrix = self._fix_blender_joint(joint_matrix)
+
+            # TODO: populate "extras" here with the metadata the Blender collada stuff uses to store
+            #  "bind_mat" and "rest_mat" so we can go back to our original matrices when exporting
+            #  from blender to .dae!
             node = self.add_node(joint_name, transform=joint_matrix)
-            joints[joint_name] = node
+
+            # Store the node along with any fixups we may need to apply to the bind matrices later
+            joints[joint_name] = JointContext(node, orig_matrix, fixup_matrix)
 
         # Add each joint to the child list of their respective parents
-        for joint_name, joint_node in joints.items():
+        for joint_name, joint_ctx in joints.items():
             if parent := AVATAR_SKELETON[joint_name].parent:
-                joints[parent().name].children.append(self.model.nodes.index(joint_node))
+                joints[parent().name].node.children.append(self.model.nodes.index(joint_ctx.node))
         return joints
 
-    def add_skin(self, name: str, joint_nodes: Dict[str, gltflib.Node], skin_seg: SkinSegmentDict) -> gltflib.Skin:
+    def _fix_blender_joint(self, joint_matrix: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Split a joint matrix into a joint matrix and fixup matrix
+
+        If we don't account for weird scaling on the collision volumes, then
+        Blender freaks out. This is an issue in blender where it doesn't
+        apply the inverse bind matrices relative to the scale and rotation of
+        the bones themselves, as it should per the glTF spec. Blender's glTF loader
+        tries to recover from this by applying certain transforms as a pose, but
+        the damage has been done by that point. Nobody else runs really runs into
+        this because they have the good sense to not use some nightmare abomination
+        rig with scaling and rotation on the skeleton like SL does.
+
+        Blender will _only_ correctly handle the translation component of the joint,
+        any other transforms need to be mixed into the inverse bind matrices themselves.
+        There's no internal concept of bone scale or rot in Blender right now.
+
+        Should investigate an Avastar-style approach of optionally retargeting
+        to a Blender-compatible rig with translation-only bones, and modify
+        the bind matrices to accommodate. The glTF importer supports metadata through
+        the "extras" fields, so we can potentially abuse the "bind_mat" metadata field
+        that Blender already uses for the "Keep Bind Info" Collada import / export hack.
+
+        For context:
+        * https://github.com/KhronosGroup/glTF-Blender-IO/issues/1305
+        * https://developer.blender.org/T38660 (these are Collada, but still relevant)
+        * https://developer.blender.org/T29246
+        * https://developer.blender.org/T50412
+        * https://developer.blender.org/T53620 (FBX but still relevant)
+        """
+        scale, shear, angles, translate, projection = transformations.decompose_matrix(joint_matrix)
+        joint_matrix = transformations.compose_matrix(translate=translate)
+        fixup_matrix = transformations.compose_matrix(scale=scale, angles=angles)
+        return joint_matrix, fixup_matrix
+
+    def add_skin(self, name: str, joint_nodes: JOINT_CONTEXT_DICT, skin_seg: SkinSegmentDict) -> gltflib.Skin:
         joints_arr = []
         for joint_name in skin_seg['joint_names']:
-            joints_arr.append(self.model.nodes.index(joint_nodes[joint_name]))
+            joint_ctx = joint_nodes[joint_name]
+            joints_arr.append(self.model.nodes.index(joint_ctx.node))
 
         # glTF also doesn't have a concept of a "bind shape matrix" like Collada does
         # per its skinning docs, so we have to mix it into the inverse bind matrices.
         # See https://github.com/KhronosGroup/glTF-Tutorials/blob/master/gltfTutorial/gltfTutorial_020_Skins.md
-        # TODO: apply the bind shape matrix to the mesh data instead?
+        # TODO: apply the bind shape matrix to the mesh data instead? Will that make my normals not messed up?
         inv_binds = []
         bind_shape_matrix = llsd_to_mat4(skin_seg['bind_shape_matrix'])
         for joint_name, inv_bind in zip(skin_seg['joint_names'], skin_seg['inverse_bind_matrix']):
-            inv_bind = np.matmul(llsd_to_mat4(inv_bind), bind_shape_matrix)
+            joint_ctx = joint_nodes[joint_name]
+            inv_bind = joint_ctx.fixup_matrix @ llsd_to_mat4(inv_bind) @ bind_shape_matrix
             inv_binds.append(sl_mat4_to_gltf(inv_bind))
         inv_binds_data = np.array(inv_binds, dtype=np.float32).tobytes()
         buffer_view = self.add_buffer_view(inv_binds_data, target=None)
@@ -419,7 +465,7 @@ def main():
     filename = Path(sys.argv[1]).stem
     mesh: MeshAsset = reader.read(LLMeshSerializer(parse_segment_contents=True))
 
-    builder = GLTFBuilder()
+    builder = GLTFBuilder(blender_compatibility=True)
     builder.add_nodes_from_llmesh(mesh, filename)
     gltf = builder.finalize()
 
