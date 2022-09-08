@@ -3,10 +3,8 @@ WIP LLMesh -> glTF converter, for testing eventual glTF -> LLMesh conversion log
 """
 # TODO:
 #  * Simple tests
-#  * Make skinning actually work correctly
-#  * * The weird scaling on the collision volumes / fitted mesh bones will clearly be a problem.
-#      Blender's Collada importer / export stuff appears to sidestep these problems (by only applying
-#      the bind shape matrix to the model in the viewport?)
+#  * Round-tripping skinning data from Blender-compatible glTF back to LLMesh (maybe through rig retargeting?)
+#  * Panda3D-glTF viewer for LLMesh? The glTFs seem to work fine in Panda3D-glTF's `gltf-viewer`.
 
 import dataclasses
 import math
@@ -20,9 +18,10 @@ import gltflib
 import numpy as np
 import transformations
 
-from hippolyzer.lib.base.colladatools import llsd_to_mat4
 from hippolyzer.lib.base.datatypes import Vector3
-from hippolyzer.lib.base.mesh import LLMeshSerializer, MeshAsset, positions_from_domain, SkinSegmentDict, VertexWeight
+from hippolyzer.lib.base.mesh import (
+    LLMeshSerializer, MeshAsset, positions_from_domain, SkinSegmentDict, VertexWeight, llsd_to_mat4
+)
 from hippolyzer.lib.base.mesh_skeleton import AVATAR_SKELETON
 from hippolyzer.lib.base.serialization import BufferReader
 
@@ -106,6 +105,39 @@ def sl_weights_to_gltf(sl_weights: List[List[VertexWeight]]) -> Tuple[np.ndarray
     return joints, weights
 
 
+def normalize_vec3(a):
+    l2 = np.atleast_1d(np.linalg.norm(a, 2, axis=-1))
+    l2[l2 == 0] = 1
+    return (a / np.expand_dims(l2, axis=-1))[0]
+
+
+def apply_bind_shape_matrix(bind_shape_matrix: np.ndarray, verts: np.ndarray, norms: np.ndarray) \
+        -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Apply the bind shape matrix to the mesh data
+
+    glTF expects all verts and normals to be in armature-local space so that mesh data can be shared
+    between differently-oriented armatures. Or something.
+    # https://github.com/KhronosGroup/glTF-Blender-IO/issues/566#issuecomment-523119339
+    """
+    scale, _, angles, translation, _ = transformations.decompose_matrix(bind_shape_matrix)
+    scale_mat = transformations.compose_matrix(scale=scale)[:3, :3]
+    rot_mat = transformations.euler_matrix(*angles)[:3, :3]
+
+    new_verts = []
+    for vert in verts:
+        # Apply the SRT transform to each vert
+        new_verts.append((rot_mat @ (scale_mat @ vert)) + translation)
+
+    new_norms = []
+    for norm in norms:
+        # Our scale is unlikely to be uniform, so we have to fix up our normals as well.
+        # https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
+        new_norms.append(normalize_vec3(np.transpose(np.linalg.inv(bind_shape_matrix)[:3, :3]) @ norm))
+
+    return np.array(new_verts), np.array(new_norms)
+
+
 @dataclasses.dataclass
 class JointContext:
     node: gltflib.Node
@@ -131,6 +163,7 @@ class GLTFBuilder:
             meshes=IdentityList(),
             skins=IdentityList(),
             scenes=IdentityList((self.scene,)),
+            extensionsUsed=["KHR_materials_specular"],
             scene=0,
         )
         self.gltf = gltflib.GLTF(
@@ -146,28 +179,6 @@ class GLTFBuilder:
         if mesh_transform is None:
             mesh_transform = np.identity(4)
 
-        primitives = []
-        # Just the high LOD for now
-        for submesh in mesh.segments['high_lod']:
-            range_xyz = np.array(positions_from_domain(submesh['Position'], submesh['PositionDomain']))
-            norms = np.array(submesh['Normal'])
-            tris = np.array(submesh['TriangleList'])
-            joints = np.array([])
-            weights = np.array([])
-            range_uv = np.array([])
-            if "TexCoord0" in submesh:
-                range_uv = np.array(positions_from_domain(submesh['TexCoord0'], submesh['TexCoord0Domain']))
-            if 'Weights' in submesh:
-                joints, weights = sl_weights_to_gltf(submesh['Weights'])
-            primitives.append(self.add_primitive(
-                tris=tris,
-                positions=range_xyz,
-                normals=norms,
-                uvs=range_uv,
-                joints=joints,
-                weights=weights,
-            ))
-
         skin_seg: Optional[SkinSegmentDict] = mesh.segments.get('skin')
         skin = None
         if skin_seg:
@@ -181,15 +192,46 @@ class GLTFBuilder:
             skin = self.add_skin("Armature", joint_ctxs, skin_seg)
             skin.skeleton = self.model.nodes.index(armature_node)
 
+        primitives = []
+        # Just the high LOD for now
+        for submesh in mesh.segments['high_lod']:
+            verts = np.array(positions_from_domain(submesh['Position'], submesh['PositionDomain']))
+            norms = np.array(submesh['Normal'])
+            tris = np.array(submesh['TriangleList'])
+            joints = np.array([])
+            weights = np.array([])
+            range_uv = np.array([])
+            if "TexCoord0" in submesh:
+                range_uv = np.array(positions_from_domain(submesh['TexCoord0'], submesh['TexCoord0Domain']))
+            if 'Weights' in submesh:
+                joints, weights = sl_weights_to_gltf(submesh['Weights'])
+
+            if skin:
+                # Convert verts and norms to armature-local space
+                verts, norms = apply_bind_shape_matrix(mesh_transform, verts, norms)
+
+            primitives.append(self.add_primitive(
+                tris=tris,
+                positions=verts,
+                normals=norms,
+                uvs=range_uv,
+                joints=joints,
+                weights=weights,
+            ))
+
         mesh_node = self.add_node(
             name,
             self.add_mesh(name, primitives),
             transform=mesh_transform,
         )
-        if skin and False:
+        if skin:
             # Node translation isn't relevant, we're going to use the bind matrices
+            # If you pull this into Blender you may want to untick "Guess Original Bind Pose",
+            # it guesses that based on the inverse bind matrices which may have Maya poisoning.
+            # TODO: Maybe we could automatically undo that by comparing expected bone scale and rot
+            #  to scale and rot in the inverse bind matrices, and applying fixups to the
+            #  bind shape matrix and inverse bind matrices?
             mesh_node.matrix = None
-            # TODO: still disabled for now, messes up normals for some reason?
             mesh_node.skin = self.model.skins.index(skin)
 
         self.scene.nodes.append(self.model.nodes.index(mesh_node))
@@ -238,6 +280,12 @@ class GLTFBuilder:
                 metallicFactor=0.0,
                 roughnessFactor=0.0,
             ),
+            extensions={
+                "KHR_materials_specular": {
+                    "specularFactor": 0.0,
+                    "specularColorFactor": [0, 0, 0]
+                },
+            }
         )
         self.model.materials.append(material)
 
@@ -371,7 +419,7 @@ class GLTFBuilder:
             # Store the node along with any fixups we may need to apply to the bind matrices later
             joints[joint_name] = JointContext(node, orig_matrix, fixup_matrix)
 
-        # Add each joint to the child list of their respective parents
+        # Add each joint to the child list of their respective parent
         for joint_name, joint_ctx in joints.items():
             if parent := AVATAR_SKELETON[joint_name].parent:
                 joints[parent().name].node.children.append(self.model.nodes.index(joint_ctx.node))
@@ -426,7 +474,7 @@ class GLTFBuilder:
         bind_shape_matrix = llsd_to_mat4(skin_seg['bind_shape_matrix'])
         for joint_name, inv_bind in zip(skin_seg['joint_names'], skin_seg['inverse_bind_matrix']):
             joint_ctx = joint_nodes[joint_name]
-            inv_bind = joint_ctx.fixup_matrix @ llsd_to_mat4(inv_bind) @ bind_shape_matrix
+            inv_bind = joint_ctx.fixup_matrix @ llsd_to_mat4(inv_bind)
             inv_binds.append(sl_mat4_to_gltf(inv_bind))
         inv_binds_data = np.array(inv_binds, dtype=np.float32).tobytes()
         buffer_view = self.add_buffer_view(inv_binds_data, target=None)

@@ -102,6 +102,7 @@ setup(
         # Needed for mesh format conversion tooling
         'pycollada',
         'transformations',
+        'gltflib',
     ],
     tests_require=[
         "pytest",

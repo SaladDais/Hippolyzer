@@ -96,7 +96,7 @@ def llmesh_to_node(ll_mesh: MeshAsset, dae: collada.Collada, uniq=None,
             reflective=0.0,
             shadingtype="blinn",
             shininess=0.0,
-            diffuse=(0.0, 0.0, 0.0),
+            diffuse=(1.0, 1.0, 1.0),
         )
         mat = collada.material.Material(f"material{sub_uniq}", f"material{sub_uniq}", effect)
 
