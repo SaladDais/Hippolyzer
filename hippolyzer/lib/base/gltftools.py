@@ -128,21 +128,17 @@ def apply_bind_shape_matrix(bind_shape_matrix: np.ndarray, verts: np.ndarray, no
     scale, _, angles, translation, _ = transformations.decompose_matrix(bind_shape_matrix)
     scale_mat = transformations.compose_matrix(scale=scale)[:3, :3]
     rot_mat = transformations.euler_matrix(*angles)[:3, :3]
+    rot_scale_mat = scale_mat @ np.linalg.inv(rot_mat)
+
+    # Apply the SRT transform to each vert
+    verts = (verts @ rot_scale_mat) + translation
 
     # Our scale is unlikely to be uniform, so we have to fix up our normals as well.
     # https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
     inv_transpose_mat = np.transpose(np.linalg.inv(bind_shape_matrix)[:3, :3])
+    new_norms = [normalize_vec3(inv_transpose_mat @ norm) for norm in norms]
 
-    new_verts = []
-    for vert in verts:
-        # Apply the SRT transform to each vert
-        new_verts.append((rot_mat @ (scale_mat @ vert)) + translation)
-
-    new_norms = []
-    for norm in norms:
-        new_norms.append(normalize_vec3(inv_transpose_mat @ norm))
-
-    return np.array(new_verts), np.array(new_norms)
+    return verts, np.array(new_norms)
 
 
 @dataclasses.dataclass
