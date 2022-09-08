@@ -106,9 +106,10 @@ def sl_weights_to_gltf(sl_weights: List[List[VertexWeight]]) -> Tuple[np.ndarray
 
 
 def normalize_vec3(a):
-    l2 = np.atleast_1d(np.linalg.norm(a, 2, axis=-1))
-    l2[l2 == 0] = 1
-    return (a / np.expand_dims(l2, axis=-1))[0]
+    norm = np.linalg.norm(a)
+    if norm == 0:
+        return a
+    return a / norm
 
 
 def apply_bind_shape_matrix(bind_shape_matrix: np.ndarray, verts: np.ndarray, norms: np.ndarray) \
