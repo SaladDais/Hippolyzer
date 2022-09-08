@@ -17,6 +17,7 @@ import recordclass
 from hippolyzer.lib.base import serialization as se
 from hippolyzer.lib.base.datatypes import Vector3, Vector2, UUID, TupleCoord
 from hippolyzer.lib.base.llsd import zip_llsd, unzip_llsd
+from hippolyzer.lib.base.serialization import ParseContext
 
 LOG = logging.getLogger(__name__)
 
@@ -283,7 +284,7 @@ class VertexWeights(se.SerializableBase):
     def deserialize(cls, reader: se.Reader, ctx=None):
         influence_list = []
         for _ in range(cls.INFLUENCE_LIMIT):
-            joint_idx = reader.read(se.U8)
+            joint_idx = reader.read_bytes(1)[0]
             if joint_idx == cls.INFLUENCE_TERM:
                 break
             influence_list.append(VertexWeight(joint_idx, reader.read(cls.INFLUENCE_SER, ctx=ctx)))
@@ -321,16 +322,46 @@ class SegmentSerializer:
         return new_segment
 
 
+class VecListAdapter(se.Adapter):
+    def __init__(self, child_spec: se.SERIALIZABLE_TYPE, vec_type: Type):
+        super().__init__(child_spec)
+        self.vec_type = vec_type
+
+    def encode(self, val: Any, ctx: Optional[ParseContext]) -> Any:
+        return val
+
+    def decode(self, val: Any, ctx: Optional[ParseContext], pod: bool = False) -> Any:
+        new_vals = []
+        for elem in val:
+            new_vals.append(self.vec_type(*elem))
+        return new_vals
+
+
+LE_U16: np.dtype = np.dtype(np.uint16).newbyteorder('<')  # noqa
+
+
 LOD_SEGMENT_SERIALIZER = SegmentSerializer({
     # 16-bit indices to the verts making up the tri. Imposes a 16-bit
     # upper limit on verts in any given material in the mesh.
-    "TriangleList": se.Collection(None, se.Collection(3, se.U16)),
+    "TriangleList": se.ExprAdapter(
+        se.NumPyArray(se.BytesGreedy(), LE_U16, 3),
+        decode_func=lambda x: x.tolist(),
+    ),
     # These are used to interpolate between values in their respective domains
     # Each position represents a single vert.
-    "Position": se.Collection(None, se.Vector3U16(0.0, 1.0)),
-    "TexCoord0": se.Collection(None, se.Vector2U16(0.0, 1.0)),
+    "Position": VecListAdapter(
+        se.QuantizedNumPyArray(se.NumPyArray(se.BytesGreedy(), LE_U16, 3), 0.0, 1.0),
+        Vector3,
+    ),
+    "TexCoord0": VecListAdapter(
+        se.QuantizedNumPyArray(se.NumPyArray(se.BytesGreedy(), LE_U16, 2), 0.0, 1.0),
+        Vector2,
+    ),
     # Normals have a static domain between -1 and 1, so just use that.
-    "Normal": se.Collection(None, se.Vector3U16(-1.0, 1.0)),
+    "Normal": VecListAdapter(
+        se.QuantizedNumPyArray(se.NumPyArray(se.BytesGreedy(), LE_U16, 3), -1.0, 1.0),
+        Vector3,
+    ),
     "Weights": se.Collection(None, VertexWeights)
 })
 

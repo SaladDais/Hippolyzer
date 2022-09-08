@@ -6,6 +6,8 @@ import uuid
 from io import BytesIO
 from typing import Optional
 
+import numpy as np
+
 from hippolyzer.lib.base.datatypes import *
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base.llanim import Animation, Joint, RotKeyframe
@@ -691,6 +693,46 @@ class NameValueSerializationTests(BaseSerializationTest):
 
         # Check that deserializer doesn't raise for any of the fields
         deser.to_dict()
+
+
+class NumPySerializationTests(BaseSerializationTest):
+    def setUp(self) -> None:
+        super().setUp()
+        self.writer.endianness = "<"
+
+    def test_simple(self):
+        quant_spec = se.Vector3U16(0.0, 1.0)
+        self.writer.write(quant_spec, Vector3(0, 0.1, 0))
+        self.writer.write(quant_spec, Vector3(1, 1, 1))
+
+        reader = self._get_reader()
+        np_spec = se.NumPyArray(se.BytesGreedy(), np.dtype(np.uint16), 3)
+        np_val = reader.read(np_spec)
+        expected_arr = np.array([[0, 6554, 0], [0xFFFF, 0xFFFF, 0xFFFF]], dtype=np.uint16)
+        np.testing.assert_array_equal(expected_arr, np_val)
+
+        # Make sure writing the array back works correctly
+        orig_buf = self.writer.copy_buffer()
+        self.writer.clear()
+        self.writer.write(np_spec, expected_arr)
+        self.assertEqual(orig_buf, self.writer.copy_buffer())
+
+    def test_quantization(self):
+        quant_spec = se.Vector3U16(0.0, 1.0)
+        self.writer.write(quant_spec, Vector3(0, 0.1, 0))
+        self.writer.write(quant_spec, Vector3(1, 1, 1))
+
+        reader = self._get_reader()
+        np_spec = se.QuantizedNumPyArray(se.NumPyArray(se.BytesGreedy(), np.dtype(np.uint16), 3), 0.0, 1.0)
+        np_val = reader.read(np_spec)
+        expected_arr = np.array([[0, 0.1, 0], [1, 1, 1]], dtype=np.float64)
+        np.testing.assert_array_almost_equal(expected_arr, np_val, decimal=5)
+
+        # Make sure writing the array back works correctly
+        orig_buf = self.writer.copy_buffer()
+        self.writer.clear()
+        self.writer.write(np_spec, expected_arr)
+        self.assertEqual(orig_buf, self.writer.copy_buffer())
 
 
 class AnimSerializationTests(BaseSerializationTest):

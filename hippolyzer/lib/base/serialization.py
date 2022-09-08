@@ -10,6 +10,7 @@ from io import SEEK_CUR, SEEK_SET, SEEK_END, RawIOBase, BufferedIOBase
 from typing import *
 
 import lazy_object_proxy
+import numpy as np
 
 import hippolyzer.lib.base.llsd as llsd
 import hippolyzer.lib.base.datatypes as dtypes
@@ -838,7 +839,7 @@ class QuantizedFloat(QuantizedFloatBase):
         super().__init__(prim_spec, zero_median=False)
         self.lower = lower
         self.upper = upper
-        # We know the range in `QuantizedFloat` when it's constructed,  so we can infer
+        # We know the range in `QuantizedFloat` when it's constructed, so we can infer
         # whether or not we should round towards zero in __init__
         max_error = (upper - lower) * self.step_mag
         midpoint = (upper + lower) / 2.0
@@ -1610,7 +1611,9 @@ class BitfieldDataclass(DataclassAdapter):
 
 
 class ExprAdapter(Adapter):
-    def __init__(self, child_spec: SERIALIZABLE_TYPE, decode_func: Callable, encode_func: Callable):
+    _ID = lambda x: x
+
+    def __init__(self, child_spec: SERIALIZABLE_TYPE, decode_func: Callable = _ID, encode_func: Callable = _ID):
         super().__init__(child_spec)
         self._decode_func = decode_func
         self._encode_func = encode_func
@@ -1657,6 +1660,62 @@ class BinaryLLSD(SerializableBase):
     @classmethod
     def serialize(cls, val, writer: BufferWriter, ctx):
         writer.write_bytes(llsd.format_binary(val, with_header=False))
+
+
+class NumPyArray(Adapter):
+    """
+    An 2-dimensional, dynamic-length array of data from numpy. Greedy.
+
+    Unlike most other serializers, your endianness _must_ be specified in the dtype!
+    """
+    __slots__ = ['dtype', 'elems']
+
+    def __init__(self, child_spec: Optional[SERIALIZABLE_TYPE], dtype: np.dtype, elems: int):
+        super().__init__(child_spec)
+        self.dtype = dtype
+        self.elems = elems
+
+    def _pick_dtype(self, endian: str) -> np.dtype:
+        return self.dtype.newbyteorder('>') if endian != "<" else self.dtype
+
+    def decode(self, val: Any, ctx: Optional[ParseContext], pod: bool = False) -> Any:
+        num_elems = len(val) // self.dtype.itemsize
+        num_ndims = num_elems // self.elems
+        buf_array = np.frombuffer(val, dtype=self.dtype, count=num_elems)
+        return buf_array.reshape((num_ndims, self.elems))
+
+    def encode(self, val, ctx: Optional[ParseContext]) -> Any:
+        val: np.ndarray = np.array(val, dtype=self.dtype).flatten()
+        return val.tobytes()
+
+
+class QuantizedNumPyArray(Adapter):
+    """Like QuantizedFloat. Only works correctly for unsigned types, no zero midpoint rounding!"""
+    def __init__(self, child_spec: NumPyArray, lower: float, upper: float):
+        super().__init__(child_spec)
+        self.dtype = child_spec.dtype
+        self.lower = lower
+        self.upper = upper
+        self.step_mag = 1.0 / ((2 ** (self.dtype.itemsize * 8)) - 1)
+
+    def encode(self, val: Any, ctx: Optional[ParseContext]) -> Any:
+        val = np.array(val, dtype=np.float64)
+        val = np.clip(val, self.lower, self.upper)
+        delta = self.upper - self.lower
+        if delta == 0.0:
+            return np.zeros(val.shape, dtype=self.dtype)
+
+        val -= self.lower
+        val /= delta
+        val /= self.step_mag
+        return np.rint(val).astype(self.dtype)
+
+    def decode(self, val: Any, ctx: Optional[ParseContext], pod: bool = False) -> Any:
+        val = val.astype(np.float64)
+        val *= self.step_mag
+        val *= self.upper - self.lower
+        val += self.lower
+        return val
 
 
 def subfield_serializer(msg_name, block_name, var_name):
