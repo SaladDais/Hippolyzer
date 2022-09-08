@@ -119,6 +119,10 @@ def apply_bind_shape_matrix(bind_shape_matrix: np.ndarray, verts: np.ndarray, no
     glTF expects all verts and normals to be in armature-local space so that mesh data can be shared
     between differently-oriented armatures. Or something.
     # https://github.com/KhronosGroup/glTF-Blender-IO/issues/566#issuecomment-523119339
+
+    glTF also doesn't have a concept of a "bind shape matrix" like Collada does
+    per its skinning docs, so we have to mix it into the mesh data manually.
+    See https://github.com/KhronosGroup/glTF-Tutorials/blob/master/gltfTutorial/gltfTutorial_020_Skins.md
     """
     scale, _, angles, translation, _ = transformations.decompose_matrix(bind_shape_matrix)
     scale_mat = transformations.compose_matrix(scale=scale)[:3, :3]
@@ -468,12 +472,7 @@ class GLTFBuilder:
             joint_ctx = joint_nodes[joint_name]
             joints_arr.append(self.model.nodes.index(joint_ctx.node))
 
-        # glTF also doesn't have a concept of a "bind shape matrix" like Collada does
-        # per its skinning docs, so we have to mix it into the inverse bind matrices.
-        # See https://github.com/KhronosGroup/glTF-Tutorials/blob/master/gltfTutorial/gltfTutorial_020_Skins.md
-        # TODO: apply the bind shape matrix to the mesh data instead? Will that make my normals not messed up?
         inv_binds = []
-        bind_shape_matrix = llsd_to_mat4(skin_seg['bind_shape_matrix'])
         for joint_name, inv_bind in zip(skin_seg['joint_names'], skin_seg['inverse_bind_matrix']):
             joint_ctx = joint_nodes[joint_name]
             inv_bind = joint_ctx.fixup_matrix @ llsd_to_mat4(inv_bind)
