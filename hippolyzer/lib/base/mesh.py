@@ -265,7 +265,6 @@ def positions_to_domain(positions: Iterable[TupleCoord], domain: DomainDict):
 
 class VertexWeights(se.SerializableBase):
     """Serializer for a list of joint weights on a single vertex"""
-    INFLUENCE_SER = se.QuantizedFloat(se.U16, 0.0, 1.0)
     INFLUENCE_LIMIT = 4
     INFLUENCE_TERM = 0xFF
 
@@ -276,7 +275,7 @@ class VertexWeights(se.SerializableBase):
         for val in vals:
             joint_idx, influence = val
             writer.write(se.U8, joint_idx)
-            writer.write(cls.INFLUENCE_SER, influence, ctx=ctx)
+            writer.write(se.U16, round(influence * 0xFFff), ctx=ctx)
         if len(vals) != cls.INFLUENCE_LIMIT:
             writer.write(se.U8, cls.INFLUENCE_TERM)
 
@@ -287,7 +286,8 @@ class VertexWeights(se.SerializableBase):
             joint_idx = reader.read_bytes(1)[0]
             if joint_idx == cls.INFLUENCE_TERM:
                 break
-            influence_list.append(VertexWeight(joint_idx, reader.read(cls.INFLUENCE_SER, ctx=ctx)))
+            weight = reader.read(se.U16, ctx=ctx) / 0xFFff
+            influence_list.append(VertexWeight(joint_idx, weight))
         return influence_list
 
 
