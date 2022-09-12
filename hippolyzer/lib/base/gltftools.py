@@ -5,6 +5,8 @@ WIP LLMesh -> glTF converter, for testing eventual glTF -> LLMesh conversion log
 #  * Simple tests
 #  * Round-tripping skinning data from Blender-compatible glTF back to LLMesh (maybe through rig retargeting?)
 #  * Panda3D-glTF viewer for LLMesh? The glTFs seem to work fine in Panda3D-glTF's `gltf-viewer`.
+#  * Check if skew and projection components of transform matrices are ignored in practice as the spec requires.
+#    I suppose this would render some real assets impossible to represent with glTF.
 
 import dataclasses
 import math

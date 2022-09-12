@@ -40,6 +40,8 @@ class TestMesh(unittest.TestCase):
         writer.write(serializer, reader.read(serializer))
         second_buf = writer.copy_buffer()
         self.assertEqual(first_buf, second_buf)
+        # Dates may not round-trip correctly, but length should always be the same
+        self.assertEqual(len(first_buf), len(self.slm_bytes))
 
     def test_serialize_raw_segments(self):
         serializer = LLMeshSerializer(include_raw_segments=True)

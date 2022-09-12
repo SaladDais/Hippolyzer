@@ -24,7 +24,6 @@ from lxml import etree
 import numpy as np
 import transformations
 
-from hippolyzer.lib.base.datatypes import Vector3
 from hippolyzer.lib.base.helpers import get_resource_filename
 from hippolyzer.lib.base.serialization import BufferReader
 from hippolyzer.lib.base.mesh import (
@@ -311,39 +310,11 @@ def fix_weird_bind_matrices(skin_seg: SkinSegmentDict) -> None:
     if not skin_seg['joint_names']:
         return
 
-    scale_fixup = Vector3(1, 1, 1)
-    angle_fixup = Vector3(0, 0, 0)
-    have_fixups = False
-
-    # Totally non-scientific method of detecting odd bind matrices based on squinting very,
-    # very hard at a random sample of assets.
-    for joint_name, joint_inv in zip(skin_seg['joint_names'], skin_seg['inverse_bind_matrix']):
-        if not joint_name.startswith("m"):
-            # We can't make very good guesses based on collision volume scales and rotations,
-            # skip anything but the "m" joints.
-            continue
-        joint_mat = llsd_to_mat4(joint_inv)
-        joint_scale, _, joint_angle, _, _ = transformations.decompose_matrix(joint_mat)
-        # If the scale component of an mJointName joint isn't roughly <1,1,1>, we likely have
-        # scaling applied to the inverse bind matrices rather than the bind matrix. Figure out
-        # what the fixup should be so that we can reverse it.
-        if abs(3.0 - sum(joint_scale)) > 0.5:
-            scale_fixup = Vector3(1, 1, 1) / Vector3(*joint_scale)
-            have_fixups = True
-        # I wouldn't expect mJointName joints to be rotated at all in their inverse bind matrices.
-        # Is this a rotation that should've been applied to the bind shape matrix instead?
-        # In any event, all joints are likely rotated by this amount, so calculate the inverse.
-        if abs(sum(joint_angle)) > 0.05:
-            angle_fixup = -Vector3(*joint_angle)
-            have_fixups = True
-
-    if have_fixups:
-        LOG.warning(f"Detected weird matrices in mesh! {scale_fixup!r}, {angle_fixup!r}")
-        # The magnitude of the scales in the inverse bind matrices look very strange.
-        # The bind matrix itself is probably messed up as well, try to fix it.
-        # TODO: put this back in, the previous logic was totally wrong-headed.
-        #  DON'T MESS WITH INVERSE TRANSLATION!!!! Only bind shape gets its translation scaled.
-        pass
+    # TODO: calculate the correct inverse bind matrix scale & rotations from avatar_skeleton.xml
+    #  definitions. If the rotation and scale factors are the same across all inverse bind matrices then
+    #  they can be moved over to the bind shape matrix to keep Blender happy.
+    #  Maybe add a scaled / rotated empty as a parent for the armature instead?
+    return
 
 
 def main():

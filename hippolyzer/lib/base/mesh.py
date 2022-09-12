@@ -281,6 +281,17 @@ class VertexWeights(se.SerializableBase):
 
     @classmethod
     def deserialize(cls, reader: se.Reader, ctx=None):
+        # NOTE: normally you'd want to do something like arrange this into a nicely
+        # aligned byte array with zero padding so that you could vectorize the decoding.
+        # In cases where having a vertex with no weights is semantically equivalent to
+        # having a vertex _with_ weights of a value of 0.0 that's fine. This isn't the case
+        # in LL's implementation of mesh:
+        #
+        # https://bitbucket.org/lindenlab/viewer/src/d31a83fb946c49a38376ea3b312b5380d0c8c065/indra/llmath/llvolume.cpp#lines-2560:2628
+        #
+        # Consider the difference between handling of b"\x00\x00\x00\xFF" and b"\xFF" with the above logic.
+        # To simplify round-tripping while preserving those semantics, we don't do a vectorized decode.
+        # I had a vectorized numpy version, but those requirements made everything a bit of a mess.
         influence_list = []
         for _ in range(cls.INFLUENCE_LIMIT):
             joint_idx = reader.read_bytes(1)[0]
@@ -357,7 +368,7 @@ LOD_SEGMENT_SERIALIZER = SegmentSerializer({
         se.QuantizedNumPyArray(se.NumPyArray(se.BytesGreedy(), LE_U16, 2), 0.0, 1.0),
         Vector2,
     ),
-    # Normals have a static domain between -1 and 1, so just use that.
+    # Normals have a static domain between -1 and 1, so we just use that rather than 0.0 - 1.0.
     "Normal": VecListAdapter(
         se.QuantizedNumPyArray(se.NumPyArray(se.BytesGreedy(), LE_U16, 3), -1.0, 1.0),
         Vector3,
