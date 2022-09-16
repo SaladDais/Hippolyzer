@@ -75,7 +75,9 @@ setup(
     entry_points={
         'console_scripts': {
             'hippolyzer-gui = hippolyzer.apps.proxy_gui:gui_main',
-            'hippolyzer-cli = hippolyzer.apps.proxy:main'
+            'hippolyzer-cli = hippolyzer.apps.proxy:main',
+            'hippolyzer-leapagent = hippolyzer.apps.proxy_leapagent:agent_main',
+            'hippolyzer-leapreceiver = hippolyzer.apps.proxy_leapreceiver:receiver_main',
         }
     },
     zip_safe=False,
