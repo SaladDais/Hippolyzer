@@ -13,18 +13,45 @@ from hippolyzer.lib.proxy.leap import LEAPBridgeServer, LEAPClient
 
 
 async def client_connected(client: LEAPClient):
-    # Not awaiting is totally ok if you don't care about the response,
-    # but your linter may complain.
-    await client.sys_command("ping")
+    # Kick off a request to get ops for each API supported by the viewer
+    # Won't wait for a response from the viewer between each send
+    api_futs = {}
+    for api_name in (await client.sys_command("getAPIs")).keys():
+        api_fut = client.sys_command("getAPI", {"api": api_name})
+        api_futs[api_fut] = api_name
 
-    # For each API supported by the viewer
-    for api in await client.sys_command("getAPIs"):
-        print("=" * 5, api, "=" * 5)
-        # List supported OPs
-        pprint.pprint(await client.sys_command("getAPI", {"api": api}))
+    # Wait for all of our commands to complete in parallel
+    for fut in (await asyncio.wait(api_futs.keys()))[0]:
+        # Figure out which API this future even relates to
+        print("=" * 5, api_futs[fut], "=" * 5)
+        # List supported ops for this api
+        pprint.pprint(await fut)
 
-    async with client.subscribe("StartupState") as get_event:
+    # Subscribe to StartupState events within this scope
+    async with client.listen_scoped("StartupState") as get_event:
+        # Get a single StartupState event then continue
         pprint.pprint(await get_event())
+
+    # More manual version of above that gives you a Queue you can pass around
+    # A None gets posted to the mainloop every time the viewer restarts the main loop,
+    # so we can rely on _something_ being published to this.
+    llapp_queue = await client.listen("mainloop")
+    try:
+        pprint.pprint(await llapp_queue.get())
+        llapp_queue.task_done()
+    finally:
+        await client.stop_listening(llapp_queue)
+
+    # A simple command with a reply
+    pprint.pprint(await client.command("LLFloaterReg", "getBuildMap"))
+
+    # A simple command that has no reply, or has a reply we don't care about.
+    client.void_command("LLFloaterReg", "showInstance", {"name": "preferences"})
+
+    # Some commands must be executed against the dynamically assigned command
+    # pump that's specific to our LEAP listener. `sys_command()` is the same as
+    # `command()` except it internally addresses whatever the system command pump is.
+    await client.sys_command("ping")
 
 
 def receiver_main():
