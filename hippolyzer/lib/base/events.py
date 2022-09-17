@@ -59,17 +59,15 @@ class Event:
                 continue
             if one_shot:
                 self.unsubscribe(instance, *inner_args, **kwargs)
-            if instance(args, *inner_args, **kwargs):
+            if instance(args, *inner_args, **kwargs) and not one_shot:
                 self.unsubscribe(instance, *inner_args, **kwargs)
 
-    def get_subscriber_count(self):
+    def __len__(self):
         return len(self.subscribers)
 
     def clear_subscribers(self):
         self.subscribers.clear()
-        return self
 
     __iadd__ = subscribe
     __isub__ = unsubscribe
     __call__ = notify
-    __len__ = get_subscriber_count

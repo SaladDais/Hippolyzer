@@ -23,6 +23,9 @@ async def client_connected(client: LEAPClient):
         # List supported OPs
         pprint.pprint(await client.sys_command("getAPI", {"api": api}))
 
+    async with client.subscribe("StartupState") as get_event:
+        pprint.pprint(await get_event())
+
 
 def receiver_main():
     logging.basicConfig(level=logging.INFO)

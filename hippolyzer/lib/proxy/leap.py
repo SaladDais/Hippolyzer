@@ -6,6 +6,8 @@ TODO: split this out into its own package
 
 from __future__ import annotations
 
+import collections
+import contextlib
 from typing import *
 
 import asyncio
@@ -36,23 +38,33 @@ class LEAPClient:
         # Map of req id -> future held by requester to send responses to
         # TODO: LRU dict with cancel on evict.
         self._reply_map: Dict[uuid.UUID, asyncio.Future] = {}
+        self._pump_listeners: Dict[str, Set[asyncio.Queue]] = collections.defaultdict(set)
         self._connection_status = ConnectionStatus.READY
+        self._drain_task = None
 
     @property
-    def connected(self):
+    def connected(self) -> bool:
         return self._connection_status == ConnectionStatus.CONNECTED
 
-    async def connect(self):
+    @property
+    def address(self) -> Optional[Tuple]:
+        return self._writer.get_extra_info('peername', None)
+
+    async def connect(self) -> None:
         """Receive the "hello" message from the viewer and start the message pump"""
         assert self._connection_status == ConnectionStatus.READY
         self._connection_status = ConnectionStatus.CONNECTING
 
-        welcome_message = await self._read_message()
-        self._reply_pump = welcome_message['pump']
-        self.cmd_pump = welcome_message['data']['command']
+        try:
+            welcome_message = await self._read_message()
+            self._reply_pump = welcome_message['pump']
+            self.cmd_pump = welcome_message['data']['command']
 
-        self._connection_status = ConnectionStatus.CONNECTED
-        self._start_message_pump()
+            self._connection_status = ConnectionStatus.CONNECTED
+            self._start_message_pump()
+        except:
+            self.disconnect()
+            raise
 
     def _start_message_pump(self) -> None:
         """Read and handle inbound messages in a background task"""
@@ -69,8 +81,10 @@ class LEAPClient:
         # the incomplete read.
         asyncio.get_event_loop().create_task(_pump_messages_forever())
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Close the connection and clean up any pending request futures"""
+        if self.connected:
+            logging.info('closing LEAP connection from %r' % (self.address,))
         self._connection_status = ConnectionStatus.DISCONNECTED
         self._writer.close()
 
@@ -79,19 +93,26 @@ class LEAPClient:
             if not fut.done():
                 fut.cancel()
         self._reply_map.clear()
+        # TODO: Give anything that cares about disconnects a signal that it's happened
+        #  keep around Task handles and cancel those instead?
+        self._pump_listeners.clear()
 
-    async def sys_command(self, op: str, data: Optional[Dict] = None) -> Any:
+    def sys_command(self, op: str, data: Optional[Dict] = None) -> Optional[Awaitable]:
         """Make a request to an internal LEAP method over the command pump"""
-        return await self.command(self.cmd_pump, op, data)
+        return self.command(self.cmd_pump, op, data)
 
-    async def command(self, pump: str, op: str, data: Optional[Dict] = None) -> Any:
+    def command(self, pump: str, op: str, data: Optional[Dict] = None) -> Optional[Awaitable]:
         """Make a request to an internal LEAP method using the standard command form (op in data)"""
         data = data.copy() if data else {}
         data['op'] = op
-        return await self.request(pump, data)
+        return self.request(pump, data)
 
-    async def request(self, pump: str, data: Any) -> Any:
-        """Send a message with request semantics to the other side"""
+    def request(self, pump: str, data: Any, expect_reply: bool = True) -> Optional[Awaitable]:
+        """
+        Send a message with request semantics to the other side
+
+        Sending the message is done synchronously, only waiting for the reply is done async.
+        """
         assert self.connected
         # If you don't pass in a dict for data, we have nowhere to stuff `reqid`.
         # That means no reply tracking, meaning no future.
@@ -101,24 +122,32 @@ class LEAPClient:
             data = data.copy()
             # Tell the viewer the pump to send replies to
             data["reply"] = self._reply_pump
-            req_id = uuid.uuid4()
-            data["reqid"] = req_id
+            if expect_reply:
+                req_id = uuid.uuid4()
+                data["reqid"] = req_id
 
-            fut = asyncio.Future()
-            # The future will be cleaned up when the Future is done.
-            fut.add_done_callback(self._cleanup_request_future)
-            self._reply_map[req_id] = fut
+                fut = asyncio.Future()
+                # The future will be cleaned up when the Future is done.
+                fut.add_done_callback(self._cleanup_request_future)
+                self._reply_map[req_id] = fut
 
-        await self._write_message(pump, data)
-        return await fut
+        self._write_message(pump, data)
+        return fut
 
-    async def _write_message(self, pump: str, data: Any):
-        assert self._connection_status == ConnectionStatus.CONNECTED
+    def _write_message(self, pump: str, data: Any) -> None:
+        assert self.connected
         ser = llsd.format_notation({"pump": pump, "data": data})
         payload = bytearray(str(len(ser)).encode("utf8"))
         payload.extend(b":")
         payload.extend(ser)
         self._writer.write(payload)
+        # We're in sync context, we need to schedule draining the socket,
+        # which is async. If a drain is already scheduled then we don't need to reschedule.
+        if not self._drain_task:
+            self._drain_task = asyncio.create_task(self._drain_soon())
+
+    async def _drain_soon(self) -> None:
+        self._drain_task = None
         await self._writer.drain()
 
     async def _read_message(self) -> Any:
@@ -131,6 +160,38 @@ class LEAPClient:
         parsed = llsd.parse_notation((await self._reader.readexactly(length)).strip())
         return parsed
 
+    @contextlib.asynccontextmanager
+    async def subscribe(self, source_pump: str) -> AsyncContextManager[Callable[[], Awaitable[Any]]]:
+        """Subscribe to events published on source_pump, allow awaiting them"""
+        assert self.connected
+
+        msg_queue = asyncio.Queue()
+
+        async def _get_wrapper():
+            # TODO: handle disconnection while awaiting new Queue message
+            msg = await msg_queue.get()
+
+            # Consumption is completion
+            msg_queue.task_done()
+            return msg
+
+        listener_name = "PythonListener-%s" % uuid.uuid4()
+        listen_params = {"listener": listener_name, "source": source_pump}
+
+        listeners = self._pump_listeners[source_pump]
+        had_listeners = bool(listeners)
+        listeners.add(msg_queue)
+
+        if not had_listeners:
+            await self.sys_command("listen", listen_params)
+
+        try:
+            yield _get_wrapper
+        finally:
+            listeners.remove(msg_queue)
+            if self.connected and not listeners:
+                await self.sys_command("stoplistening", listen_params)
+
     def handle_message(self, message: Any) -> bool:
         """
         Handle an inbound message and try to route it to the right recipient
@@ -138,21 +199,32 @@ class LEAPClient:
         TODO: Events, somehow. Maybe a catch-all event as well?
         """
         if not isinstance(message, dict):
+            logging.warning(f"Received a non-map message: {message!r}")
             return False
 
+        pump = message.get("pump")
         data = message.get("data")
-        if not isinstance(data, dict):
-            return False
+        if pump == self._reply_pump:
+            # This is a reply for a request
+            if not isinstance(data, dict):
+                logging.warning(f"Received a non-map reply over the reply pump: {message!r}")
+                return False
 
-        # reqid can tell us what future needs to be resolved, if any.
-        reqid = data.get("reqid")
-        fut = self._reply_map.get(reqid)
-        if not fut:
-            return False
-        # We don't actually care about the reqid, pop it off
-        data.pop("reqid")
-        # Notify anyone awaiting about the received data
-        fut.set_result(data)
+            # reqid can tell us what future needs to be resolved, if any.
+            reqid = data.get("reqid")
+            fut = self._reply_map.get(reqid)
+            if not fut:
+                logging.warning(f"Received a reply over the reply pump with no reqid or future: {message!r}")
+                return False
+            # We don't actually care about the reqid, pop it off
+            data.pop("reqid")
+            # Notify anyone awaiting about the received data
+            fut.set_result(data)
+        elif (listener_set := self._pump_listeners.get(pump)) is not None:
+            for listener in listener_set:
+                listener.put_nowait(data)
+        else:
+            logging.warning(f"Received a message for unknown pump: {message!r}")
         return True
 
     def _cleanup_request_future(self, req_fut: asyncio.Future) -> None:
@@ -164,22 +236,16 @@ class LEAPClient:
 
 
 class LEAPBridgeServer:
-    """LEAP Bridge server to use with asyncio.start_server()"""
+    """LEAP Bridge TCP server to use with asyncio.start_server()"""
 
     def __init__(self, client_connected_cb: Optional[Callable[[LEAPClient]], Awaitable[Any]] = None):
         self.clients: weakref.WeakSet[LEAPClient] = weakref.WeakSet()
         self._client_connected_cb = client_connected_cb
 
     async def handle_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
-        addr = writer.get_extra_info('peername', None)
-        logging.info('Accepting LEAP connection from %r' % (addr,))
-
         client = LEAPClient(reader, writer)
-        try:
-            await client.connect()
-        except:
-            writer.close()
-            raise
+        logging.info('Accepting LEAP connection from %r' % (client.address,))
+        await client.connect()
 
         self.clients.add(client)
         if self._client_connected_cb:
