@@ -9,7 +9,7 @@ import logging
 import multiprocessing
 import pprint
 
-from hippolyzer.lib.proxy.leap import LEAPBridgeServer, LEAPClient
+from hippolyzer.lib.proxy.leap import LEAPBridgeServer, LEAPClient, LLWindowWrapper, UIPath, LLUIWrapper
 
 
 async def client_connected(client: LEAPClient):
@@ -52,6 +52,24 @@ async def client_connected(client: LEAPClient):
     # pump that's specific to our LEAP listener. `sys_command()` is the same as
     # `command()` except it internally addresses whatever the system command pump is.
     await client.sys_command("ping")
+
+    # Spawn the test textbox floater
+    client.void_command("LLFloaterReg", "showInstance", {"name": "test_textbox"})
+
+    window_api = LLWindowWrapper(client)
+
+    # LEAP allows addressing UI elements by "path". We expose that through a pathlib-like interface
+    # to allow composing UI element paths.
+    textbox_path = UIPath.for_floater("floater_test_textbox") / "long_text_editor"
+    # Click the "long_text_editor" in the test textbox floater.
+    await window_api.mouse_click(button="LEFT", path=textbox_path)
+
+    # Type some text in it
+    window_api.text_input("Also I can type in here pretty good.")
+
+    # Print out the value of the textbox we just typed in
+    ui_api = LLUIWrapper(client)
+    pprint.pprint(await ui_api.get_value(textbox_path))
 
 
 def receiver_main():
