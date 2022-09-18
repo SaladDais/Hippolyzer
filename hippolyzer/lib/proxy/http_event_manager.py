@@ -42,7 +42,7 @@ class MITMProxyEventManager:
         "UpdateNotecardAgentInventory", "UpdateNotecardTaskInventory",
         "UpdateScriptAgent", "UpdateScriptTask",
         "UpdateSettingsAgentInventory", "UpdateSettingsTaskInventory",
-        "UploadBakedTexture",
+        "UploadBakedTexture", "UploadAgentProfileImage",
     }
 
     def __init__(self, session_manager: SessionManager, flow_context: HTTPFlowContext):

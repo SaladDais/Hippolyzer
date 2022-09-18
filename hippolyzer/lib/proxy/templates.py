@@ -108,4 +108,7 @@ CAP_TEMPLATES: List[CAPTemplate] = [
     CAPTemplate(cap_name='ViewerBenefits', method='GET', body=b'', query=set(), path=''),
     CAPTemplate(cap_name='SetDisplayName', method='POST', body=b'<?xml version="1.0" ?>\n<llsd>\n<map>\n    <key>display_name</key>\n    <array>\n      <string>OLD_DISPLAY_NAME</string>\n      <string>NEW_DISPLAY_NAME</string>\n    </array>\n  </map>\n</llsd>\n', query=set(), path=''),
     CAPTemplate(cap_name='ObjectMediaNavigate', method='POST', body=b'<?xml version="1.0" ?>\n<llsd>\n<map>\n    <key>current_url</key>\n    <string></string>\n    <key>object_id</key>\n    <uuid><!HIPPOREPL[[SELECTED_FULL]]></uuid>\n    <key>texture_index</key>\n    <integer></integer>\n  </map>\n</llsd>\n', query=set(), path=''),
+    CAPTemplate(cap_name='AgentProfile', method='GET', body=b'', query=set(), path='/<SOME_ID>'),
+    CAPTemplate(cap_name='InterestList', method='POST', body=b'<?xml version="1.0" ?>\n<llsd>\n<map>\n   <key>mode</key>\n    <string>360</string>\n  </map>\n</llsd>', query=set(), path='/'),
+    CAPTemplate(cap_name='RegionObjects', method='GET', body=b'', query=set(), path=''),
 ]
