@@ -81,7 +81,7 @@ async def client_connected(client: LEAPClient):
     # Clear out the textbox, note that this does _not_ work when path is specified!
     # TODO: clearing a textbox isn't so nice. CTL+A doesn't work as expected even without a path,
     #  it leaves a capital "A" in the text editor. We get rid of it by doing backspace right after.
-    window_api.key_press(keysym="a", mask=["CTL"])
+    window_api.key_press(mask=["CTL"], keysym="a")
     window_api.key_press(keysym="Backsp")
 
     # Type some text
