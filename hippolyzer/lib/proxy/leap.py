@@ -2,6 +2,7 @@
 Tooling for working with the SL viewer's LEAP integration: now with 100% less eventlet
 
 TODO: split this out into its own package
+TODO: Support playback of VITA event recording format snippets? Does anyone actually use those?
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ import dataclasses
 import enum
 import logging
 import pathlib
+import posixpath
 import uuid
 import weakref
 
@@ -114,19 +116,19 @@ class LEAPClient:
         """Make a request to an internal LEAP method using the standard command form (op in data)"""
         data = data.copy() if data else {}
         data['op'] = op
-        return self.send_message(pump, data)
+        return self.post(pump, data, expect_reply=True)
 
     def void_command(self, pump: str, op: str, data: Optional[Dict] = None) -> None:
         """Like `command()`, but we don't expect a reply."""
         data = data.copy() if data else {}
         data['op'] = op
-        self.send_message(pump, data, expect_reply=False)
+        self.post(pump, data, expect_reply=False)
 
-    def send_message(self, pump: str, data: Any, expect_reply: bool = True) -> Optional[Awaitable]:
+    def post(self, pump: str, data: Any, expect_reply: bool) -> Optional[Awaitable]:
         """
-        Send a message with request semantics to the other side
+        Post an event to the other side's `pump`.
 
-        Sending the message is done synchronously, only waiting for the reply is done async.
+        Post the event is done synchronously, only waiting for the reply is done async.
         """
         assert self.connected
         # If you don't pass in a dict for data, we have nowhere to stuff `reqid`.
@@ -303,6 +305,18 @@ class UIPath(pathlib.PurePosixPath):
     def for_floater(cls, floater_name: str) -> UIPath:
         return cls("/main_view/menu_stack/world_panel/Floater View") / floater_name
 
+    def __str__(self) -> str:
+        """Like the base __str__ except ".." and "." segments will be resolved."""
+        return posixpath.normpath(super().__str__())
+
+
+async def _data_unwrapper(data_fut: Awaitable[Dict], inner_elem: str) -> Any:
+    """Unwraps part of the data future while allowing the request itself to remain synchronous"""
+    # We want the request to be sent immediately, without requiring the request to be `await`ed first,
+    # but that means that we have to return a `Coroutine` that will pull the value out of the dict
+    # rather than directly returning the `Future`.
+    return (await data_fut)[inner_elem]
+
 
 UI_PATH_TYPE = Optional[Union[str, UIPath]]
 
@@ -335,37 +349,37 @@ class LLWindowWrapper(LEAPAPIWrapper):
         return payload
 
     def key_down(self, /, *, mask: MASK_TYPE = None, keycode: KEYCODE_TYPE = None,
-                 keysym: KEYSYM_TYPE = None, char: CHAR_TYPE = None, path: UI_PATH_TYPE = None):
+                 keysym: KEYSYM_TYPE = None, char: CHAR_TYPE = None, path: UI_PATH_TYPE = None) -> None:
         """Simulate a key being pressed down"""
         payload = self._convert_key_payload(keysym=keysym, keycode=keycode, char=char, mask=mask, path=path)
         self._client.void_command(self._pump_name, "keyDown", payload)
 
     def key_up(self, /, *, mask: MASK_TYPE = None, keycode: KEYCODE_TYPE = None,
-               keysym: KEYSYM_TYPE = None, char: CHAR_TYPE = None, path: UI_PATH_TYPE = None):
+               keysym: KEYSYM_TYPE = None, char: CHAR_TYPE = None, path: UI_PATH_TYPE = None) -> None:
         """Simulate a key being released"""
         payload = self._convert_key_payload(keysym=keysym, keycode=keycode, char=char, mask=mask, path=path)
         self._client.void_command(self._pump_name, "keyUp", payload)
 
     def key_press(self, /, *, mask: MASK_TYPE = None, keycode: KEYCODE_TYPE = None,
-                  keysym: KEYSYM_TYPE = None, char: CHAR_TYPE = None, path: UI_PATH_TYPE = None):
+                  keysym: KEYSYM_TYPE = None, char: CHAR_TYPE = None, path: UI_PATH_TYPE = None) -> None:
         """Simulate a key being pressed down and immediately released"""
         self.key_down(mask=mask, keycode=keycode, keysym=keysym, char=char, path=path)
         self.key_up(mask=mask, keycode=keycode, keysym=keysym, char=char, path=path)
 
-    def text_input(self, text_input: str, path: UI_PATH_TYPE = None):
+    def text_input(self, text_input: str, path: UI_PATH_TYPE = None) -> None:
         """Simulate a user typing a string of text"""
         # TODO: Uhhhhh I can't see how the key* APIs could possibly handle i18n correctly,
         #  what with all the U8s. Maybe I'm just dumb?
         for char in text_input:
             self.key_press(char=char, path=path)
 
-    async def get_paths(self, under: str = "") -> Dict:
+    async def get_paths(self, under: UI_PATH_TYPE = "") -> Dict:
         """Get all UI paths under the root, or under a path if specified"""
-        return await self._client.command(self._pump_name, "getPaths", {"under": under})
+        return await self._client.command(self._pump_name, "getPaths", {"under": str(under)})
 
-    async def get_info(self, path: str) -> Dict:
+    async def get_info(self, path: UI_PATH_TYPE) -> Dict:
         """Get info about an element specified by path"""
-        return await self._client.command(self._pump_name, "getInfo", {"path": path})
+        return await self._client.command(self._pump_name, "getInfo", {"path": str(path)})
 
     def _build_mouse_payload(self, /, *, x: MOUSE_COORD_TYPE, y: MOUSE_COORD_TYPE, path: UI_PATH_TYPE,
                              mask: MASK_TYPE, button: str = None) -> Dict:
@@ -410,7 +424,7 @@ class LLWindowWrapper(LEAPAPIWrapper):
         payload = self._build_mouse_payload(x=x, y=y, path=path, mask=None)
         return self._client.command(self._pump_name, "mouseMove", payload)
 
-    def mouse_scroll(self, clicks: int):
+    def mouse_scroll(self, clicks: int) -> None:
         """Act as if the scroll wheel has been moved `clicks` amount. May be negative"""
         self._client.command(self._pump_name, "mouseScroll", {"clicks": clicks})
 
@@ -428,17 +442,58 @@ class LLUIWrapper(LEAPAPIWrapper):
 
     def get_value(self, path: UI_PATH_TYPE) -> Awaitable[Any]:
         """For the UI control identified by `path`, return the current value in `value`"""
-
-        # We want the request to be sent immediately, without requiring `get_value()` to be `await`ed first,
-        # but that means that we have to return a `Coroutine` that will pull the value out of the dict
-        # rather than directly returning the `Future`.
-        # TODO: extract this out into a helper function that makes "unwrapper" Coroutines that wrap a Future.
         resp_fut = self._client.command(self._pump_name, "getValue", {"path": str(path)})
+        return _data_unwrapper(resp_fut, "value")
 
-        async def _wrapper():
-            return (await resp_fut)['value']
 
-        return _wrapper()
+class LLCommandDispatcherWrapper(LEAPAPIWrapper):
+    PUMP_NAME = "LLCommandDispatcher"
+
+    def dispatch(
+            self,
+            cmd: str,
+            /,
+            *,
+            params: Optional[Collection[str]] = None,
+            query: Optional[Dict[str, str]] = None,
+            trusted: bool = True,
+    ) -> None:
+        """Execute a command registered as an LLCommandHandler"""
+        return self._client.void_command(self._pump_name, "dispatch", {
+            "cmd": cmd,
+            "params": params or [],
+            "query": query or {},
+            "trusted": trusted,
+        })
+
+    def enumerate(self) -> Awaitable[Dict]:
+        """Get map of registered LLCommandHandlers, containing name, key, and (e.g.) untrusted flag"""
+        return self._client.command(self._pump_name, "enumerate")
+
+
+class LLViewerControlWrapper(LEAPAPIWrapper):
+    PUMP_NAME = "LLViewerControl"
+
+    def get(self, group: str, key: str) -> Awaitable[Any]:
+        """
+        Get value of a Control (config) key
+
+        `group` can be one of "CrashSettings", "Global", "PerAccount", "Warnings".
+        """
+        return self._client.command(self._pump_name, "get", {"key": key, "group": group})
+
+    def vars(self, group: str) -> Awaitable[List[Dict]]:
+        """Return a list of dicts of controls in `group`"""
+        resp_fut = self._client.command(self._pump_name, "vars", {"group": group})
+        return _data_unwrapper(resp_fut, "vars")
+
+    def set(self, group: str, key: str, value: Any) -> None:
+        """
+        Set a configuration value
+
+        TODO: error handling based on "error" field in resp?
+        """
+        self._client.void_command(self._pump_name, "set", {"key": key, "group": group, "value": value})
 
 
 class LEAPBridgeServer:

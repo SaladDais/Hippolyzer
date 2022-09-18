@@ -2,27 +2,38 @@
 Simple stub for testing receiving inbound LEAP connections over TCP
 
 To be removed at some point once this is supported by the proxy itself.
+For now it's a bunch of example uses of the APIs.
 """
+
+from typing import *
 
 import asyncio
 import logging
 import multiprocessing
 import pprint
 
-from hippolyzer.lib.proxy.leap import LEAPBridgeServer, LEAPClient, LLWindowWrapper, UIPath, LLUIWrapper
+from hippolyzer.lib.proxy.leap import (
+    LEAPBridgeServer,
+    LEAPClient,
+    UIPath,
+    LLCommandDispatcherWrapper,
+    LLWindowWrapper,
+    LLUIWrapper,
+    LLViewerControlWrapper,
+)
 
 
 async def client_connected(client: LEAPClient):
     # Kick off a request to get ops for each API supported by the viewer
     # Won't wait for a response from the viewer between each send
-    api_futs = {}
+    api_futs: Dict[Awaitable, str] = {}
     for api_name in (await client.sys_command("getAPIs")).keys():
         api_fut = client.sys_command("getAPI", {"api": api_name})
         api_futs[api_fut] = api_name
 
-    # Wait for all of our commands to complete in parallel
+    # Wait for all of our getAPI commands to complete in parallel
     for fut in (await asyncio.wait(api_futs.keys()))[0]:
-        # Figure out which API this future even relates to
+        # Print out which API this future even relates to
         print("=" * 5, api_futs[fut], "=" * 5)
         # List supported ops for this api
         pprint.pprint(await fut)
@@ -53,18 +64,27 @@ async def client_connected(client: LEAPClient):
     # `command()` except it internally addresses whatever the system command pump is.
     await client.sys_command("ping")
 
+    # Print out all the commands supported by LLCommandDispatcher
+    cmd_dispatcher_api = LLCommandDispatcherWrapper(client)
+    pprint.pprint(await cmd_dispatcher_api.enumerate())
+
     # Spawn the test textbox floater
     client.void_command("LLFloaterReg", "showInstance", {"name": "test_textbox"})
-
-    window_api = LLWindowWrapper(client)
 
     # LEAP allows addressing UI elements by "path". We expose that through a pathlib-like interface
     # to allow composing UI element paths.
     textbox_path = UIPath.for_floater("floater_test_textbox") / "long_text_editor"
     # Click the "long_text_editor" in the test textbox floater.
+    window_api = LLWindowWrapper(client)
     await window_api.mouse_click(button="LEFT", path=textbox_path)
 
-    # Type some text in it
+    # Clear out the textbox, note that this does _not_ work when path is specified!
+    # TODO: clearing a textbox isn't so nice. CTL+A doesn't work as expected even without a path,
+    #  it leaves a capital "A" in the text editor. We get rid of it by doing backspace right after.
+    window_api.key_press(keysym="a", mask=["CTL"])
+    window_api.key_press(keysym="Backsp")
+
+    # Type some text
     window_api.text_input("Also I can type in here pretty good.")
 
     # Print out the value of the textbox we just typed in
@@ -73,10 +93,14 @@ async def client_connected(client: LEAPClient):
 
     # But you don't need to explicitly give input focus like above, you can send keypresses
     # directly to a path.
-    # TODO: clearing a textbox isn't so nice. CTL+A doesn't work as expected even without a path,
-    #  it leaves a capital "A" in the text editor.
     monospace_path = UIPath.for_floater("floater_test_textbox") / "monospace_text_editor"
     window_api.text_input("I typed in here by path.", path=monospace_path)
+
+    # We can also access the viewer config to reason about viewer state.
+    viewer_control_api = LLViewerControlWrapper(client)
+    pprint.pprint(await viewer_control_api.get("Global", "StatsPilotFile"))
+    # Print the first ten vars in the "Global" group
+    pprint.pprint((await viewer_control_api.vars("Global"))[:10])
 
 
 def receiver_main():
