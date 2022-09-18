@@ -71,6 +71,13 @@ async def client_connected(client: LEAPClient):
     ui_api = LLUIWrapper(client)
     pprint.pprint(await ui_api.get_value(textbox_path))
 
+    # But you don't need to explicitly give input focus like above, you can send keypresses
+    # directly to a path.
+    # TODO: clearing a textbox isn't so nice. CTL+A doesn't work as expected even without a path,
+    #  it leaves a capital "A" in the text editor.
+    monospace_path = UIPath.for_floater("floater_test_textbox") / "monospace_text_editor"
+    window_api.text_input("I typed in here by path.", path=monospace_path)
+
 
 def receiver_main():
     logging.basicConfig(level=logging.INFO)

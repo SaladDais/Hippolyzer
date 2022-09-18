@@ -352,7 +352,7 @@ class LLWindowWrapper(LEAPAPIWrapper):
         self.key_down(mask=mask, keycode=keycode, keysym=keysym, char=char, path=path)
         self.key_up(mask=mask, keycode=keycode, keysym=keysym, char=char, path=path)
 
-    def text_input(self, text_input: str, path: Optional[str] = None):
+    def text_input(self, text_input: str, path: UI_PATH_TYPE = None):
         """Simulate a user typing a string of text"""
         # TODO: Uhhhhh I can't see how the key* APIs could possibly handle i18n correctly,
         #  what with all the U8s. Maybe I'm just dumb?
