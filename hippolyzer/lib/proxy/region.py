@@ -189,7 +189,7 @@ class EventQueueManager:
             # over the EQ. That will allow us to shove our own event onto the response once it comes in,
             # otherwise we have to wait until the EQ legitimately returns 200 due to a new event.
             # May or may not work in OpenSim.
-            circuit.send_message(Message(
+            circuit.send(Message(
                 'PlacesQuery',
                 Block('AgentData', AgentID=session.agent_id, SessionID=session.id, QueryID=UUID()),
                 Block('TransactionData', TransactionID=UUID()),

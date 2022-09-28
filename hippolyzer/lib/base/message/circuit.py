@@ -77,9 +77,6 @@ class Circuit:
                 )
             return self._send_prepared_message(message, transport)
 
-    # Temporary alias
-    send_message = send
-
     def send_reliable(self, message: Message, transport=None) -> asyncio.Future:
         """send() wrapper that always sends reliably and allows `await`ing ACK receipt"""
         if not message.synthetic:
