@@ -81,7 +81,7 @@ setup(
     zip_safe=False,
     python_requires='>=3.8',
     install_requires=[
-        'llbase>=1.2.5',
+        'llsd<1.1.0',
         'defusedxml',
         'aiohttp<4.0.0',
         'recordclass<0.15',

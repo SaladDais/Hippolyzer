@@ -20,7 +20,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 from logging import getLogger
 
-from llbase import llsd
+import llsd
 
 from hippolyzer.lib.base.message.data import msg_details
 

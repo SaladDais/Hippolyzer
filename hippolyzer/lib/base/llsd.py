@@ -1,14 +1,19 @@
+import calendar
+import datetime
+import struct
 import typing
+import uuid
 import zlib
 
-from llbase.llsd import *
+from llsd import *
 # So we can directly reference the original wrapper funcs where necessary
-import llbase.llsd
+import llsd as base_llsd
+from llsd.base import is_string, is_unicode
 
 from hippolyzer.lib.base.datatypes import *
 
 
-class HippoLLSDBaseFormatter(llbase.llsd.LLSDBaseFormatter):
+class HippoLLSDBaseFormatter(base_llsd.base.LLSDBaseFormatter):
     UUID: callable
     ARRAY: callable
 
@@ -24,12 +29,12 @@ class HippoLLSDBaseFormatter(llbase.llsd.LLSDBaseFormatter):
         return self.ARRAY(v.data())
 
 
-class HippoLLSDXMLFormatter(llbase.llsd.LLSDXMLFormatter, HippoLLSDBaseFormatter):
+class HippoLLSDXMLFormatter(base_llsd.serde_xml.LLSDXMLFormatter, HippoLLSDBaseFormatter):
     def __init__(self):
         super().__init__()
 
 
-class HippoLLSDXMLPrettyFormatter(llbase.llsd.LLSDXMLPrettyFormatter, HippoLLSDBaseFormatter):
+class HippoLLSDXMLPrettyFormatter(base_llsd.serde_xml.LLSDXMLPrettyFormatter, HippoLLSDBaseFormatter):
     def __init__(self):
         super().__init__()
 
@@ -42,7 +47,7 @@ def format_xml(val: typing.Any):
     return HippoLLSDXMLFormatter().format(val)
 
 
-class HippoLLSDNotationFormatter(llbase.llsd.LLSDNotationFormatter, HippoLLSDBaseFormatter):
+class HippoLLSDNotationFormatter(base_llsd.serde_notation.LLSDNotationFormatter, HippoLLSDBaseFormatter):
     def __init__(self):
         super().__init__()
 
@@ -84,7 +89,7 @@ def _format_binary_recurse(something) -> bytes:
             return b'1'
         else:
             return b'0'
-    elif is_integer(something):
+    elif isinstance(something, int):
         try:
             return b'i' + struct.pack('!i', something)
         except (OverflowError, struct.error) as exc:
@@ -129,7 +134,7 @@ def _format_binary_recurse(something) -> bytes:
                 (type(something), something))
 
 
-class HippoLLSDBinaryParser(llbase.llsd.LLSDBinaryParser):
+class HippoLLSDBinaryParser(base_llsd.serde_binary.LLSDBinaryParser):
     def __init__(self):
         super().__init__()
         self._dispatch[ord('u')] = lambda: UUID(bytes=self._getc(16))
@@ -162,11 +167,11 @@ def parse_binary(data: bytes):
 
 
 def parse_xml(data: bytes):
-    return llbase.llsd.parse_xml(data)
+    return base_llsd.parse_xml(data)
 
 
 def parse_notation(data: bytes):
-    return llbase.llsd.parse_notation(data)
+    return base_llsd.parse_notation(data)
 
 
 def zip_llsd(val: typing.Any):
@@ -189,6 +194,6 @@ def parse(data: bytes):
         else:
             return parse_notation(data)
     except KeyError as e:
-        raise llbase.llsd.LLSDParseError('LLSD could not be parsed: %s' % (e,))
+        raise base_llsd.LLSDParseError('LLSD could not be parsed: %s' % (e,))
     except TypeError as e:
-        raise llbase.llsd.LLSDParseError('Input stream not of type bytes. %s' % (e,))
+        raise base_llsd.LLSDParseError('Input stream not of type bytes. %s' % (e,))
