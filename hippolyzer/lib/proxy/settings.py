@@ -25,6 +25,7 @@ class EnvSettingDescriptor(SettingDescriptor):
 class ProxySettings(Settings):
     SOCKS_PROXY_PORT: int = EnvSettingDescriptor(9061, "HIPPO_UDP_PORT", int)
     HTTP_PROXY_PORT: int = EnvSettingDescriptor(9062, "HIPPO_HTTP_PORT", int)
+    LEAP_PORT: int = EnvSettingDescriptor(9063, "HIPPO_LEAP_PORT", int)
     PROXY_BIND_ADDR: str = EnvSettingDescriptor("127.0.0.1", "HIPPO_BIND_HOST", str)
     REMOTELY_ACCESSIBLE: bool = SettingDescriptor(False)
     USE_VIEWER_OBJECT_CACHE: bool = SettingDescriptor(False)

@@ -157,7 +157,6 @@ class UDPMessageDeserializer:
         reader.seek(current_template.get_msg_freq_num_len() + msg.offset)
 
         for tmpl_block in current_template.blocks:
-            LOG.debug("Parsing %s:%s" % (msg.name, tmpl_block.name))
             # EOF?
             if not len(reader):
                 # Seems like even some "Single" blocks are optional?
@@ -180,7 +179,6 @@ class UDPMessageDeserializer:
 
             for i in range(repeat_count):
                 current_block = Block(tmpl_block.name)
-                LOG.debug("Adding block %s" % current_block.name)
                 msg.add_block(current_block)
 
                 for tmpl_variable in tmpl_block.variables:

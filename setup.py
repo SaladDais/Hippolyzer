@@ -82,6 +82,7 @@ setup(
     python_requires='>=3.8',
     install_requires=[
         'llsd<1.1.0',
+        'outleap<1.0',
         'defusedxml',
         'aiohttp<4.0.0',
         'recordclass<0.15',

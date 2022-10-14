@@ -35,6 +35,7 @@ mitmproxy==8.0.0
 msgpack==1.0.3
 multidict==5.2.0
 numpy==1.21.4
+outleap~=0.4.1
 parso==0.8.3
 passlib==1.7.4
 prompt-toolkit==3.0.23

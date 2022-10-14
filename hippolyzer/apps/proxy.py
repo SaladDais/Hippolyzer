@@ -9,6 +9,7 @@ from typing import Optional
 
 import mitmproxy.ctx
 import mitmproxy.exceptions
+import outleap
 
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.proxy.addons import AddonManager
@@ -112,6 +113,7 @@ def start_proxy(session_manager: SessionManager, extra_addons: Optional[list] = 
 
     udp_proxy_port = session_manager.settings.SOCKS_PROXY_PORT
     http_proxy_port = session_manager.settings.HTTP_PROXY_PORT
+    leap_port = session_manager.settings.LEAP_PORT
     if proxy_host is None:
         proxy_host = session_manager.settings.PROXY_BIND_ADDR
 
@@ -143,6 +145,10 @@ def start_proxy(session_manager: SessionManager, extra_addons: Optional[list] = 
     coro = asyncio.start_server(server.handle_connection, proxy_host, udp_proxy_port)
     async_server = loop.run_until_complete(coro)
 
+    leap_server = outleap.LEAPBridgeServer(session_manager.leap_client_connected)
+    coro = asyncio.start_server(leap_server.handle_connection, proxy_host, leap_port)
+    async_leap_server = loop.run_until_complete(coro)
+
     event_manager = MITMProxyEventManager(session_manager, flow_context)
     loop.create_task(event_manager.run())
 
@@ -169,6 +175,8 @@ def start_proxy(session_manager: SessionManager, extra_addons: Optional[list] = 
     # Close the server
     print("Closing SOCKS server")
     async_server.close()
+    print("Shutting down LEAP server")
+    async_leap_server.close()
     print("Shutting down addons")
     AddonManager.shutdown()
     print("Waiting for SOCKS server to close")

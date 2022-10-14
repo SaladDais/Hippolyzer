@@ -9,6 +9,8 @@ import weakref
 from typing import *
 from weakref import ref
 
+from outleap import LEAPClient
+
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.helpers import proxify
 from hippolyzer.lib.base.message.message import Message
@@ -50,6 +52,7 @@ class Session(BaseClientSession):
         self.http_message_handler: MessageHandler[HippoHTTPFlow, str] = MessageHandler()
         self.objects = ProxyWorldObjectManager(self, session_manager.settings, session_manager.name_cache)
         self.inventory = ProxyInventoryManager(proxify(self))
+        self.leap_client: Optional[LEAPClient] = None
         # Base path of a newview type cache directory for this session
         self.cache_dir: Optional[str] = None
         self._main_region = None
@@ -187,6 +190,7 @@ class SessionManager:
         self.message_logger: Optional[BaseMessageLogger] = None
         self.addon_ctx: Dict[str, Any] = {}
         self.name_cache = ProxyNameCache()
+        self.pending_leap_clients: List[LEAPClient] = []
 
     def create_session(self, login_data) -> Session:
         session = Session.from_login_data(login_data, self)
@@ -203,12 +207,23 @@ class SessionManager:
             if session.pending and session.id == session_id:
                 logging.info("Claimed %r" % session)
                 session.pending = False
+                # TODO: less crap way of tying a LEAP client to a session
+                while self.pending_leap_clients:
+                    leap_client = self.pending_leap_clients.pop(-1)
+                    # Client may have gone bad since it connected
+                    if not leap_client.connected:
+                        continue
+                    logging.info("Assigned LEAP client to session")
+                    session.leap_client = leap_client
+                    break
                 return session
         return None
 
     def close_session(self, session: Session):
         logging.info("Closed %r" % session)
         session.objects.clear()
+        if session.leap_client:
+            session.leap_client.disconnect()
         self.sessions.remove(session)
 
     def resolve_cap(self, url: str) -> Optional["CapData"]:
@@ -217,6 +232,9 @@ class SessionManager:
             if cap_data:
                 return cap_data
         return CapData()
+
+    async def leap_client_connected(self, leap_client: LEAPClient):
+        self.pending_leap_clients.append(leap_client)
 
 
 @dataclasses.dataclass
