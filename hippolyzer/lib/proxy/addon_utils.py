@@ -116,16 +116,14 @@ class MetaBaseAddon(abc.ABCMeta):
     Won't work as you expect!
     """
     def __setattr__(self, key: str, value):
-        # TODO: Keep track of AddonProperties in __new__ or something?
         try:
             existing = object.__getattribute__(self, key)
+            if existing and isinstance(existing, BaseAddonProperty):
+                existing.__set__(self, value)
+                return
         except AttributeError:
             # If the attribute doesn't exist then it's fine to use the base setattr.
-            super().__setattr__(key, value)
-            return
-        if existing and isinstance(existing, BaseAddonProperty):
-            existing.__set__(self, value)
-            return
+            pass
         super().__setattr__(key, value)
 
 
