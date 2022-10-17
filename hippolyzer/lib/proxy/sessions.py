@@ -235,6 +235,7 @@ class SessionManager:
 
     async def leap_client_connected(self, leap_client: LEAPClient):
         self.pending_leap_clients.append(leap_client)
+        AddonManager.handle_leap_client_added(self, leap_client)
 
 
 @dataclasses.dataclass

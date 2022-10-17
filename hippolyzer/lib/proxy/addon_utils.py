@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from typing import *
-
 import abc
 import copy
 import dataclasses
 import multiprocessing
 import pickle
 import warnings
+
+import outleap
 
 from hippolyzer.lib.base.datatypes import UUID, Vector3
 from hippolyzer.lib.base.message.message import Block, Message
@@ -192,6 +193,9 @@ class BaseAddon(metaclass=MetaBaseAddon):
 
     def handle_proxied_packet(self, session_manager: SessionManager, packet: UDPPacket,
                               session: Optional[Session], region: Optional[ProxiedRegion]):
+        pass
+
+    async def handle_leap_client_added(self, session_manager: SessionManager, leap_client: outleap.LEAPClient):
         pass
 
 

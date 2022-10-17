@@ -15,6 +15,8 @@ import time
 from types import ModuleType
 from typing import *
 
+import outleap
+
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.helpers import get_mtime
 from hippolyzer.lib.base.message.message import Message
@@ -343,11 +345,11 @@ class AddonManager:
             cls.SCHEDULER.kill_matching_tasks(lifetime_mask=TaskLifeScope.ADDON, creator=addon)
 
     @classmethod
-    def _call_all_addon_hooks(cls, hook_name, *args, **kwargs):
+    def _call_all_addon_hooks(cls, hook_name, *args, call_async=False, **kwargs):
         for module in cls.FRESH_ADDON_MODULES.values():
             if not module:
                 continue
-            ret = cls._call_module_hooks(module, hook_name, *args, **kwargs)
+            ret = cls._call_module_hooks(module, hook_name, *args, call_async=call_async, **kwargs)
             if ret:
                 return ret
 
@@ -378,15 +380,15 @@ class AddonManager:
         return commands
 
     @classmethod
-    def _call_module_hooks(cls, module, hook_name, *args, **kwargs):
+    def _call_module_hooks(cls, module, hook_name, *args, call_async=False, **kwargs):
         for addon in cls._get_module_addons(module):
-            ret = cls._try_call_hook(addon, hook_name, *args, **kwargs)
+            ret = cls._try_call_hook(addon, hook_name, *args, call_async=call_async, **kwargs)
             if ret:
                 return ret
-        return cls._try_call_hook(module, hook_name, *args, **kwargs)
+        return cls._try_call_hook(module, hook_name, *args, call_async=call_async, **kwargs)
 
     @classmethod
-    def _try_call_hook(cls, addon, hook_name, *args, **kwargs):
+    def _try_call_hook(cls, addon, hook_name, *args, call_async=False, **kwargs):
         if cls._SUBPROCESS:
             return
 
@@ -396,6 +398,20 @@ class AddonManager:
         if not hook_func:
             return
         try:
+            if call_async:
+                old_hook_func = hook_func
+
+                # Wrapper so we can invoke an async hook synchronously.
+                def _wrapper(*w_args, **w_kwargs):
+                    cls.SCHEDULER.schedule_task(
+                        old_hook_func(*w_args, **w_kwargs),
+                        scope=TaskLifeScope.ADDON,
+                        creator=addon,
+                    )
+                    # Fall through to any other handlers as well,
+                    # async handlers don't chain.
+                    return None
+                hook_func = _wrapper
             return hook_func(*args, **kwargs)
         except:
             logging.exception("Exploded in %r's %s hook" % (addon, hook_name))
@@ -577,3 +593,7 @@ class AddonManager:
         with addon_ctx.push(session, region):
             return cls._call_all_addon_hooks("handle_proxied_packet", session_manager,
                                              packet, session, region)
+
+    @classmethod
+    def handle_leap_client_added(cls, session_manager: SessionManager, leap_client: outleap.LEAPClient):
+        return cls._call_all_addon_hooks("handle_leap_client_added", session_manager, leap_client, call_async=True)
