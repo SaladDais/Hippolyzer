@@ -88,12 +88,12 @@ class AddonIntegrationTests(BaseProxyTest):
         self._setup_default_circuit()
         self._fake_command("foobar baz")
         await self._wait_drained()
-        self.assertEqual(self.session.addon_ctx["bazquux"], "baz")
+        self.assertEqual(self.session.addon_ctx["MockAddon"]["bazquux"], "baz")
 
         # In session context these should be equivalent
         with addon_ctx.push(new_session=self.session):
-            self.assertEqual(self.session.addon_ctx["bazquux"], self.addon.bazquux)
-            self.assertEqual(self.session.addon_ctx["another"], "baz")
+            self.assertEqual(self.session.addon_ctx["MockAddon"]["bazquux"], self.addon.bazquux)
+            self.assertEqual(self.session.addon_ctx["MockAddon"]["another"], "baz")
 
         # Outside session context it should raise
         with self.assertRaises(AttributeError):
@@ -104,7 +104,7 @@ class AddonIntegrationTests(BaseProxyTest):
 
         self.session.addon_ctx.clear()
         with addon_ctx.push(new_session=self.session):
-            # This has no default so should fail
+            # This has no default so it should fail
             with self.assertRaises(AttributeError):
                 _something = self.addon.bazquux
             # This has a default
@@ -144,9 +144,9 @@ class AddonIntegrationTests(BaseProxyTest):
         AddonManager.load_addon_from_path(str(self.parent_path), reload=True)
         # Wait for the init hooks to run
         await asyncio.sleep(0.001)
-        self.assertFalse("quux" in self.session_manager.addon_ctx)
+        self.assertFalse("quux" in self.session_manager.addon_ctx["ParentAddon"])
         parent_addon_mod = AddonManager.FRESH_ADDON_MODULES['hippolyzer.user_addon_parent_addon']
         self.assertEqual(0, parent_addon_mod.ParentAddon.quux)
-        self.assertEqual(0, self.session_manager.addon_ctx["quux"])
+        self.assertEqual(0, self.session_manager.addon_ctx["ParentAddon"]["quux"])
         parent_addon_mod.ParentAddon.quux = 1
-        self.assertEqual(1, self.session_manager.addon_ctx["quux"])
+        self.assertEqual(1, self.session_manager.addon_ctx["ParentAddon"]["quux"])

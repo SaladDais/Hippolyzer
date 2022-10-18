@@ -211,13 +211,17 @@ class BaseAddonProperty(abc.ABC, Generic[_T, _U]):
     session_manager.addon_ctx dict, without any namespacing. Can be accessed either
     through `AddonClass.property_name` or `addon_instance.property_name`.
     """
-    __slots__ = ("name", "default")
+    __slots__ = ("name", "default", "_owner")
 
     def __init__(self, default=dataclasses.MISSING):
         self.default = default
+        self._owner = None
 
     def __set_name__(self, owner, name: str):
         self.name = name
+        # Keep track of which addon "owns" this property so that we can shove
+        # the data in a bucket specific to that addon name.
+        self._owner = owner
 
     def _make_default(self) -> _T:
         if self.default is not dataclasses.MISSING:
@@ -235,18 +239,20 @@ class BaseAddonProperty(abc.ABC, Generic[_T, _U]):
         if ctx_obj is None:
             raise AttributeError(
                 f"{self.__class__} {self.name} accessed outside proper context")
+        addon_state = ctx_obj.addon_ctx[self._owner.__name__]
         # Set a default if we have one, otherwise let the keyerror happen.
         # Maybe we should do this at addon initialization instead of on get.
-        if self.name not in ctx_obj.addon_ctx:
+        if self.name not in addon_state:
             default = self._make_default()
             if default is not dataclasses.MISSING:
-                ctx_obj.addon_ctx[self.name] = default
+                addon_state[self.name] = default
             else:
                 raise AttributeError(f"{self.name} is not set")
-        return ctx_obj.addon_ctx[self.name]
+        return addon_state[self.name]
 
     def __set__(self, _obj, value: _T) -> None:
-        self._get_context_obj().addon_ctx[self.name] = value
+        addon_state = self._get_context_obj().addon_ctx[self._owner.__name__]
+        addon_state[self.name] = value
 
 
 class SessionProperty(BaseAddonProperty[_T, "Session"]):

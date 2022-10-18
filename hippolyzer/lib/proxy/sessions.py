@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import collections
 import dataclasses
 import datetime
 import functools
@@ -43,7 +44,8 @@ class Session(BaseClientSession):
         self.circuit_code = circuit_code
         self.global_caps = {}
         # Bag of arbitrary data addons can use to persist data across addon reloads
-        self.addon_ctx = {}
+        # Each addon name gets its own separate dict within this dict
+        self.addon_ctx: Dict[str, Dict[str, Any]] = collections.defaultdict(dict)
         self.session_manager: SessionManager = session_manager or None
         self.selected: SelectionModel = SelectionModel()
         self.regions: List[ProxiedRegion] = []
@@ -188,7 +190,7 @@ class SessionManager:
         self.flow_context = HTTPFlowContext()
         self.asset_repo = HTTPAssetRepo()
         self.message_logger: Optional[BaseMessageLogger] = None
-        self.addon_ctx: Dict[str, Any] = {}
+        self.addon_ctx: Dict[str, Dict[str, Any]] = collections.defaultdict(dict)
         self.name_cache = ProxyNameCache()
         self.pending_leap_clients: List[LEAPClient] = []
 

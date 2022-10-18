@@ -13,7 +13,7 @@ def _to_spongecase(val):
 
 
 def handle_lludp_message(session: Session, _region: ProxiedRegion, message: Message):
-    ctx = session.addon_ctx
+    ctx = session.addon_ctx[__name__]
     ctx.setdefault("spongecase", False)
     if message.name == "ChatFromViewer":
         chat = message["ChatData"]["Message"]
