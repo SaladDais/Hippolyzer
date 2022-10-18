@@ -385,9 +385,12 @@ class GLTFBuilder:
         return buffer_view
 
     def add_joints(self, skin: SkinSegmentDict) -> JOINT_CONTEXT_DICT:
-        joints: JOINT_CONTEXT_DICT = {}
         # There may be some joints not present in the mesh that we need to add to reach the mPelvis root
-        required_joints = AVATAR_SKELETON.get_required_joints(skin['joint_names'])
+        required_joints = set()
+        for joint_name in skin['joint_names']:
+            joint_node = AVATAR_SKELETON[joint_name]
+            required_joints.add(joint_node)
+            required_joints.update(joint_node.ancestors)
 
         # If this is present, it may override the joint positions from the skeleton definition
         if 'alt_inverse_bind_matrix' in skin:
@@ -395,12 +398,12 @@ class GLTFBuilder:
         else:
             joint_overrides = {}
 
-        for joint_name in required_joints:
-            joint = AVATAR_SKELETON[joint_name]
+        built_joints: JOINT_CONTEXT_DICT = {}
+        for joint in required_joints:
             joint_matrix = joint.matrix
 
             # Do we have a joint position override that would affect joint_matrix?
-            override = joint_overrides.get(joint_name)
+            override = joint_overrides.get(joint.name)
             if override:
                 decomp = list(transformations.decompose_matrix(joint_matrix))
                 # We specifically only want the translation from the override!
@@ -419,16 +422,16 @@ class GLTFBuilder:
             # TODO: populate "extras" here with the metadata the Blender collada stuff uses to store
             #  "bind_mat" and "rest_mat" so we can go back to our original matrices when exporting
             #  from blender to .dae!
-            node = self.add_node(joint_name, transform=joint_matrix)
+            gltf_joint = self.add_node(joint.name, transform=joint_matrix)
 
             # Store the node along with any fixups we may need to apply to the bind matrices later
-            joints[joint_name] = JointContext(node, orig_matrix, fixup_matrix)
+            built_joints[joint.name] = JointContext(gltf_joint, orig_matrix, fixup_matrix)
 
         # Add each joint to the child list of their respective parent
-        for joint_name, joint_ctx in joints.items():
+        for joint_name, joint_ctx in built_joints.items():
             if parent := AVATAR_SKELETON[joint_name].parent:
-                joints[parent().name].node.children.append(self.model.nodes.index(joint_ctx.node))
-        return joints
+                built_joints[parent().name].node.children.append(self.model.nodes.index(joint_ctx.node))
+        return built_joints
 
     def _fix_blender_joint(self, joint_matrix: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
