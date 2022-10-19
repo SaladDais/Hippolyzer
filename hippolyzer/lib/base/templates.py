@@ -5,13 +5,14 @@ Serialization templates for structures used in LLUDP and HTTP bodies.
 import abc
 import collections
 import dataclasses
+import enum
 import math
 import zlib
 from typing import *
 
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base import llsd
-from hippolyzer.lib.base.datatypes import UUID, IntEnum, IntFlag, Vector3
+from hippolyzer.lib.base.datatypes import UUID, IntEnum, IntFlag, Vector3, Quaternion
 from hippolyzer.lib.base.namevalue import NameValuesSerializer
 
 
@@ -2055,3 +2056,69 @@ class RetrieveNavMeshSrcSerializer(se.BaseHTTPSerializer):
         # 15 bit window size, gzip wrapped
         deser["navmesh_data"] = zlib.decompress(deser["navmesh_data"], wbits=15 | 32)
         return deser
+
+
+# Beta puppetry stuff, subject to change!
+
+
+class PuppetryEventMask(enum.IntFlag):
+    POSITION = 1 << 0
+    POSITION_IN_PARENT_FRAME = 1 << 1
+    ROTATION = 1 << 2
+    ROTATION_IN_PARENT_FRAME = 1 << 3
+    SCALE = 1 << 4
+    DISABLE_CONSTRAINT = 1 << 7
+
+
+class PuppetryOption(se.OptionalFlagged):
+    def __init__(self, flag_val, spec):
+        super().__init__("mask", se.IntFlag(PuppetryEventMask, se.U8), flag_val, spec)
+
+
+# Range to use for puppetry's quantized floats when converting to<->from U16
+LL_PELVIS_OFFSET_RANGE = (-5.0, 5.0)
+
+
+@dataclasses.dataclass
+class PuppetryJointData:
+    # Where does this number come from? `avatar_skeleton.xml`?
+    joint_id: int = se.dataclass_field(se.S16)
+    # Determines which fields will follow
+    mask: PuppetryEventMask = se.dataclass_field(se.IntFlag(PuppetryEventMask, se.U8))
+    rotation: Optional[Quaternion] = se.dataclass_field(
+        # These are very odd scales for a quantized quaternion, but that's what they are.
+        PuppetryOption(PuppetryEventMask.ROTATION, se.PackedQuat(se.Vector3U16(*LL_PELVIS_OFFSET_RANGE))),
+    )
+    position: Optional[Vector3] = se.dataclass_field(
+        PuppetryOption(PuppetryEventMask.POSITION, se.Vector3U16(*LL_PELVIS_OFFSET_RANGE)),
+    )
+    scale: Optional[Vector3] = se.dataclass_field(
+        PuppetryOption(PuppetryEventMask.SCALE, se.Vector3U16(*LL_PELVIS_OFFSET_RANGE)),
+    )
+
+
+@dataclasses.dataclass
+class PuppetryEventData:
+    time: int = se.dataclass_field(se.S32)
+    # Must be set manually due to below issue
+    num_joints: int = se.dataclass_field(se.U16)
+    # This field is packed in the least helpful way possible. The length field
+    # is in between the collection count and the collection data, but the length
+    # field essentially only tells you how many bytes until the end of the buffer
+    # proper, which you already know from msgsystem. Why is this here?
+    joints: List[PuppetryJointData] = se.dataclass_field(se.TypedByteArray(
+        se.U32,
+        # Just treat contents as a greedy collection, tries to keep reading until EOF
+        se.Collection(None, se.Dataclass(PuppetryJointData)),
+    ))
+
+
+@se.subfield_serializer("AgentAnimation", "PhysicalAvatarEventList", "TypeData")
+@se.subfield_serializer("AvatarAnimation", "PhysicalAvatarEventList", "TypeData")
+class PuppetryEventDataSerializer(se.SimpleSubfieldSerializer):
+    # You can have multiple joint events packed in right after the other, implicitly.
+    # They may _or may not_ be split into separate PhysicalAvatarEventList blocks?
+    # This doesn't seem to be handled specifically in the decoder, is this a
+    # serialization bug in the viewer?
+    TEMPLATE = se.Collection(None, se.Dataclass(PuppetryEventData))
+    EMPTY_IS_NONE = True
