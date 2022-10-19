@@ -201,6 +201,15 @@ class SessionManager:
             session.http_message_handler,
         )
         self.sessions.append(session)
+        # TODO: less crap way of tying a LEAP client to a session
+        while self.pending_leap_clients:
+            leap_client = self.pending_leap_clients.pop(-1)
+            # Client may have gone bad since it connected
+            if not leap_client.connected:
+                continue
+            logging.info("Assigned LEAP client to session")
+            session.leap_client = leap_client
+            break
         logging.info("Created %r" % session)
         return session
 
@@ -209,15 +218,6 @@ class SessionManager:
             if session.pending and session.id == session_id:
                 logging.info("Claimed %r" % session)
                 session.pending = False
-                # TODO: less crap way of tying a LEAP client to a session
-                while self.pending_leap_clients:
-                    leap_client = self.pending_leap_clients.pop(-1)
-                    # Client may have gone bad since it connected
-                    if not leap_client.connected:
-                        continue
-                    logging.info("Assigned LEAP client to session")
-                    session.leap_client = leap_client
-                    break
                 return session
         return None
 

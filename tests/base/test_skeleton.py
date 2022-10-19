@@ -17,6 +17,7 @@ class TestSkeleton(unittest.TestCase):
 
     def test_get_joint_index(self):
         self.assertEqual(7, self.skeleton["mNeck"].index)
+        self.assertEqual(113, self.skeleton["mKneeLeft"].index)
 
     def test_get_joint_parent(self):
         self.assertEqual("mChest", self.skeleton["mNeck"].parent().name)
