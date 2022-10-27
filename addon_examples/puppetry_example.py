@@ -59,7 +59,7 @@ class PuppetryExampleAddon(BaseAddon):
     @register_puppetry_command
     async def set_camera(self, args: dict):
         if (camera_num := args.get("camera_num")) is not None:
-            self.camera_num = BodyPartMask(camera_num)
+            self.camera_num = camera_num
 
     @register_puppetry_command
     async def stop(self, _args: dict):
