@@ -5,6 +5,7 @@ Serialization templates for structures used in LLUDP and HTTP bodies.
 import abc
 import collections
 import dataclasses
+import datetime
 import enum
 import math
 import zlib
@@ -2024,6 +2025,20 @@ class ScriptPermissions(IntFlag):
     RETURN_OBJECTS = 1 << 16
     FORCE_SIT = 1 << 17
     CHANGE_ENVIRONMENT = 1 << 18
+
+
+class CreationDateAdapter(se.Adapter):
+    def decode(self, val: Any, ctx: Optional[se.ParseContext], pod: bool = False) -> Any:
+        return datetime.datetime.fromtimestamp(val / 1_000_000).isoformat()
+
+    def encode(self, val: Any, ctx: Optional[se.ParseContext]) -> Any:
+        return int(datetime.datetime.fromisoformat(val).timestamp() * 1_000_000)
+
+
+@se.subfield_serializer("ObjectProperties", "ObjectData", "CreationDate")
+class CreationDateSerializer(se.AdapterSubfieldSerializer):
+    ADAPTER = CreationDateAdapter(None)
+    ORIG_INLINE = True
 
 
 @se.http_serializer("RenderMaterials")
