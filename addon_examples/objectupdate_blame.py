@@ -20,7 +20,7 @@ from hippolyzer.lib.proxy.sessions import Session
 
 class ObjectUpdateBlameAddon(BaseAddon):
     update_blame_counter: Counter[UUID] = SessionProperty(Counter)
-    track_update_blame: bool = SessionProperty(False)
+    should_track_update_blame: bool = SessionProperty(False)
 
     @handle_command()
     async def precache_objects(self, _session: Session, region: ProxiedRegion):
@@ -38,11 +38,11 @@ class ObjectUpdateBlameAddon(BaseAddon):
 
     @handle_command()
     async def track_update_blame(self, _session: Session, _region: ProxiedRegion):
-        self.track_update_blame = True
+        self.should_track_update_blame = True
 
     @handle_command()
     async def untrack_update_blame(self, _session: Session, _region: ProxiedRegion):
-        self.track_update_blame = False
+        self.should_track_update_blame = False
 
     @handle_command()
     async def clear_update_blame(self, _session: Session, _region: ProxiedRegion):
@@ -58,7 +58,7 @@ class ObjectUpdateBlameAddon(BaseAddon):
 
     def handle_object_updated(self, session: Session, region: ProxiedRegion,
                               obj: Object, updated_props: Set[str]):
-        if not self.track_update_blame:
+        if not self.should_track_update_blame:
             return
         if region != session.main_region:
             return
