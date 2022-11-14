@@ -57,6 +57,27 @@ class JointNode:
             ancestors.append(joint_node)
         return ancestors
 
+    @property
+    def children(self) -> Sequence[JointNode]:
+        children = []
+        for node in self.skeleton().joint_dict.values():
+            if node.parent and node.parent() == self:
+                children.append(node)
+        return children
+
+    @property
+    def descendents(self) -> Set[JointNode]:
+        descendents = set()
+        ancestors = {self}
+        last_ancestors = set()
+        while last_ancestors != ancestors:
+            last_ancestors = ancestors
+            for node in self.skeleton().joint_dict.values():
+                if node.parent and node.parent() in ancestors:
+                    ancestors.add(node)
+                    descendents.add(node)
+        return descendents
+
 
 class Skeleton:
     def __init__(self, root_node: etree.ElementBase):

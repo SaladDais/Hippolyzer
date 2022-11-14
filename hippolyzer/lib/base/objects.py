@@ -199,6 +199,28 @@ class Object(recordclass.datatuple):  # type: ignore
         del val["Parent"]
         return val
 
+    @property
+    def Ancestors(self) -> List[Object]:
+        obj = self
+        ancestors = []
+        while obj.Parent:
+            obj = obj.Parent
+            ancestors.append(obj)
+        return ancestors
+
+    @property
+    def Descendents(self) -> List[Object]:
+        new_children = [self]
+        descendents = []
+        while new_children:
+            to_check = new_children[:]
+            new_children.clear()
+            for obj in to_check:
+                for child in obj.Children:
+                    new_children.append(child)
+                    descendents.append(child)
+        return descendents
+
 
 def handle_to_gridxy(handle: int) -> Tuple[int, int]:
     return (handle >> 32) // 256, (handle & 0xFFffFFff) // 256

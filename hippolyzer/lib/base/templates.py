@@ -4,6 +4,7 @@ Serialization templates for structures used in LLUDP and HTTP bodies.
 
 import abc
 import collections
+import copy
 import dataclasses
 import datetime
 import enum
@@ -1251,7 +1252,7 @@ class TextureEntryCollection:
             vals = getattr(self, key)
             # Fill give all faces the default value for this key
             for te in as_dicts:
-                te[key] = vals[None]
+                te[key] = copy.copy(vals[None])
             # Walk over the exception cases and replace the default value
             for face_nums, val in vals.items():
                 # Default case already handled
@@ -1260,7 +1261,7 @@ class TextureEntryCollection:
                 for face_num in face_nums:
                     if face_num >= num_faces:
                         raise ValueError(f"Bad value for num_faces? {face_num} >= {num_faces}")
-                    as_dicts[face_num][key] = val
+                    as_dicts[face_num][key] = copy.copy(val)
         return [TextureEntry(**x) for x in as_dicts]
 
     @classmethod
