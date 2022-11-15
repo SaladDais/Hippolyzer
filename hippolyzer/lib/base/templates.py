@@ -2028,6 +2028,36 @@ class ScriptPermissions(IntFlag):
     CHANGE_ENVIRONMENT = 1 << 18
 
 
+@se.enum_field_serializer("UpdateMuteListEntry", "MuteData", "MuteType")
+class MuteType(IntEnum):
+    BY_NAME = 0
+    AGENT = 1
+    OBJECT = 2
+    GROUP = 3
+    # Voice, presumably.
+    EXTERNAL = 4
+
+
+@se.flag_field_serializer("UpdateMuteListEntry", "MuteData", "MuteFlags")
+class MuteFlags(IntFlag):
+    # For backwards compatibility (since any mute list entries that were created before the flags existed
+    # will have a flags field of 0), some flags are "inverted".
+    # Note that it's possible, through flags, to completely disable an entry in the mute list.
+    # The code should detect this case and remove the mute list entry instead.
+    TEXT_CHAT = 1 << 0
+    VOICE_CHAT = 1 << 1
+    PARTICLES = 1 << 2
+    OBJECT_SOUNDS = 1 << 3
+
+    @property
+    def DEFAULT(self):
+        return 0x0
+
+    @property
+    def ALL(self):
+        return 0xF
+
+
 class CreationDateAdapter(se.Adapter):
     def decode(self, val: Any, ctx: Optional[se.ParseContext], pod: bool = False) -> Any:
         return datetime.datetime.fromtimestamp(val / 1_000_000).isoformat()
