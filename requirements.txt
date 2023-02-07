@@ -7,7 +7,7 @@ async-timeout==4.0.1
 attrs==21.2.0
 blinker==1.4
 Brotli==1.0.9
-certifi==2021.10.8
+certifi==2022.12.7
 cffi==1.15.0
 charset-normalizer==2.0.9
 click==8.0.3
