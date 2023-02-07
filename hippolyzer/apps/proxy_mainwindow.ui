@@ -193,7 +193,7 @@
            </size>
           </property>
           <property name="styleSheet">
-           <string notr="true">color: rgb(80, 0, 0)</string>
+           <string notr="true"/>
           </property>
           <property name="tabChangesFocus">
            <bool>true</bool>
@@ -213,7 +213,7 @@
          </widget>
          <widget class="QPlainTextEdit" name="textResponse">
           <property name="styleSheet">
-           <string notr="true">color: rgb(0, 0, 80)</string>
+           <string notr="true"/>
           </property>
           <property name="tabChangesFocus">
            <bool>true</bool>
