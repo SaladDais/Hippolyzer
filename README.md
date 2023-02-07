@@ -48,8 +48,7 @@ A proxy is provided with both a CLI and Qt-based interface. The proxy applicatio
 custom SOCKS 5 UDP proxy, as well as an HTTP proxy based on [mitmproxy](https://mitmproxy.org/).
 
 Multiple clients are supported at a time, and UDP messages may be injected in either
-direction. The proxy UI was inspired by the Message Log and Message Builder as present in
-the [Alchemy](https://github.com/AlchemyViewer/Alchemy) viewer.
+direction.
 
 ### Proxy Setup
 
