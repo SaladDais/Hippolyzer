@@ -139,7 +139,7 @@ class ViewerObjectCache:
         return RegionViewerObjectCache.from_file(objects_file)
 
 
-class ViewerObjectCacheEntry(recordclass.datatuple):   # type: ignore
+class ViewerObjectCacheEntry(recordclass.dataobject):   # type: ignore
     local_id: int
     crc: int
     data: bytes

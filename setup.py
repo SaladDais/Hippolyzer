@@ -45,6 +45,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: System :: Networking :: Monitoring",
         "Topic :: Software Development :: Libraries :: Python Modules",
@@ -85,7 +86,7 @@ setup(
         'outleap<1.0',
         'defusedxml',
         'aiohttp<4.0.0',
-        'recordclass<0.15',
+        'recordclass>0.15,<0.19',
         'lazy-object-proxy',
         'arpeggio',
         # requests breaks with newer idna
@@ -98,7 +99,7 @@ setup(
         'Glymur<0.9.7',
         'numpy<2.0',
         # These could be in extras_require if you don't want a GUI.
-        'pyside6',
+        'pyside6-essentials',
         'qasync',
         # Needed for mesh format conversion tooling
         'pycollada',

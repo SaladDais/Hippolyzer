@@ -178,7 +178,7 @@ class DomainDict(TypedDict):
     Min: List[float]
 
 
-class VertexWeight(recordclass.datatuple):  # type: ignore
+class VertexWeight(recordclass.RecordClass):
     """Vertex weight for a specific joint on a specific vertex"""
     # index of the joint within the joint_names list in the skin segment
     joint_idx: int

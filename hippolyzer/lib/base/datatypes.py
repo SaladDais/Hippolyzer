@@ -42,12 +42,10 @@ class _IterableStub:
 RAD_TO_DEG = 180 / math.pi
 
 
-class TupleCoord(recordclass.datatuple, _IterableStub):  # type: ignore
-    __options__ = {
-        "fast_new": False,
-    }
-
+class TupleCoord(recordclass.RecordClass, _IterableStub):
     def __init__(self, *args):
+        # Only to help typing, doesn't actually do anything.
+        # All the important stuff happens in `__new__()`
         pass
 
     @classmethod
@@ -367,7 +365,7 @@ def flags_to_pod(flag_cls: Type[enum.IntFlag], val: int) -> Tuple[Union[str, int
     return tuple(flag.name for flag in iter(flag_cls) if val & flag.value) + extra
 
 
-class TaggedUnion(recordclass.datatuple):  # type: ignore
+class TaggedUnion(recordclass.RecordClass):
     tag: Any
     value: Any
 

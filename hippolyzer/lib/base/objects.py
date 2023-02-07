@@ -35,12 +35,7 @@ import hippolyzer.lib.base.serialization as se
 import hippolyzer.lib.base.templates as tmpls
 
 
-class Object(recordclass.datatuple):  # type: ignore
-    __options__ = {
-        "use_weakref": True,
-    }
-    __weakref__: Any
-
+class Object(recordclass.RecordClass, use_weakref=True):  # type: ignore
     LocalID: Optional[int] = None
     State: Optional[int] = None
     FullID: Optional[UUID] = None
