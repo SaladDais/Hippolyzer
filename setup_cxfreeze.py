@@ -3,6 +3,7 @@ import setuptools  # noqa
 import os
 import shutil
 from distutils.core import Command
+from importlib.metadata import version
 from pathlib import Path
 
 from cx_Freeze import setup, Executable
@@ -113,7 +114,7 @@ executables = [
 
 setup(
     name="hippolyzer_gui",
-    version="0.12.2",
+    version=version("hippolyzer"),
     description="Hippolyzer GUI",
     options=options,
     executables=executables,
