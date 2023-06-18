@@ -230,7 +230,7 @@ class MeshUploadInterceptingAddon(BaseAddon):
             show_message("Mangled upload request")
 
     def handle_object_updated(self, session: Session, region: ProxiedRegion,
-                              obj: Object, updated_props: Set[str]):
+                              obj: Object, updated_props: Set[str], msg: Optional[Message]):
         if obj.LocalID not in self.local_mesh_target_locals:
             return
         if "Name" not in updated_props or obj.Name is None:

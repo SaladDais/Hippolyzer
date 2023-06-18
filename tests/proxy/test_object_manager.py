@@ -48,7 +48,7 @@ class ObjectTrackingAddon(BaseAddon):
         super().__init__()
         self.events = []
 
-    def handle_object_updated(self, session, region, obj: Object, updated_props: Set[str]):
+    def handle_object_updated(self, session, region, obj: Object, updated_props: Set[str], msg: Optional[Message]):
         self.events.append(("update", obj, updated_props))
 
     def handle_object_killed(self, session, region, obj: Object):

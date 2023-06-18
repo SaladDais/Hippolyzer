@@ -126,7 +126,7 @@ class UDPMessageDeserializer:
         frequency, num = _parse_msg_num(reader)
         current_template = self.template_dict.get_template_by_pair(frequency, num)
         if current_template is None:
-            raise exc.MessageTemplateNotFound("deserializing data")
+            raise exc.MessageTemplateNotFound("deserializing data", f"{frequency}:{num}")
         msg.name = current_template.name
 
         # extra field, see note regarding msg.offset

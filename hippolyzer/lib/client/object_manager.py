@@ -297,7 +297,8 @@ class ClientWorldObjectManager:
         self._rebuild_avatar_objects()
         self._region_managers.clear()
 
-    def _update_existing_object(self, obj: Object, new_properties: dict, update_type: ObjectUpdateType):
+    def _update_existing_object(self, obj: Object, new_properties: dict, update_type: ObjectUpdateType,
+                                msg: Optional[Message]):
         old_parent_id = obj.ParentID
         new_parent_id = new_properties.get("ParentID", obj.ParentID)
         old_local_id = obj.LocalID
@@ -340,23 +341,23 @@ class ClientWorldObjectManager:
                 LOG.warning(f"Tried to move object {obj!r} to unknown region {new_region_handle}")
 
             if obj.PCode == PCode.AVATAR:
-                # `Avatar` instances are handled separately. Update all Avatar objects so
-                # we can deal with the RegionHandle change.
+                # `Avatar` instances are handled separately. Update all Avatar objects,
+                # so we can deal with the RegionHandle change.
                 self._rebuild_avatar_objects()
         elif new_parent_id != old_parent_id:
             # Parent ID changed, but we're in the same region
             new_region_state.handle_object_reparented(obj, old_parent_id=old_parent_id)
 
         if actually_updated_props and new_region_state is not None:
-            self._run_object_update_hooks(obj, actually_updated_props, update_type)
+            self._run_object_update_hooks(obj, actually_updated_props, update_type, msg)
 
-    def _track_new_object(self, region: RegionObjectsState, obj: Object):
+    def _track_new_object(self, region: RegionObjectsState, obj: Object, msg: Message):
         region.track_object(obj)
         self._fullid_lookup[obj.FullID] = obj
         if obj.PCode == PCode.AVATAR:
             self._avatar_objects[obj.FullID] = obj
             self._rebuild_avatar_objects()
-        self._run_object_update_hooks(obj, set(obj.to_dict().keys()), ObjectUpdateType.OBJECT_UPDATE)
+        self._run_object_update_hooks(obj, set(obj.to_dict().keys()), ObjectUpdateType.OBJECT_UPDATE, msg)
 
     def _kill_object_by_local_id(self, region_state: RegionObjectsState, local_id: int):
         obj = region_state.lookup_localid(local_id)
@@ -408,11 +409,11 @@ class ClientWorldObjectManager:
             # our view of the world then we want to move it to this region.
             obj = self.lookup_fullid(object_data["FullID"])
             if obj:
-                self._update_existing_object(obj, object_data, ObjectUpdateType.OBJECT_UPDATE)
+                self._update_existing_object(obj, object_data, ObjectUpdateType.OBJECT_UPDATE, msg)
             else:
                 if region_state is None:
                     continue
-                self._track_new_object(region_state, Object(**object_data))
+                self._track_new_object(region_state, Object(**object_data), msg)
         msg.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
     def _handle_terse_object_update(self, msg: Message):
@@ -432,7 +433,7 @@ class ClientWorldObjectManager:
                 # Need the Object as context because decoding state requires PCode.
                 state_deserializer = ObjectStateSerializer.deserialize
                 object_data["State"] = state_deserializer(ctx_obj=obj, val=object_data["State"])
-                self._update_existing_object(obj, object_data, ObjectUpdateType.OBJECT_UPDATE)
+                self._update_existing_object(obj, object_data, ObjectUpdateType.OBJECT_UPDATE, msg)
             else:
                 if region_state:
                     region_state.missing_locals.add(object_data["LocalID"])
@@ -460,7 +461,7 @@ class ClientWorldObjectManager:
                 self._update_existing_object(obj, {
                     "UpdateFlags": update_flags,
                     "RegionHandle": handle,
-                }, ObjectUpdateType.OBJECT_UPDATE)
+                }, ObjectUpdateType.OBJECT_UPDATE, msg)
                 continue
 
             cached_obj_data = self._lookup_cache_entry(handle, block["ID"], block["CRC"])
@@ -468,7 +469,7 @@ class ClientWorldObjectManager:
                 cached_obj = normalize_object_update_compressed_data(cached_obj_data)
                 cached_obj["UpdateFlags"] = update_flags
                 cached_obj["RegionHandle"] = handle
-                self._track_new_object(region_state, Object(**cached_obj))
+                self._track_new_object(region_state, Object(**cached_obj), msg)
                 continue
 
             # Don't know about it and wasn't cached.
@@ -499,11 +500,11 @@ class ClientWorldObjectManager:
                 LOG.warning(f"Got ObjectUpdateCompressed for unknown region {handle}: {object_data!r}")
             obj = self.lookup_fullid(object_data["FullID"])
             if obj:
-                self._update_existing_object(obj, object_data, ObjectUpdateType.OBJECT_UPDATE)
+                self._update_existing_object(obj, object_data, ObjectUpdateType.OBJECT_UPDATE, msg)
             else:
                 if region_state is None:
                     continue
-                self._track_new_object(region_state, Object(**object_data))
+                self._track_new_object(region_state, Object(**object_data), msg)
         msg.meta["ObjectUpdateIDs"] = tuple(seen_locals)
 
     def _handle_object_properties_generic(self, packet: Message):
@@ -516,7 +517,7 @@ class ClientWorldObjectManager:
             obj = self.lookup_fullid(block["ObjectID"])
             if obj:
                 seen_locals.append(obj.LocalID)
-                self._update_existing_object(obj, object_properties, ObjectUpdateType.PROPERTIES)
+                self._update_existing_object(obj, object_properties, ObjectUpdateType.PROPERTIES, packet)
             else:
                 LOG.debug(f"Received {packet.name} for unknown {block['ObjectID']}")
         packet.meta["ObjectUpdateIDs"] = tuple(seen_locals)
@@ -563,9 +564,10 @@ class ClientWorldObjectManager:
                 LOG.debug(f"Received ObjectCost for unknown {object_id}")
                 continue
             obj.ObjectCosts.update(object_costs)
-            self._run_object_update_hooks(obj, {"ObjectCosts"}, ObjectUpdateType.COSTS)
+            self._run_object_update_hooks(obj, {"ObjectCosts"}, ObjectUpdateType.COSTS, None)
 
-    def _run_object_update_hooks(self, obj: Object, updated_props: Set[str], update_type: ObjectUpdateType):
+    def _run_object_update_hooks(self, obj: Object, updated_props: Set[str], update_type: ObjectUpdateType,
+                                 msg: Optional[Message]):
         region_state = self._get_region_state(obj.RegionHandle)
         region_state.resolve_futures(obj, update_type)
         if obj.PCode == PCode.AVATAR and "NameValue" in updated_props:

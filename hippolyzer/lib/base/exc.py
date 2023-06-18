@@ -176,7 +176,7 @@ class MessageTemplateNotFound(MessageSystemError):
         self.template = template
 
     def __str__(self):
-        return "No message template found, context: '%s'" % self.context
+        return "No message template found for %s, context: '%s'" % (self.template, self.context)
 
 
 class MessageTemplateParsingError(MessageSystemError):

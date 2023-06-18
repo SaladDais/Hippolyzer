@@ -133,8 +133,9 @@ class ProxyWorldObjectManager(ClientWorldObjectManager):
             region_mgr.queued_cache_misses |= missing_locals
             region_mgr.request_missed_cached_objects_soon()
 
-    def _run_object_update_hooks(self, obj: Object, updated_props: Set[str], update_type: ObjectUpdateType):
-        super()._run_object_update_hooks(obj, updated_props, update_type)
+    def _run_object_update_hooks(self, obj: Object, updated_props: Set[str], update_type: ObjectUpdateType,
+                                 msg: Optional[Message]):
+        super()._run_object_update_hooks(obj, updated_props, update_type, msg)
         region = self._session.region_by_handle(obj.RegionHandle)
         if self._settings.ALLOW_AUTO_REQUEST_OBJECTS:
             if obj.PCode == PCode.AVATAR and "ParentID" in updated_props:
@@ -145,7 +146,7 @@ class ProxyWorldObjectManager(ClientWorldObjectManager):
                     # have no way to get a sitting agent's true region location, even if it's ourselves.
                     region.objects.queued_cache_misses.add(obj.ParentID)
                     region.objects.request_missed_cached_objects_soon()
-        AddonManager.handle_object_updated(self._session, region, obj, updated_props)
+        AddonManager.handle_object_updated(self._session, region, obj, updated_props, msg)
 
     def _run_kill_object_hooks(self, obj: Object):
         super()._run_kill_object_hooks(obj)

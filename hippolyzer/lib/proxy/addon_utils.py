@@ -172,7 +172,7 @@ class BaseAddon(metaclass=MetaBaseAddon):
         pass
 
     def handle_object_updated(self, session: Session, region: ProxiedRegion,
-                              obj: Object, updated_props: Set[str]):
+                              obj: Object, updated_props: Set[str], msg: Optional[Message]):
         pass
 
     def handle_object_killed(self, session: Session, region: ProxiedRegion, obj: Object):

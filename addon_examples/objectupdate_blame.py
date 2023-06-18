@@ -10,6 +10,7 @@ before you start tracking can help too.
 from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.objects import Object
 from hippolyzer.lib.base.templates import PCode
 from hippolyzer.lib.proxy.addon_utils import BaseAddon, show_message, SessionProperty
@@ -57,7 +58,7 @@ class ObjectUpdateBlameAddon(BaseAddon):
             print(f"{obj_id} ({name!r}): {count}")
 
     def handle_object_updated(self, session: Session, region: ProxiedRegion,
-                              obj: Object, updated_props: Set[str]):
+                              obj: Object, updated_props: Set[str], msg: Optional[Message]):
         if not self.should_track_update_blame:
             return
         if region != session.main_region:

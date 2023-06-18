@@ -561,9 +561,9 @@ class AddonManager:
 
     @classmethod
     def handle_object_updated(cls, session: Session, region: ProxiedRegion,
-                              obj: Object, updated_props: Set[str]):
+                              obj: Object, updated_props: Set[str], msg: Optional[Message]):
         with addon_ctx.push(session, region):
-            return cls._call_all_addon_hooks("handle_object_updated", session, region, obj, updated_props)
+            return cls._call_all_addon_hooks("handle_object_updated", session, region, obj, updated_props, msg)
 
     @classmethod
     def handle_object_killed(cls, session: Session, region: ProxiedRegion, obj: Object):

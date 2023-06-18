@@ -46,6 +46,9 @@ class UDPPacket:
             return self.dst_addr
         return self.src_addr
 
+    def __repr__(self):
+        return f"<{self.__class__.__name__} src_addr={self.src_addr!r} dst_addr={self.dst_addr!r} data={self.data!r}>"
+
 
 class AbstractUDPTransport(abc.ABC):
     __slots__ = ()

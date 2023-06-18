@@ -114,7 +114,7 @@ class BlueishObjectListGUIAddon(BaseAddon):
         region.objects.request_missing_objects()
 
     def handle_object_updated(self, session: Session, region: ProxiedRegion,
-                              obj: Object, updated_props: Set[str]):
+                              obj: Object, updated_props: Set[str], msg: Optional[Message]):
         if self.blueish_model is None:
             return
 

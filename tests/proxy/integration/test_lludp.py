@@ -36,7 +36,7 @@ class MockAddon(BaseAddon):
             return True
 
     def handle_object_updated(self, session: Session, region: ProxiedRegion,
-                              obj: Object, updated_props: Set[str]):
+                              obj: Object, updated_props: Set[str], msg: Optional[Message]):
         self.events.append(("object_update", session.id, region.circuit_addr, obj.LocalID, updated_props))
 
 
