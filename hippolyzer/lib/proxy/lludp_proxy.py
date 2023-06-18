@@ -3,7 +3,6 @@ import logging
 import weakref
 from typing import Optional, Tuple
 
-from hippolyzer.lib.base.exc import MessageTemplateNotFound
 from hippolyzer.lib.base.message.message_dot_xml import MessageDotXML
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.message.udpserializer import UDPMessageSerializer
