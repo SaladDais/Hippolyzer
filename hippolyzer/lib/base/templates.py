@@ -1859,6 +1859,8 @@ class AvatarPropertiesFlags(IntFlag):
 @se.flag_field_serializer("AvatarGroupsReply", "GroupData", "GroupPowers")
 @se.flag_field_serializer("AvatarGroupDataUpdate", "GroupData", "GroupPowers")
 @se.flag_field_serializer("AvatarDataUpdate", "AgentDataData", "GroupPowers")
+@se.flag_field_serializer("GroupProfileReply", "GroupData", "PowersMask")
+@se.flag_field_serializer("GroupRoleDataReply", "RoleData", "Powers")
 class GroupPowerFlags(IntFlag):
     MEMBER_INVITE = 1 << 1  # Invite member
     MEMBER_EJECT = 1 << 2  # Eject member from group
@@ -1946,6 +1948,15 @@ class GroupPowerFlags(IntFlag):
 
     # Group Banning
     GROUP_BAN_ACCESS = 1 << 51  # Allows access to ban / un-ban agents from a group.
+
+
+@se.flag_field_serializer("GrantUserRights", "Rights", "RelatedRights")
+@se.flag_field_serializer("ChangeUserRights", "Rights", "RelatedRights")
+class UserRelatedRights(IntFlag):
+    """See lluserrelations.h for definitions"""
+    ONLINE_STATUS = 1
+    MAP_LOCATION = 1 << 1
+    MODIFY_OBJECTS = 1 << 2
 
 
 @se.flag_field_serializer("RequestObjectPropertiesFamily", "ObjectData", "RequestFlags")
