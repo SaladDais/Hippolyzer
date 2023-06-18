@@ -78,7 +78,7 @@ class TemplateDataPacker:
         MsgType.MVT_S8: _make_struct_spec('b'),
         MsgType.MVT_U8: _make_struct_spec('B'),
         MsgType.MVT_BOOL: _make_struct_spec('B'),
-        MsgType.MVT_LLUUID: (lambda x: UUID(bytes=bytes(x)), lambda x: x.bytes),
+        MsgType.MVT_LLUUID: (lambda x: UUID(bytes=bytes(x)), lambda x: UUID(x).bytes),
         MsgType.MVT_IP_ADDR: (socket.inet_ntoa, socket.inet_aton),
         MsgType.MVT_IP_PORT: _make_struct_spec('!H'),
         MsgType.MVT_U16: _make_struct_spec('<H'),
