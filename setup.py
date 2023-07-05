@@ -86,7 +86,8 @@ setup(
         'outleap<1.0',
         'defusedxml',
         'aiohttp<4.0.0',
-        'recordclass>0.15,<0.19',
+        # Newer recordclasses break!
+        'recordclass>0.15,<0.18.3',
         'lazy-object-proxy',
         'arpeggio',
         # requests breaks with newer idna

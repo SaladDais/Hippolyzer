@@ -569,7 +569,11 @@ class ClientWorldObjectManager:
     def _run_object_update_hooks(self, obj: Object, updated_props: Set[str], update_type: ObjectUpdateType,
                                  msg: Optional[Message]):
         region_state = self._get_region_state(obj.RegionHandle)
-        region_state.resolve_futures(obj, update_type)
+        if region_state:
+            region_state.resolve_futures(obj, update_type)
+        else:
+            LOG.warning(f"{obj} not tied to a region state")
+
         if obj.PCode == PCode.AVATAR and "NameValue" in updated_props:
             if obj.NameValue:
                 self.name_cache.update(obj.FullID, obj.NameValue.to_dict())
