@@ -231,7 +231,8 @@ class MessageLogWindow(QtWidgets.QMainWindow):
                      "AvatarRenderInfo FirestormBridge ObjectAnimation ParcelDwellRequest ParcelAccessListRequest " \
                      "ParcelDwellReply ParcelAccessListReply AttachedSoundGainChange " \
                      "ParcelPropertiesRequest ParcelProperties GetObjectCost GetObjectPhysicsData ObjectImage " \
-                     "ViewerAsset GetTexture SetAlwaysRun GetDisplayNames MapImageService MapItemReply".split(" ")
+                     "ViewerAsset GetTexture SetAlwaysRun GetDisplayNames MapImageService MapItemReply " \
+                     "AgentFOV".split(" ")
     DEFAULT_FILTER = f"!({' || '.join(ignored for ignored in DEFAULT_IGNORE)})"
 
     textRequest: QtWidgets.QTextEdit
