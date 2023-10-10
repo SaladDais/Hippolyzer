@@ -222,7 +222,7 @@ class Message:
     def add_blocks(self, block_list):
         # can have a list of blocks if it is multiple or variable
         for block in block_list:
-            if type(block) == list:
+            if type(block) is list:
                 for bl in block:
                     self.add_block(bl)
             else:

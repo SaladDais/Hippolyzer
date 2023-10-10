@@ -89,7 +89,7 @@ class _MutableMultiDictTests:
             d = create_instance()
             s = pickle.dumps(d, protocol)
             ud = pickle.loads(s)
-            assert type(ud) == type(d)
+            assert type(ud) is type(d)
             assert ud == d
             alternative = pickle.dumps(create_instance("werkzeug"), protocol)
             assert pickle.loads(alternative) == d

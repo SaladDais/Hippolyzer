@@ -1917,7 +1917,7 @@ class IntEnumSubfieldSerializer(AdapterInstanceSubfieldSerializer):
         val = super().deserialize(ctx_obj, val, pod=pod)
         # Don't pretend we were able to deserialize this if we
         # had to fall through to the `int` case.
-        if pod and type(val) == int:
+        if pod and type(val) is int:
             return UNSERIALIZABLE
         return val
 
