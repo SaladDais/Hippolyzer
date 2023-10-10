@@ -174,7 +174,10 @@ class AddonManager:
     def load_addon_from_path(cls, path, reload=False, raise_exceptions=True):
         path = pathlib.Path(path).absolute()
         mod_name = "hippolyzer.user_addon_%s" % path.stem
-        cls.BASE_ADDON_SPECS.append(importlib.util.spec_from_file_location(mod_name, path))
+        spec = importlib.util.spec_from_file_location(mod_name, path)
+        if not spec:
+            raise ValueError(f"Unable to load {path}")
+        cls.BASE_ADDON_SPECS.append(spec)
         addon_dir = os.path.realpath(pathlib.Path(path).parent.absolute())
 
         if addon_dir not in sys.path:
