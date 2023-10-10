@@ -1,4 +1,5 @@
 import datetime as dt
+import logging
 
 from hippolyzer.lib.base.helpers import get_mtime
 from hippolyzer.lib.client.inventory_manager import InventoryManager
@@ -25,4 +26,7 @@ class ProxyInventoryManager(InventoryManager):
                 newest_cache = inv_cache_path
 
         if newest_cache:
-            self.load_cache(newest_cache)
+            try:
+                self.load_cache(newest_cache)
+            except:
+                logging.exception("Failed to load invcache")
