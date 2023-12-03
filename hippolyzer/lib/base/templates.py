@@ -1461,6 +1461,8 @@ class ExtraParamType(IntEnum):
     RESERVED = 0x50
     MESH = 0x60
     EXTENDED_MESH = 0x70
+    RENDER_MATERIAL = 0x80
+    REFLECTION_PROBE = 0x90
 
 
 class ExtendedMeshFlags(IntFlag):
@@ -1481,6 +1483,13 @@ class SculptTypeData:
     Type: SculptType = se.bitfield_field(bits=6, adapter=se.IntEnum(SculptType))
     Invert: bool = se.bitfield_field(bits=1, adapter=se.BoolAdapter())
     Mirror: bool = se.bitfield_field(bits=1, adapter=se.BoolAdapter())
+
+
+class ReflectionProbeFlags(IntFlag):
+    # use a box influence volume
+    BOX_VOLUME = 0x1
+    # render dynamic objects (avatars) into this Reflection Probe
+    DYNAMIC = 0x2
 
 
 EXTRA_PARAM_TEMPLATES = {
@@ -1513,6 +1522,15 @@ EXTRA_PARAM_TEMPLATES = {
     }),
     ExtraParamType.EXTENDED_MESH: se.Template({
         "Flags": se.IntFlag(ExtendedMeshFlags, se.U32),
+    }),
+    ExtraParamType.RENDER_MATERIAL: se.Collection(se.U8, se.Template({
+        "TEIdx": se.U8,
+        "TEID": se.UUID,
+    })),
+    ExtraParamType.REFLECTION_PROBE: se.Template({
+        "Ambiance": se.F32,
+        "ClipDistance": se.F32,
+        "Flags": se.IntFlag(ReflectionProbeFlags, se.U8),
     }),
 }
 
