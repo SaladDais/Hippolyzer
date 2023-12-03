@@ -762,7 +762,8 @@ class RegionObjectsState:
     def handle_object_reparented(self, obj: Object, old_parent_id: int):
         """Recreate any links to ancestor Objects for obj due to parent changes"""
         self._unparent_object(obj, old_parent_id)
-        self._parent_object(obj, insert_at_head=True)
+        # Avatars get sent to the _end_ of the child list when reparented
+        self._parent_object(obj, insert_at_head=obj.PCode != PCode.AVATAR)
 
     def collect_orphans(self, parent_localid: int) -> Sequence[int]:
         """Take ownership of any orphan IDs belonging to parent_localid"""
