@@ -224,6 +224,11 @@ class MITMProxyEventManager:
 
         status = flow.response.status_code
         cap_data: Optional[CapData] = flow.metadata["cap_data"]
+        if not cap_data:
+            # Make sure there's always cap data attached to the flow, even if it's
+            # empty. Some consumers expect it to always be there, when it might not
+            # be if the proxy barfed while handling the request.
+            cap_data = flow.metadata["cap_data"] = CapData()
 
         if status == 200 and cap_data and cap_data.cap_name == "FirestormBridge":
             # Fake FirestormBridge cap based on a bridge-like response coming from
