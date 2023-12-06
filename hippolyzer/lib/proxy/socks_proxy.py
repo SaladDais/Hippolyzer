@@ -83,7 +83,7 @@ class SOCKS5Server:
         try:
             # UDP Associate
             if cmd == 3:
-                loop = asyncio.get_running_loop()
+                loop = asyncio.get_event_loop_policy().get_event_loop()
                 transport, protocol = await loop.create_datagram_endpoint(
                     self._udp_protocol_creator(writer.get_extra_info("peername")),
                     local_addr=('0.0.0.0', 0))
