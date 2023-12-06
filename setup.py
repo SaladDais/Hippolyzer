@@ -94,6 +94,7 @@ setup(
         'idna<3,>=2.5',
         # 7.x will be a major change.
         'mitmproxy>=8.0.0,<8.1',
+        'Werkzeug<3.0',
         # For REPLs
         'ptpython<4.0',
         # JP2 codec
