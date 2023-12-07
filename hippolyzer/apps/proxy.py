@@ -16,7 +16,7 @@ from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.ca_utils import setup_ca
 from hippolyzer.lib.proxy.commands import handle_command
-from hippolyzer.lib.proxy.http_proxy import create_http_proxy, create_proxy_master, HTTPFlowContext
+from hippolyzer.lib.proxy.http_proxy import create_http_proxy, HTTPFlowContext
 from hippolyzer.lib.proxy.http_event_manager import MITMProxyEventManager
 from hippolyzer.lib.proxy.lludp_proxy import SLSOCKS5Server
 from hippolyzer.lib.base.message.message import Message
@@ -85,12 +85,12 @@ class REPLAddon(BaseAddon):
             AddonManager.spawn_repl()
 
 
-def run_http_proxy_process(proxy_host, http_proxy_port, flow_context: HTTPFlowContext):
+def run_http_proxy_process(proxy_host, http_proxy_port, flow_context: HTTPFlowContext, ssl_insecure=False):
     mitm_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(mitm_loop)
 
     async def mitmproxy_loop():
-        mitmproxy_master = create_http_proxy(proxy_host, http_proxy_port, flow_context)
+        mitmproxy_master = create_http_proxy(proxy_host, http_proxy_port, flow_context, ssl_insecure=ssl_insecure)
         gc.freeze()
         await mitmproxy_master.run()
 
@@ -98,7 +98,7 @@ def run_http_proxy_process(proxy_host, http_proxy_port, flow_context: HTTPFlowCo
 
 
 def start_proxy(session_manager: SessionManager, extra_addons: Optional[list] = None,
-                extra_addon_paths: Optional[list] = None, proxy_host=None):
+                extra_addon_paths: Optional[list] = None, proxy_host=None, ssl_insecure=False):
     extra_addons = extra_addons or []
     extra_addon_paths = extra_addon_paths or []
     extra_addons.append(SelectionManagerAddon())
@@ -123,17 +123,13 @@ def start_proxy(session_manager: SessionManager, extra_addons: Optional[list] = 
     # TODO: argparse
     if len(sys.argv) == 3:
         if sys.argv[1] == "--setup-ca":
-            try:
-                mitmproxy_master = create_http_proxy(proxy_host, http_proxy_port, flow_context)
-            except mitmproxy.exceptions.MitmproxyException:
-                # Proxy already running, create the master so we don't try to bind to a port
-                mitmproxy_master = create_proxy_master(proxy_host, http_proxy_port, flow_context)
+            mitmproxy_master = create_http_proxy(proxy_host, http_proxy_port, flow_context)
             setup_ca(sys.argv[2], mitmproxy_master)
             return sys.exit(0)
 
     http_proc = multiprocessing.Process(
         target=run_http_proxy_process,
-        args=(proxy_host, http_proxy_port, flow_context),
+        args=(proxy_host, http_proxy_port, flow_context, ssl_insecure),
         daemon=True,
     )
     http_proc.start()

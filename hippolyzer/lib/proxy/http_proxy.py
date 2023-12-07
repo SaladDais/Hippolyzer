@@ -236,7 +236,7 @@ class SLMITMMaster(mitmproxy.master.Master):
         )
 
 
-def create_proxy_master(host, port, flow_context: HTTPFlowContext):  # pragma: no cover
+def create_http_proxy(host, port, flow_context: HTTPFlowContext, ssl_insecure=False):  # pragma: no cover
     opts = mitmproxy.options.Options()
     master = SLMITMMaster(flow_context, opts)
 
@@ -251,10 +251,6 @@ def create_proxy_master(host, port, flow_context: HTTPFlowContext):  # pragma: n
         ssl_verify_upstream_trusted_ca=ca_bundle,
         listen_host=host,
         listen_port=port,
+        ssl_insecure=ssl_insecure,
     )
-    return master
-
-
-def create_http_proxy(bind_host, port, flow_context: HTTPFlowContext):  # pragma: no cover
-    master = create_proxy_master(bind_host, port, flow_context)
     return master

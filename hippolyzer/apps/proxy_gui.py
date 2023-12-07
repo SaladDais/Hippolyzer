@@ -42,7 +42,7 @@ from hippolyzer.lib.base.network.transport import Direction, SocketUDPTransport
 from hippolyzer.lib.proxy.addons import BaseInteractionManager, AddonManager
 from hippolyzer.lib.proxy.ca_utils import setup_ca_everywhere
 from hippolyzer.lib.proxy.caps_client import ProxyCapsClient
-from hippolyzer.lib.proxy.http_proxy import create_proxy_master, HTTPFlowContext
+from hippolyzer.lib.proxy.http_proxy import create_http_proxy, HTTPFlowContext
 from hippolyzer.lib.proxy.message_logger import LLUDPMessageLogEntry, AbstractMessageLogEntry, WrappingMessageLogger, \
     import_log_entries, export_log_entries
 from hippolyzer.lib.proxy.region import ProxiedRegion
@@ -275,9 +275,11 @@ class MessageLogWindow(QtWidgets.QMainWindow):
         self.actionOpenMessageBuilder.triggered.connect(self._openMessageBuilder)
 
         self.actionProxyRemotelyAccessible.setChecked(self.settings.REMOTELY_ACCESSIBLE)
+        self.actionProxySSLInsecure.setChecked(self.settings.SSL_INSECURE)
         self.actionUseViewerObjectCache.setChecked(self.settings.USE_VIEWER_OBJECT_CACHE)
         self.actionRequestMissingObjects.setChecked(self.settings.AUTOMATICALLY_REQUEST_MISSING_OBJECTS)
         self.actionProxyRemotelyAccessible.triggered.connect(self._setProxyRemotelyAccessible)
+        self.actionProxySSLInsecure.triggered.connect(self._setProxySSLInsecure)
         self.actionUseViewerObjectCache.triggered.connect(self._setUseViewerObjectCache)
         self.actionRequestMissingObjects.triggered.connect(self._setRequestMissingObjects)
         self.actionOpenNewMessageLogWindow.triggered.connect(self._openNewMessageLogWindow)
@@ -458,7 +460,7 @@ class MessageLogWindow(QtWidgets.QMainWindow):
         if clicked_btn is not yes_btn:
             return
 
-        master = create_proxy_master("127.0.0.1", -1, HTTPFlowContext())
+        master = create_http_proxy("127.0.0.1", -1, HTTPFlowContext())
         dirs = setup_ca_everywhere(master)
 
         msg = QtWidgets.QMessageBox()
@@ -472,6 +474,12 @@ class MessageLogWindow(QtWidgets.QMainWindow):
         self.sessionManager.settings.REMOTELY_ACCESSIBLE = checked
         msg = QtWidgets.QMessageBox()
         msg.setText("Remote accessibility setting changes will take effect on next run")
+        msg.exec()
+
+    def _setProxySSLInsecure(self, checked: bool):
+        self.sessionManager.settings.SSL_INSECURE = checked
+        msg = QtWidgets.QMessageBox()
+        msg.setText("SSL security setting changes will take effect on next run")
         msg.exec()
 
     def _setUseViewerObjectCache(self, checked: bool):
@@ -937,6 +945,7 @@ def gui_main():
         session_manager=window.sessionManager,
         extra_addon_paths=window.getAddonList(),
         proxy_host=http_host,
+        ssl_insecure=settings.SSL_INSECURE,
     )
 
 

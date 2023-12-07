@@ -35,3 +35,4 @@ class ProxySettings(Settings):
     AUTOMATICALLY_REQUEST_MISSING_OBJECTS: bool = SettingDescriptor(False)
     ADDON_SCRIPTS: List[str] = SettingDescriptor(list)
     FILTERS: Dict[str, str] = SettingDescriptor(dict)
+    SSL_INSECURE: bool = SettingDescriptor(False)
