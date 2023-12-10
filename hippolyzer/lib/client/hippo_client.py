@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 from importlib.metadata import version
 import logging
@@ -13,14 +14,21 @@ import multidict
 
 from hippolyzer.lib.base.helpers import proxify
 from hippolyzer.lib.base.message.circuit import Circuit
+from hippolyzer.lib.base.message.message import Message, Block
+from hippolyzer.lib.base.message.message_dot_xml import MessageDotXML
 from hippolyzer.lib.base.message.message_handler import MessageHandler
+from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.network.caps_client import CapsClient
-from hippolyzer.lib.base.network.transport import ADDR_TUPLE
+from hippolyzer.lib.base.network.transport import ADDR_TUPLE, Direction, SocketUDPTransport
+from hippolyzer.lib.base.settings import Settings
 from hippolyzer.lib.base.transfer_manager import TransferManager
 from hippolyzer.lib.base.xfer_manager import XferManager
 from hippolyzer.lib.client.asset_uploader import AssetUploader
-from hippolyzer.lib.client.object_manager import ClientObjectManager
+from hippolyzer.lib.client.object_manager import ClientObjectManager, ClientWorldObjectManager
 from hippolyzer.lib.client.state import BaseClientSession, BaseClientRegion, BaseClientSessionManager
+
+
+LOG = logging.getLogger(__name__)
 
 
 class HippoCapsClient(CapsClient):
@@ -28,11 +36,65 @@ class HippoCapsClient(CapsClient):
         headers["User-Agent"] = f"Hippolyzer/v{version('hippolyzer')}"
 
 
+class HippoClientProtocol(asyncio.DatagramProtocol):
+    def __init__(self, session: HippoClientSession):
+        self.session = session
+        self.transport: Optional[SocketUDPTransport] = None
+        self.message_xml = MessageDotXML()
+        self.deserializer = UDPMessageDeserializer(
+            settings=self.session.session_manager.settings,
+        )
+        loop = asyncio.get_event_loop_policy().get_event_loop()
+        self.resend_task = loop.create_task(self.attempt_resends())
+
+    def connection_made(self, transport: asyncio.DatagramTransport):
+        self.transport = SocketUDPTransport(transport)
+
+    def datagram_received(self, data, source_addr: ADDR_TUPLE):
+        region = self.session.region_by_circuit_addr(source_addr)
+        if not region:
+            logging.warning("Received packet from invalid address %s", source_addr)
+            return
+
+        message = self.deserializer.deserialize(data)
+        message.direction = Direction.IN
+        message.sender = source_addr
+
+        if not self.message_xml.validate_udp_msg(message.name):
+            LOG.warning(
+                f"Received {message.name!r} over UDP, when it should come over the event queue. Discarding."
+            )
+            raise PermissionError(f"UDPBanned message {message.name}")
+
+        region.circuit.collect_acks(message)
+
+        try:
+            self.session.message_handler.handle(message)
+        except:
+            LOG.exception("Failed in region message handler")
+        region.message_handler.handle(message)
+
+    async def attempt_resends(self):
+        while True:
+            await asyncio.sleep(0.1)
+            if self.session is None:
+                continue
+            for region in self.session.regions:
+                if not region.circuit or not region.circuit.is_alive:
+                    continue
+                region.circuit.resend_unacked()
+
+    def close(self):
+        logging.info("Closing UDP transport")
+        self.transport.close()
+        self.session = None
+        self.resend_task.cancel()
+
+
 class HippoClientRegion(BaseClientRegion):
     def __init__(self, circuit_addr, seed_cap: str, session: HippoClientSession, handle=None):
         super().__init__()
         self.caps = multidict.MultiDict()
-        self.objects = ClientObjectManager(proxify(self))
         self.message_handler = MessageHandler()
         self.circuit_addr = circuit_addr
         self.handle = handle
@@ -43,6 +105,7 @@ class HippoClientRegion(BaseClientRegion):
         self.xfer_manager = XferManager(proxify(self), self.session().secure_session_id)
         self.transfer_manager = TransferManager(proxify(self), session.agent_id, session.id)
         self.asset_uploader = AssetUploader(proxify(self))
+        self.objects = ClientObjectManager(proxify(self))
 
     def update_caps(self, caps: Mapping[str, str]) -> None:
         self.caps.update(caps)
@@ -58,26 +121,44 @@ class HippoClientSession(BaseClientSession):
 
     region_by_handle: Callable[[int], Optional[HippoClientRegion]]
     region_by_circuit_addr: Callable[[ADDR_TUPLE], Optional[HippoClientRegion]]
+    session_manager: HippoClient
 
-    def __init__(self, id, secure_session_id, agent_id, circuit_code, client: Optional[HippoClient] = None,
+    def __init__(self, id, secure_session_id, agent_id, circuit_code, session_manager: Optional[HippoClient] = None,
                  login_data=None):
-        super().__init__(id, secure_session_id, agent_id, circuit_code, client, login_data=login_data)
-        self.http_session = client.http_session
+        super().__init__(id, secure_session_id, agent_id, circuit_code, session_manager, login_data=login_data)
+        self.http_session = session_manager.http_session
+        self.objects = ClientWorldObjectManager(proxify(self), session_manager.settings, None)
+        self.protocol: Optional[HippoClientProtocol] = None
 
     def register_region(self, circuit_addr: Optional[ADDR_TUPLE] = None, seed_url: Optional[str] = None,
                         handle: Optional[int] = None) -> HippoClientRegion:
         return super().register_region(circuit_addr, seed_url, handle)  # type:ignore
 
-    def open_circuit(self, near_addr, circuit_addr, transport):
+    def open_circuit(self, circuit_addr):
         for region in self.regions:
             if region.circuit_addr == circuit_addr:
+                valid_circuit = False
                 if not region.circuit or not region.circuit.is_alive:
-                    region.circuit = Circuit(near_addr, circuit_addr, transport)
-                    return True
+                    region.circuit = Circuit(("127.0.0.1", 0), circuit_addr, self.protocol.transport)
+                    region.circuit.is_alive = False
+                    valid_circuit = True
                 if region.circuit and region.circuit.is_alive:
                     # Whatever, already open
                     logging.debug("Tried to re-open circuit for %r" % (circuit_addr,))
-                    return True
+                    valid_circuit = True
+
+                if valid_circuit:
+                    # TODO: This is a little bit crap, we need to know if a UseCircuitCode was ever ACKed
+                    #  before we can start sending other packets, otherwise we might have a race.
+                    region.circuit.send_reliable(
+                        Message(
+                            "UseCircuitCode",
+                            Block("CircuitCode", Code=self.circuit_code, SessionID=self.id, ID=self.agent_id),
+                        )
+                    )
+                    # TODO: set this in a callback for UseCircuitCode ACK
+                    region.circuit.is_alive = True
+                return valid_circuit
         return False
 
 
@@ -229,11 +310,26 @@ class HippoClient(BaseClientSessionManager):
         self._mac = uuid.getnode()
         self._options = options if options is not None else self.DEFAULT_OPTIONS
         self.http_session = aiohttp.ClientSession()
+        self.session: Optional[HippoClientSession] = None
+        self.settings = Settings()
 
     async def aclose(self):
-        await self.http_session.close()
+        try:
+            await self.logout()
+        finally:
+            await self.http_session.close()
 
-    async def login(self, username: str, password: str, login_uri: Optional[str] = "", agree_to_tos: bool = False):
+    async def login(
+            self,
+            username: str,
+            password: str,
+            login_uri: Optional[str] = "",
+            agree_to_tos: bool = False,
+            start_location: str = "home"
+    ):
+        if self.session:
+            raise RuntimeError("Already logged in!")
+
         if not login_uri:
             login_uri = self.DEFAULT_LOGIN_URI
 
@@ -262,7 +358,7 @@ class HippoClient(BaseClientSessionManager):
             # TODO: What is this?
             "platform_version": "2.38.0",
             "read_critical": 0,
-            "start": "home",
+            "start": start_location,
             "token": "",
             "version": version("hippolyzer"),
             "options": list(self._options),
@@ -270,4 +366,36 @@ class HippoClient(BaseClientSessionManager):
         rpc_payload = xmlrpc.client.dumps((payload,), "login_to_simulator")
         async with self.http_session.post(login_uri, data=rpc_payload, headers={"Content-Type": "text/xml"}) as resp:
             resp.raise_for_status()
-            print(await resp.read())
+            login_data = xmlrpc.client.loads((await resp.read()).decode("utf8"))[0][0]
+        self.session = HippoClientSession.from_login_data(login_data, self)
+
+        loop = asyncio.get_event_loop_policy().get_event_loop()
+        transport, protocol = await loop.create_datagram_endpoint(
+            lambda: HippoClientProtocol(self.session),
+            local_addr=('0.0.0.0', 0))
+        self.session.protocol = protocol
+        protocol.transport = SocketUDPTransport(transport)
+        assert self.session.open_circuit(self.session.regions[-1].circuit_addr)
+        self.session.main_region = self.session.regions[-1]
+
+        await self.session.main_region.circuit.send_reliable(
+            Message(
+                "CompleteAgentMovement",
+                Block("AgentData", AgentID=self.session.agent_id, SessionID=self.session.id, CircuitCode=self.session.circuit_code)
+            )
+        )
+
+    async def logout(self):
+        if not self.session:
+            return
+        session = self.session
+        self.session = None
+        if not session.main_region or not session.main_region.is_alive:
+            # Nothing to do
+            return
+        session.main_region.circuit.send(
+            Message(
+                "LogoutRequest",
+                Block("AgentData", AgentID=session.agent_id, SessionID=session.id),
+            )
+        )

@@ -39,6 +39,7 @@ from hippolyzer.lib.base.settings import SettingDescriptor
 from hippolyzer.lib.base.ui_helpers import loadUi
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base.network.transport import Direction, SocketUDPTransport
+from hippolyzer.lib.client.state import BaseClientSessionManager
 from hippolyzer.lib.proxy.addons import BaseInteractionManager, AddonManager
 from hippolyzer.lib.proxy.ca_utils import setup_ca_everywhere
 from hippolyzer.lib.proxy.caps_client import ProxyCapsClient
@@ -71,6 +72,7 @@ class GUISessionManager(SessionManager, QtCore.QObject):
     regionRemoved = QtCore.Signal(ProxiedRegion)
 
     def __init__(self, settings):
+        BaseClientSessionManager.__init__(self)
         SessionManager.__init__(self, settings)
         QtCore.QObject.__init__(self)
         self.all_regions = []

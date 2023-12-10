@@ -25,11 +25,16 @@ class ReliableResendInfo:
 
 
 class Circuit:
-    def __init__(self, near_host: Optional[ADDR_TUPLE], far_host: ADDR_TUPLE, transport):
+    def __init__(
+        self,
+        near_host: Optional[ADDR_TUPLE],
+        far_host: ADDR_TUPLE,
+        transport: Optional[AbstractUDPTransport] = None,
+    ):
         self.near_host: Optional[ADDR_TUPLE] = near_host
         self.host: ADDR_TUPLE = far_host
         self.is_alive = True
-        self.transport: Optional[AbstractUDPTransport] = transport
+        self.transport = transport
         self.serializer = UDPMessageSerializer()
         self.last_packet_at = dt.datetime.now()
         self.packet_id_base = 0
@@ -66,6 +71,7 @@ class Circuit:
         # If it was queued, it's not anymore
         message.queued = False
         message.finalized = True
+        return True
 
     def send(self, message: Message, transport=None) -> UDPPacket:
         if self.prepare_message(message):

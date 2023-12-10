@@ -73,7 +73,7 @@ class BaseClientRegion(ConnectionHolder, abc.ABC):
         return "<%s %s>" % (self.__class__.__name__, self.name)
 
 
-class BaseClientSessionManager(abc.ABC):
+class BaseClientSessionManager:
     pass
 
 
@@ -176,3 +176,6 @@ class BaseClientSession(abc.ABC):
             if region.handle == handle:
                 return region
         return None
+
+    def __repr__(self):
+        return "<%s %s>" % (self.__class__.__name__, self.id)

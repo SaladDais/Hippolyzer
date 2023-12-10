@@ -114,13 +114,10 @@ class Session(BaseClientSession):
                 return CapData(cap_name, ref(region), ref(self), base_url, cap_type)
         return None
 
-    def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self.id)
-
 
 class SessionManager(BaseClientSessionManager):
     def __init__(self, settings: ProxySettings):
-        super().__init__()
+        BaseClientSessionManager.__init__(self)
         self.settings: ProxySettings = settings
         self.sessions: List[Session] = []
         self.shutdown_signal = multiprocessing.Event()
