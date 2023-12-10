@@ -21,6 +21,7 @@ from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.network.caps_client import CapsClient
 from hippolyzer.lib.base.network.transport import ADDR_TUPLE, Direction, SocketUDPTransport
 from hippolyzer.lib.base.settings import Settings
+from hippolyzer.lib.base.templates import RegionHandshakeReplyFlags
 from hippolyzer.lib.base.transfer_manager import TransferManager
 from hippolyzer.lib.base.xfer_manager import XferManager
 from hippolyzer.lib.client.asset_uploader import AssetUploader
@@ -376,12 +377,51 @@ class HippoClient(BaseClientSessionManager):
         self.session.protocol = protocol
         protocol.transport = SocketUDPTransport(transport)
         assert self.session.open_circuit(self.session.regions[-1].circuit_addr)
-        self.session.main_region = self.session.regions[-1]
+        region = self.session.regions[-1]
+        self.session.main_region = region
 
-        await self.session.main_region.circuit.send_reliable(
+        # Register first so we can handle it even if the ack happens after the message is sent
+        region_handshake_fut = region.message_handler.wait_for(("RegionHandshake",))
+        await region.circuit.send_reliable(
             Message(
                 "CompleteAgentMovement",
-                Block("AgentData", AgentID=self.session.agent_id, SessionID=self.session.id, CircuitCode=self.session.circuit_code)
+                Block(
+                    "AgentData",
+                    AgentID=self.session.agent_id,
+                    SessionID=self.session.id,
+                    CircuitCode=self.session.circuit_code
+                ),
+            )
+        )
+        region.name = str((await region_handshake_fut)["RegionInfo"][0]["SimName"])
+        await region.circuit.send_reliable(
+            Message(
+                "RegionHandshakeReply",
+                Block("AgentData", AgentID=self.session.agent_id, SessionID=self.session.id),
+                Block(
+                    "RegionInfo",
+                    Flags=(
+                        RegionHandshakeReplyFlags.SUPPORTS_SELF_APPEARANCE
+                        | RegionHandshakeReplyFlags.VOCACHE_IS_EMPTY
+                    )
+                )
+            )
+        )
+        await region.circuit.send_reliable(
+            Message(
+                "AgentThrottle",
+                Block(
+                    "AgentData",
+                    AgentID=self.session.agent_id,
+                    SessionID=self.session.id,
+                    CircuitCode=self.session.circuit_code,
+                ),
+                Block(
+                    "Throttle",
+                    GenCounter=0,
+                    # Reasonable defaults, I guess
+                    Throttles_=[207360.0, 165376.0, 33075.19921875, 33075.19921875, 682700.75, 682700.75, 269312.0],
+                )
             )
         )
 
@@ -393,6 +433,7 @@ class HippoClient(BaseClientSessionManager):
         if not session.main_region or not session.main_region.is_alive:
             # Nothing to do
             return
+        # Don't need to send reliably, there's a good chance the server won't ACK anyway.
         session.main_region.circuit.send(
             Message(
                 "LogoutRequest",
