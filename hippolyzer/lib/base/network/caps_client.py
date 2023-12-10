@@ -82,8 +82,9 @@ CAPS_DICT = Union[
 
 
 class CapsClient:
-    def __init__(self, caps: Optional[CAPS_DICT] = None):
+    def __init__(self, caps: Optional[CAPS_DICT] = None, session: Optional[aiohttp.ClientSession] = None) -> None:
         self._caps = caps
+        self._session = session
 
     def _request_fixups(self, cap_or_url: str, headers: Dict, proxy: Optional[bool], ssl: Any):
         return cap_or_url, headers, proxy, ssl
@@ -117,6 +118,7 @@ class CapsClient:
         session_owned = False
         # Use an existing session if we have one to take advantage of connection pooling
         # otherwise create one
+        session = session or self._session
         if session is None:
             session_owned = True
             session = aiohttp.ClientSession(

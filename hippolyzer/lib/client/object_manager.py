@@ -27,8 +27,10 @@ from hippolyzer.lib.base.objects import (
 )
 from hippolyzer.lib.base.settings import Settings
 from hippolyzer.lib.client.namecache import NameCache, NameCacheEntry
-from hippolyzer.lib.client.state import BaseClientSession, BaseClientRegion
 from hippolyzer.lib.base.templates import PCode, ObjectStateSerializer
+
+if TYPE_CHECKING:
+    from hippolyzer.lib.client.state import BaseClientRegion, BaseClientSession
 
 
 LOG = logging.getLogger(__name__)

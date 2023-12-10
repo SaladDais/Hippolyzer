@@ -34,7 +34,7 @@ class InventoryManager:
                 # completion from the inventory cache. This matches indra's behavior.
                 version=InventoryCategory.VERSION_NONE,
                 type="category",
-                pref_type=skel_cat.get("type_default", -1),
+                pref_type=skel_cat.get("type_default", "-1"),
                 owner_id=self._session.agent_id,
             ))
 

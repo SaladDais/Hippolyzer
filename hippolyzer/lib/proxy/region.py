@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import hashlib
 import uuid
 import weakref
@@ -9,12 +8,11 @@ import urllib.parse
 
 import multidict
 
-from hippolyzer.lib.base.datatypes import Vector3, UUID
+from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.helpers import proxify
 from hippolyzer.lib.base.message.llsd_msg_serializer import LLSDMessageSerializer
 from hippolyzer.lib.base.message.message import Message, Block
 from hippolyzer.lib.base.message.message_handler import MessageHandler
-from hippolyzer.lib.base.objects import handle_to_global_pos
 from hippolyzer.lib.client.state import BaseClientRegion
 from hippolyzer.lib.proxy.caps_client import ProxyCapsClient
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
@@ -44,14 +42,15 @@ class CapsMultiDict(multidict.MultiDict[Tuple[CapType, str]]):
 
 
 class ProxiedRegion(BaseClientRegion):
+    circuit: Optional[ProxiedCircuit]
+
     def __init__(self, circuit_addr, seed_cap: str, session: Session, handle=None):
+        super().__init__()
         # A client may make a Seed request twice, and may get back two (valid!) sets of
         # Cap URIs. We need to be able to look up both, so MultiDict is necessary.
         self.handle: Optional[int] = handle
-        self._name: Optional[str] = None
         # TODO: when does this change?
         self.cache_id: Optional[UUID] = None
-        self.circuit: Optional[ProxiedCircuit] = None
         self.circuit_addr = circuit_addr
         self.caps = CapsMultiDict()
         # Reverse lookup for URL -> cap data
@@ -71,30 +70,8 @@ class ProxiedRegion(BaseClientRegion):
         self._recalc_caps()
 
     @property
-    def name(self):
-        if self._name:
-            return self._name
-        return "Pending %r" % (self.circuit_addr,)
-
-    @name.setter
-    def name(self, val):
-        self._name = val
-
-    @property
-    def cap_urls(self) -> multidict.MultiDict[str, str]:
+    def cap_urls(self) -> multidict.MultiDict[str]:
         return multidict.MultiDict((x, y[1]) for x, y in self.caps.items())
-
-    @property
-    def global_pos(self) -> Vector3:
-        if self.handle is None:
-            raise ValueError("Can't determine global region position without handle")
-        return handle_to_global_pos(self.handle)
-
-    @property
-    def is_alive(self):
-        if not self.circuit:
-            return False
-        return self.circuit.is_alive
 
     def update_caps(self, caps: Mapping[str, str]):
         for cap_name, cap_url in caps.items():
@@ -158,14 +135,8 @@ class ProxiedRegion(BaseClientRegion):
         return None
 
     def mark_dead(self):
-        logging.info("Marking %r dead" % self)
-        if self.circuit:
-            self.circuit.is_alive = False
-        self.objects.clear()
+        super().mark_dead()
         self.eq_manager.clear()
-
-    def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self.name)
 
 
 class EventQueueManager:

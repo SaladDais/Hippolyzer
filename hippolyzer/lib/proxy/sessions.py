@@ -6,7 +6,6 @@ import datetime
 import functools
 import logging
 import multiprocessing
-import weakref
 from typing import *
 from weakref import ref
 
@@ -14,9 +13,9 @@ from outleap import LEAPClient
 
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.helpers import proxify
-from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
-from hippolyzer.lib.client.state import BaseClientSession
+from hippolyzer.lib.base.network.transport import ADDR_TUPLE
+from hippolyzer.lib.client.state import BaseClientSession, BaseClientSessionManager
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.proxy.http_asset_repo import HTTPAssetRepo
@@ -34,30 +33,34 @@ if TYPE_CHECKING:
 
 
 class Session(BaseClientSession):
-    def __init__(self, session_id, secure_session_id, agent_id, circuit_code,
+    regions: MutableSequence[ProxiedRegion]
+    region_by_handle: Callable[[int], Optional[ProxiedRegion]]
+    region_by_circuit_addr: Callable[[ADDR_TUPLE], Optional[ProxiedRegion]]
+    main_region: Optional[ProxiedRegion]
+    REGION_CLS = ProxiedRegion
+
+    def __init__(self, id, secure_session_id, agent_id, circuit_code,
                  session_manager: Optional[SessionManager], login_data=None):
-        self.login_data = login_data or {}
-        self.pending = True
-        self.id: UUID = session_id
-        self.secure_session_id: UUID = secure_session_id
-        self.agent_id: UUID = agent_id
-        self.circuit_code = circuit_code
-        self.global_caps = {}
+        super().__init__(
+            id=id,
+            secure_session_id=secure_session_id,
+            agent_id=agent_id,
+            circuit_code=circuit_code,
+            session_manager=session_manager,
+            login_data=login_data,
+        )
         # Bag of arbitrary data addons can use to persist data across addon reloads
         # Each addon name gets its own separate dict within this dict
         self.addon_ctx: Dict[str, Dict[str, Any]] = collections.defaultdict(dict)
-        self.session_manager: SessionManager = session_manager or None
+        self.session_manager: SessionManager = session_manager
         self.selected: SelectionModel = SelectionModel()
-        self.regions: List[ProxiedRegion] = []
         self.started_at = datetime.datetime.now()
-        self.message_handler: MessageHandler[Message, str] = MessageHandler()
         self.http_message_handler: MessageHandler[HippoHTTPFlow, str] = MessageHandler()
         self.objects = ProxyWorldObjectManager(self, session_manager.settings, session_manager.name_cache)
         self.inventory = ProxyInventoryManager(proxify(self))
         self.leap_client: Optional[LEAPClient] = None
         # Base path of a newview type cache directory for this session
         self.cache_dir: Optional[str] = None
-        self._main_region = None
 
     @property
     def global_addon_ctx(self):
@@ -65,76 +68,12 @@ class Session(BaseClientSession):
             return {}
         return self.session_manager.addon_ctx
 
-    @classmethod
-    def from_login_data(cls, login_data, session_manager):
-        sess = Session(
-            session_id=UUID(login_data["session_id"]),
-            secure_session_id=UUID(login_data["secure_session_id"]),
-            agent_id=UUID(login_data["agent_id"]),
-            circuit_code=int(login_data["circuit_code"]),
-            session_manager=session_manager,
-            login_data=login_data,
-        )
-        appearance_service = login_data.get("agent_appearance_service")
-        map_image_service = login_data.get("map-server-url")
-        if appearance_service:
-            sess.global_caps["AppearanceService"] = appearance_service
-        if map_image_service:
-            sess.global_caps["MapImageService"] = map_image_service
-        # Login data also has details about the initial sim
-        sess.register_region(
-            circuit_addr=(login_data["sim_ip"], login_data["sim_port"]),
-            handle=(login_data["region_x"] << 32) | login_data["region_y"],
-            seed_url=login_data["seed_capability"],
-        )
-        return sess
-
-    @property
-    def main_region(self) -> Optional[ProxiedRegion]:
-        if self._main_region and self._main_region() in self.regions:
-            return self._main_region()
-        return None
-
-    @main_region.setter
-    def main_region(self, val: ProxiedRegion):
-        self._main_region = weakref.ref(val)
-
-    def register_region(self, circuit_addr: Optional[Tuple[str, int]] = None,
+    def register_region(self, circuit_addr: Optional[ADDR_TUPLE] = None,
                         seed_url: Optional[str] = None,
                         handle: Optional[int] = None) -> ProxiedRegion:
-        if not any((circuit_addr, seed_url)):
-            raise ValueError("One of circuit_addr and seed_url must be defined!")
-
-        for region in self.regions:
-            if region.circuit_addr == circuit_addr:
-                if seed_url and region.cap_urls.get("Seed") != seed_url:
-                    region.update_caps({"Seed": seed_url})
-                if handle:
-                    region.handle = handle
-                return region
-            if seed_url and region.cap_urls.get("Seed") == seed_url:
-                return region
-
-        if not circuit_addr:
-            raise ValueError("Can't create region without circuit addr!")
-
-        logging.info("Registering region for %r" % (circuit_addr,))
-        region = ProxiedRegion(circuit_addr, seed_url, self, handle=handle)
-        self.regions.append(region)
+        region: ProxiedRegion = super().register_region(circuit_addr, seed_url, handle)  # type: ignore
         AddonManager.handle_region_registered(self, region)
         return region
-
-    def region_by_circuit_addr(self, circuit_addr) -> Optional[ProxiedRegion]:
-        for region in self.regions:
-            if region.circuit_addr == circuit_addr and region.circuit:
-                return region
-        return None
-
-    def region_by_handle(self, handle: int) -> Optional[ProxiedRegion]:
-        for region in self.regions:
-            if region.handle == handle:
-                return region
-        return None
 
     def open_circuit(self, near_addr, circuit_addr, transport):
         for region in self.regions:
@@ -175,15 +114,13 @@ class Session(BaseClientSession):
                 return CapData(cap_name, ref(region), ref(self), base_url, cap_type)
         return None
 
-    def transaction_to_assetid(self, transaction_id: UUID):
-        return UUID.combine(transaction_id, self.secure_session_id)
-
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.id)
 
 
-class SessionManager:
+class SessionManager(BaseClientSessionManager):
     def __init__(self, settings: ProxySettings):
+        super().__init__()
         self.settings: ProxySettings = settings
         self.sessions: List[Session] = []
         self.shutdown_signal = multiprocessing.Event()
