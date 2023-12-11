@@ -99,6 +99,7 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
         async def _do_login():
             with aioresponses.aioresponses() as m:
                 m.post(self.FAKE_LOGIN_URI, body=self._make_fake_login_body())
+                m.post(self.FAKE_LOGIN_RESP['seed_capability'], body="<llsd><map></map></llsd>")
                 await client.login("foo", "bar", login_uri=self.FAKE_LOGIN_URI)
             await client.logout()
 

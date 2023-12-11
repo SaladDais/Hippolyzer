@@ -23,13 +23,7 @@ import unittest
 from hippolyzer.lib.base.settings import Settings
 
 
-class TestEvents(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
+class TestSettings(unittest.TestCase):
     def test_base_settings(self):
         settings = Settings()
         self.assertEqual(settings.ENABLE_DEFERRED_PACKET_PARSING, True)

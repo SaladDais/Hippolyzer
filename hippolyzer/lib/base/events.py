@@ -18,7 +18,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program; if not, write to the Free Software Foundation,
 Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
-
+import asyncio
 from logging import getLogger
 
 logger = getLogger('utilities.events')
@@ -54,13 +54,22 @@ class Event:
 
     def notify(self, args):
         for handler in self.subscribers[:]:
-            instance, inner_args, kwargs, one_shot, predicate = handler
+            handler, inner_args, kwargs, one_shot, predicate = handler
             if predicate and not predicate(args):
                 continue
             if one_shot:
-                self.unsubscribe(instance, *inner_args, **kwargs)
-            if instance(args, *inner_args, **kwargs) and not one_shot:
-                self.unsubscribe(instance, *inner_args, **kwargs)
+                self.unsubscribe(handler, *inner_args, **kwargs)
+            if asyncio.iscoroutinefunction(handler):
+                # Note that unsubscription may be delayed due to asyncio scheduling :)
+
+                async def _run_handler_wrapper():
+                    unsubscribe = await handler(args, *inner_args, **kwargs)
+                    if unsubscribe:
+                        self.unsubscribe(handler, *inner_args, **kwargs)
+                asyncio.get_event_loop().create_task(_run_handler_wrapper())
+            else:
+                if handler(args, *inner_args, **kwargs) and not one_shot:
+                    self.unsubscribe(handler, *inner_args, **kwargs)
 
     def __len__(self):
         return len(self.subscribers)

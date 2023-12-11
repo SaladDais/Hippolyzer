@@ -35,6 +35,7 @@ LOG = logging.getLogger(__name__)
 class HippoCapsClient(CapsClient):
     def _request_fixups(self, cap_or_url: str, headers: Dict, proxy: Optional[bool], ssl: Any):
         headers["User-Agent"] = f"Hippolyzer/v{version('hippolyzer')}"
+        return cap_or_url, headers, proxy, False
 
 
 class HippoClientProtocol(asyncio.DatagramProtocol):
@@ -120,7 +121,7 @@ class HippoClientSession(BaseClientSession):
                         handle: Optional[int] = None) -> HippoClientRegion:
         return super().register_region(circuit_addr, seed_url, handle)  # type:ignore
 
-    def open_circuit(self, circuit_addr):
+    async def open_circuit(self, circuit_addr):
         for region in self.regions:
             if region.circuit_addr == circuit_addr:
                 valid_circuit = False
@@ -136,13 +137,13 @@ class HippoClientSession(BaseClientSession):
                 if valid_circuit:
                     # TODO: This is a little bit crap, we need to know if a UseCircuitCode was ever ACKed
                     #  before we can start sending other packets, otherwise we might have a race.
-                    region.circuit.send_reliable(
+                    await region.circuit.send_reliable(
                         Message(
                             "UseCircuitCode",
                             Block("CircuitCode", Code=self.circuit_code, SessionID=self.id, ID=self.agent_id),
                         )
                     )
-                    # TODO: set this in a callback for UseCircuitCode ACK
+                    # TODO: What happens if a circuit code is invalid, again?
                     region.circuit.is_alive = True
                 return valid_circuit
         return False
@@ -375,9 +376,12 @@ class HippoClient(BaseClientSessionManager):
         self.session.transport, self.session.protocol = await self._create_transport()
         self._resend_task = asyncio.create_task(self._attempt_resends())
 
-        assert self.session.open_circuit(self.session.regions[-1].circuit_addr)
+        assert await self.session.open_circuit(self.session.regions[-1].circuit_addr)
         region = self.session.regions[-1]
         self.session.main_region = region
+
+        # Kick this off and await it later
+        seed_resp_fut = region.caps_client.post("Seed", session=self.http_session, llsd=list(self.SUPPORTED_CAPS))
 
         # Register first so we can handle it even if the ack happens after the message is sent
         region_handshake_fut = region.message_handler.wait_for(("RegionHandshake",))
@@ -423,6 +427,8 @@ class HippoClient(BaseClientSessionManager):
                 )
             )
         )
+        async with seed_resp_fut as seed_resp:
+            region.update_caps(await seed_resp.read_llsd())
 
     async def logout(self):
         if not self.session:
