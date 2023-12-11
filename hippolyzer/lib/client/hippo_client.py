@@ -19,7 +19,7 @@ from hippolyzer.lib.base.message.message_dot_xml import MessageDotXML
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.network.caps_client import CapsClient
-from hippolyzer.lib.base.network.transport import ADDR_TUPLE, Direction, SocketUDPTransport
+from hippolyzer.lib.base.network.transport import ADDR_TUPLE, Direction, SocketUDPTransport, AbstractUDPTransport
 from hippolyzer.lib.base.settings import Settings
 from hippolyzer.lib.base.templates import RegionHandshakeReplyFlags
 from hippolyzer.lib.base.transfer_manager import TransferManager
@@ -39,17 +39,11 @@ class HippoCapsClient(CapsClient):
 
 class HippoClientProtocol(asyncio.DatagramProtocol):
     def __init__(self, session: HippoClientSession):
-        self.session = session
-        self.transport: Optional[SocketUDPTransport] = None
+        self.session = proxify(session)
         self.message_xml = MessageDotXML()
         self.deserializer = UDPMessageDeserializer(
             settings=self.session.session_manager.settings,
         )
-        loop = asyncio.get_event_loop_policy().get_event_loop()
-        self.resend_task = loop.create_task(self.attempt_resends())
-
-    def connection_made(self, transport: asyncio.DatagramTransport):
-        self.transport = SocketUDPTransport(transport)
 
     def datagram_received(self, data, source_addr: ADDR_TUPLE):
         region = self.session.region_by_circuit_addr(source_addr)
@@ -69,27 +63,17 @@ class HippoClientProtocol(asyncio.DatagramProtocol):
 
         region.circuit.collect_acks(message)
 
+        # TODO: Ignore resends we already have, our ACK may have been missed
+        if message.reliable:
+            # This is a bit crap. We send an ACK immediately through a PacketAck.
+            # This is pretty wasteful, we should batch them up and send them on a timer.
+            region.circuit.send_acks((message.packet_id,))
+
         try:
             self.session.message_handler.handle(message)
         except:
             LOG.exception("Failed in region message handler")
         region.message_handler.handle(message)
-
-    async def attempt_resends(self):
-        while True:
-            await asyncio.sleep(0.1)
-            if self.session is None:
-                continue
-            for region in self.session.regions:
-                if not region.circuit or not region.circuit.is_alive:
-                    continue
-                region.circuit.resend_unacked()
-
-    def close(self):
-        logging.info("Closing UDP transport")
-        self.transport.close()
-        self.session = None
-        self.resend_task.cancel()
 
 
 class HippoClientRegion(BaseClientRegion):
@@ -129,6 +113,7 @@ class HippoClientSession(BaseClientSession):
         super().__init__(id, secure_session_id, agent_id, circuit_code, session_manager, login_data=login_data)
         self.http_session = session_manager.http_session
         self.objects = ClientWorldObjectManager(proxify(self), session_manager.settings, None)
+        self.transport: Optional[SocketUDPTransport] = None
         self.protocol: Optional[HippoClientProtocol] = None
 
     def register_region(self, circuit_addr: Optional[ADDR_TUPLE] = None, seed_url: Optional[str] = None,
@@ -140,7 +125,7 @@ class HippoClientSession(BaseClientSession):
             if region.circuit_addr == circuit_addr:
                 valid_circuit = False
                 if not region.circuit or not region.circuit.is_alive:
-                    region.circuit = Circuit(("127.0.0.1", 0), circuit_addr, self.protocol.transport)
+                    region.circuit = Circuit(("127.0.0.1", 0), circuit_addr, self.transport)
                     region.circuit.is_alive = False
                     valid_circuit = True
                 if region.circuit and region.circuit.is_alive:
@@ -310,15 +295,32 @@ class HippoClient(BaseClientSessionManager):
         self._password: Optional[str] = None
         self._mac = uuid.getnode()
         self._options = options if options is not None else self.DEFAULT_OPTIONS
-        self.http_session = aiohttp.ClientSession()
+        self.http_session: Optional[aiohttp.ClientSession] = aiohttp.ClientSession()
         self.session: Optional[HippoClientSession] = None
         self.settings = Settings()
+        self._resend_task: Optional[asyncio.Task] = None
 
     async def aclose(self):
         try:
-            await self.logout()
+            if self.session:
+                await self.logout()
         finally:
-            await self.http_session.close()
+            if self.http_session:
+                await self.http_session.close()
+                self.http_session = None
+
+    def __del__(self):
+        # Make sure we don't leak resources if someone was lazy.
+        if self.http_session:
+            asyncio.get_event_loop_policy().get_event_loop().create_task(self.aclose())
+
+    async def _create_transport(self) -> Tuple[AbstractUDPTransport, HippoClientProtocol]:
+        loop = asyncio.get_event_loop_policy().get_event_loop()
+        transport, protocol = await loop.create_datagram_endpoint(
+            lambda: HippoClientProtocol(self.session),
+            local_addr=('0.0.0.0', 0))
+        transport = SocketUDPTransport(transport)
+        return transport, protocol
 
     async def login(
             self,
@@ -370,12 +372,9 @@ class HippoClient(BaseClientSessionManager):
             login_data = xmlrpc.client.loads((await resp.read()).decode("utf8"))[0][0]
         self.session = HippoClientSession.from_login_data(login_data, self)
 
-        loop = asyncio.get_event_loop_policy().get_event_loop()
-        transport, protocol = await loop.create_datagram_endpoint(
-            lambda: HippoClientProtocol(self.session),
-            local_addr=('0.0.0.0', 0))
-        self.session.protocol = protocol
-        protocol.transport = SocketUDPTransport(transport)
+        self.session.transport, self.session.protocol = await self._create_transport()
+        self._resend_task = asyncio.create_task(self._attempt_resends())
+
         assert self.session.open_circuit(self.session.regions[-1].circuit_addr)
         region = self.session.regions[-1]
         self.session.main_region = region
@@ -428,15 +427,28 @@ class HippoClient(BaseClientSessionManager):
     async def logout(self):
         if not self.session:
             return
+        if self._resend_task:
+            self._resend_task.cancel()
+            self._resend_task = None
+
         session = self.session
         self.session = None
-        if not session.main_region or not session.main_region.is_alive:
-            # Nothing to do
-            return
-        # Don't need to send reliably, there's a good chance the server won't ACK anyway.
-        session.main_region.circuit.send(
-            Message(
-                "LogoutRequest",
-                Block("AgentData", AgentID=session.agent_id, SessionID=session.id),
+        if session.main_region and session.main_region.is_alive:
+            # Don't need to send reliably, there's a good chance the server won't ACK anyway.
+            session.main_region.circuit.send(
+                Message(
+                    "LogoutRequest",
+                    Block("AgentData", AgentID=session.agent_id, SessionID=session.id),
+                )
             )
-        )
+        session.transport.close()
+
+    async def _attempt_resends(self):
+        while True:
+            await asyncio.sleep(0.1)
+            if self.session is None:
+                continue
+            for region in self.session.regions:
+                if not region.circuit or not region.circuit.is_alive:
+                    continue
+                region.circuit.resend_unacked()

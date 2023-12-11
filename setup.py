@@ -83,30 +83,32 @@ setup(
     python_requires='>=3.8',
     install_requires=[
         'llsd<1.1.0',
-        'outleap<1.0',
         'defusedxml',
         'aiohttp<4.0.0',
         # Newer recordclasses break!
         'recordclass>0.15,<0.18.3',
         'lazy-object-proxy',
-        'arpeggio',
         # requests breaks with newer idna
         'idna<3,>=2.5',
+        # Needed for mesh format conversion tooling
+        'pycollada',
+        'transformations',
+        'gltflib',
+        # JP2 codec
+        'Glymur<0.9.7',
+        'numpy<2.0',
+
+        # Proxy-specific stuff
+        'outleap<1.0',
+        'arpeggio',
         # 7.x will be a major change.
         'mitmproxy>=8.0.0,<8.1',
         'Werkzeug<3.0',
         # For REPLs
         'ptpython<4.0',
-        # JP2 codec
-        'Glymur<0.9.7',
-        'numpy<2.0',
         # These could be in extras_require if you don't want a GUI.
         'pyside6-essentials',
         'qasync',
-        # Needed for mesh format conversion tooling
-        'pycollada',
-        'transformations',
-        'gltflib',
     ],
     tests_require=[
         "pytest",

@@ -1,11 +1,11 @@
 import asyncio
 import unittest
-from typing import Any, Optional, List, Tuple
 
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.message.udpserializer import UDPMessageSerializer
-from hippolyzer.lib.base.network.transport import UDPPacket, AbstractUDPTransport, ADDR_TUPLE
+from hippolyzer.lib.base.network.transport import UDPPacket
+from hippolyzer.lib.base.test_utils import MockTransport
 from hippolyzer.lib.proxy.lludp_proxy import InterceptingLLUDPProxyProtocol
 from hippolyzer.lib.proxy.region import ProxiedRegion
 from hippolyzer.lib.proxy.sessions import SessionManager
@@ -63,21 +63,3 @@ class BaseProxyTest(unittest.IsolatedAsyncioTestCase):
     def _msg_to_datagram(self, msg: Message, src, dst, socks_header=True):
         packet = self._msg_to_packet(msg, src, dst)
         return SOCKS5UDPTransport.serialize(packet, force_socks_header=socks_header)
-
-
-class MockTransport(AbstractUDPTransport):
-    def sendto(self, data: Any, addr: Optional[ADDR_TUPLE] = ...) -> None:
-        pass
-
-    def abort(self) -> None:
-        pass
-
-    def close(self) -> None:
-        pass
-
-    def __init__(self):
-        super().__init__()
-        self.packets: List[Tuple[bytes, Tuple[str, int]]] = []
-
-    def send_packet(self, packet: UDPPacket) -> None:
-        self.packets.append((packet.data, packet.dst_addr))

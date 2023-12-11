@@ -6,7 +6,6 @@ from typing import *
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
-from hippolyzer.lib.base.message.circuit import ConnectionHolder
 from hippolyzer.lib.base.templates import (
     AssetType,
     EstateAssetType,
@@ -16,26 +15,10 @@ from hippolyzer.lib.base.templates import (
     TransferTargetType,
     TransferStatus,
 )
-from hippolyzer.lib.proxy.circuit import ProxiedCircuit
 from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.base.transfer_manager import TransferManager, Transfer
 from hippolyzer.lib.base.xfer_manager import XferManager
-
-
-class MockHandlingCircuit(ProxiedCircuit):
-    def __init__(self, handler: MessageHandler[Message, str]):
-        super().__init__(("127.0.0.1", 1), ("127.0.0.1", 2), None)
-        self.handler = handler
-
-    def _send_prepared_message(self, message: Message, transport=None):
-        loop = asyncio.get_event_loop_policy().get_event_loop()
-        loop.call_soon(self.handler.handle, message)
-
-
-class MockConnectionHolder(ConnectionHolder):
-    def __init__(self, circuit, message_handler):
-        self.circuit = circuit
-        self.message_handler = message_handler
+from hippolyzer.lib.base.test_utils import MockHandlingCircuit, MockConnectionHolder
 
 
 class BaseTransferTests(unittest.IsolatedAsyncioTestCase):
