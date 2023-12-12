@@ -6,6 +6,7 @@ from typing import Tuple, Optional
 
 import aioresponses
 
+from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.circuit import Circuit
 from hippolyzer.lib.base.message.message import Message, Block
@@ -83,6 +84,13 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
         "region_y": 123,
         "seed_capability": "https://127.0.0.1:4/foo",
     }
+    FAKE_SEED_RESP = {
+        "EventQueueGet": "https://127.0.0.1:5/",
+    }
+    FAKE_EQ_RESP = {
+        "id": 1,
+        "events": [],
+    }
 
     def setUp(self):
         self.server_handler = MessageHandler()
@@ -99,7 +107,8 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
         async def _do_login():
             with aioresponses.aioresponses() as m:
                 m.post(self.FAKE_LOGIN_URI, body=self._make_fake_login_body())
-                m.post(self.FAKE_LOGIN_RESP['seed_capability'], body="<llsd><map></map></llsd>")
+                m.post(self.FAKE_LOGIN_RESP['seed_capability'], body=llsd.format_xml(self.FAKE_SEED_RESP))
+                m.post(self.FAKE_SEED_RESP['EventQueueGet'], body=llsd.format_xml(self.FAKE_EQ_RESP))
                 await client.login("foo", "bar", login_uri=self.FAKE_LOGIN_URI)
             await client.logout()
 
