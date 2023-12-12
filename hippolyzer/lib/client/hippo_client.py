@@ -314,7 +314,7 @@ class HippoClient(BaseClientSessionManager):
         self._password: Optional[str] = None
         self._mac = uuid.getnode()
         self._options = options if options is not None else self.DEFAULT_OPTIONS
-        self.http_session: Optional[aiohttp.ClientSession] = aiohttp.ClientSession()
+        self.http_session: Optional[aiohttp.ClientSession] = aiohttp.ClientSession(trust_env=True)
         self.session: Optional[HippoClientSession] = None
         self.settings = ClientSettings()
         self._resend_task: Optional[asyncio.Task] = None
@@ -387,8 +387,12 @@ class HippoClient(BaseClientSessionManager):
             "version": version("hippolyzer"),
             "options": list(self._options),
         }
-        rpc_payload = xmlrpc.client.dumps((payload,), "login_to_simulator")
-        async with self.http_session.post(login_uri, data=rpc_payload, headers={"Content-Type": "text/xml"}) as resp:
+        async with self.http_session.post(
+                login_uri,
+                data=xmlrpc.client.dumps((payload,), "login_to_simulator"),
+                headers={"Content-Type": "text/xml"},
+                ssl=self.settings.SSL_VERIFY,
+        ) as resp:
             resp.raise_for_status()
             login_data = xmlrpc.client.loads((await resp.read()).decode("utf8"))[0][0]
         self.session = HippoClientSession.from_login_data(login_data, self)
