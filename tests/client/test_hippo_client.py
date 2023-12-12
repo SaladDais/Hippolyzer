@@ -71,6 +71,10 @@ class MockHippoClient(HippoClient):
         return MockServerTransport(self.server), protocol
 
 
+async def _soon(get_msg) -> Message:
+    return await asyncio.wait_for(get_msg(), timeout=1.0)
+
+
 class TestHippoClient(unittest.IsolatedAsyncioTestCase):
     FAKE_LOGIN_URI = "http://127.0.0.1:1/login.cgi"
     FAKE_LOGIN_RESP = {
@@ -89,38 +93,38 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
     }
     FAKE_EQ_RESP = {
         "id": 1,
-        "events": [],
+        "events": [{"message": "ViewerFrozenMessage", "body": {"FrozenData": [{"Data": False}]}}],
     }
 
-    def setUp(self):
+    async def asyncSetUp(self):
         self.server_handler = MessageHandler()
         self.server_transport = PacketForwardingTransport()
         self.server_circuit = Circuit(("127.0.0.1", 2), ("127.0.0.1", 99), self.server_transport)
         self.server = MockServer(self.server_circuit, self.server_handler)
+        self.aio_mock = aioresponses.aioresponses()
+        self.aio_mock.start()
+        self.aio_mock.post(
+            self.FAKE_LOGIN_URI,
+            body=xmlrpc.client.dumps((self.FAKE_LOGIN_RESP,), None, True)
+        )
+        self.aio_mock.post(self.FAKE_LOGIN_RESP['seed_capability'], body=llsd.format_xml(self.FAKE_SEED_RESP))
+        self.aio_mock.post(self.FAKE_SEED_RESP['EventQueueGet'], body=llsd.format_xml(self.FAKE_EQ_RESP), repeat=True)
+        self.client = MockHippoClient(self.server)
 
-    def _make_fake_login_body(self):
-        return xmlrpc.client.dumps((self.FAKE_LOGIN_RESP,), None, True)
+    async def asyncTearDown(self):
+        await self.client.aclose()
+        self.aio_mock.stop()
 
-    async def test_login(self):
-        client = MockHippoClient(self.server)
-
+    async def _log_client_in(self, client: MockHippoClient):
         async def _do_login():
-            with aioresponses.aioresponses() as m:
-                m.post(self.FAKE_LOGIN_URI, body=self._make_fake_login_body())
-                m.post(self.FAKE_LOGIN_RESP['seed_capability'], body=llsd.format_xml(self.FAKE_SEED_RESP))
-                m.post(self.FAKE_SEED_RESP['EventQueueGet'], body=llsd.format_xml(self.FAKE_EQ_RESP))
-                await client.login("foo", "bar", login_uri=self.FAKE_LOGIN_URI)
-            await client.logout()
+            await client.login("foo", "bar", login_uri=self.FAKE_LOGIN_URI)
 
         login_task = asyncio.create_task(_do_login())
         with self.server_handler.subscribe_async(
                 ("*",),
         ) as get_msg:
-            async def _get_msg_soon():
-                return await asyncio.wait_for(get_msg(), timeout=1.0)
-
-            assert (await _get_msg_soon()).name == "UseCircuitCode"
-            assert (await _get_msg_soon()).name == "CompleteAgentMovement"
+            assert (await _soon(get_msg)).name == "UseCircuitCode"
+            assert (await _soon(get_msg)).name == "CompleteAgentMovement"
             self.server.circuit.send(Message(
                 'RegionHandshake',
                 Block('RegionInfo', fill_missing=True),
@@ -128,8 +132,22 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
                 Block('RegionInfo3', fill_missing=True),
                 Block('RegionInfo4', fill_missing=True),
             ))
-            assert (await _get_msg_soon()).name == "RegionHandshakeReply"
-            assert (await _get_msg_soon()).name == "AgentThrottle"
-            assert (await _get_msg_soon()).name == "LogoutRequest"
+            assert (await _soon(get_msg)).name == "RegionHandshakeReply"
+            assert (await _soon(get_msg)).name == "AgentThrottle"
+            await login_task
 
-        await login_task
+    async def test_login(self):
+        await self._log_client_in(self.client)
+        with self.server_handler.subscribe_async(
+                ("*",),
+        ) as get_msg:
+            logout_task = asyncio.create_task(self.client.logout())
+            assert (await _soon(get_msg)).name == "LogoutRequest"
+            await logout_task
+
+    async def test_eq(self):
+        await self._log_client_in(self.client)
+        with self.client.session.message_handler.subscribe_async(
+                ("ViewerFrozenMessage",),
+        ) as get_msg:
+            assert (await _soon(get_msg)).name == "ViewerFrozenMessage"
