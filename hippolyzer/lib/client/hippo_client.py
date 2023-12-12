@@ -37,6 +37,7 @@ class ClientSettings(Settings):
     # Off by default for now, the cert validation is a big mess due to LL using an internal CA.
     SSL_VERIFY: bool = SettingDescriptor(False)
     SSL_CERT_PATH: str = SettingDescriptor(get_resource_filename("lib/base/network/data/ca-bundle.crt"))
+    USER_AGENT: str = SettingDescriptor(f"Hippolyzer/v{version('hippolyzer')}")
 
 
 class HippoCapsClient(CapsClient):
@@ -50,7 +51,7 @@ class HippoCapsClient(CapsClient):
         self._settings = settings
 
     def _request_fixups(self, cap_or_url: str, headers: Dict, proxy: Optional[bool], ssl: Any):
-        headers["User-Agent"] = f"Hippolyzer/v{version('hippolyzer')}"
+        headers["User-Agent"] = self._settings.USER_AGENT
         return cap_or_url, headers, proxy, self._settings.SSL_VERIFY
 
 
@@ -390,7 +391,7 @@ class HippoClient(BaseClientSessionManager):
         async with self.http_session.post(
                 login_uri,
                 data=xmlrpc.client.dumps((payload,), "login_to_simulator"),
-                headers={"Content-Type": "text/xml"},
+                headers={"Content-Type": "text/xml", "User-Agent": self.settings.USER_AGENT},
                 ssl=self.settings.SSL_VERIFY,
         ) as resp:
             resp.raise_for_status()
