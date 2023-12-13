@@ -98,7 +98,7 @@ class HippoClientRegion(BaseClientRegion):
     def __init__(self, circuit_addr, seed_cap: str, session: HippoClientSession, handle=None):
         super().__init__()
         self.caps = multidict.MultiDict()
-        self.message_handler = MessageHandler()
+        self.message_handler = MessageHandler(take_by_default=False)
         self.circuit_addr = circuit_addr
         self.handle = handle
         if seed_cap:
@@ -133,6 +133,7 @@ class HippoClientSession(BaseClientSession):
         self.objects = ClientWorldObjectManager(proxify(self), session_manager.settings, None)
         self.transport: Optional[SocketUDPTransport] = None
         self.protocol: Optional[HippoClientProtocol] = None
+        self.message_handler.take_by_default = False
 
     def register_region(self, circuit_addr: Optional[ADDR_TUPLE] = None, seed_url: Optional[str] = None,
                         handle: Optional[int] = None) -> HippoClientRegion:
