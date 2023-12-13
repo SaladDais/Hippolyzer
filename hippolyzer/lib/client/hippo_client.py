@@ -337,7 +337,8 @@ class HippoClient(BaseClientSessionManager):
     def __del__(self):
         # Make sure we don't leak resources if someone was lazy.
         if self.http_session:
-            asyncio.get_event_loop_policy().get_event_loop().create_task(self.aclose())
+            asyncio.get_event_loop_policy().get_event_loop().create_task(self.http_session.close)
+            self.http_session = None
 
     async def _create_transport(self) -> Tuple[AbstractUDPTransport, HippoClientProtocol]:
         loop = asyncio.get_event_loop_policy().get_event_loop()
@@ -459,6 +460,7 @@ class HippoClient(BaseClientSessionManager):
             seed_resp.raise_for_status()
             region.update_caps(await seed_resp.read_llsd())
         self._eq_task = asyncio.get_event_loop().create_task(self._poll_event_queue())
+        self.session.main_region.message_handler.subscribe("StartPingCheck", self._handle_ping_check)
 
     async def logout(self):
         if not self.session:
@@ -519,3 +521,11 @@ class HippoClient(BaseClientSessionManager):
                     self.session.main_region.message_handler.handle(msg)
                 ack = polled["id"]
                 await asyncio.sleep(0.001)
+
+    async def _handle_ping_check(self, message: Message):
+        self.session.main_region.circuit.send(
+            Message(
+                "CompletePingCheck",
+                Block("PingID", PingID=message["PingID"]["PingID"]),
+            )
+        )
