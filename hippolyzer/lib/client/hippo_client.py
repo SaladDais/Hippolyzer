@@ -26,6 +26,7 @@ from hippolyzer.lib.base.templates import RegionHandshakeReplyFlags
 from hippolyzer.lib.base.transfer_manager import TransferManager
 from hippolyzer.lib.base.xfer_manager import XferManager
 from hippolyzer.lib.client.asset_uploader import AssetUploader
+from hippolyzer.lib.client.inventory_manager import InventoryManager
 from hippolyzer.lib.client.object_manager import ClientObjectManager, ClientWorldObjectManager
 from hippolyzer.lib.client.state import BaseClientSession, BaseClientRegion, BaseClientSessionManager
 
@@ -131,6 +132,7 @@ class HippoClientSession(BaseClientSession):
         super().__init__(id, secure_session_id, agent_id, circuit_code, session_manager, login_data=login_data)
         self.http_session = session_manager.http_session
         self.objects = ClientWorldObjectManager(proxify(self), session_manager.settings, None)
+        self.inventory_manager = InventoryManager(proxify(self))
         self.transport: Optional[SocketUDPTransport] = None
         self.protocol: Optional[HippoClientProtocol] = None
         self.message_handler.take_by_default = False
@@ -139,7 +141,7 @@ class HippoClientSession(BaseClientSession):
                         handle: Optional[int] = None) -> HippoClientRegion:
         return super().register_region(circuit_addr, seed_url, handle)  # type:ignore
 
-    async def open_circuit(self, circuit_addr):
+    async def open_circuit(self, circuit_addr: ADDR_TUPLE):
         for region in self.regions:
             if region.circuit_addr == circuit_addr:
                 valid_circuit = False

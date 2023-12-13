@@ -87,6 +87,10 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
         "region_x": 0,
         "region_y": 123,
         "seed_capability": "https://127.0.0.1:4/foo",
+        "inventory-skeleton": [
+            {'name': 'My Inventory', 'folder_id': str(UUID(int=4)),
+             'parent_id': '00000000-0000-0000-0000-000000000000', 'type_default': 8, 'version': 200}
+        ]
     }
     FAKE_SEED_RESP = {
         "EventQueueGet": "https://127.0.0.1:5/",
@@ -149,3 +153,7 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
                 ("ViewerFrozenMessage",),
         ) as get_msg:
             assert (await _soon(get_msg)).name == "ViewerFrozenMessage"
+
+    async def test_inventory_manager(self):
+        await self._log_client_in(self.client)
+        self.assertEqual(self.client.session.inventory_manager.model.root.node_id, UUID(int=4))
