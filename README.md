@@ -402,9 +402,13 @@ above is your only option.
 
 ### Should I use this library to make an SL client in Python?
 
-No. If you just want to write a client in Python, you should instead look at using 
+Probably not. If you just want to write a client in Python, you should instead look at using
 [libremetaverse](https://github.com/cinderblocks/libremetaverse/) via pythonnet.
-I removed the client-related code inherited from PyOGP because libremetaverse's was simply better.
+I removed the client-related code inherited from PyOGP because libremetaverse's was simply better
+for general use.
 
 <https://github.com/CasperTech/node-metaverse/> also looks like a good, modern wrapper if you
 prefer TypeScript.
+
+There is, however, a very low-level `HippoClient` class provided for testing, but it's unlikely
+to be what you want for writing a general-purpose bot.
