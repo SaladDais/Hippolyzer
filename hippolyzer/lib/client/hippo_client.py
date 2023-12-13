@@ -22,7 +22,7 @@ from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.network.caps_client import CapsClient, CAPS_DICT
 from hippolyzer.lib.base.network.transport import ADDR_TUPLE, Direction, SocketUDPTransport, AbstractUDPTransport
 from hippolyzer.lib.base.settings import Settings, SettingDescriptor
-from hippolyzer.lib.base.templates import RegionHandshakeReplyFlags
+from hippolyzer.lib.base.templates import RegionHandshakeReplyFlags, ChatType
 from hippolyzer.lib.base.transfer_manager import TransferManager
 from hippolyzer.lib.base.xfer_manager import XferManager
 from hippolyzer.lib.client.asset_uploader import AssetUploader
@@ -481,6 +481,13 @@ class HippoClient(BaseClientSessionManager):
                 )
             )
         session.transport.close()
+
+    def send_chat(self, message: Union[bytes, str], channel: int = 0, chat_type=ChatType.NORMAL) -> asyncio.Future:
+        return self.session.main_region.circuit.send_reliable(Message(
+            "ChatFromViewer",
+            Block("AgentData", SessionID=self.session.id, AgentID=self.session.agent_id),
+            Block("ChatData", Message=message, Channel=channel, Type=chat_type),
+        ))
 
     async def _attempt_resends(self):
         while True:
