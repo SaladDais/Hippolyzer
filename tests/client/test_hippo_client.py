@@ -56,7 +56,7 @@ class MockServerTransport(MockTransport):
         packet = copy.copy(packet)
         packet.direction = Direction.IN
         # Delay calling so the client can do its ACK bookkeeping first
-        asyncio.get_event_loop_policy().get_event_loop().call_soon(lambda: self._server.process_inbound(packet))
+        asyncio.get_event_loop().call_soon(lambda: self._server.process_inbound(packet))
 
 
 class MockHippoClient(HippoClient):
@@ -112,14 +112,13 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
         self.client = MockHippoClient(self.server)
 
     async def asyncTearDown(self):
-        await self.client.aclose()
-        self.aio_mock.stop()
+        try:
+            await self.client.aclose()
+        finally:
+            self.aio_mock.stop()
 
     async def _log_client_in(self, client: MockHippoClient):
-        async def _do_login():
-            await client.login("foo", "bar", login_uri=self.FAKE_LOGIN_URI)
-
-        login_task = asyncio.create_task(_do_login())
+        login_task = asyncio.create_task(client.login("foo", "bar", login_uri=self.FAKE_LOGIN_URI))
         with self.server_handler.subscribe_async(
                 ("*",),
         ) as get_msg:
@@ -141,9 +140,8 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
         with self.server_handler.subscribe_async(
                 ("*",),
         ) as get_msg:
-            logout_task = asyncio.create_task(self.client.logout())
+            await self.client.logout()
             assert (await _soon(get_msg)).name == "LogoutRequest"
-            await logout_task
 
     async def test_eq(self):
         await self._log_client_in(self.client)
