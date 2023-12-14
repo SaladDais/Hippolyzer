@@ -11,6 +11,7 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.circuit import Circuit
 from hippolyzer.lib.base.message.message import Message, Block
 from hippolyzer.lib.base.message.message_handler import MessageHandler
+from hippolyzer.lib.base.message.msgtypes import PacketFlags
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.network.transport import AbstractUDPTransport, UDPPacket, Direction
 from hippolyzer.lib.base.test_utils import MockTransport, MockConnectionHolder
@@ -157,3 +158,20 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
     async def test_inventory_manager(self):
         await self._log_client_in(self.client)
         self.assertEqual(self.client.session.inventory_manager.model.root.node_id, UUID(int=4))
+
+    async def test_resend_suppression(self):
+        """Make sure the client only handles the first seen copy of a reliable message"""
+        await self._log_client_in(self.client)
+        with self.client.session.message_handler.subscribe_async(
+                ("ChatFromSimulator", "AgentDataUpdate"),
+        ) as get_msg:
+            msg = Message("ChatFromSimulator", Block("ChatData", fill_missing=True))
+            msg.send_flags |= PacketFlags.RELIABLE
+
+            # Fake re-sending the message
+            packet = self.server_circuit.send(msg)
+            self.server_transport.send_packet(packet)
+
+            self.server_circuit.send(Message("AgentDataUpdate", Block("AgentData", fill_missing=True)))
+            assert (await _soon(get_msg)).name == "ChatFromSimulator"
+            assert (await _soon(get_msg)).name == "AgentDataUpdate"
