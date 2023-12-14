@@ -126,17 +126,22 @@ class HippoClientRegion(BaseClientRegion):
     def cap_urls(self) -> multidict.MultiDict:
         return self.caps.copy()
 
-    async def connect(self):
+    async def connect(self, main_region: bool = False):
         # Disconnect first if we're already connected
         await self.disconnect()
 
+        # TODO: What happens if a circuit code is invalid, again? Does it just refuse to ACK?
         await self.circuit.send_reliable(
             Message(
                 "UseCircuitCode",
-                Block("CircuitCode", Code=self.session().circuit_code, SessionID=self.session().id, ID=self.session().agent_id),
+                Block(
+                    "CircuitCode",
+                    Code=self.session().circuit_code,
+                    SessionID=self.session().id,
+                    ID=self.session().agent_id,
+                ),
             )
         )
-        # TODO: What happens if a circuit code is invalid, again?
         self.circuit.is_alive = True
 
         # Clear out any old caps urls except the seed URL, we're about to fetch new caps.
@@ -150,18 +155,11 @@ class HippoClientRegion(BaseClientRegion):
         # Register first so we can handle it even if the ack happens after the message is sent
         region_handshake_fut = self.message_handler.wait_for(("RegionHandshake",))
 
-        # TODO: This is only for the "main" circuit, shouldn't be done for others
-        await self.circuit.send_reliable(
-            Message(
-                "CompleteAgentMovement",
-                Block(
-                    "AgentData",
-                    AgentID=self.session().agent_id,
-                    SessionID=self.session().id,
-                    CircuitCode=self.session().circuit_code
-                ),
-            )
-        )
+        # If we're connecting to the main region, it won't even send us a RegionHandshake until we
+        # first send a CompleteAgentMovement.
+        if main_region:
+            await self.complete_agent_movement()
+
         self.name = str((await region_handshake_fut)["RegionInfo"][0]["SimName"])
         await self.circuit.send_reliable(
             Message(
@@ -205,6 +203,20 @@ class HippoClientRegion(BaseClientRegion):
             self._eq_task.cancel()
         self._eq_task = None
         self.circuit.disconnect()
+
+    async def complete_agent_movement(self):
+        await self.circuit.send_reliable(
+            Message(
+                "CompleteAgentMovement",
+                Block(
+                    "AgentData",
+                    AgentID=self.session().agent_id,
+                    SessionID=self.session().id,
+                    CircuitCode=self.session().circuit_code
+                ),
+            )
+        )
+        self.session().main_region = self
 
     async def _poll_event_queue(self):
         ack: Optional[int] = None
@@ -443,6 +455,12 @@ class HippoClient(BaseClientSessionManager):
             return None
         return self.session.main_region
 
+    @property
+    def main_circuit(self) -> Optional[Circuit]:
+        if not self.main_region:
+            return None
+        return self.main_region.circuit
+
     async def aclose(self):
         try:
             if self.session:
@@ -525,8 +543,7 @@ class HippoClient(BaseClientSessionManager):
 
         assert await self.session.open_circuit(self.session.regions[-1].circuit_addr)
         region = self.session.regions[-1]
-        self.session.main_region = region
-        await region.connect()
+        await region.connect(main_region=True)
 
     async def logout(self):
         if not self.session:
@@ -535,22 +552,22 @@ class HippoClient(BaseClientSessionManager):
             self._resend_task.cancel()
             self._resend_task = None
 
-        session = self.session
-        self.session = None
-        if session.main_region and session.main_region.is_alive:
+        if self.main_circuit and self.main_circuit.is_alive:
             # Don't need to send reliably, there's a good chance the server won't ACK anyway.
-            session.main_region.circuit.send(
+            self.main_circuit.send(
                 Message(
                     "LogoutRequest",
-                    Block("AgentData", AgentID=session.agent_id, SessionID=session.id),
+                    Block("AgentData", AgentID=self.session.agent_id, SessionID=self.session.id),
                 )
             )
+        session = self.session
+        self.session = None
         for region in session.regions:
             await region.disconnect()
         session.transport.close()
 
     def send_chat(self, message: Union[bytes, str], channel: int = 0, chat_type=ChatType.NORMAL) -> asyncio.Future:
-        return self.session.main_region.circuit.send_reliable(Message(
+        return self.main_circuit.send_reliable(Message(
             "ChatFromViewer",
             Block("AgentData", SessionID=self.session.id, AgentID=self.session.agent_id),
             Block("ChatData", Message=message, Channel=channel, Type=chat_type),
