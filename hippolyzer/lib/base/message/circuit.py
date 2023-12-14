@@ -6,6 +6,7 @@ import copy
 import dataclasses
 import datetime as dt
 import logging
+from collections import deque
 from typing import *
 from typing import Optional
 
@@ -40,6 +41,8 @@ class Circuit:
         self.packet_id_base = 0
         self.unacked_reliable: Dict[Tuple[Direction, int], ReliableResendInfo] = {}
         self.resend_every: float = 3.0
+        # Reliable messages that we've already seen and handled, for resend suppression
+        self.seen_reliable: deque[int] = deque(maxlen=1_000)
 
     def _send_prepared_message(self, message: Message, transport=None):
         try:
@@ -130,6 +133,13 @@ class Circuit:
         message.packet_id = packet_id
         message.direction = direction
         self.send(message)
+
+    def track_reliable(self, packet_id: int) -> bool:
+        """Tracks a reliable packet, returning if it's a new message"""
+        if packet_id in self.seen_reliable:
+            return False
+        self.seen_reliable.append(packet_id)
+        return True
 
     def __repr__(self):
         return "<%s %r : %r>" % (self.__class__.__name__, self.near_host, self.host)
