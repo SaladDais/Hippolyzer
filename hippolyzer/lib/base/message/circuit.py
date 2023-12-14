@@ -49,6 +49,11 @@ class Circuit:
             raise
         return self.send_datagram(serialized, message.direction, transport=transport)
 
+    def disconnect(self):
+        self.packet_id_base = 0
+        self.unacked_reliable.clear()
+        self.is_alive = False
+
     def send_datagram(self, data: bytes, direction: Direction, transport=None):
         self.last_packet_at = dt.datetime.now()
         src_addr, dst_addr = self.host, self.near_host
