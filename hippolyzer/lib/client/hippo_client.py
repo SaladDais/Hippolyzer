@@ -376,6 +376,12 @@ class HippoClient(BaseClientSessionManager):
         self.settings = ClientSettings()
         self._resend_task: Optional[asyncio.Task] = None
 
+    @property
+    def main_region(self) -> Optional[HippoClientRegion]:
+        if not self.session:
+            return None
+        return self.session.main_region
+
     async def aclose(self):
         try:
             if self.session:
