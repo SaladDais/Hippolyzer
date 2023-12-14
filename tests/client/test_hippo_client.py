@@ -98,7 +98,10 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
     }
     FAKE_EQ_RESP = {
         "id": 1,
-        "events": [{"message": "ViewerFrozenMessage", "body": {"FrozenData": [{"Data": False}]}}],
+        "events": [
+            {"message": "ViewerFrozenMessage", "body": {"FrozenData": [{"Data": False}]}},
+            {"message": "NotTemplated", "body": {"foo": {"bar": True}}},
+        ],
     }
 
     async def asyncSetUp(self):
@@ -151,9 +154,12 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
     async def test_eq(self):
         await self._log_client_in(self.client)
         with self.client.session.message_handler.subscribe_async(
-                ("ViewerFrozenMessage",),
+                ("ViewerFrozenMessage", "NotTemplated"),
         ) as get_msg:
             assert (await _soon(get_msg)).name == "ViewerFrozenMessage"
+            msg = await _soon(get_msg)
+            assert msg.name == "NotTemplated"
+            assert msg["EventData"]["foo"]["bar"] == 1
 
     async def test_inventory_manager(self):
         await self._log_client_in(self.client)
