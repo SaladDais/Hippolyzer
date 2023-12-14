@@ -128,7 +128,7 @@ class HippoClientRegion(BaseClientRegion):
 
     async def connect(self, main_region: bool = False):
         # Disconnect first if we're already connected
-        await self.disconnect()
+        self.disconnect()
 
         # TODO: What happens if a circuit code is invalid, again? Does it just refuse to ACK?
         await self.circuit.send_reliable(
@@ -198,13 +198,16 @@ class HippoClientRegion(BaseClientRegion):
 
         self._eq_task = asyncio.get_event_loop().create_task(self._poll_event_queue())
 
-    async def disconnect(self):
+    def disconnect(self) -> None:
+        """Simulator has gone away, disconnect. Should be synchronous"""
         if self._eq_task is not None:
             self._eq_task.cancel()
         self._eq_task = None
         self.circuit.disconnect()
+        self.objects.clear()
+        # TODO: cancel XFers and Transfers and whatnot
 
-    async def complete_agent_movement(self):
+    async def complete_agent_movement(self) -> None:
         await self.circuit.send_reliable(
             Message(
                 "CompleteAgentMovement",
@@ -242,6 +245,8 @@ class HippoClientRegion(BaseClientRegion):
                             # as a body, but just to be sure...
                             msg.add_block(Block("EventData", Data=event["body"]))
                         msg.synthetic = True
+                    msg.sender = self.circuit_addr
+                    msg.direction = Direction.IN
                     self.session().message_handler.handle(msg)
                     self.message_handler.handle(msg)
                 ack = polled["id"]
@@ -275,9 +280,19 @@ class HippoClientSession(BaseClientSession):
         self.protocol: Optional[HippoClientProtocol] = None
         self.message_handler.take_by_default = False
 
+        self.message_handler.subscribe("DisableSimulator", lambda msg: self.unregister_region(msg.sender))
+
     def register_region(self, circuit_addr: Optional[ADDR_TUPLE] = None, seed_url: Optional[str] = None,
                         handle: Optional[int] = None) -> HippoClientRegion:
         return super().register_region(circuit_addr, seed_url, handle)  # type:ignore
+
+    def unregister_region(self, circuit_addr: ADDR_TUPLE) -> None:
+        for i, region in self.regions:
+            if region.circuit_addr == circuit_addr:
+                self.regions[i].disconnect()
+                del self.regions[i]
+                return
+        raise KeyError(f"No such region for {circuit_addr!r}")
 
     async def open_circuit(self, circuit_addr: ADDR_TUPLE):
         for region in self.regions:
@@ -563,7 +578,7 @@ class HippoClient(BaseClientSessionManager):
         session = self.session
         self.session = None
         for region in session.regions:
-            await region.disconnect()
+            region.disconnect()
         session.transport.close()
 
     def send_chat(self, message: Union[bytes, str], channel: int = 0, chat_type=ChatType.NORMAL) -> asyncio.Future:
