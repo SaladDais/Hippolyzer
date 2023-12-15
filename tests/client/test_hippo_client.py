@@ -148,7 +148,7 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
         with self.server_handler.subscribe_async(
                 ("*",),
         ) as get_msg:
-            await self.client.logout()
+            self.client.logout()
             assert (await _soon(get_msg)).name == "LogoutRequest"
 
     async def test_eq(self):

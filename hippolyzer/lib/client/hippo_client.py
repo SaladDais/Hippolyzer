@@ -174,7 +174,6 @@ class HippoClientRegion(BaseClientRegion):
                 )
             )
         )
-        # TODO: do we need to send this for every region or just the first?
         await self.circuit.send_reliable(
             Message(
                 "AgentThrottle",
@@ -280,21 +279,24 @@ class HippoClientSession(BaseClientSession):
         self.protocol: Optional[HippoClientProtocol] = None
         self.message_handler.take_by_default = False
 
-        self.message_handler.subscribe("DisableSimulator", lambda msg: self.unregister_region(msg.sender))
+        for msg_name in ("DisableSimulator", "CloseCircuit"):
+            self.message_handler.subscribe(msg_name, lambda msg: self.unregister_region(msg.sender))
+        for msg_name in ("EnableSimulator", "TeleportFinish", "CrossedRegion", "EstablishAgentCommunication"):
+            self.message_handler.subscribe(msg_name, self._handle_register_region_message)
 
     def register_region(self, circuit_addr: Optional[ADDR_TUPLE] = None, seed_url: Optional[str] = None,
                         handle: Optional[int] = None) -> HippoClientRegion:
         return super().register_region(circuit_addr, seed_url, handle)  # type:ignore
 
     def unregister_region(self, circuit_addr: ADDR_TUPLE) -> None:
-        for i, region in self.regions:
+        for i, region in enumerate(self.regions):
             if region.circuit_addr == circuit_addr:
                 self.regions[i].disconnect()
                 del self.regions[i]
                 return
         raise KeyError(f"No such region for {circuit_addr!r}")
 
-    async def open_circuit(self, circuit_addr: ADDR_TUPLE):
+    def open_circuit(self, circuit_addr: ADDR_TUPLE):
         for region in self.regions:
             if region.circuit_addr == circuit_addr:
                 valid_circuit = False
@@ -308,6 +310,41 @@ class HippoClientSession(BaseClientSession):
                     valid_circuit = True
                 return valid_circuit
         return False
+
+    def _handle_register_region_message(self, msg: Message):
+        # Handle events that inform us about new regions
+        sim_addr, sim_handle, sim_seed = None, None, None
+        moving_to_region = True
+        print(msg)
+        # Sim is asking us to talk to a neighbour
+        if msg.name == "EstablishAgentCommunication":
+            ip_split = msg["EventData"]["sim-ip-and-port"].split(":")
+            sim_addr = (ip_split[0], int(ip_split[1]))
+            sim_seed = msg["EventData"]["seed-capability"]
+        # We teleported or cross region, opening comms to new sim
+        elif msg.name in ("TeleportFinish", "CrossedRegion"):
+            sim_block = msg.get_block("RegionData", msg.get_block("Info"))[0]
+            sim_addr = (sim_block["SimIP"], sim_block["SimPort"])
+            sim_handle = sim_block["RegionHandle"]
+            sim_seed = sim_block["SeedCapability"]
+            moving_to_region = True
+        # Sim telling us about a neighbour
+        elif msg.name == "EnableSimulator":
+            sim_block = msg["SimulatorInfo"][0]
+            sim_addr = (sim_block["IP"], sim_block["Port"])
+            sim_handle = sim_block["Handle"]
+
+        # Register a region if this message was telling us about a new one
+        if sim_addr is not None:
+            region = self.register_region(sim_addr, handle=sim_handle, seed_url=sim_seed)
+            need_connect = not (region.circuit and region.circuit.is_alive) or moving_to_region
+            self.open_circuit(sim_addr)
+            print(need_connect, moving_to_region, region, msg)
+            if need_connect:
+                asyncio.get_event_loop().create_task(region.connect(main_region=moving_to_region))
+            elif moving_to_region:
+                # No need to connect, but we do need to complete agent movement.
+                asyncio.get_event_loop().create_task(region.complete_agent_movement())
 
 
 class HippoClient(BaseClientSessionManager):
@@ -478,8 +515,7 @@ class HippoClient(BaseClientSessionManager):
 
     async def aclose(self):
         try:
-            if self.session:
-                await self.logout()
+            self.logout()
         finally:
             if self.http_session:
                 await self.http_session.close()
@@ -487,9 +523,12 @@ class HippoClient(BaseClientSessionManager):
 
     def __del__(self):
         # Make sure we don't leak resources if someone was lazy.
-        if self.http_session:
-            asyncio.get_event_loop_policy().get_event_loop().create_task(self.http_session.close)
-            self.http_session = None
+        try:
+            self.logout()
+        finally:
+            if self.http_session:
+                asyncio.get_event_loop_policy().get_event_loop().create_task(self.http_session.close)
+                self.http_session = None
 
     async def _create_transport(self) -> Tuple[AbstractUDPTransport, HippoClientProtocol]:
         loop = asyncio.get_event_loop_policy().get_event_loop()
@@ -556,11 +595,11 @@ class HippoClient(BaseClientSessionManager):
         self.session.transport, self.session.protocol = await self._create_transport()
         self._resend_task = asyncio.create_task(self._attempt_resends())
 
-        assert await self.session.open_circuit(self.session.regions[-1].circuit_addr)
+        assert self.session.open_circuit(self.session.regions[-1].circuit_addr)
         region = self.session.regions[-1]
         await region.connect(main_region=True)
 
-    async def logout(self):
+    def logout(self):
         if not self.session:
             return
         if self._resend_task:
