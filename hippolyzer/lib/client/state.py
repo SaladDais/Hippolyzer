@@ -70,7 +70,7 @@ class BaseClientRegion(ConnectionHolder, abc.ABC):
         self.objects.clear()
 
     def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self.name)
+        return "<%s %s (%r)>" % (self.__class__.__name__, self.name, self.handle)
 
 
 class BaseClientSessionManager:

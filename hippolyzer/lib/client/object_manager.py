@@ -50,7 +50,7 @@ class ClientObjectManager:
     Object manager for a specific region
     """
 
-    __slots__ = ("_region", "_world_objects", "state")
+    __slots__ = ("_region", "_world_objects", "state", "__weakref__")
 
     def __init__(self, region: BaseClientRegion):
         self._region: BaseClientRegion = proxify(region)

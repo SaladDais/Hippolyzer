@@ -113,7 +113,7 @@ class HippoClientRegion(BaseClientRegion):
         self.xfer_manager = XferManager(proxify(self), self.session().secure_session_id)
         self.transfer_manager = TransferManager(proxify(self), session.agent_id, session.id)
         self.asset_uploader = AssetUploader(proxify(self))
-        self.objects = ClientObjectManager(proxify(self))
+        self.objects = ClientObjectManager(self)
         self._llsd_serializer = LLSDMessageSerializer()
         self._eq_task: Optional[asyncio.Task] = None
 
@@ -128,7 +128,8 @@ class HippoClientRegion(BaseClientRegion):
 
     async def connect(self, main_region: bool = False):
         # Disconnect first if we're already connected
-        self.disconnect()
+        if self.circuit and self.circuit.is_alive:
+            self.disconnect()
 
         # TODO: What happens if a circuit code is invalid, again? Does it just refuse to ACK?
         await self.circuit.send_reliable(
@@ -161,6 +162,7 @@ class HippoClientRegion(BaseClientRegion):
             await self.complete_agent_movement()
 
         self.name = str((await region_handshake_fut)["RegionInfo"][0]["SimName"])
+        self.session().objects.track_region_objects(self.handle)
         await self.circuit.send_reliable(
             Message(
                 "RegionHandshakeReply",
@@ -314,8 +316,7 @@ class HippoClientSession(BaseClientSession):
     def _handle_register_region_message(self, msg: Message):
         # Handle events that inform us about new regions
         sim_addr, sim_handle, sim_seed = None, None, None
-        moving_to_region = True
-        print(msg)
+        moving_to_region = False
         # Sim is asking us to talk to a neighbour
         if msg.name == "EstablishAgentCommunication":
             ip_split = msg["EventData"]["sim-ip-and-port"].split(":")
@@ -339,7 +340,6 @@ class HippoClientSession(BaseClientSession):
             region = self.register_region(sim_addr, handle=sim_handle, seed_url=sim_seed)
             need_connect = not (region.circuit and region.circuit.is_alive) or moving_to_region
             self.open_circuit(sim_addr)
-            print(need_connect, moving_to_region, region, msg)
             if need_connect:
                 asyncio.get_event_loop().create_task(region.connect(main_region=moving_to_region))
             elif moving_to_region:
