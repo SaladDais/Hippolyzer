@@ -73,7 +73,7 @@ class ClientObjectManager:
         if self._region.handle is not None:
             # We're tracked by the world object manager, tell it to untrack
             # any objects that we owned
-            self._world_objects.clear_region_objects(self._region.handle)
+            self._world_objects.untrack_region_objects(self._region.handle)
 
     def lookup_localid(self, localid: int) -> Optional[Object]:
         return self.state.lookup_localid(localid)
@@ -240,12 +240,14 @@ class ClientWorldObjectManager:
         if self._get_region_manager(handle) is None:
             self._region_managers[handle] = proxify(self._session.region_by_handle(handle).objects)
 
-    def clear_region_objects(self, handle: int):
+    def untrack_region_objects(self, handle: int):
         """Handle signal that a region object manager was just cleared"""
         # Make sure they're gone from our lookup table
         for obj in tuple(self._fullid_lookup.values()):
             if obj.RegionHandle == handle:
                 del self._fullid_lookup[obj.FullID]
+        if handle in self._region_managers:
+            del self._region_managers[handle]
         self._rebuild_avatar_objects()
 
     def _get_region_manager(self, handle: int) -> Optional[ClientObjectManager]:
@@ -290,9 +292,9 @@ class ClientWorldObjectManager:
             obj = obj.Parent
 
     def clear(self):
+        for handle in tuple(self._region_managers.keys()):
+            self.untrack_region_objects(handle)
         self._avatars.clear()
-        for region_mgr in self._region_managers.values():
-            region_mgr.clear()
         if self._fullid_lookup:
             LOG.warning(f"Had {len(self._fullid_lookup)} objects not tied to a region manager!")
         self._fullid_lookup.clear()
