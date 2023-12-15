@@ -32,7 +32,7 @@ _K = TypeVar("_K", bound=Hashable)
 MESSAGE_HANDLER = Callable[[_T], Any]
 PREDICATE = Callable[[_T], bool]
 # TODO: Can't do `Iterable[Union[_K, Literal["*"]]` apparently?
-MESSAGE_NAMES = Iterable[Union[_K, LiteralString]]
+MESSAGE_NAMES = Iterable[Union[_K, str]]
 
 
 class MessageHandler(Generic[_T, _K]):
