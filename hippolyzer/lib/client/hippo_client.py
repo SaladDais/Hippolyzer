@@ -12,6 +12,7 @@ from typing import *
 import aiohttp
 import multidict
 
+from hippolyzer.lib.base.datatypes import Vector3
 from hippolyzer.lib.base.helpers import proxify, get_resource_filename
 from hippolyzer.lib.base.message.circuit import Circuit
 from hippolyzer.lib.base.message.llsd_msg_serializer import LLSDMessageSerializer
@@ -626,6 +627,42 @@ class HippoClient(BaseClientSessionManager):
             Block("AgentData", SessionID=self.session.id, AgentID=self.session.agent_id),
             Block("ChatData", Message=message, Channel=channel, Type=chat_type),
         ))
+
+    def teleport(self, region_handle: int, local_pos=Vector3(0, 0, 0)) -> asyncio.Future:
+        """Synchronously requests a teleport, returning a Future for teleport completion"""
+        teleport_fut = asyncio.Future()
+
+        # Send request synchronously, await asynchronously.
+        send_fut = self.main_circuit.send_reliable(
+            Message(
+                'TeleportLocationRequest',
+                Block('AgentData', AgentID=self.session.agent_id, SessionID=self.session.id),
+                Block('Info', RegionHandle=region_handle, Position=local_pos, fill_missing=True),
+            )
+        )
+
+        async def _do_teleport():
+            # Subscribe first, we may receive an event before we receive the packet ACK.
+            with self.session.message_handler.subscribe_async(
+                    ("TeleportLocal", "TeleportFailed", "TeleportFinish"),
+            ) as get_tp_done_msg:
+                try:
+                    await send_fut
+                except Exception as e:
+                    # Pass along error if we failed to send reliably.
+                    teleport_fut.set_exception(e)
+                    return
+
+                # Wait for a message that says we're done the teleport
+                msg = await get_tp_done_msg()
+                if msg.name == "TeleportFailed":
+                    teleport_fut.set_exception(RuntimeError("Failed to teleport"))
+                else:
+                    teleport_fut.set_result(None)
+
+        asyncio.get_event_loop().create_task(_do_teleport())
+
+        return teleport_fut
 
     async def _attempt_resends(self):
         while True:
