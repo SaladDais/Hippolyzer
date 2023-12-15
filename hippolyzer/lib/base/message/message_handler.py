@@ -31,7 +31,8 @@ _T = TypeVar("_T")
 _K = TypeVar("_K", bound=Hashable)
 MESSAGE_HANDLER = Callable[[_T], Any]
 PREDICATE = Callable[[_T], bool]
-MESSAGE_NAMES = Iterable[_K]
+# TODO: Can't do `Iterable[Union[_K, Literal["*"]]` apparently?
+MESSAGE_NAMES = Iterable[Union[_K, LiteralString]]
 
 
 class MessageHandler(Generic[_T, _K]):
@@ -43,7 +44,7 @@ class MessageHandler(Generic[_T, _K]):
         LOG.debug('Creating a monitor for %s' % message_name)
         return self.handlers.setdefault(message_name, Event())
 
-    def subscribe(self, message_name: _K, handler: MESSAGE_HANDLER) -> Event:
+    def subscribe(self, message_name: Union[_K, Literal["*"]], handler: MESSAGE_HANDLER) -> Event:
         notifier = self.register(message_name)
         notifier.subscribe(handler)
         return notifier
@@ -145,7 +146,7 @@ class MessageHandler(Generic[_T, _K]):
         # Always try to call wildcard handlers
         self._handle_type('*', message)
 
-    def _handle_type(self, name: _K, message: _T):
+    def _handle_type(self, name: Union[_K, Literal["*"]], message: _T):
         handler = self.handlers.get(name)
         if not handler:
             return

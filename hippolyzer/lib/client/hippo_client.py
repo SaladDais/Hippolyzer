@@ -103,7 +103,7 @@ class HippoClientRegion(BaseClientRegion):
     def __init__(self, circuit_addr, seed_cap: str, session: HippoClientSession, handle=None):
         super().__init__()
         self.caps = multidict.MultiDict()
-        self.message_handler = MessageHandler(take_by_default=False)
+        self.message_handler: MessageHandler[Message, str] = MessageHandler(take_by_default=False)
         self.circuit_addr = circuit_addr
         self.handle = handle
         if seed_cap:

@@ -105,7 +105,7 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
     }
 
     async def asyncSetUp(self):
-        self.server_handler = MessageHandler()
+        self.server_handler: MessageHandler[Message, str] = MessageHandler()
         self.server_transport = PacketForwardingTransport()
         self.server_circuit = Circuit(("127.0.0.1", 2), ("127.0.0.1", 99), self.server_transport)
         self.server = MockServer(self.server_circuit, self.server_handler)
