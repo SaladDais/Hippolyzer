@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import functools
 import hashlib
 from importlib.metadata import version
 import logging
@@ -117,7 +118,7 @@ class HippoClientRegion(BaseClientRegion):
         self.objects = ClientObjectManager(self)
         self._llsd_serializer = LLSDMessageSerializer()
         self._eq_task: Optional[asyncio.Task] = None
-        self.connected: asyncio.Event = asyncio.Event()
+        self.connected: asyncio.Future = asyncio.Future()
 
         self.message_handler.subscribe("StartPingCheck", self._handle_ping_check)
 
@@ -128,11 +129,27 @@ class HippoClientRegion(BaseClientRegion):
     def cap_urls(self) -> multidict.MultiDict:
         return self.caps.copy()
 
+    @staticmethod
+    def _set_connected_on_error(func):
+        @functools.wraps(func)
+        async def _wrapper(self, *args, **kwargs):
+            try:
+                return await func(self, *args, **kwargs)
+            except Exception as e:
+                # Let consumers who were `await`ing the connected signal know there was an error
+                if not self.connected.done():
+                    self.connected.set_exception(e)
+                raise
+
+        return _wrapper
+
+    @_set_connected_on_error
     async def connect(self, main_region: bool = False):
         # Disconnect first if we're already connected
         if self.circuit and self.circuit.is_alive:
             self.disconnect()
-        self.connected.clear()
+        if self.connected.done():
+            self.connected = asyncio.Future()
 
         # TODO: What happens if a circuit code is invalid, again? Does it just refuse to ACK?
         await self.circuit.send_reliable(
@@ -201,7 +218,7 @@ class HippoClientRegion(BaseClientRegion):
             self.update_caps(await seed_resp.read_llsd())
 
         self._eq_task = asyncio.get_event_loop().create_task(self._poll_event_queue())
-        self.connected.set()
+        self.connected.set_result(None)
 
     def disconnect(self) -> None:
         """Simulator has gone away, disconnect. Should be synchronous"""
@@ -210,7 +227,8 @@ class HippoClientRegion(BaseClientRegion):
         self._eq_task = None
         self.circuit.disconnect()
         self.objects.clear()
-        self.connected.clear()
+        if self.connected.done():
+            self.connected = asyncio.Future()
         # TODO: cancel XFers and Transfers and whatnot
 
     async def complete_agent_movement(self) -> None:
@@ -670,10 +688,9 @@ class HippoClient(BaseClientSessionManager):
 
                     # Region should be registered by this point, wait for it to connect
                     try:
-                        # We won't get an error here if the complete_agent_movement() fails, since
-                        # someone else does the connect(), just fail if it takes longer than 30 seconds.
-                        await asyncio.wait_for(self.session.region_by_handle(region_handle).connected.wait(), 30)
-                    except asyncio.TimeoutError as e:
+                        # just fail if it takes longer than 30 seconds for the handshake to complete
+                        await asyncio.wait_for(self.session.region_by_handle(region_handle).connected, 30)
+                    except Exception as e:
                         teleport_fut.set_exception(e)
                         return
                     teleport_fut.set_result(None)
