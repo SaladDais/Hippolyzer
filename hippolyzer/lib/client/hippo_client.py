@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import functools
 import hashlib
 from importlib.metadata import version
 import logging
@@ -101,20 +100,6 @@ class HippoClientProtocol(asyncio.DatagramProtocol):
         region.message_handler.handle(message)
 
 
-def _set_connected_on_error(func: Callable):
-    @functools.wraps(func)
-    async def _wrapper(inner_self: HippoClientRegion, *args, **kwargs):
-        try:
-            return await func(inner_self, *args, **kwargs)
-        except Exception as e:
-            # Let consumers who were `await`ing the connected signal know there was an error
-            if not inner_self.connected.done():
-                inner_self.connected.set_exception(e)
-            raise
-
-    return _wrapper
-
-
 class HippoClientRegion(BaseClientRegion):
     def __init__(self, circuit_addr, seed_cap: str, session: HippoClientSession, handle=None):
         super().__init__()
@@ -143,7 +128,6 @@ class HippoClientRegion(BaseClientRegion):
     def cap_urls(self) -> multidict.MultiDict:
         return self.caps.copy()
 
-    @_set_connected_on_error
     async def connect(self, main_region: bool = False):
         # Disconnect first if we're already connected
         if self.circuit and self.circuit.is_alive:
@@ -151,73 +135,80 @@ class HippoClientRegion(BaseClientRegion):
         if self.connected.done():
             self.connected = asyncio.Future()
 
-        # TODO: What happens if a circuit code is invalid, again? Does it just refuse to ACK?
-        await self.circuit.send_reliable(
-            Message(
-                "UseCircuitCode",
-                Block(
-                    "CircuitCode",
-                    Code=self.session().circuit_code,
-                    SessionID=self.session().id,
-                    ID=self.session().agent_id,
-                ),
+        try:
+            # TODO: What happens if a circuit code is invalid, again? Does it just refuse to ACK?
+            await self.circuit.send_reliable(
+                Message(
+                    "UseCircuitCode",
+                    Block(
+                        "CircuitCode",
+                        Code=self.session().circuit_code,
+                        SessionID=self.session().id,
+                        ID=self.session().agent_id,
+                    ),
+                )
             )
-        )
-        self.circuit.is_alive = True
+            self.circuit.is_alive = True
 
-        # Clear out any old caps urls except the seed URL, we're about to fetch new caps.
-        seed_url = self.caps["Seed"]
-        self.caps.clear()
-        self.caps["Seed"] = seed_url
+            # Clear out any old caps urls except the seed URL, we're about to fetch new caps.
+            seed_url = self.caps["Seed"]
+            self.caps.clear()
+            self.caps["Seed"] = seed_url
 
-        # Kick this off and await it later
-        seed_resp_fut = self.caps_client.post("Seed", llsd=list(self.session().session_manager.SUPPORTED_CAPS))
+            # Kick this off and await it later
+            seed_resp_fut = self.caps_client.post("Seed", llsd=list(self.session().session_manager.SUPPORTED_CAPS))
 
-        # Register first so we can handle it even if the ack happens after the message is sent
-        region_handshake_fut = self.message_handler.wait_for(("RegionHandshake",))
+            # Register first so we can handle it even if the ack happens after the message is sent
+            region_handshake_fut = self.message_handler.wait_for(("RegionHandshake",))
 
-        # If we're connecting to the main region, it won't even send us a RegionHandshake until we
-        # first send a CompleteAgentMovement.
-        if main_region:
-            await self.complete_agent_movement()
+            # If we're connecting to the main region, it won't even send us a RegionHandshake until we
+            # first send a CompleteAgentMovement.
+            if main_region:
+                await self.complete_agent_movement()
 
-        self.name = str((await region_handshake_fut)["RegionInfo"][0]["SimName"])
-        self.session().objects.track_region_objects(self.handle)
-        await self.circuit.send_reliable(
-            Message(
-                "RegionHandshakeReply",
-                Block("AgentData", AgentID=self.session().agent_id, SessionID=self.session().id),
-                Block(
-                    "RegionInfo",
-                    Flags=(
-                        RegionHandshakeReplyFlags.SUPPORTS_SELF_APPEARANCE
-                        | RegionHandshakeReplyFlags.VOCACHE_IS_EMPTY
+            self.name = str((await region_handshake_fut)["RegionInfo"][0]["SimName"])
+            self.session().objects.track_region_objects(self.handle)
+            await self.circuit.send_reliable(
+                Message(
+                    "RegionHandshakeReply",
+                    Block("AgentData", AgentID=self.session().agent_id, SessionID=self.session().id),
+                    Block(
+                        "RegionInfo",
+                        Flags=(
+                            RegionHandshakeReplyFlags.SUPPORTS_SELF_APPEARANCE
+                            | RegionHandshakeReplyFlags.VOCACHE_IS_EMPTY
+                        )
                     )
                 )
             )
-        )
-        await self.circuit.send_reliable(
-            Message(
-                "AgentThrottle",
-                Block(
-                    "AgentData",
-                    AgentID=self.session().agent_id,
-                    SessionID=self.session().id,
-                    CircuitCode=self.session().circuit_code,
-                ),
-                Block(
-                    "Throttle",
-                    GenCounter=0,
-                    # Reasonable defaults, I guess
-                    Throttles_=[207360.0, 165376.0, 33075.19921875, 33075.19921875, 682700.75, 682700.75, 269312.0],
+            await self.circuit.send_reliable(
+                Message(
+                    "AgentThrottle",
+                    Block(
+                        "AgentData",
+                        AgentID=self.session().agent_id,
+                        SessionID=self.session().id,
+                        CircuitCode=self.session().circuit_code,
+                    ),
+                    Block(
+                        "Throttle",
+                        GenCounter=0,
+                        # Reasonable defaults, I guess
+                        Throttles_=[207360.0, 165376.0, 33075.19921875, 33075.19921875, 682700.75, 682700.75, 269312.0],
+                    )
                 )
             )
-        )
-        async with seed_resp_fut as seed_resp:
-            seed_resp.raise_for_status()
-            self.update_caps(await seed_resp.read_llsd())
+            async with seed_resp_fut as seed_resp:
+                seed_resp.raise_for_status()
+                self.update_caps(await seed_resp.read_llsd())
 
-        self._eq_task = asyncio.get_event_loop().create_task(self._poll_event_queue())
+            self._eq_task = asyncio.get_event_loop().create_task(self._poll_event_queue())
+        except Exception as e:
+            # Let consumers who were `await`ing the connected signal know there was an error
+            if not self.connected.done():
+                self.connected.set_exception(e)
+            raise
+
         self.connected.set_result(None)
 
     def disconnect(self) -> None:
