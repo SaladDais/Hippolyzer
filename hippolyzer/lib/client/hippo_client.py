@@ -352,7 +352,9 @@ class HippoClientSession(BaseClientSession):
         # Register a region if this message was telling us about a new one
         if sim_addr is not None:
             region = self.register_region(sim_addr, handle=sim_handle, seed_url=sim_seed)
-            need_connect = not (region.circuit and region.circuit.is_alive) or moving_to_region
+            # We can't actually connect without a sim seed, mind you, when we receive and EnableSimulator
+            # we have to wait for the EstablishAgentCommunication to actually connect.
+            need_connect = (sim_seed and not (region.circuit and region.circuit.is_alive)) or moving_to_region
             self.open_circuit(sim_addr)
             if need_connect:
                 asyncio.get_event_loop().create_task(region.connect(main_region=moving_to_region))
