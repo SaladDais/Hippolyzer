@@ -297,7 +297,7 @@ class HippoClientSession(BaseClientSession):
 
         for msg_name in ("DisableSimulator", "CloseCircuit"):
             self.message_handler.subscribe(msg_name, lambda msg: self.unregister_region(msg.sender))
-        for msg_name in ("EnableSimulator", "TeleportFinish", "CrossedRegion", "EstablishAgentCommunication"):
+        for msg_name in ("TeleportFinish", "CrossedRegion", "EstablishAgentCommunication"):
             self.message_handler.subscribe(msg_name, self._handle_register_region_message)
 
     def register_region(self, circuit_addr: Optional[ADDR_TUPLE] = None, seed_url: Optional[str] = None,
@@ -344,17 +344,24 @@ class HippoClientSession(BaseClientSession):
             sim_seed = sim_block["SeedCapability"]
             moving_to_region = True
         # Sim telling us about a neighbour
-        elif msg.name == "EnableSimulator":
-            sim_block = msg["SimulatorInfo"][0]
-            sim_addr = (sim_block["IP"], sim_block["Port"])
-            sim_handle = sim_block["Handle"]
+        # elif msg.name == "EnableSimulator":
+        #     sim_block = msg["SimulatorInfo"][0]
+        #     sim_addr = (sim_block["IP"], sim_block["Port"])
+        #     sim_handle = sim_block["Handle"]
+        # TODO: EnableSimulator is a little weird. It creates a region and establishes a
+        #  circuit, but with no seed cap. The viewer will send UseCircuitCode and all that,
+        #  but it's totally workable to just wait for an EstablishAgentCommunication to do that,
+        #  since that's when the region actually shows up. I guess EnableSimulator just gives the
+        #  viewer some lead time to set up the circuit before the region is actually shown through
+        #  EstablishAgentCommunication? Either way, messing around with regions that don't have seed
+        #  caps is annoying, so let's just not do it.
 
         # Register a region if this message was telling us about a new one
         if sim_addr is not None:
             region = self.register_region(sim_addr, handle=sim_handle, seed_url=sim_seed)
             # We can't actually connect without a sim seed, mind you, when we receive and EnableSimulator
             # we have to wait for the EstablishAgentCommunication to actually connect.
-            need_connect = (sim_seed and not (region.circuit and region.circuit.is_alive)) or moving_to_region
+            need_connect = (region.circuit and region.circuit.is_alive) or moving_to_region
             self.open_circuit(sim_addr)
             if need_connect:
                 asyncio.get_event_loop().create_task(region.connect(main_region=moving_to_region))
