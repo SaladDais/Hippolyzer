@@ -117,6 +117,7 @@ class HippoClientRegion(BaseClientRegion):
         self.objects = ClientObjectManager(self)
         self._llsd_serializer = LLSDMessageSerializer()
         self._eq_task: Optional[asyncio.Task] = None
+        self.connected: asyncio.Event = asyncio.Event()
 
         self.message_handler.subscribe("StartPingCheck", self._handle_ping_check)
 
@@ -131,6 +132,7 @@ class HippoClientRegion(BaseClientRegion):
         # Disconnect first if we're already connected
         if self.circuit and self.circuit.is_alive:
             self.disconnect()
+        self.connected.clear()
 
         # TODO: What happens if a circuit code is invalid, again? Does it just refuse to ACK?
         await self.circuit.send_reliable(
@@ -199,6 +201,7 @@ class HippoClientRegion(BaseClientRegion):
             self.update_caps(await seed_resp.read_llsd())
 
         self._eq_task = asyncio.get_event_loop().create_task(self._poll_event_queue())
+        self.connected.set()
 
     def disconnect(self) -> None:
         """Simulator has gone away, disconnect. Should be synchronous"""
@@ -207,6 +210,7 @@ class HippoClientRegion(BaseClientRegion):
         self._eq_task = None
         self.circuit.disconnect()
         self.objects.clear()
+        self.connected.clear()
         # TODO: cancel XFers and Transfers and whatnot
 
     async def complete_agent_movement(self) -> None:
@@ -641,7 +645,7 @@ class HippoClient(BaseClientSessionManager):
             )
         )
 
-        async def _do_teleport():
+        async def _handle_teleport():
             # Subscribe first, we may receive an event before we receive the packet ACK.
             with self.session.message_handler.subscribe_async(
                     ("TeleportLocal", "TeleportFailed", "TeleportFinish"),
@@ -657,10 +661,24 @@ class HippoClient(BaseClientSessionManager):
                 msg = await get_tp_done_msg()
                 if msg.name == "TeleportFailed":
                     teleport_fut.set_exception(RuntimeError("Failed to teleport"))
-                else:
+                elif msg.name == "TeleportLocal":
+                    # Within the sim, nothing else we need to do
+                    teleport_fut.set_result(None)
+                elif msg.name == "TeleportFinish":
+                    # Non-local TP, wait until we receive the AgentMovementComplete to
+                    # set the finished signal.
+
+                    # Region should be registered by this point, wait for it to connect
+                    try:
+                        # We won't get an error here if the complete_agent_movement() fails, since
+                        # someone else does the connect(), just fail if it takes longer than 30 seconds.
+                        await asyncio.wait_for(self.session.region_by_handle(region_handle).connected.wait(), 30)
+                    except asyncio.TimeoutError as e:
+                        teleport_fut.set_exception(e)
+                        return
                     teleport_fut.set_result(None)
 
-        asyncio.get_event_loop().create_task(_do_teleport())
+        asyncio.get_event_loop().create_task(_handle_teleport())
 
         return teleport_fut
 
