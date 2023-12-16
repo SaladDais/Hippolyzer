@@ -101,6 +101,20 @@ class HippoClientProtocol(asyncio.DatagramProtocol):
         region.message_handler.handle(message)
 
 
+def _set_connected_on_error(func: Callable):
+    @functools.wraps(func)
+    async def _wrapper(inner_self: HippoClientRegion, *args, **kwargs):
+        try:
+            return await func(inner_self, *args, **kwargs)
+        except Exception as e:
+            # Let consumers who were `await`ing the connected signal know there was an error
+            if not inner_self.connected.done():
+                inner_self.connected.set_exception(e)
+            raise
+
+    return _wrapper
+
+
 class HippoClientRegion(BaseClientRegion):
     def __init__(self, circuit_addr, seed_cap: str, session: HippoClientSession, handle=None):
         super().__init__()
@@ -128,20 +142,6 @@ class HippoClientRegion(BaseClientRegion):
     @property
     def cap_urls(self) -> multidict.MultiDict:
         return self.caps.copy()
-
-    @staticmethod
-    def _set_connected_on_error(func):
-        @functools.wraps(func)
-        async def _wrapper(self, *args, **kwargs):
-            try:
-                return await func(self, *args, **kwargs)
-            except Exception as e:
-                # Let consumers who were `await`ing the connected signal know there was an error
-                if not self.connected.done():
-                    self.connected.set_exception(e)
-                raise
-
-        return _wrapper
 
     @_set_connected_on_error
     async def connect(self, main_region: bool = False):
