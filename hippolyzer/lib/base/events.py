@@ -38,6 +38,11 @@ class Event:
 
         return self
 
+    def __await__(self):
+        fut = asyncio.Future()
+        self.subscribe(fut.set_result, one_shot=True)
+        return fut.__await__()
+
     def _handler_key(self, handler):
         return handler[:3]
 

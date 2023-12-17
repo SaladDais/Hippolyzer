@@ -44,10 +44,9 @@ class MessageHandler(Generic[_T, _K]):
         LOG.debug('Creating a monitor for %s' % message_name)
         return self.handlers.setdefault(message_name, Event())
 
-    def subscribe(self, message_name: Union[_K, Literal["*"]], handler: MESSAGE_HANDLER) -> Event:
+    def subscribe(self, message_name: Union[_K, Literal["*"]], handler: MESSAGE_HANDLER):
         notifier = self.register(message_name)
         notifier.subscribe(handler)
-        return notifier
 
     def _subscribe_all(self, message_names: MESSAGE_NAMES, handler: MESSAGE_HANDLER,
                        predicate: Optional[PREDICATE] = None) -> List[Event]:
