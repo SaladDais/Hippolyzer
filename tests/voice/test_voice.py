@@ -205,7 +205,7 @@ class TestVoiceClient(unittest.IsolatedAsyncioTestCase):
                 "ConnectorHandle": 2,
             }
         })
-        await self.client.ready
+        await self.client.ready.wait()
 
     async def test_create_connector(self):
         await self._serve_connector_setup()
@@ -216,6 +216,12 @@ class TestVoiceClient(unittest.IsolatedAsyncioTestCase):
         async def _handle_login():
             msg = await self._expect_message("Account.Login.1")
             self.assertEqual("foo", msg.data["AccountName"])
+            await self.server_connection.send_event("AccountLoginStateChangeEvent", {
+                "AccountHandle": 2,
+                "StatusCode": 200,
+                "StatusString": "OK",
+                "State": 1,
+            })
             await self.server_connection.send_response(msg.request_id, msg.name, {
                 "ReturnCode": 0,
                 "Results": {
@@ -224,12 +230,6 @@ class TestVoiceClient(unittest.IsolatedAsyncioTestCase):
                     "AccountHandle": 2,
                     "DisplayName": "foo",
                 }
-            })
-            await self.server_connection.send_event("AccountLoginStateChangeEvent", {
-                "AccountHandle": 2,
-                "StatusCode": 200,
-                "StatusString": "OK",
-                "State": 1,
             })
 
         login_task = asyncio.get_event_loop().create_task(_handle_login())

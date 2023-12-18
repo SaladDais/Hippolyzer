@@ -46,8 +46,8 @@ class VoiceClient:
         self._host = host
         self._port = port
 
-        self.logged_in = Event()
-        self.ready = Event()
+        self.logged_in = asyncio.Event()
+        self.ready = asyncio.Event()
         self.session_added = Event()
         self.channel_info_updated = Event()
         self.participant_added = Event()
@@ -138,7 +138,7 @@ class VoiceClient:
 
         client = cls(host, port)
         await client.create_vivox_connection()
-        await client.ready
+        await client.ready.wait()
         return client
 
     async def create_vivox_connection(self):
@@ -174,7 +174,7 @@ class VoiceClient:
         })
 
         self._connector_handle = connector_resp['Results']['ConnectorHandle']
-        self.ready.notify(None)
+        self.ready.set()
 
     async def login(self, username: Union[uuid.UUID, str], password: str):
         # UUID, convert to Vivox format
@@ -202,7 +202,7 @@ class VoiceClient:
             raise Exception(resp)
 
         self._display_name = urllib.parse.unquote(resp["Results"]["DisplayName"])
-        await self.logged_in
+        await self.logged_in.wait()
 
         return resp
 
@@ -215,6 +215,7 @@ class VoiceClient:
                 "AccountHandle": self._account_handle,
             })
             self._account_handle = None
+            self.logged_in.clear()
 
     async def join_session(self, uri: str, region_handle: Optional[int] = None):
         if self._session_handle:
@@ -371,7 +372,7 @@ class VoiceClient:
         elif event_type == "AccountLoginStateChangeEvent":
             if dict_msg.get('StatusString') == "OK" and dict_msg['State'] == '1':
                 self._account_handle = dict_msg['AccountHandle']
-                self.logged_in.notify(self._account_handle)
+                self.logged_in.set()
         elif event_type == "SessionAddedEvent":
             self._session_handle = dict_msg["SessionHandle"]
             self._session_group_handle = dict_msg["SessionGroupHandle"]
