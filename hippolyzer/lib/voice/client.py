@@ -74,7 +74,7 @@ class VoiceClient:
         self._pos = Vector3(0, 0, 0)
 
         self.vivox_conn: Optional[VivoxConnection] = None
-        self._poll_task = asyncio.get_event_loop().create_task(self._poll_messages())
+        self._poll_task = asyncio.create_task(self._poll_messages())
         self.message_handler: MessageHandler[VivoxMessage, str] = MessageHandler(take_by_default=False)
 
     @property
@@ -328,7 +328,7 @@ class VoiceClient:
 
         RESP_LOG.debug("%s %s %s %r" % ("Request", request_id, msg_type, data))
 
-        asyncio.get_event_loop().create_task(self.vivox_conn.send_request(request_id, msg_type, data))
+        asyncio.create_task(self.vivox_conn.send_request(request_id, msg_type, data))
         future = asyncio.Future()
         self._pending_req_futures[request_id] = future
         return future
@@ -355,7 +355,7 @@ class VoiceClient:
                     self.message_handler.handle(msg)
 
                     # Spin off handler tasks for each event so that we don't block polling
-                    _ = asyncio.get_event_loop().create_task(self._dispatch_received_event(msg.name, msg.data))
+                    _ = asyncio.create_task(self._dispatch_received_event(msg.name, msg.data))
                 elif msg.type == "Response":
                     # Might not have this request ID if it was sent directly via the socket
                     if msg.request_id in self._pending_req_futures:

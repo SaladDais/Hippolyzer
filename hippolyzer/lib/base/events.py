@@ -71,7 +71,7 @@ class Event:
                     unsubscribe = await handler(args, *inner_args, **kwargs)
                     if unsubscribe:
                         self.unsubscribe(handler, *inner_args, **kwargs)
-                asyncio.get_event_loop().create_task(_run_handler_wrapper())
+                asyncio.create_task(_run_handler_wrapper())
             else:
                 if handler(args, *inner_args, **kwargs) and not one_shot:
                     self.unsubscribe(handler, *inner_args, **kwargs)

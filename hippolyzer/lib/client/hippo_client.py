@@ -202,7 +202,7 @@ class HippoClientRegion(BaseClientRegion):
                 seed_resp.raise_for_status()
                 self.update_caps(await seed_resp.read_llsd())
 
-            self._eq_task = asyncio.get_event_loop().create_task(self._poll_event_queue())
+            self._eq_task = asyncio.create_task(self._poll_event_queue())
         except Exception as e:
             # Let consumers who were `await`ing the connected signal know there was an error
             if not self.connected.done():
@@ -364,10 +364,10 @@ class HippoClientSession(BaseClientSession):
             need_connect = (region.circuit and region.circuit.is_alive) or moving_to_region
             self.open_circuit(sim_addr)
             if need_connect:
-                asyncio.get_event_loop().create_task(region.connect(main_region=moving_to_region))
+                asyncio.create_task(region.connect(main_region=moving_to_region))
             elif moving_to_region:
                 # No need to connect, but we do need to complete agent movement.
-                asyncio.get_event_loop().create_task(region.complete_agent_movement())
+                asyncio.create_task(region.complete_agent_movement())
 
 
 class HippoClient(BaseClientSessionManager):
@@ -550,7 +550,10 @@ class HippoClient(BaseClientSessionManager):
             self.logout()
         finally:
             if self.http_session:
-                asyncio.get_event_loop_policy().get_event_loop().create_task(self.http_session.close)
+                try:
+                    asyncio.create_task(self.http_session.close)
+                except:
+                    pass
                 self.http_session = None
 
     async def _create_transport(self) -> Tuple[AbstractUDPTransport, HippoClientProtocol]:
@@ -695,7 +698,7 @@ class HippoClient(BaseClientSessionManager):
                         return
                     teleport_fut.set_result(None)
 
-        asyncio.get_event_loop().create_task(_handle_teleport())
+        asyncio.create_task(_handle_teleport())
 
         return teleport_fut
 
