@@ -48,12 +48,14 @@ class VoiceClient:
 
         self.logged_in = asyncio.Event()
         self.ready = asyncio.Event()
+        self.session_ready = asyncio.Event()
         self.session_added = Event()
         self.channel_info_updated = Event()
         self.participant_added = Event()
         self.participant_updated = Event()
         self.participant_removed = Event()
         self.capture_devices_received = Event()
+        self.render_devices_received = Event()
 
         self._pending_req_futures: dict[str, asyncio.Future] = {}
 
@@ -161,7 +163,8 @@ class VoiceClient:
         devices = (await self.send_message("Aux.GetCaptureDevices.1", {}))["Results"]
         self.capture_devices_received.notify(devices)
 
-        await self.send_message("Aux.GetRenderDevices.1", {})
+        devices = (await self.send_message("Aux.GetRenderDevices.1", {}))["Results"]
+        self.render_devices_received.notify(devices)
 
         await self.set_speakers_muted(False)
         await self.set_speaker_volume(62)
@@ -245,12 +248,13 @@ class VoiceClient:
             "Name": ""
         })
         # wait until we're actually added
-        await self.participant_added
+        await self.session_ready.wait()
 
     async def leave_session(self):
         await self.send_message("SessionGroup.Terminate.1", {
             "SessionGroupHandle": self._session_group_handle,
         })
+        self.session_ready.clear()
 
         # TODO: refactor into a collection
         for participant in self._participants.values():
@@ -363,8 +367,7 @@ class VoiceClient:
             try:
                 RESP_LOG.debug(repr(msg))
                 if msg.type == "Event":
-                    # Use call_soon to avoid some weird race conditions
-                    asyncio.get_event_loop().call_soon(self.message_handler.handle, msg)
+                    self.message_handler.handle(msg)
                 elif msg.type == "Response":
                     # Might not have this request ID if it was sent directly via the socket
                     if msg.request_id in self._pending_req_futures:
@@ -388,6 +391,7 @@ class VoiceClient:
         self._session_handle = msg.data["SessionHandle"]
         self._session_group_handle = msg.data["SessionGroupHandle"]
         self.session_added.notify(self._session_handle)
+        self.session_ready.set()
 
     def _handle_session_removed(self, _msg: VivoxMessage):
         self._session_handle = None
@@ -395,6 +399,7 @@ class VoiceClient:
         # clear out the participant list.
         for participant in tuple(self._participants.values()):
             self._handle_participant_removed(participant)
+        self.session_ready.clear()
 
     def _handle_participant_added(self, msg: VivoxMessage):
         self._participants[msg.data["ParticipantUri"]] = msg.data

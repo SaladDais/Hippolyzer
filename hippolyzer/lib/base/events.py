@@ -38,11 +38,6 @@ class Event:
 
         return self
 
-    def __await__(self):
-        fut = asyncio.Future()
-        self.subscribe(fut.set_result, one_shot=True)
-        return fut.__await__()
-
     def _handler_key(self, handler):
         return handler[:3]
 
@@ -70,7 +65,7 @@ class Event:
                 async def _run_handler_wrapper():
                     unsubscribe = await handler(args, *inner_args, **kwargs)
                     if unsubscribe:
-                        self.unsubscribe(handler, *inner_args, **kwargs)
+                        _ = self.unsubscribe(handler, *inner_args, **kwargs)
                 asyncio.create_task(_run_handler_wrapper())
             else:
                 if handler(args, *inner_args, **kwargs) and not one_shot:
