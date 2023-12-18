@@ -149,9 +149,13 @@ class TestVoiceClient(unittest.IsolatedAsyncioTestCase):
 
         self.client._make_request_id = _make_request_id
 
-    async def _handle_next_message(self, name: str):
+    async def _expect_message(self, name: str):
         msg = await self.server_connection.read_message()
         self.assertEqual(name, msg.name)
+        return msg
+
+    async def _handle_message(self, name: str):
+        msg = await self._expect_message(name)
         await self.server_connection.send_response(msg.request_id, msg.name, {
             "ReturnCode": 0,
             "Results": {}
@@ -188,10 +192,10 @@ class TestVoiceClient(unittest.IsolatedAsyncioTestCase):
                 "RenderDevices": []
             }
         })
-        await self._handle_next_message("Connector.MuteLocalSpeaker.1")
-        await self._handle_next_message("Connector.SetLocalSpeakerVolume.1")
-        await self._handle_next_message("Connector.MuteLocalMic.1")
-        await self._handle_next_message("Connector.SetLocalMicVolume.1")
+        await self._handle_message("Connector.MuteLocalSpeaker.1")
+        await self._handle_message("Connector.SetLocalSpeakerVolume.1")
+        await self._handle_message("Connector.MuteLocalMic.1")
+        await self._handle_message("Connector.SetLocalMicVolume.1")
 
         msg = await self.server_connection.read_message()
         self.assertEqual('Connector.Create.1', msg.name)
@@ -201,6 +205,34 @@ class TestVoiceClient(unittest.IsolatedAsyncioTestCase):
                 "ConnectorHandle": 2,
             }
         })
+        await self.client.ready
 
-    async def test_connection(self):
+    async def test_create_connector(self):
         await self._serve_connector_setup()
+
+    async def test_login(self):
+        await self._serve_connector_setup()
+
+        async def _handle_login():
+            msg = await self._expect_message("Account.Login.1")
+            self.assertEqual("foo", msg.data["AccountName"])
+            await self.server_connection.send_response(msg.request_id, msg.name, {
+                "ReturnCode": 0,
+                "Results": {
+                    "StatusCode": 0,
+                    "StatusString": None,
+                    "AccountHandle": 2,
+                    "DisplayName": "foo",
+                }
+            })
+            await self.server_connection.send_event("AccountLoginStateChangeEvent", {
+                "AccountHandle": 2,
+                "StatusCode": 200,
+                "StatusString": "OK",
+                "State": 1,
+            })
+
+        login_task = asyncio.get_event_loop().create_task(_handle_login())
+
+        await asyncio.wait_for(self.client.login("foo", "bar"), 0.5)
+        await asyncio.wait_for(login_task, 0.5)
