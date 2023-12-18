@@ -98,7 +98,7 @@ class TestVivoxConnection(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual("quux", msg.request_id)
 
             self.assertEqual("Request", msg.type)
-            self.assertEqual("Aux.GetRenderDevices.1", msg.action)
+            self.assertEqual("Aux.GetRenderDevices.1", msg.name)
             self.assertDictEqual({"Foo": "1"}, msg.data)
             i += 1
 
@@ -149,22 +149,58 @@ class TestVoiceClient(unittest.IsolatedAsyncioTestCase):
 
         self.client._make_request_id = _make_request_id
 
-    async def test_connection(self):
-        async def _serve_login():
-            await self.server_connection.send_event(
-                "VoiceServiceConnectionStateChangedEvent",
-                {
-                    "Connected": 1,
-                    "Platform": "Linux",
-                    "Version": 1,
-                    "DataDirectory": "/tmp/whatever",
-                }
-            )
-            self.assertEqual(
-                ('Request', 'Aux.GetCaptureDevices.1', '1', {}),
-                await self.server_connection.read_message()
-            )
+    async def _handle_next_message(self, name: str):
+        msg = await self.server_connection.read_message()
+        self.assertEqual(name, msg.name)
+        await self.server_connection.send_response(msg.request_id, msg.name, {
+            "ReturnCode": 0,
+            "Results": {}
+        })
 
-        serve_coro = asyncio.get_event_loop().create_task(_serve_login())
-        # Await this here so we can see any exceptions
-        await serve_coro
+    async def _serve_connector_setup(self):
+        await self.server_connection.send_event(
+            "VoiceServiceConnectionStateChangedEvent",
+            {
+                "Connected": 1,
+                "Platform": "Linux",
+                "Version": 1,
+                "DataDirectory": "/tmp/whatever",
+            }
+        )
+        msg = await self.server_connection.read_message()
+        self.assertEqual('Aux.GetCaptureDevices.1', msg.name)
+        await self.server_connection.send_response(msg.request_id, msg.name, {
+            "ReturnCode": 0,
+            "Results": {
+                "StatusCode": 0,
+                "StatusString": None,
+                "CaptureDevices": []
+            }
+        })
+
+        msg = await self.server_connection.read_message()
+        self.assertEqual('Aux.GetRenderDevices.1', msg.name)
+        await self.server_connection.send_response(msg.request_id, msg.name, {
+            "ReturnCode": 0,
+            "Results": {
+                "StatusCode": 0,
+                "StatusString": None,
+                "RenderDevices": []
+            }
+        })
+        await self._handle_next_message("Connector.MuteLocalSpeaker.1")
+        await self._handle_next_message("Connector.SetLocalSpeakerVolume.1")
+        await self._handle_next_message("Connector.MuteLocalMic.1")
+        await self._handle_next_message("Connector.SetLocalMicVolume.1")
+
+        msg = await self.server_connection.read_message()
+        self.assertEqual('Connector.Create.1', msg.name)
+        await self.server_connection.send_response(msg.request_id, msg.name, {
+            "ReturnCode": 0,
+            "Results": {
+                "ConnectorHandle": 2,
+            }
+        })
+
+    async def test_connection(self):
+        await self._serve_connector_setup()

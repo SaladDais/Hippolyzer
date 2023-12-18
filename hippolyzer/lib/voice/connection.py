@@ -12,7 +12,7 @@ import lxml.etree
 
 class VivoxMessage(NamedTuple):
     type: str
-    action: str
+    name: str
     request_id: Optional[str]
     data: dict
 

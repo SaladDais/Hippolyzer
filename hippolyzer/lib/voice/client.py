@@ -9,14 +9,13 @@ import subprocess
 import tempfile
 import urllib.parse
 import uuid
-from collections import UserDict
 from typing import Optional, Union, Any
 
 from hippolyzer.lib.base.datatypes import Vector3
 from hippolyzer.lib.base.events import Event
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.objects import handle_to_gridxy
-from .connection import VivoxConnection
+from .connection import VivoxConnection, VivoxMessage
 
 LOG = logging.getLogger(__name__)
 RESP_LOG = logging.getLogger(__name__ + ".responses")
@@ -38,12 +37,6 @@ def vivox_to_uuid(val):
     # Pull the base64-encoded UUID out of the URI
     val = val.split(":")[-1].split("@")[0][1:]
     return str(uuid.UUID(bytes=base64.b64decode(val, b"-_")))
-
-
-class VoiceEvent(UserDict):
-    def __init__(self, name: str, event_dict: dict):
-        self.name = name
-        super().__init__(event_dict)
 
 
 class VoiceClient:
@@ -82,7 +75,7 @@ class VoiceClient:
 
         self.vivox_conn: Optional[VivoxConnection] = None
         self._poll_task = asyncio.get_event_loop().create_task(self._poll_messages())
-        self.message_handler: MessageHandler[VoiceEvent, str] = MessageHandler()
+        self.message_handler: MessageHandler[VivoxMessage, str] = MessageHandler()
 
     @property
     def username(self):
@@ -358,10 +351,10 @@ class VoiceClient:
             try:
                 RESP_LOG.debug(repr(msg))
                 if msg.type == "Event":
-                    self.message_handler.handle(VoiceEvent(msg.action, msg.data))
+                    self.message_handler.handle(msg)
 
                     # Spin off handler tasks for each event so that we don't block polling
-                    _ = asyncio.get_event_loop().create_task(self._dispatch_received_event(msg.action, msg.data))
+                    _ = asyncio.get_event_loop().create_task(self._dispatch_received_event(msg.name, msg.data))
                 elif msg.type == "Response":
                     # Might not have this request ID if it was sent directly via the socket
                     if msg.request_id in self._pending_req_futures:
