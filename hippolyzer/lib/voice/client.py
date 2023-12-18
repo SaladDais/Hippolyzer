@@ -77,6 +77,17 @@ class VoiceClient:
         self._poll_task = asyncio.create_task(self._poll_messages())
         self.message_handler: MessageHandler[VivoxMessage, str] = MessageHandler(take_by_default=False)
 
+        self.message_handler.subscribe(
+            "VoiceServiceConnectionStateChangedEvent",
+            self._handle_voice_service_connection_state_changed
+        )
+        self.message_handler.subscribe("AccountLoginStateChangeEvent", self._handle_account_login_state_change)
+        self.message_handler.subscribe("SessionAddedEvent", self._handle_session_added)
+        self.message_handler.subscribe("SessionRemovedEvent", self._handle_session_removed)
+        self.message_handler.subscribe("ParticipantAddedEvent", self._handle_participant_added)
+        self.message_handler.subscribe("ParticipantUpdatedEvent", self._handle_participant_updated)
+        self.message_handler.subscribe("ParticipantRemovedEvent", self._handle_participant_removed)
+
     @property
     def username(self):
         return self._username
@@ -352,10 +363,8 @@ class VoiceClient:
             try:
                 RESP_LOG.debug(repr(msg))
                 if msg.type == "Event":
-                    self.message_handler.handle(msg)
-
-                    # Spin off handler tasks for each event so that we don't block polling
-                    _ = asyncio.create_task(self._dispatch_received_event(msg.name, msg.data))
+                    # Use call_soon to avoid some weird race conditions
+                    asyncio.get_event_loop().call_soon(self.message_handler.handle, msg)
                 elif msg.type == "Response":
                     # Might not have this request ID if it was sent directly via the socket
                     if msg.request_id in self._pending_req_futures:
@@ -364,39 +373,44 @@ class VoiceClient:
             except Exception:
                 LOG.exception("Error in response handler?")
 
-    async def _dispatch_received_event(self, event_type: str, dict_msg: dict):
-        # TODO: just make these separate message handlers.
-        if event_type == "VoiceServiceConnectionStateChangedEvent":
-            # Vivox daemon is ready for us, create the connector
-            await self.create_connector()
-        elif event_type == "AccountLoginStateChangeEvent":
-            if dict_msg.get('StatusString') == "OK" and dict_msg['State'] == '1':
-                self._account_handle = dict_msg['AccountHandle']
-                self.logged_in.set()
-        elif event_type == "SessionAddedEvent":
-            self._session_handle = dict_msg["SessionHandle"]
-            self._session_group_handle = dict_msg["SessionGroupHandle"]
-            self.session_added.notify(self._session_handle)
-        elif event_type == "SessionRemovedEvent":
-            self._session_handle = None
-            # We often don't get all the `ParticipantRemoved`s before the session dies,
-            # clear out the participant list.
-            for participant in tuple(self._participants.values()):
-                self._handle_participant_removed(participant)
-        elif event_type == "ParticipantAddedEvent":
-            self._participants[dict_msg["ParticipantUri"]] = dict_msg
-            self.participant_added.notify(dict_msg)
-        elif event_type == "ParticipantRemovedEvent":
-            self._handle_participant_removed(dict_msg)
-        elif event_type == "ParticipantUpdatedEvent":
-            participant_uri = dict_msg["ParticipantUri"]
-            if participant_uri in self._participants:
-                self._participants[participant_uri].update(dict_msg)
-                self.participant_updated.notify(dict_msg)
+    async def _handle_voice_service_connection_state_changed(self, _msg: VivoxMessage):
+        await self.create_connector()
 
-    def _handle_participant_removed(self, participant: dict):
-        participant_uri = participant["ParticipantUri"]
+    def _handle_account_login_state_change(self, msg: VivoxMessage):
+        if msg.data.get('StatusString') == "OK" and msg.data['State'] == '1':
+            self._account_handle = msg.data['AccountHandle']
+            self.logged_in.set()
+        else:
+            self.logged_in.clear()
+            self._account_handle = None
+
+    def _handle_session_added(self, msg: VivoxMessage):
+        self._session_handle = msg.data["SessionHandle"]
+        self._session_group_handle = msg.data["SessionGroupHandle"]
+        self.session_added.notify(self._session_handle)
+
+    def _handle_session_removed(self, _msg: VivoxMessage):
+        self._session_handle = None
+        # We often don't get all the `ParticipantRemoved`s before the session dies,
+        # clear out the participant list.
+        for participant in tuple(self._participants.values()):
+            self._handle_participant_removed(participant)
+
+    def _handle_participant_added(self, msg: VivoxMessage):
+        self._participants[msg.data["ParticipantUri"]] = msg.data
+        self.participant_added.notify(msg.data)
+
+    def _handle_participant_updated(self, msg: VivoxMessage):
+        participant_uri = msg.data["ParticipantUri"]
         if participant_uri in self._participants:
+            participant = self._participants[participant_uri]
+            participant.update(msg.data)
+            self.participant_updated.notify(participant)
+
+    def _handle_participant_removed(self, msg: VivoxMessage):
+        participant_uri = msg.data["ParticipantUri"]
+        if participant_uri in self._participants:
+            participant = self._participants[participant_uri]
             del self._participants[participant_uri]
             self.participant_removed.notify(participant)
 

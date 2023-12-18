@@ -163,51 +163,55 @@ class TestVoiceClient(unittest.IsolatedAsyncioTestCase):
         })
         return msg
 
-    async def _serve_connector_setup(self):
-        await self.server_connection.send_event(
-            "VoiceServiceConnectionStateChangedEvent",
-            {
-                "Connected": 1,
-                "Platform": "Linux",
-                "Version": 1,
-                "DataDirectory": "/tmp/whatever",
-            }
-        )
-        msg = await self.server_connection.read_message()
-        self.assertEqual('Aux.GetCaptureDevices.1', msg.name)
-        await self.server_connection.send_response(msg.request_id, msg.name, {
-            "ReturnCode": 0,
-            "Results": {
-                "StatusCode": 0,
-                "StatusString": None,
-                "CaptureDevices": []
-            }
-        })
+    async def _do_connector_setup(self):
+        async def _serve_connector_setup():
+            await self.server_connection.send_event(
+                "VoiceServiceConnectionStateChangedEvent",
+                {
+                    "Connected": 1,
+                    "Platform": "Linux",
+                    "Version": 1,
+                    "DataDirectory": "/tmp/whatever",
+                }
+            )
+            msg = await self.server_connection.read_message()
+            self.assertEqual('Aux.GetCaptureDevices.1', msg.name)
+            await self.server_connection.send_response(msg.request_id, msg.name, {
+                "ReturnCode": 0,
+                "Results": {
+                    "StatusCode": 0,
+                    "StatusString": None,
+                    "CaptureDevices": []
+                }
+            })
 
-        msg = await self.server_connection.read_message()
-        self.assertEqual('Aux.GetRenderDevices.1', msg.name)
-        await self.server_connection.send_response(msg.request_id, msg.name, {
-            "ReturnCode": 0,
-            "Results": {
-                "StatusCode": 0,
-                "StatusString": None,
-                "RenderDevices": []
-            }
-        })
-        await self._handle_message("Connector.MuteLocalSpeaker.1")
-        await self._handle_message("Connector.SetLocalSpeakerVolume.1")
-        await self._handle_message("Connector.MuteLocalMic.1")
-        await self._handle_message("Connector.SetLocalMicVolume.1")
+            msg = await self.server_connection.read_message()
+            self.assertEqual('Aux.GetRenderDevices.1', msg.name)
+            await self.server_connection.send_response(msg.request_id, msg.name, {
+                "ReturnCode": 0,
+                "Results": {
+                    "StatusCode": 0,
+                    "StatusString": None,
+                    "RenderDevices": []
+                }
+            })
+            await self._handle_message("Connector.MuteLocalSpeaker.1")
+            await self._handle_message("Connector.SetLocalSpeakerVolume.1")
+            await self._handle_message("Connector.MuteLocalMic.1")
+            await self._handle_message("Connector.SetLocalMicVolume.1")
 
-        msg = await self.server_connection.read_message()
-        self.assertEqual('Connector.Create.1', msg.name)
-        await self.server_connection.send_response(msg.request_id, msg.name, {
-            "ReturnCode": 0,
-            "Results": {
-                "ConnectorHandle": 2,
-            }
-        })
-        await self.client.ready.wait()
+            msg = await self.server_connection.read_message()
+            self.assertEqual('Connector.Create.1', msg.name)
+            await self.server_connection.send_response(msg.request_id, msg.name, {
+                "ReturnCode": 0,
+                "Results": {
+                    "ConnectorHandle": 2,
+                }
+            })
+
+        serve_connector_task = asyncio.create_task(_serve_connector_setup())
+        await asyncio.wait_for(serve_connector_task, 0.5)
+        await asyncio.wait_for(self.client.ready.wait(), 0.5)
 
     async def _do_login(self):
         async def _serve_login():
@@ -247,25 +251,25 @@ class TestVoiceClient(unittest.IsolatedAsyncioTestCase):
 
         serve_session_task = asyncio.create_task(_serve_session())
 
-        await self.client.join_session("uri:foo@bar", region_handle=256)
+        await asyncio.wait_for(self.client.join_session("uri:foo@bar", region_handle=256), 0.5)
         self.assertIn("uri:baz@foo", self.client.participants)
 
-        await serve_session_task
+        await asyncio.wait_for(serve_session_task, 0.5)
 
     async def test_create_connector(self):
-        await self._serve_connector_setup()
+        await self._do_connector_setup()
 
     async def test_login(self):
-        await self._serve_connector_setup()
+        await self._do_connector_setup()
         await self._do_login()
 
     async def test_create_session(self):
-        await self._serve_connector_setup()
+        await self._do_connector_setup()
         await self._do_login()
         await self._join_session()
 
     async def test_set_position(self):
-        await self._serve_connector_setup()
+        await self._do_connector_setup()
         await self._do_login()
         await self._join_session()
         handle_3d_pos_task = asyncio.create_task(self._handle_message("Session.Set3DPosition.1"))
