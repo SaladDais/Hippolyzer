@@ -44,7 +44,7 @@ class VoiceEvent(UserDict):
         super().__init__(event_dict)
 
 
-class VoiceClient(object):
+class VoiceClient:
     SERVER_URL = "http://www.bhr.vivox.com/api2/"  # noqa
 
     def __init__(self, host, port):
@@ -332,7 +332,7 @@ class VoiceClient(object):
 
         RESP_LOG.debug("%s %s %s %r" % ("Request", request_id, msg_type, data))
 
-        asyncio.get_event_loop().create_task(self.vivox_conn.send(request_id, msg_type, data))
+        asyncio.get_event_loop().create_task(self.vivox_conn.send_request(request_id, msg_type, data))
         future = asyncio.Future()
         self._pending_req_futures[request_id] = future
         return future

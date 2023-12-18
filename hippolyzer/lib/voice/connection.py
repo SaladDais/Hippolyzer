@@ -90,15 +90,20 @@ class VivoxConnection:
     async def read_messages(self):
         # TODO: handle interrupted read
         while self._reader and not self._reader.at_eof() and not self._writer.is_closing():
-            msg = await self._reader.readuntil(b"\n\n\n")
-            yield self.parse(msg[:-3])
+            yield await self.read_message()
+
+    async def read_message(self):
+        msg = await self._reader.readuntil(b"\n\n\n")
+        return self.parse(msg[:-3])
 
     def parse(self, raw_msg) -> Tuple[str, Optional[str], Optional[str], dict]:
         parsed_msg = defusedxml.lxml.fromstring(raw_msg.decode("utf8"))
         msg_type = parsed_msg.tag
         request_id = parsed_msg.attrib.get("requestId", None)
 
-        dict_msg = xml_to_dict(parsed_msg)[1]
+        # There may be no params, just use an empty dict if that's the case
+        dict_msg = xml_to_dict(parsed_msg)[1] or {}
+
         if msg_type == "Event":
             msg_action = parsed_msg.attrib.get("type")
         elif msg_type == "Response":
@@ -106,6 +111,9 @@ class VivoxConnection:
             # This is pretty useless, get rid of it because it gunks up repr()s.
             if 'InputXml' in dict_msg:
                 del dict_msg['InputXml']
+            dict_msg = _clean_message(msg_action, parsed_msg, dict_msg)
+        elif msg_type == "Request":
+            msg_action = parsed_msg.attrib.get("action")
             dict_msg = _clean_message(msg_action, parsed_msg, dict_msg)
         else:
             raise Exception("Unknown Vivox message type %r?" % msg_type)
@@ -118,7 +126,7 @@ class VivoxConnection:
         weakref.finalize(drain_coro, drain_coro.close)
         return drain_coro
 
-    def send(self, request_id: str, msg_type: str, data: Any) -> Coroutine[Any, Any, None]:
+    def send_request(self, request_id: str, msg_type: str, data: Any) -> Coroutine[Any, Any, None]:
         elem = lxml.etree.Element("Request")
         elem.attrib["requestId"] = request_id
         elem.attrib["action"] = msg_type
