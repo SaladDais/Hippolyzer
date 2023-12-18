@@ -75,7 +75,7 @@ class VoiceClient:
 
         self.vivox_conn: Optional[VivoxConnection] = None
         self._poll_task = asyncio.get_event_loop().create_task(self._poll_messages())
-        self.message_handler: MessageHandler[VivoxMessage, str] = MessageHandler()
+        self.message_handler: MessageHandler[VivoxMessage, str] = MessageHandler(take_by_default=False)
 
     @property
     def username(self):
