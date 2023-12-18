@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import base64
 import json
@@ -324,7 +326,7 @@ class VoiceClient:
         })
 
     def send_message(self, msg_type: str, data: Any) -> asyncio.Future[dict]:
-        request_id = str(uuid.uuid4())
+        request_id = self._make_request_id()
         # This is apparently what the viewer does, not clear if
         # request_id has any semantic significance
         if msg_type == "Session.Create.1":
@@ -352,20 +354,19 @@ class VoiceClient:
         while not self.vivox_conn:
             await asyncio.sleep(0.001)
 
-        async for msg_type, msg_action, request_id, dict_msg in self.vivox_conn.read_messages():
+        async for msg in self.vivox_conn.read_messages():
             try:
-                if msg_type == "Event":
-                    RESP_LOG.debug("%s %s %r" % ("Event", msg_action, dict_msg))
-                    self.message_handler.handle(VoiceEvent(msg_action, dict_msg))
+                RESP_LOG.debug(repr(msg))
+                if msg.type == "Event":
+                    self.message_handler.handle(VoiceEvent(msg.action, msg.data))
 
                     # Spin off handler tasks for each event so that we don't block polling
-                    _ = asyncio.get_event_loop().create_task(self._dispatch_received_event(msg_action, dict_msg))
-                elif msg_type == "Response":
-                    RESP_LOG.debug("%s %s %s %r" % ("Response", request_id, msg_action, dict_msg))
+                    _ = asyncio.get_event_loop().create_task(self._dispatch_received_event(msg.action, msg.data))
+                elif msg.type == "Response":
                     # Might not have this request ID if it was sent directly via the socket
-                    if request_id in self._pending_req_futures:
-                        self._pending_req_futures[request_id].set_result(dict_msg)
-                        del self._pending_req_futures[request_id]
+                    if msg.request_id in self._pending_req_futures:
+                        self._pending_req_futures[msg.request_id].set_result(msg.data)
+                        del self._pending_req_futures[msg.request_id]
             except Exception:
                 LOG.exception("Error in response handler?")
 
@@ -450,3 +451,6 @@ class VoiceClient:
         if self._region_global_x is not None:
             pos = self.region_pos
         self.channel_info_updated.notify(pos)
+
+    def _make_request_id(self):
+        return str(uuid.uuid4())

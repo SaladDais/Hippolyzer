@@ -1,12 +1,20 @@
 # TODO: some fancy parser that parses everything into
 #  dicts or objects using schemas.
+from __future__ import annotations
 
 import asyncio
 import weakref
-from typing import Any, Tuple, Optional, Coroutine
+from typing import Any, Optional, Coroutine, NamedTuple
 
 import defusedxml.lxml
 import lxml.etree
+
+
+class VivoxMessage(NamedTuple):
+    type: str
+    action: str
+    request_id: Optional[str]
+    data: dict
 
 
 def xml_to_dict(element):
@@ -96,7 +104,7 @@ class VivoxConnection:
         msg = await self._reader.readuntil(b"\n\n\n")
         return self.parse(msg[:-3])
 
-    def parse(self, raw_msg) -> Tuple[str, Optional[str], Optional[str], dict]:
+    def parse(self, raw_msg) -> VivoxMessage:
         parsed_msg = defusedxml.lxml.fromstring(raw_msg.decode("utf8"))
         msg_type = parsed_msg.tag
         request_id = parsed_msg.attrib.get("requestId", None)
@@ -114,10 +122,9 @@ class VivoxConnection:
             dict_msg = _clean_message(msg_action, parsed_msg, dict_msg)
         elif msg_type == "Request":
             msg_action = parsed_msg.attrib.get("action")
-            dict_msg = _clean_message(msg_action, parsed_msg, dict_msg)
         else:
             raise Exception("Unknown Vivox message type %r?" % msg_type)
-        return msg_type, msg_action, request_id, dict_msg
+        return VivoxMessage(msg_type, msg_action, request_id, dict_msg)
 
     def send_raw(self, buf: bytes) -> Coroutine[Any, Any, None]:
         self._writer.write(buf + b"\n\n\n")
@@ -126,12 +133,24 @@ class VivoxConnection:
         weakref.finalize(drain_coro, drain_coro.close)
         return drain_coro
 
-    def send_request(self, request_id: str, msg_type: str, data: Any) -> Coroutine[Any, Any, None]:
-        elem = lxml.etree.Element("Request")
-        elem.attrib["requestId"] = request_id
-        elem.attrib["action"] = msg_type
-        if msg_type == "Account.WebCall.1":
+    def send_request(self, request_id: str, action: str, data: Any) -> Coroutine[Any, Any, None]:
+        if action == "Account.WebCall.1":
             data = dict(data)
             data["Parameters"] = _build_webcall_params(data["Parameters"])
+        return self._send_request_response("Request", request_id, action, data)
+
+    def send_response(self, request_id: str, action: str, data: Any) -> Coroutine[Any, Any, None]:
+        return self._send_request_response("Response", request_id, action, data)
+
+    def _send_request_response(self, msg_type: str, request_id: str, action: str, data: Any):
+        elem = lxml.etree.Element(msg_type)
+        elem.attrib["requestId"] = request_id
+        elem.attrib["action"] = action
+        serialized = lxml.etree.tostring(buildxml(elem, data))
+        return self.send_raw(serialized)
+
+    def send_event(self, event_type: str, data: Any) -> Coroutine[Any, Any, None]:
+        elem = lxml.etree.Element("Event")
+        elem.attrib["type"] = event_type
         serialized = lxml.etree.tostring(buildxml(elem, data))
         return self.send_raw(serialized)
