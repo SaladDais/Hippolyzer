@@ -251,7 +251,7 @@ class VoiceClient:
         self._region_global_y = 0
         self._uri = None
 
-    def set_3d_position(self, pos: Vector3, vel: Vector3 = Vector3(0, 0, 0)) -> asyncio.Future:
+    def set_3d_pos(self, pos: Vector3, vel: Vector3 = Vector3(0, 0, 0)) -> asyncio.Future:
         """Set global 3D position, in Vivox coordinates"""
         self._pos = pos
         future = self.send_message("Session.Set3DPosition.1", {
@@ -262,10 +262,10 @@ class VoiceClient:
         self._channel_info_updated()
         return future
 
-    def set_region_3d_position(self, pos: Vector3, vel: Vector3 = Vector3(0, 0, 0)) -> asyncio.Future:
+    def set_region_3d_pos(self, pos: Vector3, vel: Vector3 = Vector3(0, 0, 0)) -> asyncio.Future:
         """Set 3D position, in region-local coordinates"""
         vel = Vector3(vel[0], vel[2], -vel[1])
-        return self.set_3d_position(self._region_to_global(pos), vel=vel)
+        return self.set_3d_pos(self._region_to_global(pos), vel=vel)
 
     def set_speakers_muted(self, val: bool):
         return self.send_message("Connector.MuteLocalSpeaker.1", {

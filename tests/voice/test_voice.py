@@ -269,7 +269,7 @@ class TestVoiceClient(unittest.IsolatedAsyncioTestCase):
         await self._do_login()
         await self._join_session()
         handle_3d_pos_task = asyncio.create_task(self._handle_message("Session.Set3DPosition.1"))
-        await self.client.set_region_3d_position(Vector3(1, 2, 3))
+        await self.client.set_region_3d_pos(Vector3(1, 2, 3))
         msg = await handle_3d_pos_task
         self.assertDictEqual(
             {'X': '1.0', 'Y': '3.0', 'Z': '-258.0'},

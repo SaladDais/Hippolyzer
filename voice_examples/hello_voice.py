@@ -22,7 +22,7 @@ async def amain():
 
         await client.join_session(os.environ["SLVOICE_URI"], int(os.environ["SLVOICE_HANDLE"]))
 
-        await client.set_region_3d_position(Vector3(0, 0, 0))
+        await client.set_region_3d_pos(Vector3(0, 0, 0))
         print(client.region_pos)
 
         # leave running for 20 seconds, then exit
