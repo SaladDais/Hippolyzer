@@ -16,6 +16,8 @@ VOICE_PATH = os.environ["SLVOICE_PATH"]
 async def amain():
     client = await VoiceClient.simple_init(VOICE_PATH)
     async with aclosing(client):
+        print("Capture Devices:", client.capture_devices)
+        print("Render Devices:", client.render_devices)
         await client.set_mic_muted(True)
         await client.set_mic_volume(60)
         print(await client.login(os.environ["SLVOICE_USERNAME"], os.environ["SLVOICE_PASSWORD"]))

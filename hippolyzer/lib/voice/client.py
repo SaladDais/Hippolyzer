@@ -40,7 +40,7 @@ def vivox_to_uuid(val):
 
 
 class VoiceClient:
-    SERVER_URL = "http://www.bhr.vivox.com/api2/"  # noqa
+    SERVER_URL = "https://www.bhr.vivox.com/api2/"
 
     def __init__(self, host, port):
         self._host = host
@@ -56,6 +56,8 @@ class VoiceClient:
         self.participant_removed = Event()
         self.capture_devices_received = Event()
         self.render_devices_received = Event()
+        self.render_devices = {}
+        self.capture_devices = {}
 
         self._pending_req_futures: dict[str, asyncio.Future] = {}
 
@@ -162,9 +164,13 @@ class VoiceClient:
         # TODO: Move all this extra crap out of here
         devices = (await self.send_message("Aux.GetCaptureDevices.1", {}))["Results"]
         self.capture_devices_received.notify(devices)
+        self.capture_devices.clear()
+        self.capture_devices.update(devices)
 
         devices = (await self.send_message("Aux.GetRenderDevices.1", {}))["Results"]
         self.render_devices_received.notify(devices)
+        self.render_devices.clear()
+        self.render_devices.update(devices)
 
         await self.set_speakers_muted(False)
         await self.set_speaker_volume(62)
