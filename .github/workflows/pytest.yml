@@ -26,7 +26,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip wheel
         pip install -r requirements.txt
         pip install -r requirements-test.txt
         sudo apt-get install libopenjp2-7

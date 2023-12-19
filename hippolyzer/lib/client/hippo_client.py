@@ -12,7 +12,7 @@ from typing import *
 import aiohttp
 import multidict
 
-from hippolyzer.lib.base.datatypes import Vector3
+from hippolyzer.lib.base.datatypes import Vector3, StringEnum
 from hippolyzer.lib.base.helpers import proxify, get_resource_filename
 from hippolyzer.lib.base.message.circuit import Circuit
 from hippolyzer.lib.base.message.llsd_msg_serializer import LLSDMessageSerializer
@@ -33,6 +33,11 @@ from hippolyzer.lib.client.state import BaseClientSession, BaseClientRegion, Bas
 
 
 LOG = logging.getLogger(__name__)
+
+
+class StartLocation(StringEnum):
+    LAST = "last"
+    HOME = "home"
 
 
 class ClientSettings(Settings):
@@ -568,15 +573,22 @@ class HippoClient(BaseClientSessionManager):
             self,
             username: str,
             password: str,
-            login_uri: Optional[str] = "",
+            login_uri: Optional[str] = None,
             agree_to_tos: bool = False,
-            start_location: str = "home"
+            start_location: Union[StartLocation, str, None] = StartLocation.LAST
     ):
         if self.session:
             raise RuntimeError("Already logged in!")
 
         if not login_uri:
             login_uri = self.DEFAULT_LOGIN_URI
+
+        if start_location is None:
+            start_location = StartLocation.LAST
+
+        # This isn't a symbolic start location and isn't a URI, must be a sim name.
+        if start_location not in iter(StartLocation) and not start_location.startswith("uri:"):
+            start_location = f"uri:{start_location}&128&128&128"
 
         split_username = username.split(" ")
         if len(split_username) < 2:
@@ -603,7 +615,7 @@ class HippoClient(BaseClientSessionManager):
             # TODO: What is this?
             "platform_version": "2.38.0",
             "read_critical": 0,
-            "start": start_location,
+            "start": str(start_location),
             "token": "",
             "version": version("hippolyzer"),
             "options": list(self._options),

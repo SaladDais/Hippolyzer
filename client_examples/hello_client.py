@@ -27,7 +27,7 @@ async def amain():
         await client.login(
             username=os.environ["HIPPO_USERNAME"],
             password=os.environ["HIPPO_PASSWORD"],
-            start_location=os.environ.get("HIPPO_START_LOCATION", "home"),
+            start_location=os.environ.get("HIPPO_START_LOCATION", "last"),
         )
         print("I'm here")
         await client.send_chat("Hello World!", chat_type=ChatType.SHOUT)
