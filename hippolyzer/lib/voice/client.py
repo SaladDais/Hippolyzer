@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 import urllib.parse
 import uuid
-from typing import Optional, Union, Any
+from typing import Optional, Union, Any, Dict
 
 from hippolyzer.lib.base.datatypes import Vector3
 from hippolyzer.lib.base.events import Event
@@ -42,7 +42,7 @@ def vivox_to_uuid(val):
 class VoiceClient:
     SERVER_URL = "https://www.bhr.vivox.com/api2/"
 
-    def __init__(self, host, port):
+    def __init__(self, host: str, port: int):
         self._host = host
         self._port = port
 
@@ -70,7 +70,7 @@ class VoiceClient:
         self._password: Optional[str] = None
         self._display_name: Optional[str] = None
         self._uri: Optional[str] = None
-        self._participants = {}
+        self._participants: Dict[str, dict] = {}
 
         self._mic_muted = False
         self._region_global_x = 0
@@ -408,8 +408,8 @@ class VoiceClient:
         self._session_handle = None
         # We often don't get all the `ParticipantRemoved`s before the session dies,
         # clear out the participant list.
-        for participant in tuple(self._participants.values()):
-            self._handle_participant_removed(participant)
+        for participant in tuple(self._participants.keys()):
+            self._remove_participant(participant)
         self.session_ready.clear()
 
     def _handle_participant_added(self, msg: VivoxMessage):
@@ -426,7 +426,9 @@ class VoiceClient:
             self.participant_updated.notify(participant)
 
     def _handle_participant_removed(self, msg: VivoxMessage):
-        participant_uri = msg.data["ParticipantUri"]
+        self._remove_participant(msg.data["ParticipantUri"])
+
+    def _remove_participant(self, participant_uri: str):
         if participant_uri in self._participants:
             participant = self._participants[participant_uri]
             del self._participants[participant_uri]
