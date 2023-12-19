@@ -188,7 +188,7 @@ class VoiceClient:
                 "Folder": tempfile.gettempdir(),
                 "FileNamePrefix": "VivConnector",
                 "FileNameSuffix": ".log",
-                "LogLevel": 5
+                "LogLevel": 1
             },
             "Application": "",
             "MaxCalls": 12,
