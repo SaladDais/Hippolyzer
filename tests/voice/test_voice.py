@@ -230,6 +230,7 @@ class TestVoiceClient(unittest.IsolatedAsyncioTestCase):
                     "StatusString": None,
                     "AccountHandle": 2,
                     "DisplayName": "foo",
+                    "Uri": "uri:baz@foo",
                 }
             })
 

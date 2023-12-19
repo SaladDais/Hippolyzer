@@ -65,6 +65,7 @@ class VoiceClient:
         self._session_handle: Optional[str] = None
         self._session_group_handle: Optional[str] = None
         self._account_handle: Optional[str] = None
+        self._account_uri: Optional[str] = None
         self._username: Optional[str] = None
         self._password: Optional[str] = None
         self._display_name: Optional[str] = None
@@ -222,6 +223,7 @@ class VoiceClient:
             raise Exception(resp)
 
         self._display_name = urllib.parse.unquote(resp["Results"]["DisplayName"])
+        self._account_uri = resp["Results"]["Uri"]
         await self.logged_in.wait()
 
         return resp
@@ -235,6 +237,7 @@ class VoiceClient:
                 "AccountHandle": self._account_handle,
             })
             self._account_handle = None
+            self._account_uri = None
             self.logged_in.clear()
 
     async def join_session(self, uri: str, region_handle: Optional[int] = None):
@@ -391,13 +394,15 @@ class VoiceClient:
             self.logged_in.set()
         else:
             self.logged_in.clear()
+            self._account_uri = None
             self._account_handle = None
 
     def _handle_session_added(self, msg: VivoxMessage):
         self._session_handle = msg.data["SessionHandle"]
         self._session_group_handle = msg.data["SessionGroupHandle"]
         self.session_added.notify(self._session_handle)
-        self.session_ready.set()
+        # We still have to wait for ourselves to be added as a participant, wait on
+        # that to set the session_ready event.
 
     def _handle_session_removed(self, _msg: VivoxMessage):
         self._session_handle = None
@@ -410,6 +415,8 @@ class VoiceClient:
     def _handle_participant_added(self, msg: VivoxMessage):
         self._participants[msg.data["ParticipantUri"]] = msg.data
         self.participant_added.notify(msg.data)
+        if msg.data["ParticipantUri"] == self._account_uri and not self.session_ready.is_set():
+            self.session_ready.set()
 
     def _handle_participant_updated(self, msg: VivoxMessage):
         participant_uri = msg.data["ParticipantUri"]
