@@ -77,18 +77,18 @@ class VoiceClient:
 
         self.vivox_conn: Optional[VivoxConnection] = None
         self._poll_task = asyncio.create_task(self._poll_messages())
-        self.message_handler: MessageHandler[VivoxMessage, str] = MessageHandler(take_by_default=False)
+        self.event_handler: MessageHandler[VivoxMessage, str] = MessageHandler(take_by_default=False)
 
-        self.message_handler.subscribe(
+        self.event_handler.subscribe(
             "VoiceServiceConnectionStateChangedEvent",
             self._handle_voice_service_connection_state_changed
         )
-        self.message_handler.subscribe("AccountLoginStateChangeEvent", self._handle_account_login_state_change)
-        self.message_handler.subscribe("SessionAddedEvent", self._handle_session_added)
-        self.message_handler.subscribe("SessionRemovedEvent", self._handle_session_removed)
-        self.message_handler.subscribe("ParticipantAddedEvent", self._handle_participant_added)
-        self.message_handler.subscribe("ParticipantUpdatedEvent", self._handle_participant_updated)
-        self.message_handler.subscribe("ParticipantRemovedEvent", self._handle_participant_removed)
+        self.event_handler.subscribe("AccountLoginStateChangeEvent", self._handle_account_login_state_change)
+        self.event_handler.subscribe("SessionAddedEvent", self._handle_session_added)
+        self.event_handler.subscribe("SessionRemovedEvent", self._handle_session_removed)
+        self.event_handler.subscribe("ParticipantAddedEvent", self._handle_participant_added)
+        self.event_handler.subscribe("ParticipantUpdatedEvent", self._handle_participant_updated)
+        self.event_handler.subscribe("ParticipantRemovedEvent", self._handle_participant_removed)
 
     @property
     def username(self):
@@ -367,7 +367,7 @@ class VoiceClient:
             try:
                 RESP_LOG.debug(repr(msg))
                 if msg.type == "Event":
-                    self.message_handler.handle(msg)
+                    self.event_handler.handle(msg)
                 elif msg.type == "Response":
                     # Might not have this request ID if it was sent directly via the socket
                     if msg.request_id in self._pending_req_futures:
