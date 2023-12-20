@@ -152,7 +152,7 @@ class DeformerAddon(BaseAddon):
         local_anim.LocalAnimAddon.apply_local_anim(session, region, "deformer_addon", anim_data)
 
     def handle_rlv_command(self, session: Session, region: ProxiedRegion, source: UUID,
-                           cmd: str, options: List[str], param: str):
+                           behaviour: str, options: List[str], param: str):
         # An object in-world can also tell the client how to deform itself via
         # RLV-style commands.
 
@@ -160,9 +160,9 @@ class DeformerAddon(BaseAddon):
         if param != "force":
             return
 
-        if cmd == "stop_deforming":
+        if behaviour == "stop_deforming":
             self.deform_joints.clear()
-        elif cmd == "deform_joints":
+        elif behaviour == "deform_joints":
             self.deform_joints.clear()
             for joint_data in options:
                 joint_split = joint_data.split("|")

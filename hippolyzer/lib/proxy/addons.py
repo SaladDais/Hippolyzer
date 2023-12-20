@@ -21,6 +21,7 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.helpers import get_mtime
 from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.network.transport import UDPPacket
+from hippolyzer.lib.client.rlv import RLVParser
 from hippolyzer.lib.proxy import addon_ctx
 from hippolyzer.lib.proxy.task_scheduler import TaskLifeScope, TaskScheduler
 
@@ -348,7 +349,7 @@ class AddonManager:
             cls.SCHEDULER.kill_matching_tasks(lifetime_mask=TaskLifeScope.ADDON, creator=addon)
 
     @classmethod
-    def _call_all_addon_hooks(cls, hook_name, *args, call_async=False, **kwargs):
+    def _call_all_addon_hooks(cls, hook_name, *args, call_async=False, **kwargs) -> Optional[bool]:
         for module in cls.FRESH_ADDON_MODULES.values():
             if not module:
                 continue
@@ -391,7 +392,7 @@ class AddonManager:
         return cls._try_call_hook(module, hook_name, *args, call_async=call_async, **kwargs)
 
     @classmethod
-    def _try_call_hook(cls, addon, hook_name, *args, call_async=False, **kwargs):
+    def _try_call_hook(cls, addon, hook_name, *args, call_async=False, **kwargs) -> Optional[bool]:
         if cls._SUBPROCESS:
             return
 
@@ -452,32 +453,30 @@ class AddonManager:
                             raise
                     return True
         if message.name == "ChatFromSimulator" and "ChatData" in message:
-            chat: str = message["ChatData"]["Message"]
-            chat_type: int = message["ChatData"]["ChatType"]
             # RLV-style OwnerSay?
-            if chat and chat.startswith("@") and chat_type == 8:
+            if RLVParser.is_rlv_message(message):
                 # RLV allows putting multiple commands into one message, blindly splitting on ",".
-                chat = chat.lstrip("@")
                 all_cmds_handled = True
-                for command_str in chat.split(","):
-                    if not command_str:
-                        continue
-                    # RLV-style command, `@<cmd>(:<option1>;<option2>)?(=<param>)?`
-                    options, _, param = command_str.partition("=")
-                    cmd, _, options = options.partition(":")
-                    # TODO: Not always correct, commands can specify their own parsing for the option field
-                    options = options.split(";") if options else []
-                    source = message["ChatData"]["SourceID"]
+                chat: str = message["ChatData"]["Message"]
+                source = message["ChatData"]["SourceID"]
+                for command in RLVParser.parse_chat(chat):
                     try:
                         with addon_ctx.push(session, region):
-                            handled = cls._call_all_addon_hooks("handle_rlv_command",
-                                                                session, region, source, cmd, options, param)
+                            handled = cls._call_all_addon_hooks(
+                                "handle_rlv_command",
+                                session,
+                                region,
+                                source,
+                                command.behaviour,
+                                command.options,
+                                command.param,
+                            )
                         if handled:
                             region.circuit.drop_message(message)
                         else:
                             all_cmds_handled = False
                     except:
-                        LOG.exception(f"Failed while handling command {command_str!r}")
+                        LOG.exception(f"Failed while handling command {command!r}")
                         all_cmds_handled = False
                         if not cls._SWALLOW_ADDON_EXCEPTIONS:
                             raise

@@ -188,7 +188,7 @@ class BaseAddon(metaclass=MetaBaseAddon):
         pass
 
     def handle_rlv_command(self, session: Session, region: ProxiedRegion, source: UUID,
-                           cmd: str, options: List[str], param: str):
+                           behaviour: str, options: List[str], param: str):
         pass
 
     def handle_proxied_packet(self, session_manager: SessionManager, packet: UDPPacket,

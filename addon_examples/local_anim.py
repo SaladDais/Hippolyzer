@@ -114,15 +114,15 @@ class LocalAnimAddon(BaseAddon):
             await asyncio.sleep(1.0)
 
     def handle_rlv_command(self, session: Session, region: ProxiedRegion, source: UUID,
-                           cmd: str, options: List[str], param: str):
+                           behaviour: str, options: List[str], param: str):
         # We only handle commands
         if param != "force":
             return
 
-        if cmd == "stop_local_anim":
+        if behaviour == "stop_local_anim":
             self.apply_local_anim(session, region, options[0], new_data=None)
             return True
-        elif cmd == "start_local_anim":
+        elif behaviour == "start_local_anim":
             self.apply_local_anim_from_file(session, region, options[0])
             return True
 
