@@ -146,6 +146,9 @@ class TestLegacyInv(unittest.TestCase):
         new_model.root.name = "foo"
         self.assertNotEqual(self.model, new_model)
 
+    def test_legacy_serialization(self):
+        self.assertEqual(SIMPLE_INV, self.model.to_str())
+
     def test_difference_added(self):
         new_model = InventoryModel.from_llsd(self.model.to_llsd())
         diff = self.model.get_differences(new_model)

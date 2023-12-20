@@ -5,6 +5,7 @@ It's typically only used for object contents now.
 """
 from __future__ import annotations
 
+import abc
 import dataclasses
 import datetime as dt
 import logging
@@ -111,9 +112,21 @@ class InventoryBase(SchemaBase):
         return cls._obj_from_dict(obj_dict)
 
     def to_writer(self, writer: StringIO):
-        writer.write(f"\t{self.SCHEMA_NAME}\t0\n")
+        writer.write(f"\t{self.SCHEMA_NAME}")
+        if self.SCHEMA_NAME == "permissions":
+            writer.write(" 0\n")
+        else:
+            writer.write("\t0\n")
         writer.write("\t{\n")
-        for field_name, field in self._get_fields_dict().items():
+
+        # Make sure the ID field always comes first, if there is one.
+        fields_dict = {}
+        if hasattr(self, "ID_ATTR"):
+            fields_dict = {getattr(self, "ID_ATTR"): None}
+        # update()ing will put all fields that aren't yet in the dict after the ID attr.
+        fields_dict.update(self._get_fields_dict())
+
+        for field_name, field in fields_dict.items():
             spec = field.metadata.get("spec")
             # Not meant to be serialized
             if not spec:
@@ -291,13 +304,20 @@ class InventorySaleInfo(InventoryBase):
     sale_price: int = schema_field(SchemaInt)
 
 
-@dataclasses.dataclass
-class InventoryNodeBase(InventoryBase):
-    ID_ATTR: ClassVar[str]
-
+class _HasName(abc.ABC):
+    """
+    Only exists so that we can assert that all subclasses should have this without forcing
+    a particular serialization order, as would happen if this was present on InventoryNodeBase.
+    """
     name: str
 
+
+@dataclasses.dataclass
+class InventoryNodeBase(InventoryBase, _HasName):
+    ID_ATTR: ClassVar[str]
+
     parent_id: Optional[UUID] = schema_field(SchemaUUID)
+
     model: Optional[InventoryModel] = dataclasses.field(
         default=None, init=False, hash=False, compare=False, repr=False
     )
@@ -339,7 +359,6 @@ class InventoryNodeBase(InventoryBase):
 @dataclasses.dataclass
 class InventoryContainerBase(InventoryNodeBase):
     type: str = schema_field(SchemaStr)
-    name: str = schema_field(SchemaMultilineStr)
 
     @property
     def children(self) -> Sequence[InventoryNodeBase]:
@@ -386,6 +405,7 @@ class InventoryObject(InventoryContainerBase):
     ID_ATTR: ClassVar[str] = "obj_id"
 
     obj_id: UUID = schema_field(SchemaUUID)
+    name: str = schema_field(SchemaMultilineStr)
     metadata: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None, include_none=True)
 
     __hash__ = InventoryNodeBase.__hash__
@@ -399,6 +419,7 @@ class InventoryCategory(InventoryContainerBase):
 
     cat_id: UUID = schema_field(SchemaUUID)
     pref_type: str = schema_field(SchemaStr, llsd_name="preferred_type")
+    name: str = schema_field(SchemaMultilineStr)
     owner_id: UUID = schema_field(SchemaUUID)
     version: int = schema_field(SchemaInt)
     metadata: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None, include_none=True)
@@ -412,17 +433,17 @@ class InventoryItem(InventoryNodeBase):
     ID_ATTR: ClassVar[str] = "item_id"
 
     item_id: UUID = schema_field(SchemaUUID)
-    type: str = schema_field(SchemaStr)
-    inv_type: str = schema_field(SchemaStr)
-    flags: int = schema_field(SchemaFlagField)
-    name: str = schema_field(SchemaMultilineStr)
-    desc: str = schema_field(SchemaMultilineStr)
-    creation_date: dt.datetime = schema_field(SchemaDate, llsd_name="created_at")
     permissions: InventoryPermissions = schema_field(InventoryPermissions)
-    sale_info: InventorySaleInfo = schema_field(InventorySaleInfo)
     asset_id: Optional[UUID] = schema_field(SchemaUUID, default=None)
     shadow_id: Optional[UUID] = schema_field(SchemaUUID, default=None)
+    type: Optional[str] = schema_field(SchemaStr, default=None)
+    inv_type: Optional[str] = schema_field(SchemaStr, default=None)
+    flags: Optional[int] = schema_field(SchemaFlagField, default=None)
+    sale_info: Optional[InventorySaleInfo] = schema_field(InventorySaleInfo, default=None)
+    name: Optional[str] = schema_field(SchemaMultilineStr, default=None)
+    desc: Optional[str] = schema_field(SchemaMultilineStr, default=None)
     metadata: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None, include_none=True)
+    creation_date: Optional[dt.datetime] = schema_field(SchemaDate, llsd_name="created_at", default=None)
 
     __hash__ = InventoryNodeBase.__hash__
 

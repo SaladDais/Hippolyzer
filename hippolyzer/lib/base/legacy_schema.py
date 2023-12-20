@@ -116,11 +116,12 @@ class SchemaLLSD(SchemaFieldSerializer[_T]):
     """Arbitrary LLSD embedded in a field"""
     @classmethod
     def deserialize(cls, val: str) -> _T:
-        return llsd.parse_xml(val.encode("utf8"))
+        return llsd.parse_xml(val.partition("|")[0].encode("utf8"))
 
     @classmethod
     def serialize(cls, val: _T) -> str:
-        return llsd.format_xml(val).decode("utf8")
+        # Don't include the XML header
+        return llsd.format_xml(val).split(b">", 1)[1].decode("utf8") + "\n|"
 
 
 def schema_field(spec: Type[Union[SchemaBase, SchemaFieldSerializer]], *, default=dataclasses.MISSING, init=True,
