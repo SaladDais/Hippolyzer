@@ -116,19 +116,20 @@ class SchemaLLSD(SchemaFieldSerializer[_T]):
     """Arbitrary LLSD embedded in a field"""
     @classmethod
     def deserialize(cls, val: str) -> _T:
-        return llsd.parse_notation(val.encode("utf8"))
+        return llsd.parse_xml(val.encode("utf8"))
 
     @classmethod
     def serialize(cls, val: _T) -> str:
-        return llsd.format_notation(val).decode("utf8")
+        return llsd.format_xml(val).decode("utf8")
 
 
 def schema_field(spec: Type[Union[SchemaBase, SchemaFieldSerializer]], *, default=dataclasses.MISSING, init=True,
-                 repr=True, hash=None, compare=True, llsd_name=None, llsd_only=False) -> dataclasses.Field:  # noqa
+                 repr=True, hash=None, compare=True, llsd_name=None, llsd_only=False,
+                 include_none=False) -> dataclasses.Field:  # noqa
     """Describe a field in the inventory schema and the shape of its value"""
     return dataclasses.field(  # noqa
-        metadata={"spec": spec, "llsd_name": llsd_name, "llsd_only": llsd_only}, default=default,
-        init=init, repr=repr, hash=hash, compare=compare,
+        metadata={"spec": spec, "llsd_name": llsd_name, "llsd_only": llsd_only, "include_none": include_none},
+        default=default, init=init, repr=repr, hash=hash, compare=compare,
     )
 
 

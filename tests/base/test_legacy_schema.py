@@ -11,6 +11,8 @@ SIMPLE_INV = """\tinv_object\t0
 \t\tparent_id\t00000000-0000-0000-0000-000000000000
 \t\ttype\tcategory
 \t\tname\tContents|
+\t\tmetadata\t<llsd><undef /></llsd>
+|
 \t}
 \tinv_item\t0
 \t{
@@ -39,6 +41,8 @@ SIMPLE_INV = """\tinv_object\t0
 \t}
 \t\tname\tNew Script|
 \t\tdesc\t2020-04-20 04:20:39 lsl2 script|
+\t\tmetadata\t<llsd><map><key>experience</key><uuid>a2e76fcd-9360-4f6d-a924-000000000003</uuid></map></llsd>
+|
 \t\tcreation_date\t1587367239
 \t}
 """
@@ -61,6 +65,7 @@ class TestLegacyInv(unittest.TestCase):
         item = self.model.nodes[UUID('dd163122-946b-44df-99f6-a6030e2b9597')]
         self.assertEqual(item.name, "New Script")
         self.assertEqual(item.sale_info.sale_type, "not")
+        self.assertDictEqual(item.metadata, {"experience": UUID("a2e76fcd-9360-4f6d-a924-000000000003")})
         self.assertEqual(item.model, self.model)
 
     def test_access_children(self):
@@ -112,6 +117,7 @@ class TestLegacyInv(unittest.TestCase):
                     'inv_type': 'script',
                     'item_id': UUID('dd163122-946b-44df-99f6-a6030e2b9597'),
                     'name': 'New Script',
+                    'metadata': {"experience": UUID("a2e76fcd-9360-4f6d-a924-000000000003")},
                     'parent_id': UUID('f4d91477-def1-487a-b4f3-6fa201c17376'),
                     'permissions': {
                         'base_mask': 2147483647,

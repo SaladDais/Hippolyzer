@@ -122,7 +122,7 @@ class InventoryBase(SchemaBase):
                 continue
 
             val = getattr(self, field_name)
-            if val is None:
+            if val is None and not field.metadata.get("include_none"):
                 continue
 
             # Some kind of nested structure like sale_info
@@ -386,7 +386,7 @@ class InventoryObject(InventoryContainerBase):
     ID_ATTR: ClassVar[str] = "obj_id"
 
     obj_id: UUID = schema_field(SchemaUUID)
-    metadata: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None)
+    metadata: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None, include_none=True)
 
     __hash__ = InventoryNodeBase.__hash__
 
@@ -401,7 +401,7 @@ class InventoryCategory(InventoryContainerBase):
     pref_type: str = schema_field(SchemaStr, llsd_name="preferred_type")
     owner_id: UUID = schema_field(SchemaUUID)
     version: int = schema_field(SchemaInt)
-    metadata: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None)
+    metadata: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None, include_none=True)
 
     __hash__ = InventoryNodeBase.__hash__
 
@@ -422,7 +422,7 @@ class InventoryItem(InventoryNodeBase):
     sale_info: InventorySaleInfo = schema_field(InventorySaleInfo)
     asset_id: Optional[UUID] = schema_field(SchemaUUID, default=None)
     shadow_id: Optional[UUID] = schema_field(SchemaUUID, default=None)
-    metadata: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None)
+    metadata: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None, include_none=True)
 
     __hash__ = InventoryNodeBase.__hash__
 
