@@ -39,11 +39,11 @@ class HippoLLSDXMLPrettyFormatter(base_llsd.serde_xml.LLSDXMLPrettyFormatter, Hi
         super().__init__()
 
 
-def format_pretty_xml(val: typing.Any):
+def format_pretty_xml(val: typing.Any) -> bytes:
     return HippoLLSDXMLPrettyFormatter().format(val)
 
 
-def format_xml(val: typing.Any):
+def format_xml(val: typing.Any) -> bytes:
     return HippoLLSDXMLFormatter().format(val)
 
 
@@ -58,11 +58,11 @@ class HippoLLSDNotationFormatter(base_llsd.serde_notation.LLSDNotationFormatter,
         return super().STRING(v).replace(b"\n", b"\\n")
 
 
-def format_notation(val: typing.Any):
+def format_notation(val: typing.Any) -> bytes:
     return HippoLLSDNotationFormatter().format(val)
 
 
-def format_binary(val: typing.Any, with_header=True):
+def format_binary(val: typing.Any, with_header=True) -> bytes:
     val = _format_binary_recurse(val)
     if with_header:
         return b'<?llsd/binary?>\n' + val

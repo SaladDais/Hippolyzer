@@ -99,7 +99,7 @@ class InventoryManager:
                 if first_line:
                     # First line is the file header
                     first_line = False
-                    if node_llsd['inv_cache_version'] != 2:
+                    if node_llsd['inv_cache_version'] not in (2, 3):
                         raise ValueError(f"Unknown cache version: {node_llsd!r}")
                     continue
 

@@ -14,6 +14,8 @@ import re
 from io import StringIO
 from typing import *
 
+import hippolyzer.lib.base.llsd as llsd
+
 from hippolyzer.lib.base.datatypes import UUID
 
 LOG = logging.getLogger(__name__)
@@ -108,6 +110,17 @@ class SchemaUUID(SchemaFieldSerializer[UUID]):
     @classmethod
     def serialize(cls, val: UUID) -> str:
         return str(val)
+
+
+class SchemaLLSD(SchemaFieldSerializer[_T]):
+    """Arbitrary LLSD embedded in a field"""
+    @classmethod
+    def deserialize(cls, val: str) -> _T:
+        return llsd.parse_notation(val.encode("utf8"))
+
+    @classmethod
+    def serialize(cls, val: _T) -> str:
+        return llsd.format_notation(val).decode("utf8")
 
 
 def schema_field(spec: Type[Union[SchemaBase, SchemaFieldSerializer]], *, default=dataclasses.MISSING, init=True,

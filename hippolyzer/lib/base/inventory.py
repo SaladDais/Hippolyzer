@@ -22,6 +22,7 @@ from hippolyzer.lib.base.legacy_schema import (
     SchemaFieldSerializer,
     SchemaHexInt,
     SchemaInt,
+    SchemaLLSD,
     SchemaMultilineStr,
     SchemaParsingError,
     SchemaStr,
@@ -385,6 +386,7 @@ class InventoryObject(InventoryContainerBase):
     ID_ATTR: ClassVar[str] = "obj_id"
 
     obj_id: UUID = schema_field(SchemaUUID)
+    metadata: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None)
 
     __hash__ = InventoryNodeBase.__hash__
 
@@ -399,6 +401,7 @@ class InventoryCategory(InventoryContainerBase):
     pref_type: str = schema_field(SchemaStr, llsd_name="preferred_type")
     owner_id: UUID = schema_field(SchemaUUID)
     version: int = schema_field(SchemaInt)
+    metadata: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None)
 
     __hash__ = InventoryNodeBase.__hash__
 
@@ -419,6 +422,7 @@ class InventoryItem(InventoryNodeBase):
     sale_info: InventorySaleInfo = schema_field(InventorySaleInfo)
     asset_id: Optional[UUID] = schema_field(SchemaUUID, default=None)
     shadow_id: Optional[UUID] = schema_field(SchemaUUID, default=None)
+    metadata: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None)
 
     __hash__ = InventoryNodeBase.__hash__
 
