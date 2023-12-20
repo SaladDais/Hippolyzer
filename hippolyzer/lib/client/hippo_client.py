@@ -541,6 +541,12 @@ class HippoClient(BaseClientSessionManager):
             return None
         return self.main_region.circuit
 
+    @property
+    def main_caps_client(self) -> Optional[CapsClient]:
+        if not self.main_region:
+            return None
+        return self.main_region.caps_client
+
     async def aclose(self):
         try:
             self.logout()

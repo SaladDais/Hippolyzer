@@ -34,7 +34,7 @@ async def amain():
         client.session.message_handler.subscribe("ChatFromSimulator", _respond_to_chat)
 
         # Example of how to work with caps
-        async with client.main_region.caps_client.get("SimulatorFeatures") as features_resp:
+        async with client.main_caps_client.get("SimulatorFeatures") as features_resp:
             print("Features:", await features_resp.read_llsd())
 
         while True:
