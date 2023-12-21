@@ -2,7 +2,7 @@ import copy
 import unittest
 
 from hippolyzer.lib.base.datatypes import *
-from hippolyzer.lib.base.inventory import InventoryModel
+from hippolyzer.lib.base.inventory import InventoryModel, SaleType
 from hippolyzer.lib.base.wearables import Wearable, VISUAL_PARAMS
 
 SIMPLE_INV = """\tinv_object\t0
@@ -64,7 +64,7 @@ class TestLegacyInv(unittest.TestCase):
     def test_item_access(self):
         item = self.model.nodes[UUID('dd163122-946b-44df-99f6-a6030e2b9597')]
         self.assertEqual(item.name, "New Script")
-        self.assertEqual(item.sale_info.sale_type, "not")
+        self.assertEqual(item.sale_info.sale_type, SaleType.NOT)
         self.assertDictEqual(item.metadata, {"experience": UUID("a2e76fcd-9360-4f6d-a924-000000000003")})
         self.assertEqual(item.model, self.model)
 

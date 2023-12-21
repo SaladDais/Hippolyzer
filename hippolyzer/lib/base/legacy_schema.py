@@ -9,6 +9,7 @@ import abc
 import calendar
 import dataclasses
 import datetime as dt
+import inspect
 import logging
 import re
 from io import StringIO
@@ -124,7 +125,10 @@ class SchemaLLSD(SchemaFieldSerializer[_T]):
         return llsd.format_xml(val).split(b">", 1)[1].decode("utf8") + "\n|"
 
 
-def schema_field(spec: Type[Union[SchemaBase, SchemaFieldSerializer]], *, default=dataclasses.MISSING, init=True,
+_SCHEMA_SPEC = Union[Type[Union["SchemaBase", SchemaFieldSerializer]], SchemaFieldSerializer]
+
+
+def schema_field(spec: _SCHEMA_SPEC, *, default=dataclasses.MISSING, init=True,
                  repr=True, hash=None, compare=True, llsd_name=None, llsd_only=False,
                  include_none=False) -> dataclasses.Field:  # noqa
     """Describe a field in the inventory schema and the shape of its value"""
@@ -188,10 +192,15 @@ class SchemaBase(abc.ABC):
                 if not spec:
                     LOG.warning(f"Internal key {key!r}")
                     continue
+
+                spec_cls = spec
+                if not inspect.isclass(spec_cls):
+                    spec_cls = spec_cls.__class__
+
                 # some kind of nested structure like sale_info
-                if issubclass(spec, SchemaBase):
+                if issubclass(spec_cls, SchemaBase):
                     obj_dict[key] = spec.from_llsd(val)
-                elif issubclass(spec, SchemaFieldSerializer):
+                elif issubclass(spec_cls, SchemaFieldSerializer):
                     obj_dict[key] = spec.from_llsd(val)
                 else:
                     raise ValueError(f"Unsupported spec for {key!r}, {spec!r}")
@@ -220,10 +229,14 @@ class SchemaBase(abc.ABC):
             if val is None:
                 continue
 
+            spec_cls = spec
+            if not inspect.isclass(spec_cls):
+                spec_cls = spec_cls.__class__
+
             # Some kind of nested structure like sale_info
             if isinstance(val, SchemaBase):
                 val = val.to_llsd()
-            elif issubclass(spec, SchemaFieldSerializer):
+            elif issubclass(spec_cls, SchemaFieldSerializer):
                 val = spec.to_llsd(val)
             else:
                 raise ValueError(f"Bad inventory spec {spec!r}")
