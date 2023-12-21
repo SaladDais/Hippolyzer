@@ -450,8 +450,8 @@ class InventoryCategory(InventoryContainerBase):
     # TODO: not a string in AIS
     pref_type: FolderType = schema_field(SchemaEnumField(FolderType), llsd_name="preferred_type")
     name: str = schema_field(SchemaMultilineStr)
-    owner_id: UUID = schema_field(SchemaUUID)
-    version: int = schema_field(SchemaInt)
+    owner_id: Optional[UUID] = schema_field(SchemaUUID, default=None)
+    version: Optional[int] = schema_field(SchemaInt, default=None)
     metadata: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None, include_none=True)
 
     __hash__ = InventoryNodeBase.__hash__

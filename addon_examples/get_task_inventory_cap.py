@@ -17,7 +17,7 @@ from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.inventory import InventoryModel, InventoryObject
 from hippolyzer.lib.base.message.message import Message, Block
-from hippolyzer.lib.base.templates import XferFilePath
+from hippolyzer.lib.base.templates import XferFilePath, AssetType
 from hippolyzer.lib.proxy import addon_ctx
 from hippolyzer.lib.proxy.webapp_cap_addon import WebAppCapAddon
 
@@ -64,7 +64,7 @@ async def get_task_inventory():
                         InventoryObject(
                             name="Contents",
                             parent_id=UUID.ZERO,
-                            type="category",
+                            type=AssetType.CATEGORY,
                             obj_id=obj_id
                         ).to_llsd()
                     ],

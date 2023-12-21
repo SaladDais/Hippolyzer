@@ -47,6 +47,16 @@ SIMPLE_INV = """\tinv_object\t0
 \t}
 """
 
+INV_CATEGORY = """\tinv_category\t0
+\t{
+\t\tcat_id\tf4d91477-def1-487a-b4f3-6fa201c17376
+\t\tparent_id\t00000000-0000-0000-0000-000000000000
+\t\ttype\tlsltext
+\t\tpref_type\tlsltext
+\t\tname\tScripts|
+\t}
+"""
+
 
 class TestLegacyInv(unittest.TestCase):
     def setUp(self) -> None:
@@ -56,10 +66,18 @@ class TestLegacyInv(unittest.TestCase):
         self.assertTrue(UUID('f4d91477-def1-487a-b4f3-6fa201c17376') in self.model.nodes)
         self.assertIsNotNone(self.model.root)
 
+    def test_parse_category(self):
+        model = InventoryModel.from_str(INV_CATEGORY)
+        self.assertEqual(UUID('f4d91477-def1-487a-b4f3-6fa201c17376'), model.root.node_id)
+
     def test_serialize(self):
-        self.model = InventoryModel.from_str(SIMPLE_INV)
         new_model = InventoryModel.from_str(self.model.to_str())
         self.assertEqual(self.model, new_model)
+
+    def test_serialize_category(self):
+        model = InventoryModel.from_str(INV_CATEGORY)
+        new_model = InventoryModel.from_str(model.to_str())
+        self.assertEqual(model, new_model)
 
     def test_item_access(self):
         item = self.model.nodes[UUID('dd163122-946b-44df-99f6-a6030e2b9597')]
