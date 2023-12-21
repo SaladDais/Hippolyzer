@@ -3,6 +3,11 @@ Parse the horrible legacy inventory-related format.
 
 It's typically only used for object contents now.
 """
+
+# TODO: Maybe handle CRC calculation? Does anything care about that?
+#  I don't think anything in the viewer actually looks at the result
+#  of the CRC check for UDP stuff.
+
 from __future__ import annotations
 
 import abc
@@ -451,8 +456,8 @@ class InventoryCategory(InventoryContainerBase):
     pref_type: FolderType = schema_field(SchemaEnumField(FolderType), llsd_name="preferred_type")
     name: str = schema_field(SchemaMultilineStr)
     owner_id: Optional[UUID] = schema_field(SchemaUUID, default=None)
-    version: Optional[int] = schema_field(SchemaInt, default=None)
-    metadata: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None, include_none=True)
+    version: int = schema_field(SchemaInt, default=VERSION_NONE, llsd_only=True)
+    metadata: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None, include_none=False)
 
     __hash__ = InventoryNodeBase.__hash__
 

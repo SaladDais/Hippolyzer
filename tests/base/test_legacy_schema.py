@@ -79,6 +79,9 @@ class TestLegacyInv(unittest.TestCase):
         new_model = InventoryModel.from_str(model.to_str())
         self.assertEqual(model, new_model)
 
+    def test_category_legacy_serialization(self):
+        self.assertEqual(INV_CATEGORY, InventoryModel.from_str(INV_CATEGORY).to_str())
+
     def test_item_access(self):
         item = self.model.nodes[UUID('dd163122-946b-44df-99f6-a6030e2b9597')]
         self.assertEqual(item.name, "New Script")
