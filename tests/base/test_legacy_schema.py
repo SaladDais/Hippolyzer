@@ -129,7 +129,6 @@ class TestLegacyInv(unittest.TestCase):
                         'next_owner_mask': 581632,
                         'owner_id': UUID('a2e76fcd-9360-4f6d-a924-000000000003'),
                         'owner_mask': 2147483647,
-                        'is_owner_group': 0,
                     },
                     'sale_info': {
                         'sale_price': 10,

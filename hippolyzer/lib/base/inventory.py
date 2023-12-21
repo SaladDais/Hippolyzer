@@ -293,13 +293,14 @@ class InventoryPermissions(InventoryBase):
     group_id: UUID = schema_field(SchemaUUID)
     # Nothing actually cares about this, but it could be there.
     # It's kind of redundant since it just means owner_id == NULL_KEY && group_id != NULL_KEY.
-    is_owner_group: int = schema_field(SchemaInt, default=0, llsd_only=True)
+    is_owner_group: Optional[int] = schema_field(SchemaInt, default=None, llsd_only=True)
 
 
 @dataclasses.dataclass
 class InventorySaleInfo(InventoryBase):
     SCHEMA_NAME: ClassVar[str] = "sale_info"
 
+    # TODO: Not a string in AIS
     sale_type: str = schema_field(SchemaStr)
     sale_price: int = schema_field(SchemaInt)
 
@@ -358,6 +359,7 @@ class InventoryNodeBase(InventoryBase, _HasName):
 
 @dataclasses.dataclass
 class InventoryContainerBase(InventoryNodeBase):
+    # TODO: Not a string in AIS
     type: str = schema_field(SchemaStr)
 
     @property
@@ -436,7 +438,9 @@ class InventoryItem(InventoryNodeBase):
     permissions: InventoryPermissions = schema_field(InventoryPermissions)
     asset_id: Optional[UUID] = schema_field(SchemaUUID, default=None)
     shadow_id: Optional[UUID] = schema_field(SchemaUUID, default=None)
+    # TODO: Not a string in AIS
     type: Optional[str] = schema_field(SchemaStr, default=None)
+    # TODO: Not a string in AIS
     inv_type: Optional[str] = schema_field(SchemaStr, default=None)
     flags: Optional[int] = schema_field(SchemaFlagField, default=None)
     sale_info: Optional[InventorySaleInfo] = schema_field(InventorySaleInfo, default=None)
