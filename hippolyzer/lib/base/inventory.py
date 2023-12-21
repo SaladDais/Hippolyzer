@@ -8,7 +8,6 @@ from __future__ import annotations
 import abc
 import dataclasses
 import datetime as dt
-import enum
 import inspect
 import logging
 import struct
@@ -32,6 +31,7 @@ from hippolyzer.lib.base.legacy_schema import (
     SchemaUUID,
     schema_field,
 )
+from hippolyzer.lib.base.templates import SaleType, InventoryType, LegacyIntEnum, AssetType, FolderType
 
 MAGIC_ID = UUID("3c115e51-04f4-523c-9fa6-98aff1034730")
 LOG = logging.getLogger(__name__)
@@ -41,27 +41,12 @@ _T = TypeVar("_T")
 class SchemaFlagField(SchemaHexInt):
     """Like a hex int, but must be serialized as bytes in LLSD due to being a U32"""
     @classmethod
-    def from_llsd(cls, val: Any) -> int:
+    def from_llsd(cls, val: Any, flavor: str) -> int:
         return struct.unpack("!I", val)[0]
 
     @classmethod
-    def to_llsd(cls, val: int) -> Any:
+    def to_llsd(cls, val: int, flavor: str) -> Any:
         return struct.pack("!I", val)
-
-
-class LegacyIntEnum(enum.IntEnum):
-    _ignore_ = ['_LEGACY_NAMES']
-
-    @classmethod
-    def _get_legacy_names(cls) -> Tuple[str, ...]:
-        raise NotImplementedError()
-
-    @classmethod
-    def from_legacy_name(cls, name: str):
-        return cls(cls._get_legacy_names().index(name))
-
-    def to_legacy_name(self) -> str:
-        return self._get_legacy_names()[self.value]
 
 
 class SchemaEnumField(SchemaStr, Generic[_T]):
@@ -73,12 +58,12 @@ class SchemaEnumField(SchemaStr, Generic[_T]):
         return self._enum_cls.from_legacy_name(val)
 
     def serialize(self, val: _T) -> str:
-        return self._enum_cls.to_legacy_name(val)
+        return self._enum_cls(val).to_legacy_name()
 
-    def from_llsd(self, val: str) -> _T:
+    def from_llsd(self, val: str, flavor: str) -> _T:
         return self.deserialize(val)
 
-    def to_llsd(self, val: _T) -> str:
+    def to_llsd(self, val: _T, flavor: str) -> str:
         return self.serialize(val)
 
 
@@ -221,12 +206,12 @@ class InventoryModel(InventoryBase):
         return model
 
     @classmethod
-    def from_llsd(cls, llsd_val: List[Dict]) -> InventoryModel:
+    def from_llsd(cls, llsd_val: List[Dict], flavor: str = "legacy") -> InventoryModel:
         model = cls()
         for obj_dict in llsd_val:
             for inv_type in INVENTORY_TYPES:
                 if inv_type.ID_ATTR in obj_dict:
-                    if (obj := inv_type.from_llsd(obj_dict)) is not None:
+                    if (obj := inv_type.from_llsd(obj_dict, flavor)) is not None:
                         model.add(obj)
                     break
                 LOG.warning(f"Unknown object type {obj_dict!r}")
@@ -258,8 +243,8 @@ class InventoryModel(InventoryBase):
         for node in self.ordered_nodes:
             node.to_writer(writer)
 
-    def to_llsd(self):
-        return list(node.to_llsd() for node in self.ordered_nodes)
+    def to_llsd(self, flavor: str = "legacy"):
+        return list(node.to_llsd(flavor) for node in self.ordered_nodes)
 
     def add(self, node: InventoryNodeBase):
         if node.node_id in self.nodes:
@@ -338,17 +323,6 @@ class InventoryPermissions(InventoryBase):
     is_owner_group: Optional[int] = schema_field(SchemaInt, default=None, llsd_only=True)
 
 
-class SaleType(LegacyIntEnum):
-    NOT = 0
-    ORIGINAL = 1
-    COPY = 2
-    CONTENTS = 3
-
-    @classmethod
-    def _get_legacy_names(cls) -> Tuple[str, ...]:
-        return "not", "orig", "copy", "cntn"
-
-
 @dataclasses.dataclass
 class InventorySaleInfo(InventoryBase):
     SCHEMA_NAME: ClassVar[str] = "sale_info"
@@ -413,7 +387,7 @@ class InventoryNodeBase(InventoryBase, _HasName):
 @dataclasses.dataclass
 class InventoryContainerBase(InventoryNodeBase):
     # TODO: Not a string in AIS
-    type: str = schema_field(SchemaStr)
+    type: AssetType = schema_field(SchemaEnumField(AssetType))
 
     @property
     def children(self) -> Sequence[InventoryNodeBase]:
@@ -442,8 +416,8 @@ class InventoryContainerBase(InventoryNodeBase):
             name=name,
             cat_id=UUID.random(),
             parent_id=self.node_id,
-            type="category",
-            pref_type="-1",
+            type=AssetType.CATEGORY,
+            pref_type=FolderType.NONE,
             owner_id=getattr(self, 'owner_id', UUID.ZERO),
             version=1,
         )
@@ -473,7 +447,8 @@ class InventoryCategory(InventoryContainerBase):
     VERSION_NONE: ClassVar[int] = -1
 
     cat_id: UUID = schema_field(SchemaUUID)
-    pref_type: str = schema_field(SchemaStr, llsd_name="preferred_type")
+    # TODO: not a string in AIS
+    pref_type: FolderType = schema_field(SchemaEnumField(FolderType), llsd_name="preferred_type")
     name: str = schema_field(SchemaMultilineStr)
     owner_id: UUID = schema_field(SchemaUUID)
     version: int = schema_field(SchemaInt)
@@ -492,9 +467,9 @@ class InventoryItem(InventoryNodeBase):
     asset_id: Optional[UUID] = schema_field(SchemaUUID, default=None)
     shadow_id: Optional[UUID] = schema_field(SchemaUUID, default=None)
     # TODO: Not a string in AIS
-    type: Optional[str] = schema_field(SchemaStr, default=None)
+    type: Optional[AssetType] = schema_field(SchemaEnumField(AssetType), default=None)
     # TODO: Not a string in AIS
-    inv_type: Optional[str] = schema_field(SchemaStr, default=None)
+    inv_type: Optional[InventoryType] = schema_field(SchemaEnumField(InventoryType), default=None)
     flags: Optional[int] = schema_field(SchemaFlagField, default=None)
     sale_info: Optional[InventorySaleInfo] = schema_field(InventorySaleInfo, default=None)
     name: Optional[str] = schema_field(SchemaMultilineStr, default=None)

@@ -35,11 +35,11 @@ class SchemaFieldSerializer(abc.ABC, Generic[_T]):
         pass
 
     @classmethod
-    def from_llsd(cls, val: Any) -> _T:
+    def from_llsd(cls, val: Any, flavor: str) -> _T:
         return val
 
     @classmethod
-    def to_llsd(cls, val: _T) -> Any:
+    def to_llsd(cls, val: _T, flavor: str) -> Any:
         return val
 
 
@@ -53,11 +53,11 @@ class SchemaDate(SchemaFieldSerializer[dt.datetime]):
         return str(calendar.timegm(val.utctimetuple()))
 
     @classmethod
-    def from_llsd(cls, val: Any) -> dt.datetime:
+    def from_llsd(cls, val: Any, flavor: str) -> dt.datetime:
         return dt.datetime.utcfromtimestamp(val)
 
     @classmethod
-    def to_llsd(cls, val: dt.datetime):
+    def to_llsd(cls, val: dt.datetime, flavor: str):
         return calendar.timegm(val.utctimetuple())
 
 
@@ -180,7 +180,7 @@ class SchemaBase(abc.ABC):
         return cls.from_str(data.decode("utf8"))
 
     @classmethod
-    def from_llsd(cls, inv_dict: Dict):
+    def from_llsd(cls, inv_dict: Dict, flavor: str = "legacy"):
         fields = cls._get_fields_dict(llsd=True)
         obj_dict = {}
         for key, val in inv_dict.items():
@@ -199,9 +199,9 @@ class SchemaBase(abc.ABC):
 
                 # some kind of nested structure like sale_info
                 if issubclass(spec_cls, SchemaBase):
-                    obj_dict[key] = spec.from_llsd(val)
+                    obj_dict[key] = spec.from_llsd(val, flavor)
                 elif issubclass(spec_cls, SchemaFieldSerializer):
-                    obj_dict[key] = spec.from_llsd(val)
+                    obj_dict[key] = spec.from_llsd(val, flavor)
                 else:
                     raise ValueError(f"Unsupported spec for {key!r}, {spec!r}")
             else:
@@ -217,7 +217,7 @@ class SchemaBase(abc.ABC):
         writer.seek(0)
         return writer.read()
 
-    def to_llsd(self):
+    def to_llsd(self, flavor: str = "legacy"):
         obj_dict = {}
         for field_name, field in self._get_fields_dict(llsd=True).items():
             spec = field.metadata.get("spec")
@@ -235,9 +235,9 @@ class SchemaBase(abc.ABC):
 
             # Some kind of nested structure like sale_info
             if isinstance(val, SchemaBase):
-                val = val.to_llsd()
+                val = val.to_llsd(flavor)
             elif issubclass(spec_cls, SchemaFieldSerializer):
-                val = spec.to_llsd(val)
+                val = spec.to_llsd(val, flavor)
             else:
                 raise ValueError(f"Bad inventory spec {spec!r}")
             obj_dict[field_name] = val

@@ -30,12 +30,12 @@ class AssetUploader:
     async def initiate_asset_upload(self, name: str, asset_type: AssetType,
                                     body: bytes, flags: Optional[int] = None) -> UploadToken:
         payload = {
-            "asset_type": asset_type.human_name,
+            "asset_type": asset_type.to_legacy_name(),
             "description": "(No Description)",
             "everyone_mask": 0,
             "group_mask": 0,
             "folder_id": UUID.ZERO,  # Puts it in the default folder, I guess. Undocumented.
-            "inventory_type": asset_type.inventory_type.human_name,
+            "inventory_type": asset_type.inventory_type.to_legacy_name(),
             "name": name,
             "next_owner_mask": 581632,
         }

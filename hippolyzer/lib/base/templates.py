@@ -18,6 +18,17 @@ from hippolyzer.lib.base.datatypes import UUID, IntEnum, IntFlag, Vector3, Quate
 from hippolyzer.lib.base.namevalue import NameValuesSerializer
 
 
+class LegacyIntEnum(IntEnum):
+    """Used for enums that have legacy string names, may be used in the legacy schema"""
+    @abc.abstractmethod
+    def to_legacy_name(self) -> str:
+        raise NotImplementedError()
+
+    @classmethod
+    def from_legacy_name(cls, legacy_name: str):
+        raise NotImplementedError()
+
+
 @se.enum_field_serializer("RequestXfer", "XferID", "VFileType")
 @se.enum_field_serializer("AssetUploadRequest", "AssetBlock", "Type")
 @se.enum_field_serializer("AssetUploadComplete", "AssetBlock", "Type")
@@ -26,7 +37,7 @@ from hippolyzer.lib.base.namevalue import NameValuesSerializer
 @se.enum_field_serializer("RezObject", "InventoryData", "Type")
 @se.enum_field_serializer("RezScript", "InventoryBlock", "Type")
 @se.enum_field_serializer("UpdateTaskInventory", "InventoryData", "Type")
-class AssetType(IntEnum):
+class AssetType(LegacyIntEnum):
     TEXTURE = 0
     SOUND = 1
     CALLINGCARD = 2
@@ -47,7 +58,7 @@ class AssetType(IntEnum):
     GESTURE = 21
     SIMSTATE = 22
     LINK = 24
-    LINK_FOLDER = 25
+    FOLDER_LINK = 25
     MARKETPLACE_FOLDER = 26
     WIDGET = 40
     PERSON = 45
@@ -62,8 +73,7 @@ class AssetType(IntEnum):
     UNKNOWN = 255
     NONE = -1
 
-    @property
-    def human_name(self):
+    def to_legacy_name(self) -> str:
         lower = self.name.lower()
         return {
             "animation": "animatn",
@@ -71,7 +81,26 @@ class AssetType(IntEnum):
             "texture_tga": "txtr_tga",
             "image_tga": "img_tga",
             "sound_wav": "snd_wav",
+            "lsl_text": "lsltext",
+            "lsl_bytecode": "lslbyte",
+            "folder_link": "link_f",
+            "unknown": "invalid",
         }.get(lower, lower)
+
+    @classmethod
+    def from_legacy_name(cls, legacy_name: str):
+        reg_name = {
+            "animatn": "animation",
+            "callcard": "callingcard",
+            "txtr_tga": "texture_tga",
+            "img_tga": "image_tga",
+            "snd_wav": "sound_wav",
+            "lsltext": "lsl_text",
+            "lslbyte": "lsl_bytecode",
+            "invalid": "unknown",
+            "link_f": "folder_link",
+        }.get(legacy_name, legacy_name).upper()
+        return cls[reg_name]
 
     @property
     def inventory_type(self):
@@ -104,7 +133,7 @@ class AssetType(IntEnum):
 @se.enum_field_serializer("RezObject", "InventoryData", "InvType")
 @se.enum_field_serializer("RezScript", "InventoryBlock", "InvType")
 @se.enum_field_serializer("UpdateTaskInventory", "InventoryData", "InvType")
-class InventoryType(IntEnum):
+class InventoryType(LegacyIntEnum):
     TEXTURE = 0
     SOUND = 1
     CALLINGCARD = 2
@@ -133,16 +162,23 @@ class InventoryType(IntEnum):
     UNKNOWN = 255
     NONE = -1
 
-    @property
-    def human_name(self):
+    def to_legacy_name(self) -> str:
         lower = self.name.lower()
         return {
             "callingcard": "callcard",
             "none": "-1",
         }.get(lower, lower)
 
+    @classmethod
+    def from_legacy_name(cls, legacy_name: str):
+        reg_name = {
+            "callcard": "callingcard",
+            "-1": "none",
+        }.get(legacy_name, legacy_name).upper()
+        return cls[reg_name]
 
-class FolderType(IntEnum):
+
+class FolderType(LegacyIntEnum):
     TEXTURE = 0
     SOUND = 1
     CALLINGCARD = 2
@@ -161,6 +197,7 @@ class FolderType(IntEnum):
     ANIMATION = 20
     GESTURE = 21
     FAVORITE = 23
+    # The "ensemble" values aren't used, no idea what they were for.
     ENSEMBLE_START = 26
     ENSEMBLE_END = 45
     # This range is reserved for special clothing folder types.
@@ -177,13 +214,53 @@ class FolderType(IntEnum):
     # Note: We actually *never* create folders with that type. This is used for icon override only.
     MARKETPLACE_VERSION = 55
     SETTINGS = 56
-    # Firestorm folders, may not actually exist
+    # Firestorm folders, may not actually exist in legacy schema
     FIRESTORM = 57
     PHOENIX = 58
     RLV = 59
     # Opensim folders
     MY_SUITCASE = 100
     NONE = -1
+
+    def to_legacy_name(self) -> str:
+        lower = self.name.lower()
+        return {
+            "callingcard": "callcard",
+            "lsl_text": "lsltext",
+            "animation": "animatn",
+            "snapshot_category": "snapshot",
+            "lost_and_found": "lstndfnd",
+            "ensemble_start": "ensemble",
+            "ensemble_end": "ensemble",
+            "current_outfit": "current",
+            "my_outfits": "my_otfts",
+            "basic_root": "basic_rt",
+            "marketplace_listings": "merchant",
+            "marketplace_stock": "stock",
+            "marketplace_version": "version",
+            "my_suitcase": "suitcase",
+            "none": "-1",
+        }.get(lower, lower)
+
+    @classmethod
+    def from_legacy_name(cls, legacy_name: str):
+        reg_name = {
+            "callcard": "callingcard",
+            "lsltext": "lsl_text",
+            "animatn": "animation",
+            "snapshot": "snapshot_category",
+            "lstndfnd": "lost_and_found",
+            "ensemble": "ensemble_start",
+            "current": "current_outfit",
+            "my_otfts": "my_outfits",
+            "basic_rt": "basic_root",
+            "merchant": "marketplace_listings",
+            "stock": "marketplace_stock",
+            "version": "marketplace_version",
+            "suitcase": "my_suitcase",
+            "-1": "none",
+        }.get(legacy_name, legacy_name).upper()
+        return cls[reg_name]
 
 
 @se.enum_field_serializer("AgentIsNowWearing", "WearableData", "WearableType")
@@ -244,6 +321,9 @@ class Permissions(IntFlag):
     RESERVED = 1 << 31
 
 
+_SALE_TYPE_LEGACY_NAMES = ("not", "orig", "copy", "cntn")
+
+
 @se.enum_field_serializer("ObjectSaleInfo", "ObjectData", "SaleType")
 @se.enum_field_serializer("ObjectProperties", "ObjectData", "SaleType")
 @se.enum_field_serializer("ObjectPropertiesFamily", "ObjectData", "SaleType")
@@ -252,11 +332,18 @@ class Permissions(IntFlag):
 @se.enum_field_serializer("RezObject", "InventoryData", "SaleType")
 @se.enum_field_serializer("UpdateTaskInventory", "InventoryData", "SaleType")
 @se.enum_field_serializer("UpdateCreateInventoryItem", "InventoryData", "SaleType")
-class SaleInfo(IntEnum):
+class SaleType(LegacyIntEnum):
     NOT = 0
     ORIGINAL = 1
     COPY = 2
     CONTENTS = 3
+
+    @classmethod
+    def from_legacy_name(cls, legacy_name: str):
+        return cls(_SALE_TYPE_LEGACY_NAMES.index(legacy_name))
+
+    def to_legacy_name(self) -> str:
+        return _SALE_TYPE_LEGACY_NAMES[int(self.value)]
 
 
 @se.flag_field_serializer("ParcelInfoReply", "Data", "Flags")
