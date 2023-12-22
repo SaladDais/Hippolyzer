@@ -342,7 +342,6 @@ class InventoryPermissions(InventoryBase):
 class InventorySaleInfo(InventoryBase):
     SCHEMA_NAME: ClassVar[str] = "sale_info"
 
-    # TODO: Not a string in AIS
     sale_type: SaleType = schema_field(SchemaEnumField(SaleType))
     sale_price: int = schema_field(SchemaInt)
 
@@ -501,9 +500,7 @@ class InventoryItem(InventoryNodeBase):
     permissions: InventoryPermissions = schema_field(InventoryPermissions)
     asset_id: Optional[UUID] = schema_field(SchemaUUID, default=None)
     shadow_id: Optional[UUID] = schema_field(SchemaUUID, default=None)
-    # TODO: Not a string in AIS
     type: Optional[AssetType] = schema_field(SchemaEnumField(AssetType), default=None)
-    # TODO: Not a string in AIS
     inv_type: Optional[InventoryType] = schema_field(SchemaEnumField(InventoryType), default=None)
     flags: Optional[int] = schema_field(SchemaFlagField, default=None)
     sale_info: Optional[InventorySaleInfo] = schema_field(InventorySaleInfo, default=None)
