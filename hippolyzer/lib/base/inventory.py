@@ -67,11 +67,15 @@ class SchemaEnumField(SchemaStr, Generic[_T]):
     def serialize(self, val: _T) -> str:
         return self._enum_cls(val).to_lookup_name()
 
-    def from_llsd(self, val: str, flavor: str) -> _T:
-        return self.deserialize(val)
+    def from_llsd(self, val: Union[str, int], flavor: str) -> _T:
+        if flavor == "legacy":
+            return self.deserialize(val)
+        return self._enum_cls(val)
 
-    def to_llsd(self, val: _T, flavor: str) -> str:
-        return self.serialize(val)
+    def to_llsd(self, val: _T, flavor: str) -> Union[int, str]:
+        if flavor == "legacy":
+            return self.serialize(val)
+        return int(val)
 
 
 def _yield_schema_tokens(reader: StringIO):

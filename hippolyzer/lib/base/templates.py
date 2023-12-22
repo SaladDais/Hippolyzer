@@ -15,6 +15,7 @@ from typing import *
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID, IntEnum, IntFlag, Vector3, Quaternion
+from hippolyzer.lib.base.helpers import BiDiDict
 from hippolyzer.lib.base.namevalue import NameValuesSerializer
 
 
@@ -31,6 +32,19 @@ class LookupIntEnum(IntEnum):
     @classmethod
     def from_lookup_name(cls, legacy_name: str):
         raise NotImplementedError()
+
+
+_ASSET_TYPE_BIDI: BiDiDict[str] = BiDiDict({
+    "animation": "animatn",
+    "callingcard": "callcard",
+    "texture_tga": "txtr_tga",
+    "image_tga": "img_tga",
+    "sound_wav": "snd_wav",
+    "lsl_text": "lsltext",
+    "lsl_bytecode": "lslbyte",
+    "folder_link": "link_f",
+    "unknown": "invalid",
+})
 
 
 @se.enum_field_serializer("RequestXfer", "XferID", "VFileType")
@@ -79,31 +93,11 @@ class AssetType(LookupIntEnum):
 
     def to_lookup_name(self) -> str:
         lower = self.name.lower()
-        return {
-            "animation": "animatn",
-            "callingcard": "callcard",
-            "texture_tga": "txtr_tga",
-            "image_tga": "img_tga",
-            "sound_wav": "snd_wav",
-            "lsl_text": "lsltext",
-            "lsl_bytecode": "lslbyte",
-            "folder_link": "link_f",
-            "unknown": "invalid",
-        }.get(lower, lower)
+        return _ASSET_TYPE_BIDI.forward.get(lower, lower)
 
     @classmethod
     def from_lookup_name(cls, legacy_name: str):
-        reg_name = {
-            "animatn": "animation",
-            "callcard": "callingcard",
-            "txtr_tga": "texture_tga",
-            "img_tga": "image_tga",
-            "snd_wav": "sound_wav",
-            "lsltext": "lsl_text",
-            "lslbyte": "lsl_bytecode",
-            "invalid": "unknown",
-            "link_f": "folder_link",
-        }.get(legacy_name, legacy_name).upper()
+        reg_name = _ASSET_TYPE_BIDI.backward.get(legacy_name, legacy_name).upper()
         return cls[reg_name]
 
     @property
@@ -130,6 +124,13 @@ class AssetType(LookupIntEnum):
             AssetType.MESH: InventoryType.MESH,
             AssetType.SETTINGS: InventoryType.SETTINGS,
         }.get(self, AssetType.NONE)
+
+
+_INV_TYPE_BIDI: BiDiDict[str] = BiDiDict({
+    "callingcard": "callcard",
+    "attachment": "attach",
+    "none": "-1",
+})
 
 
 @se.enum_field_serializer("UpdateCreateInventoryItem", "InventoryData", "InvType")
@@ -168,18 +169,32 @@ class InventoryType(LookupIntEnum):
 
     def to_lookup_name(self) -> str:
         lower = self.name.lower()
-        return {
-            "callingcard": "callcard",
-            "none": "-1",
-        }.get(lower, lower)
+        return _INV_TYPE_BIDI.forward.get(lower, lower)
 
     @classmethod
     def from_lookup_name(cls, legacy_name: str):
-        reg_name = {
-            "callcard": "callingcard",
-            "-1": "none",
-        }.get(legacy_name, legacy_name).upper()
+        reg_name = _INV_TYPE_BIDI.backward.get(legacy_name, legacy_name).upper()
         return cls[reg_name]
+
+
+_FOLDER_TYPE_BIDI: BiDiDict[str] = BiDiDict({
+    "callingcard": "callcard",
+    "lsl_text": "lsltext",
+    "animation": "animatn",
+    "snapshot_category": "snapshot",
+    "lost_and_found": "lstndfnd",
+    "ensemble_start": "ensemble",
+    "ensemble_end": "ensemble",
+    "current_outfit": "current",
+    "my_outfits": "my_otfts",
+    "basic_root": "basic_rt",
+    "marketplace_listings": "merchant",
+    "marketplace_stock": "stock",
+    "marketplace_version": "version",
+    "my_suitcase": "suitcase",
+    "root_inventory": "root_inv",
+    "none": "-1",
+})
 
 
 class FolderType(LookupIntEnum):
@@ -228,42 +243,11 @@ class FolderType(LookupIntEnum):
 
     def to_lookup_name(self) -> str:
         lower = self.name.lower()
-        return {
-            "callingcard": "callcard",
-            "lsl_text": "lsltext",
-            "animation": "animatn",
-            "snapshot_category": "snapshot",
-            "lost_and_found": "lstndfnd",
-            "ensemble_start": "ensemble",
-            "ensemble_end": "ensemble",
-            "current_outfit": "current",
-            "my_outfits": "my_otfts",
-            "basic_root": "basic_rt",
-            "marketplace_listings": "merchant",
-            "marketplace_stock": "stock",
-            "marketplace_version": "version",
-            "my_suitcase": "suitcase",
-            "none": "-1",
-        }.get(lower, lower)
+        return _FOLDER_TYPE_BIDI.forward.get(lower, lower)
 
     @classmethod
     def from_lookup_name(cls, legacy_name: str):
-        reg_name = {
-            "callcard": "callingcard",
-            "lsltext": "lsl_text",
-            "animatn": "animation",
-            "snapshot": "snapshot_category",
-            "lstndfnd": "lost_and_found",
-            "ensemble": "ensemble_start",
-            "current": "current_outfit",
-            "my_otfts": "my_outfits",
-            "basic_rt": "basic_root",
-            "merchant": "marketplace_listings",
-            "stock": "marketplace_stock",
-            "version": "marketplace_version",
-            "suitcase": "my_suitcase",
-            "-1": "none",
-        }.get(legacy_name, legacy_name).upper()
+        reg_name = _FOLDER_TYPE_BIDI.backward.get(legacy_name, legacy_name).upper()
         return cls[reg_name]
 
 

@@ -132,6 +132,13 @@ def proxify(obj: Union[Callable[[], _T], weakref.ReferenceType, _T]) -> _T:
     return obj
 
 
+class BiDiDict(Generic[_T]):
+    """Dictionary for bidirectional lookups"""
+    def __init__(self, values: Dict[_T, _T]):
+        self.forward = {**values}
+        self.backward = {value: key for (key, value) in values.items()}
+
+
 def bytes_unescape(val: bytes) -> bytes:
     # Only in CPython. bytes -> bytes with escape decoding.
     # https://stackoverflow.com/a/23151714
