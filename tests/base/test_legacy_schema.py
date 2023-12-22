@@ -54,6 +54,7 @@ INV_CATEGORY = """\tinv_category\t0
 \t\ttype\tlsltext
 \t\tpref_type\tlsltext
 \t\tname\tScripts|
+\t\towner_id\ta2e76fcd-9360-4f6d-a924-000000000003
 \t}
 """
 
@@ -158,6 +159,22 @@ class TestLegacyInv(unittest.TestCase):
                     'type': 'lsltext'
                 }
             ]
+        )
+
+    def test_llsd_serialization_ais(self):
+        model = InventoryModel.from_str(INV_CATEGORY)
+        self.assertEqual(
+            [
+                {
+                    'agent_id': UUID('a2e76fcd-9360-4f6d-a924-000000000003'),
+                    'category_id': UUID('f4d91477-def1-487a-b4f3-6fa201c17376'),
+                    'name': 'Scripts',
+                    'parent_id': UUID('00000000-0000-0000-0000-000000000000'),
+                    'type_default': 10,
+                    'version': -1
+                }
+            ],
+            model.to_llsd("ais")
         )
 
     def test_llsd_legacy_equality(self):

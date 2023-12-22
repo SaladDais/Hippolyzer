@@ -105,6 +105,13 @@ class SchemaStr(SchemaFieldSerializer[str]):
 
 class SchemaUUID(SchemaFieldSerializer[UUID]):
     @classmethod
+    def from_llsd(cls, val: Any, flavor: str) -> UUID:
+        # FetchInventory2 will return a string, but we want a UUID. It's not an issue
+        # for us to return a UUID later there because it'll just cast to string if
+        # that's what it wants
+        return UUID(val)
+
+    @classmethod
     def deserialize(cls, val: str) -> UUID:
         return UUID(val)
 
@@ -157,11 +164,11 @@ def parse_schema_line(line: str):
 @dataclasses.dataclass
 class SchemaBase(abc.ABC):
     @classmethod
-    def _get_fields_dict(cls, llsd=False):
+    def _get_fields_dict(cls, llsd_flavor: Optional[str] = None):
         fields_dict = {}
         for field in dataclasses.fields(cls):
             field_name = field.name
-            if llsd:
+            if llsd_flavor:
                 field_name = field.metadata.get("llsd_name") or field_name
             fields_dict[field_name] = field
         return fields_dict
@@ -181,7 +188,7 @@ class SchemaBase(abc.ABC):
 
     @classmethod
     def from_llsd(cls, inv_dict: Dict, flavor: str = "legacy"):
-        fields = cls._get_fields_dict(llsd=True)
+        fields = cls._get_fields_dict(llsd_flavor=flavor)
         obj_dict = {}
         for key, val in inv_dict.items():
             if key in fields:
@@ -205,7 +212,10 @@ class SchemaBase(abc.ABC):
                 else:
                     raise ValueError(f"Unsupported spec for {key!r}, {spec!r}")
             else:
-                LOG.warning(f"Unknown key {key!r}")
+                if flavor != "ais":
+                    # AIS has a number of different fields that are irrelevant depending on
+                    # what exactly sent the payload
+                    LOG.warning(f"Unknown key {key!r}")
         return cls._obj_from_dict(obj_dict)
 
     def to_bytes(self) -> bytes:
@@ -219,7 +229,7 @@ class SchemaBase(abc.ABC):
 
     def to_llsd(self, flavor: str = "legacy"):
         obj_dict = {}
-        for field_name, field in self._get_fields_dict(llsd=True).items():
+        for field_name, field in self._get_fields_dict(llsd_flavor=flavor).items():
             spec = field.metadata.get("spec")
             # Not meant to be serialized
             if not spec:

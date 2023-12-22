@@ -17,7 +17,6 @@ import inspect
 import logging
 import secrets
 import struct
-import typing
 import weakref
 from io import StringIO
 from typing import *
@@ -190,7 +189,7 @@ class InventoryBase(SchemaBase):
         writer.write("\t}\n")
 
 
-class InventoryDifferences(typing.NamedTuple):
+class InventoryDifferences(NamedTuple):
     changed: List[InventoryNodeBase]
     removed: List[InventoryNodeBase]
 
@@ -400,7 +399,6 @@ class InventoryNodeBase(InventoryBase, _HasName):
 
 @dataclasses.dataclass
 class InventoryContainerBase(InventoryNodeBase):
-    # TODO: Not a string in AIS
     type: AssetType = schema_field(SchemaEnumField(AssetType))
 
     @property
@@ -461,7 +459,6 @@ class InventoryCategory(InventoryContainerBase):
     VERSION_NONE: ClassVar[int] = -1
 
     cat_id: UUID = schema_field(SchemaUUID)
-    # TODO: not a string in AIS
     pref_type: FolderType = schema_field(SchemaEnumField(FolderType), llsd_name="preferred_type")
     name: str = schema_field(SchemaMultilineStr)
     owner_id: Optional[UUID] = schema_field(SchemaUUID, default=None)
@@ -487,6 +484,18 @@ class InventoryCategory(InventoryContainerBase):
             name=block["Name"],
             type=AssetType.CATEGORY,
         )
+
+    @classmethod
+    def _get_fields_dict(cls, llsd_flavor: Optional[str] = None):
+        fields = super()._get_fields_dict(llsd_flavor)
+        if llsd_flavor == "ais":
+            # AIS is smart enough to know that all categories are asset type category...
+            fields.pop("type")
+            # These have different names though
+            fields["type_default"] = fields.pop("preferred_type")
+            fields["agent_id"] = fields.pop("owner_id")
+            fields["category_id"] = fields.pop("cat_id")
+        return fields
 
     __hash__ = InventoryNodeBase.__hash__
 
@@ -572,6 +581,13 @@ class InventoryItem(InventoryNodeBase):
             desc=block["Description"],
             creation_date=block["CreationDate"],
         )
+
+    def to_llsd(self, flavor: str = "legacy"):
+        val = super().to_llsd(flavor=flavor)
+        if flavor == "ais":
+            # There's little chance this differs from owner ID, just place it.
+            val["agent_id"] = val["permissions"]["owner_id"]
+        return val
 
 
 INVENTORY_TYPES: Tuple[Type[InventoryNodeBase], ...] = (InventoryCategory, InventoryObject, InventoryItem)
