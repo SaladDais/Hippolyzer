@@ -1,8 +1,8 @@
 from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.inventory import InventoryItem
 from hippolyzer.lib.base.message.message import Message, Block
 from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.client.asset_uploader import AssetUploader
-from hippolyzer.lib.client.inventory_manager import ais_item_to_inventory_data
 
 
 class ProxyAssetUploader(AssetUploader):
@@ -22,7 +22,7 @@ class ProxyAssetUploader(AssetUploader):
             ]
         }
         async with self._region.caps_client.post('FetchInventory2', llsd=ais_req_data) as resp:
-            ais_item = (await resp.read_llsd())["items"][0]
+            ais_item = InventoryItem.from_llsd((await resp.read_llsd())["items"][0])
 
         # Got it, ship it off to the viewer
         message = Message(
@@ -33,7 +33,7 @@ class ProxyAssetUploader(AssetUploader):
                 SimApproved=1,
                 TransactionID=UUID.random(),
             ),
-            ais_item_to_inventory_data(ais_item),
+            ais_item.to_inventory_data(),
             direction=Direction.IN
         )
         self._region.circuit.send(message)

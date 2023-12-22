@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import gzip
 import logging
-import secrets
 from pathlib import Path
 from typing import Union, List, Tuple, Set
 
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.inventory import InventoryModel, InventoryCategory, InventoryItem
-from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.templates import AssetType, FolderType
 from hippolyzer.lib.client.state import BaseClientSession
 
 
@@ -33,8 +32,8 @@ class InventoryManager:
                 # Don't use the version from the skeleton, this flags the inventory as needing
                 # completion from the inventory cache. This matches indra's behavior.
                 version=InventoryCategory.VERSION_NONE,
-                type="category",
-                pref_type=skel_cat.get("type_default", "-1"),
+                type=AssetType.CATEGORY,
+                pref_type=FolderType(skel_cat.get("type_default", FolderType.NONE)),
                 owner_id=self._session.agent_id,
             ))
 
@@ -112,81 +111,3 @@ class InventoryManager:
                 else:
                     LOG.warning(f"Unknown node type in inv cache: {node_llsd!r}")
         return categories, items
-
-
-# Thankfully we have 9 billion different ways to represent inventory data.
-def ais_item_to_inventory_data(ais_item: dict) -> Block:
-    return Block(
-        "InventoryData",
-        ItemID=ais_item["item_id"],
-        FolderID=ais_item["parent_id"],
-        CallbackID=0,
-        CreatorID=ais_item["permissions"]["creator_id"],
-        OwnerID=ais_item["permissions"]["owner_id"],
-        GroupID=ais_item["permissions"]["group_id"],
-        BaseMask=ais_item["permissions"]["base_mask"],
-        OwnerMask=ais_item["permissions"]["owner_mask"],
-        GroupMask=ais_item["permissions"]["group_mask"],
-        EveryoneMask=ais_item["permissions"]["everyone_mask"],
-        NextOwnerMask=ais_item["permissions"]["next_owner_mask"],
-        GroupOwned=0,
-        AssetID=ais_item["asset_id"],
-        Type=ais_item["type"],
-        InvType=ais_item["inv_type"],
-        Flags=ais_item["flags"],
-        SaleType=ais_item["sale_info"]["sale_type"],
-        SalePrice=ais_item["sale_info"]["sale_price"],
-        Name=ais_item["name"],
-        Description=ais_item["desc"],
-        CreationDate=ais_item["created_at"],
-        # Meaningless here
-        CRC=secrets.randbits(32),
-    )
-
-
-def inventory_data_to_ais_item(inventory_data: Block) -> dict:
-    return dict(
-        item_id=inventory_data["ItemID"],
-        parent_id=inventory_data["ParentID"],
-        permissions=dict(
-            creator_id=inventory_data["CreatorID"],
-            owner_id=inventory_data["OwnerID"],
-            group_id=inventory_data["GroupID"],
-            base_mask=inventory_data["BaseMask"],
-            owner_mask=inventory_data["OwnerMask"],
-            group_mask=inventory_data["GroupMask"],
-            everyone_mask=inventory_data["EveryoneMask"],
-            next_owner_mask=inventory_data["NextOwnerMask"],
-        ),
-        asset_id=inventory_data["AssetID"],
-        type=inventory_data["Type"],
-        inv_type=inventory_data["InvType"],
-        flags=inventory_data["Flags"],
-        sale_info=dict(
-            sale_type=inventory_data["SaleType"],
-            sale_price=inventory_data["SalePrice"],
-        ),
-        name=inventory_data["Name"],
-        description=inventory_data["Description"],
-        creation_at=inventory_data["CreationDate"],
-    )
-
-
-def ais_folder_to_inventory_data(ais_folder: dict) -> Block:
-    return Block(
-        "FolderData",
-        FolderID=ais_folder["cat_id"],
-        ParentID=ais_folder["parent_id"],
-        CallbackID=0,
-        Type=ais_folder["preferred_type"],
-        Name=ais_folder["name"],
-    )
-
-
-def inventory_data_to_ais_folder(inventory_data: Block) -> dict:
-    return dict(
-        cat_id=inventory_data["FolderID"],
-        parent_id=inventory_data["ParentID"],
-        preferred_type=inventory_data["Type"],
-        name=inventory_data["Name"],
-    )

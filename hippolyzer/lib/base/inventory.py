@@ -15,6 +15,7 @@ import dataclasses
 import datetime as dt
 import inspect
 import logging
+import secrets
 import struct
 import typing
 import weakref
@@ -36,7 +37,8 @@ from hippolyzer.lib.base.legacy_schema import (
     SchemaUUID,
     schema_field,
 )
-from hippolyzer.lib.base.templates import SaleType, InventoryType, LegacyIntEnum, AssetType, FolderType
+from hippolyzer.lib.base.message.message import Block
+from hippolyzer.lib.base.templates import SaleType, InventoryType, LookupIntEnum, AssetType, FolderType
 
 MAGIC_ID = UUID("3c115e51-04f4-523c-9fa6-98aff1034730")
 LOG = logging.getLogger(__name__)
@@ -55,15 +57,15 @@ class SchemaFlagField(SchemaHexInt):
 
 
 class SchemaEnumField(SchemaStr, Generic[_T]):
-    def __init__(self, enum_cls: Type[LegacyIntEnum]):
+    def __init__(self, enum_cls: Type[LookupIntEnum]):
         super().__init__()
         self._enum_cls = enum_cls
 
     def deserialize(self, val: str) -> _T:
-        return self._enum_cls.from_legacy_name(val)
+        return self._enum_cls.from_lookup_name(val)
 
     def serialize(self, val: _T) -> str:
-        return self._enum_cls(val).to_legacy_name()
+        return self._enum_cls(val).to_lookup_name()
 
     def from_llsd(self, val: str, flavor: str) -> _T:
         return self.deserialize(val)
@@ -459,6 +461,26 @@ class InventoryCategory(InventoryContainerBase):
     version: int = schema_field(SchemaInt, default=VERSION_NONE, llsd_only=True)
     metadata: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None, include_none=False)
 
+    def to_folder_data(self) -> Block:
+        return Block(
+            "FolderData",
+            FolderID=self.cat_id,
+            ParentID=self.parent_id,
+            CallbackID=0,
+            Type=self.pref_type,
+            Name=self.name,
+        )
+
+    @classmethod
+    def from_folder_data(cls, block: Block):
+        return cls(
+            cat_id=block["FolderID"],
+            parent_id=block["ParentID"],
+            pref_type=block["Type"],
+            name=block["Name"],
+            type=AssetType.CATEGORY,
+        )
+
     __hash__ = InventoryNodeBase.__hash__
 
 
@@ -489,6 +511,62 @@ class InventoryItem(InventoryNodeBase):
         if self.asset_id is not None:
             return self.asset_id
         return self.shadow_id ^ MAGIC_ID
+
+    def to_inventory_data(self) -> Block:
+        return Block(
+            "InventoryData",
+            ItemID=self.item_id,
+            FolderID=self.parent_id,
+            CallbackID=0,
+            CreatorID=self.permissions.creator_id,
+            OwnerID=self.permissions.owner_id,
+            GroupID=self.permissions.group_id,
+            BaseMask=self.permissions.base_mask,
+            OwnerMask=self.permissions.owner_mask,
+            GroupMask=self.permissions.group_mask,
+            EveryoneMask=self.permissions.everyone_mask,
+            NextOwnerMask=self.permissions.next_owner_mask,
+            GroupOwned=self.permissions.owner_id == UUID.ZERO and self.permissions.group_id != UUID.ZERO,
+            AssetID=self.true_asset_id,
+            Type=self.type,
+            InvType=self.inv_type,
+            Flags=self.flags,
+            SaleType=self.sale_info.sale_type,
+            SalePrice=self.sale_info.sale_price,
+            Name=self.name,
+            Description=self.desc,
+            CreationDate=SchemaDate.to_llsd(self.creation_date, "legacy"),
+            # Meaningless here
+            CRC=secrets.randbits(32),
+        )
+
+    @classmethod
+    def from_inventory_data(cls, block: Block):
+        return cls(
+            item_id=block["ItemID"],
+            parent_id=block["ParentID"],
+            permissions=InventoryPermissions(
+                creator_id=block["CreatorID"],
+                owner_id=block["OwnerID"],
+                group_id=block["GroupID"],
+                base_mask=block["BaseMask"],
+                owner_mask=block["OwnerMask"],
+                group_mask=block["GroupMask"],
+                everyone_mask=block["EveryoneMask"],
+                next_owner_mask=block["NextOwnerMask"],
+            ),
+            asset_id=block["AssetID"],
+            type=AssetType(block["Type"]),
+            inv_type=InventoryType(block["InvType"]),
+            flags=block["Flags"],
+            sale_info=InventorySaleInfo(
+                sale_type=SaleType(block["SaleType"]),
+                sale_price=block["SalePrice"],
+            ),
+            name=block["Name"],
+            desc=block["Description"],
+            creation_date=block["CreationDate"],
+        )
 
 
 INVENTORY_TYPES: Tuple[Type[InventoryNodeBase], ...] = (InventoryCategory, InventoryObject, InventoryItem)

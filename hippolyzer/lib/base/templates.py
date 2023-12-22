@@ -18,14 +18,18 @@ from hippolyzer.lib.base.datatypes import UUID, IntEnum, IntFlag, Vector3, Quate
 from hippolyzer.lib.base.namevalue import NameValuesSerializer
 
 
-class LegacyIntEnum(IntEnum):
-    """Used for enums that have legacy string names, may be used in the legacy schema"""
+class LookupIntEnum(IntEnum):
+    """
+    Used for enums that have legacy string names, may be used in the legacy schema
+
+    Generally this is the string returned by `LLWhateverType::lookup()` in indra
+    """
     @abc.abstractmethod
-    def to_legacy_name(self) -> str:
+    def to_lookup_name(self) -> str:
         raise NotImplementedError()
 
     @classmethod
-    def from_legacy_name(cls, legacy_name: str):
+    def from_lookup_name(cls, legacy_name: str):
         raise NotImplementedError()
 
 
@@ -37,7 +41,7 @@ class LegacyIntEnum(IntEnum):
 @se.enum_field_serializer("RezObject", "InventoryData", "Type")
 @se.enum_field_serializer("RezScript", "InventoryBlock", "Type")
 @se.enum_field_serializer("UpdateTaskInventory", "InventoryData", "Type")
-class AssetType(LegacyIntEnum):
+class AssetType(LookupIntEnum):
     TEXTURE = 0
     SOUND = 1
     CALLINGCARD = 2
@@ -73,7 +77,7 @@ class AssetType(LegacyIntEnum):
     UNKNOWN = 255
     NONE = -1
 
-    def to_legacy_name(self) -> str:
+    def to_lookup_name(self) -> str:
         lower = self.name.lower()
         return {
             "animation": "animatn",
@@ -88,7 +92,7 @@ class AssetType(LegacyIntEnum):
         }.get(lower, lower)
 
     @classmethod
-    def from_legacy_name(cls, legacy_name: str):
+    def from_lookup_name(cls, legacy_name: str):
         reg_name = {
             "animatn": "animation",
             "callcard": "callingcard",
@@ -133,7 +137,7 @@ class AssetType(LegacyIntEnum):
 @se.enum_field_serializer("RezObject", "InventoryData", "InvType")
 @se.enum_field_serializer("RezScript", "InventoryBlock", "InvType")
 @se.enum_field_serializer("UpdateTaskInventory", "InventoryData", "InvType")
-class InventoryType(LegacyIntEnum):
+class InventoryType(LookupIntEnum):
     TEXTURE = 0
     SOUND = 1
     CALLINGCARD = 2
@@ -162,7 +166,7 @@ class InventoryType(LegacyIntEnum):
     UNKNOWN = 255
     NONE = -1
 
-    def to_legacy_name(self) -> str:
+    def to_lookup_name(self) -> str:
         lower = self.name.lower()
         return {
             "callingcard": "callcard",
@@ -170,7 +174,7 @@ class InventoryType(LegacyIntEnum):
         }.get(lower, lower)
 
     @classmethod
-    def from_legacy_name(cls, legacy_name: str):
+    def from_lookup_name(cls, legacy_name: str):
         reg_name = {
             "callcard": "callingcard",
             "-1": "none",
@@ -178,7 +182,7 @@ class InventoryType(LegacyIntEnum):
         return cls[reg_name]
 
 
-class FolderType(LegacyIntEnum):
+class FolderType(LookupIntEnum):
     TEXTURE = 0
     SOUND = 1
     CALLINGCARD = 2
@@ -222,7 +226,7 @@ class FolderType(LegacyIntEnum):
     MY_SUITCASE = 100
     NONE = -1
 
-    def to_legacy_name(self) -> str:
+    def to_lookup_name(self) -> str:
         lower = self.name.lower()
         return {
             "callingcard": "callcard",
@@ -243,7 +247,7 @@ class FolderType(LegacyIntEnum):
         }.get(lower, lower)
 
     @classmethod
-    def from_legacy_name(cls, legacy_name: str):
+    def from_lookup_name(cls, legacy_name: str):
         reg_name = {
             "callcard": "callingcard",
             "lsltext": "lsl_text",
@@ -332,17 +336,17 @@ _SALE_TYPE_LEGACY_NAMES = ("not", "orig", "copy", "cntn")
 @se.enum_field_serializer("RezObject", "InventoryData", "SaleType")
 @se.enum_field_serializer("UpdateTaskInventory", "InventoryData", "SaleType")
 @se.enum_field_serializer("UpdateCreateInventoryItem", "InventoryData", "SaleType")
-class SaleType(LegacyIntEnum):
+class SaleType(LookupIntEnum):
     NOT = 0
     ORIGINAL = 1
     COPY = 2
     CONTENTS = 3
 
     @classmethod
-    def from_legacy_name(cls, legacy_name: str):
+    def from_lookup_name(cls, legacy_name: str):
         return cls(_SALE_TYPE_LEGACY_NAMES.index(legacy_name))
 
-    def to_legacy_name(self) -> str:
+    def to_lookup_name(self) -> str:
         return _SALE_TYPE_LEGACY_NAMES[int(self.value)]
 
 
