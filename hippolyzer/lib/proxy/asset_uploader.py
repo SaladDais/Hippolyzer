@@ -22,7 +22,7 @@ class ProxyAssetUploader(AssetUploader):
             ]
         }
         async with self._region.caps_client.post('FetchInventory2', llsd=ais_req_data) as resp:
-            ais_item = InventoryItem.from_llsd((await resp.read_llsd())["items"][0])
+            ais_item = InventoryItem.from_llsd((await resp.read_llsd())["items"][0], flavor="ais")
 
         # Got it, ship it off to the viewer
         message = Message(

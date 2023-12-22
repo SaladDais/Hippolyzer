@@ -49,11 +49,15 @@ class SchemaFlagField(SchemaHexInt):
     """Like a hex int, but must be serialized as bytes in LLSD due to being a U32"""
     @classmethod
     def from_llsd(cls, val: Any, flavor: str) -> int:
-        return struct.unpack("!I", val)[0]
+        if flavor == "legacy":
+            return struct.unpack("!I", val)[0]
+        return val
 
     @classmethod
     def to_llsd(cls, val: int, flavor: str) -> Any:
-        return struct.pack("!I", val)
+        if flavor == "legacy":
+            return struct.pack("!I", val)
+        return val
 
 
 class SchemaEnumField(SchemaStr, Generic[_T]):
