@@ -48,6 +48,10 @@ class SchemaFlagField(SchemaHexInt):
     """Like a hex int, but must be serialized as bytes in LLSD due to being a U32"""
     @classmethod
     def from_llsd(cls, val: Any, flavor: str) -> int:
+        # Sometimes values in S32 range will just come through normally
+        if isinstance(val, int):
+            return val
+
         if flavor == "legacy":
             return struct.unpack("!I", val)[0]
         return val
