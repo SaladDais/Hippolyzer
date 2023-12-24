@@ -37,13 +37,15 @@ class LookupIntEnum(IntEnum):
 _ASSET_TYPE_BIDI: BiDiDict[str] = BiDiDict({
     "animation": "animatn",
     "callingcard": "callcard",
-    "texture_tga": "txtr_tga",
-    "image_tga": "img_tga",
-    "sound_wav": "snd_wav",
     "lsl_text": "lsltext",
     "lsl_bytecode": "lslbyte",
+    "texture_tga": "txtr_tga",
+    "image_tga": "img_tga",
+    "image_jpeg": "jpg",
+    "sound_wav": "snd_wav",
     "folder_link": "link_f",
     "unknown": "invalid",
+    "none": "-1",
 })
 
 
