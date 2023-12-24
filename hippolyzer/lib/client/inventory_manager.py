@@ -86,6 +86,7 @@ class InventoryManager:
             self.model.add(cached_item)
 
     def _parse_cache(self, path: Union[str, Path]) -> Tuple[List[InventoryCategory], List[InventoryItem]]:
+        """Warning, may be incredibly slow due to llsd.parse_notation() behavior"""
         categories: List[InventoryCategory] = []
         items: List[InventoryItem] = []
         # Parse our cached items and categories out of the compressed inventory cache

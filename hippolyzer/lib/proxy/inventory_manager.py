@@ -1,5 +1,5 @@
+import asyncio
 import datetime as dt
-import logging
 
 from hippolyzer.lib.base.helpers import get_mtime
 from hippolyzer.lib.client.inventory_manager import InventoryManager
@@ -12,6 +12,8 @@ class ProxyInventoryManager(InventoryManager):
         super().__init__(session)
         newest_cache = None
         newest_timestamp = dt.datetime(year=1970, month=1, day=1, tzinfo=dt.timezone.utc)
+        # So consumers know when the inventory should be complete
+        self.cache_loaded: asyncio.Event = asyncio.Event()
         # Look for the newest version of the cached inventory and use that.
         # Not foolproof, but close enough if we're not sure what viewer is being used.
         for cache_dir in iter_viewer_cache_dirs():
@@ -26,7 +28,8 @@ class ProxyInventoryManager(InventoryManager):
                 newest_cache = inv_cache_path
 
         if newest_cache:
-            try:
-                self.load_cache(newest_cache)
-            except:
-                logging.exception("Failed to load invcache")
+            cache_load_fut = asyncio.ensure_future(asyncio.to_thread(self.load_cache, newest_cache))
+            # Meh. Don't care if it fails.
+            cache_load_fut.add_done_callback(lambda *args: self.cache_loaded.set())
+        else:
+            self.cache_loaded.set()
