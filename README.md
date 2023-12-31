@@ -325,7 +325,7 @@ The REPL is fully async aware and allows awaiting events without blocking:
 
 ```python
 >>> from hippolyzer.lib.client.object_manager import ObjectUpdateType
->>> evt = await session.objects.events.wait_for((ObjectUpdateType.OBJECT_UPDATE,), timeout=2.0)
+>>> evt = await session.objects.events.wait_for((ObjectUpdateType.UPDATE,), timeout=2.0)
 >>> evt.updated
 {'Position'}
 ```

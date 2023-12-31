@@ -38,7 +38,7 @@ OBJECT_OR_LOCAL = Union[Object, int]
 
 
 class ObjectUpdateType(enum.IntEnum):
-    OBJECT_UPDATE = enum.auto()
+    UPDATE = enum.auto()
     PROPERTIES = enum.auto()
     FAMILY = enum.auto()
     COSTS = enum.auto()
@@ -163,7 +163,7 @@ class ClientObjectManager:
 
         futures = []
         for local_id in local_ids:
-            futures.append(self.state.register_future(local_id, ObjectUpdateType.OBJECT_UPDATE))
+            futures.append(self.state.register_future(local_id, ObjectUpdateType.UPDATE))
         return futures
 
 
@@ -361,7 +361,7 @@ class ClientWorldObjectManager:
         if obj.PCode == PCode.AVATAR:
             self._avatar_objects[obj.FullID] = obj
             self._rebuild_avatar_objects()
-        self._run_object_update_hooks(obj, set(obj.to_dict().keys()), ObjectUpdateType.OBJECT_UPDATE, msg)
+        self._run_object_update_hooks(obj, set(obj.to_dict().keys()), ObjectUpdateType.UPDATE, msg)
 
     def _kill_object_by_local_id(self, region_state: RegionObjectsState, local_id: int):
         obj = region_state.lookup_localid(local_id)
@@ -413,7 +413,7 @@ class ClientWorldObjectManager:
             # our view of the world then we want to move it to this region.
             obj = self.lookup_fullid(object_data["FullID"])
             if obj:
-                self._update_existing_object(obj, object_data, ObjectUpdateType.OBJECT_UPDATE, msg)
+                self._update_existing_object(obj, object_data, ObjectUpdateType.UPDATE, msg)
             else:
                 if region_state is None:
                     continue
@@ -437,7 +437,7 @@ class ClientWorldObjectManager:
                 # Need the Object as context because decoding state requires PCode.
                 state_deserializer = ObjectStateSerializer.deserialize
                 object_data["State"] = state_deserializer(ctx_obj=obj, val=object_data["State"])
-                self._update_existing_object(obj, object_data, ObjectUpdateType.OBJECT_UPDATE, msg)
+                self._update_existing_object(obj, object_data, ObjectUpdateType.UPDATE, msg)
             else:
                 if region_state:
                     region_state.missing_locals.add(object_data["LocalID"])
@@ -465,7 +465,7 @@ class ClientWorldObjectManager:
                 self._update_existing_object(obj, {
                     "UpdateFlags": update_flags,
                     "RegionHandle": handle,
-                }, ObjectUpdateType.OBJECT_UPDATE, msg)
+                }, ObjectUpdateType.UPDATE, msg)
                 continue
 
             cached_obj_data = self._lookup_cache_entry(handle, block["ID"], block["CRC"])
@@ -504,7 +504,7 @@ class ClientWorldObjectManager:
                 LOG.warning(f"Got ObjectUpdateCompressed for unknown region {handle}: {object_data!r}")
             obj = self.lookup_fullid(object_data["FullID"])
             if obj:
-                self._update_existing_object(obj, object_data, ObjectUpdateType.OBJECT_UPDATE, msg)
+                self._update_existing_object(obj, object_data, ObjectUpdateType.UPDATE, msg)
             else:
                 if region_state is None:
                     continue

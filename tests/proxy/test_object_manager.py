@@ -667,7 +667,7 @@ class SessionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncio
 
     async def test_handle_object_update_event(self):
         with self.session.objects.events.subscribe_async(
-            message_names=(ObjectUpdateType.OBJECT_UPDATE,),
+            message_names=(ObjectUpdateType.UPDATE,),
             predicate=lambda e: e.object.UpdateFlags & JUST_CREATED_FLAGS and "LocalID" in e.updated,
         ) as get_events:
             self._create_object(local_id=999)
@@ -676,7 +676,7 @@ class SessionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncio
 
     async def test_handle_object_update_predicate(self):
         with self.session.objects.events.subscribe_async(
-            message_names=(ObjectUpdateType.OBJECT_UPDATE,),
+            message_names=(ObjectUpdateType.UPDATE,),
         ) as get_events:
             self._create_object(local_id=999)
             evt = await asyncio.wait_for(get_events(), 1.0)
@@ -684,10 +684,10 @@ class SessionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncio
 
     async def test_handle_object_update_events_two_subscribers(self):
         with self.session.objects.events.subscribe_async(
-            message_names=(ObjectUpdateType.OBJECT_UPDATE,),
+            message_names=(ObjectUpdateType.UPDATE,),
         ) as get_events:
             with self.session.objects.events.subscribe_async(
-                    message_names=(ObjectUpdateType.OBJECT_UPDATE,),
+                    message_names=(ObjectUpdateType.UPDATE,),
             ) as get_events2:
                 self._create_object(local_id=999)
                 evt = await asyncio.wait_for(get_events(), 1.0)
@@ -697,10 +697,10 @@ class SessionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncio
 
     async def test_handle_object_update_events_two_subscribers_timeout(self):
         with self.session.objects.events.subscribe_async(
-            message_names=(ObjectUpdateType.OBJECT_UPDATE,),
+            message_names=(ObjectUpdateType.UPDATE,),
         ) as get_events:
             with self.session.objects.events.subscribe_async(
-                    message_names=(ObjectUpdateType.OBJECT_UPDATE,),
+                    message_names=(ObjectUpdateType.UPDATE,),
             ) as get_events2:
                 self._create_object(local_id=999)
                 evt = asyncio.wait_for(get_events(), 0.01)

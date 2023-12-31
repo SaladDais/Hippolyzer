@@ -72,7 +72,7 @@ class PixelArtistAddon(BaseAddon):
         # Watch for any newly created prims, this is basically what the viewer does to find
         # prims that it just created with the build tool.
         with session.objects.events.subscribe_async(
-                (ObjectUpdateType.OBJECT_UPDATE,),
+                (ObjectUpdateType.UPDATE,),
                 predicate=lambda e: e.object.UpdateFlags & JUST_CREATED_FLAGS and "LocalID" in e.updated
         ) as get_events:
             # Create a pool of prims to use for building the pixel art
