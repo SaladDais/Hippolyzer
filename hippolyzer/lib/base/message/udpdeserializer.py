@@ -220,11 +220,17 @@ class UDPMessageDeserializer:
         if tmpl_variable.probably_binary:
             return unpacked_data
         # Truncated strings need to be treated carefully
-        if tmpl_variable.probably_text and unpacked_data.endswith(b"\x00"):
-            try:
-                return unpacked_data.decode("utf8").rstrip("\x00")
-            except UnicodeDecodeError:
-                return JankStringyBytes(unpacked_data)
+        if tmpl_variable.probably_text:
+            # If it has a null terminator, let's try to decode it first.
+            # We don't want to do this if there isn't one, because that may change
+            # the meaning of the data.
+            if unpacked_data.endswith(b"\x00"):
+                try:
+                    return unpacked_data.decode("utf8").rstrip("\x00")
+                except UnicodeDecodeError:
+                    pass
+            # Failed, return jank stringy bytes
+            return JankStringyBytes(unpacked_data)
         elif tmpl_variable.type in {MsgType.MVT_FIXED, MsgType.MVT_VARIABLE}:
             # No idea if this should be bytes or a string... make an object that's sort of both.
             return JankStringyBytes(unpacked_data)

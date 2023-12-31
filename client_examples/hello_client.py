@@ -19,7 +19,7 @@ async def amain():
             return
         if message["ChatData"]["SourceType"] != ChatSourceType.AGENT:
             return
-        if "hello" not in str(message["ChatData"]["Message"]).lower():
+        if "hello" not in message["ChatData"]["Message"].lower():
             return
         await client.send_chat(f'Hello {message["ChatData"]["FromName"]}!', chat_type=ChatType.SHOUT)
 

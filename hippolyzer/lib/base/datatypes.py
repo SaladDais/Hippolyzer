@@ -317,6 +317,12 @@ class JankStringyBytes(bytes):
             return item in str(self)
         return item in bytes(self)
 
+    def lower(self):
+        return str(self).lower()
+
+    def upper(self):
+        return str(self).upper()
+
 
 class RawBytes(bytes):
     __slots__ = ()
