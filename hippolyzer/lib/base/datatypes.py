@@ -317,6 +317,16 @@ class JankStringyBytes(bytes):
             return item in str(self)
         return item in bytes(self)
 
+    def __add__(self, other):
+        if isinstance(other, bytes):
+            return bytes(self) + other
+        return str(self) + other
+
+    def __radd__(self, other):
+        if isinstance(other, bytes):
+            return other + bytes(self)
+        return other + str(self)
+
     def lower(self):
         return str(self).lower()
 
