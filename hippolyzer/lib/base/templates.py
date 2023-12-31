@@ -1953,7 +1953,7 @@ class AvatarPropertiesFlags(IntFlag):
 
 @se.flag_field_serializer("AvatarGroupsReply", "GroupData", "GroupPowers")
 @se.flag_field_serializer("AvatarGroupDataUpdate", "GroupData", "GroupPowers")
-@se.flag_field_serializer("AvatarDataUpdate", "AgentDataData", "GroupPowers")
+@se.flag_field_serializer("AgentDataUpdate", "AgentData", "GroupPowers")
 @se.flag_field_serializer("GroupProfileReply", "GroupData", "PowersMask")
 @se.flag_field_serializer("GroupRoleDataReply", "RoleData", "Powers")
 class GroupPowerFlags(IntFlag):
@@ -2164,17 +2164,37 @@ class MuteFlags(IntFlag):
         return 0xF
 
 
-class CreationDateAdapter(se.Adapter):
+class DateAdapter(se.Adapter):
+    def __init__(self, multiplier: int):
+        super(DateAdapter, self).__init__(None)
+        self._multiplier = multiplier
+
     def decode(self, val: Any, ctx: Optional[se.ParseContext], pod: bool = False) -> Any:
-        return datetime.datetime.fromtimestamp(val / 1_000_000).isoformat()
+        return datetime.datetime.fromtimestamp(val / self._multiplier).isoformat()
 
     def encode(self, val: Any, ctx: Optional[se.ParseContext]) -> Any:
-        return int(datetime.datetime.fromisoformat(val).timestamp() * 1_000_000)
+        return int(datetime.datetime.fromisoformat(val).timestamp() * self._multiplier)
+
+
+@se.enum_field_serializer("MeanCollisionAlert", "MeanCollision", "Type")
+class MeanCollisionType(IntEnum):
+    INVALID = 0
+    BUMP = enum.auto()
+    LLPUSHOBJECT = enum.auto()
+    SELECTED_OBJECT_COLLIDE = enum.auto()
+    SCRIPTED_OBJECT_COLLIDE = enum.auto()
+    PHYSICAL_OBJECT_COLLIDE = enum.auto()
 
 
 @se.subfield_serializer("ObjectProperties", "ObjectData", "CreationDate")
 class CreationDateSerializer(se.AdapterSubfieldSerializer):
-    ADAPTER = CreationDateAdapter(None)
+    ADAPTER = DateAdapter(1_000_000)
+    ORIG_INLINE = True
+
+
+@se.subfield_serializer("MeanCollisionAlert", "MeanCollision", "Time")
+class DateSerializer(se.AdapterSubfieldSerializer):
+    ADAPTER = DateAdapter(1)
     ORIG_INLINE = True
 
 
