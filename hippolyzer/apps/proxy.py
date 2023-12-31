@@ -77,6 +77,15 @@ class SelectionManagerAddon(BaseAddon):
             selected.task_item = parsed["item-id"]
 
 
+class AgentUpdaterAddon(BaseAddon):
+    def handle_eq_event(self, session: Session, region: ProxiedRegion, event: dict):
+        if event['message'] != 'AgentGroupDataUpdate':
+            return
+        session.groups.clear()
+        for group in event['body']['GroupData']:
+            session.groups.add(group['GroupID'])
+
+
 class REPLAddon(BaseAddon):
     @handle_command()
     async def spawn_repl(self, session: Session, region: ProxiedRegion):
@@ -103,6 +112,7 @@ def start_proxy(session_manager: SessionManager, extra_addons: Optional[list] = 
     extra_addon_paths = extra_addon_paths or []
     extra_addons.append(SelectionManagerAddon())
     extra_addons.append(REPLAddon())
+    extra_addons.append(AgentUpdaterAddon())
 
     root_log = logging.getLogger()
     root_log.addHandler(logging.StreamHandler())

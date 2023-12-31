@@ -82,6 +82,8 @@ class BaseClientSession(abc.ABC):
     id: UUID
     agent_id: UUID
     secure_session_id: UUID
+    active_group: UUID
+    groups: Set[UUID]
     message_handler: MessageHandler[Message, str]
     regions: MutableSequence[BaseClientRegion]
     region_by_handle: Callable[[int], Optional[BaseClientRegion]]
@@ -100,6 +102,8 @@ class BaseClientSession(abc.ABC):
         self.circuit_code = circuit_code
         self.global_caps = {}
         self.session_manager = session_manager
+        self.active_group: UUID = UUID.ZERO
+        self.groups: Set[UUID] = set()
         self.regions = []
         self._main_region = None
         self.message_handler: MessageHandler[Message, str] = MessageHandler()

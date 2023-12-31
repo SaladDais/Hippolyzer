@@ -77,9 +77,8 @@ class PixelArtistAddon(BaseAddon):
         ) as get_events:
             # Create a pool of prims to use for building the pixel art
             for _ in range(needed_prims):
-                # TODO: We don't track the land group or user's active group, so
-                #   "anyone can build" must be on for rezzing to work.
-                group_id = UUID()
+                # TODO: Can't get land group atm, just tries to rez with the user's active group
+                group_id = session.active_group
                 region.circuit.send(Message(
                     'ObjectAdd',
                     Block('AgentData', AgentID=session.agent_id, SessionID=session.id, GroupID=group_id),

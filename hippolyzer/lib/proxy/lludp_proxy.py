@@ -161,6 +161,8 @@ class InterceptingLLUDPProxyProtocol(UDPProxyProtocol):
             region.mark_dead()
         elif message.name == "RegionHandshake":
             region.name = str(message["RegionInfo"][0]["SimName"])
+        elif message.name == "AgentDataUpdate" and self.session:
+            self.session.active_group = message["AgentData"]["ActiveGroupID"]
 
         # Send the message if it wasn't explicitly dropped or sent before
         if not message.finalized:

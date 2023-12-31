@@ -638,6 +638,8 @@ class HippoClient(BaseClientSessionManager):
 
         self.session.transport, self.session.protocol = await self._create_transport()
         self._resend_task = asyncio.create_task(self._attempt_resends())
+        self.session.message_handler.subscribe("AgentDataUpdate", self._handle_agent_data_update)
+        self.session.message_handler.subscribe("AgentGroupDataUpdate", self._handle_agent_group_data_update)
 
         assert self.session.open_circuit(self.session.regions[-1].circuit_addr)
         region = self.session.regions[-1]
@@ -729,3 +731,11 @@ class HippoClient(BaseClientSessionManager):
                     continue
                 region.circuit.resend_unacked()
             await asyncio.sleep(0.5)
+
+    def _handle_agent_data_update(self, msg: Message):
+        self.session.active_group = msg["AgentData"]["ActiveGroupID"]
+
+    def _handle_agent_group_data_update(self, msg: Message):
+        self.session.groups.clear()
+        for block in msg["GroupData"]:
+            self.session.groups.add(block["GroupID"])
