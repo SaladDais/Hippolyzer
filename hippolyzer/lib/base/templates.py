@@ -2198,6 +2198,37 @@ class DateSerializer(se.AdapterSubfieldSerializer):
     ORIG_INLINE = True
 
 
+class ParcelGridType(enum.IntEnum):
+    PUBLIC = 0x00
+    OWNED = 0x01  # Presumably non-linden owned land
+    GROUP = 0x02
+    SELF = 0x03
+    FOR_SALE = 0x04
+    AUCTION = 0x05
+
+
+class ParcelGridFlags(enum.IntFlag):
+    UNUSED = 0x8
+    HIDDEN_AVS = 0x10
+    SOUND_LOCAL = 0x20
+    WEST_LINE = 0x40
+    SOUTH_LINE = 0x80
+
+
+@dataclasses.dataclass
+class ParcelGridInfo(se.BitfieldDataclass):
+    PRIM_SPEC: ClassVar[se.SerializablePrimitive] = se.U8
+    SHIFT: ClassVar[bool] = False
+
+    Type: Union[ParcelGridType, int] = se.bitfield_field(bits=3, adapter=se.IntEnum(ParcelGridType))
+    Flags: ParcelGridFlags = se.bitfield_field(bits=5, adapter=se.IntFlag(ParcelGridFlags))
+
+
+@se.subfield_serializer("ParcelOverlay", "ParcelData", "Data")
+class ParcelOverlaySerializer(se.AdapterSubfieldSerializer):
+    ADAPTER = se.BitfieldDataclass(ParcelGridInfo)
+
+
 @se.http_serializer("RenderMaterials")
 class RenderMaterialsSerializer(se.BaseHTTPSerializer):
     @classmethod

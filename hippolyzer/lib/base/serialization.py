@@ -1583,12 +1583,13 @@ class BitfieldDataclass(DataclassAdapter):
     PRIM_SPEC: ClassVar[Optional[SerializablePrimitive]] = None
 
     def __init__(self, data_cls: Optional[Type] = None,
-                 prim_spec: Optional[SerializablePrimitive] = None, shift: bool = True):
+                 prim_spec: Optional[SerializablePrimitive] = None, shift: Optional[bool] = None):
         if not dataclasses.is_dataclass(data_cls):
             raise ValueError(f"{data_cls!r} is not a dataclass")
         if prim_spec is None:
             prim_spec = getattr(data_cls, 'PRIM_SPEC', None)
-
+        if shift is None:
+            shift = getattr(data_cls, 'SHIFT', True)
         super().__init__(data_cls, prim_spec)
         self._shift = shift
         self._bitfield_spec = self._build_bitfield(data_cls)
