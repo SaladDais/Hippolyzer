@@ -41,10 +41,12 @@ class StartLocation(StringEnum):
 
 
 class ClientSettings(Settings):
-    # Off by default for now, the cert validation is a big mess due to LL using an internal CA.
     SSL_VERIFY: bool = SettingDescriptor(False)
+    """Off by default for now, the cert validation is a big mess due to LL using an internal CA."""
     SSL_CERT_PATH: str = SettingDescriptor(get_resource_filename("lib/base/network/data/ca-bundle.crt"))
     USER_AGENT: str = SettingDescriptor(f"Hippolyzer/v{version('hippolyzer')}")
+    SEND_AGENT_UPDATES: bool = SettingDescriptor(True)
+    """Generally you want to send these, lots of things will break if you don't send at least one."""
 
 
 class HippoCapsClient(CapsClient):
@@ -203,6 +205,22 @@ class HippoClientRegion(BaseClientRegion):
                     )
                 )
             )
+            if self.session().session_manager.settings.SEND_AGENT_UPDATES:
+                # Usually we want to send at least one, since lots of messages will never be sent by the sim
+                # until we send at least one AgentUpdate. For example, ParcelOverlay and LayerData.
+                await self.circuit.send_reliable(
+                    Message(
+                        "AgentUpdate",
+                        Block(
+                            'AgentData',
+                            AgentID=self.session().agent_id,
+                            SessionID=self.session().id,
+                            # Don't really care about the other fields.
+                            fill_missing=True,
+                        )
+                    )
+                )
+
             async with seed_resp_fut as seed_resp:
                 seed_resp.raise_for_status()
                 self.update_caps(await seed_resp.read_llsd())
@@ -289,6 +307,7 @@ class HippoClientSession(BaseClientSession):
     region_by_circuit_addr: Callable[[ADDR_TUPLE], Optional[HippoClientRegion]]
     regions: List[HippoClientRegion]
     session_manager: HippoClient
+    main_region: Optional[HippoClientRegion]
 
     def __init__(self, id, secure_session_id, agent_id, circuit_code, session_manager: Optional[HippoClient] = None,
                  login_data=None):
@@ -581,7 +600,8 @@ class HippoClient(BaseClientSessionManager):
             password: str,
             login_uri: Optional[str] = None,
             agree_to_tos: bool = False,
-            start_location: Union[StartLocation, str, None] = StartLocation.LAST
+            start_location: Union[StartLocation, str, None] = StartLocation.LAST,
+            connect: bool = True,
     ):
         if self.session:
             raise RuntimeError("Already logged in!")
@@ -642,8 +662,9 @@ class HippoClient(BaseClientSessionManager):
         self.session.message_handler.subscribe("AgentGroupDataUpdate", self._handle_agent_group_data_update)
 
         assert self.session.open_circuit(self.session.regions[-1].circuit_addr)
-        region = self.session.regions[-1]
-        await region.connect(main_region=True)
+        if connect:
+            region = self.session.regions[-1]
+            await region.connect(main_region=True)
 
     def logout(self):
         if not self.session:
