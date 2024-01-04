@@ -576,7 +576,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
         message_names = sorted(x.name for x in self.templateDict)
 
         for message_name in message_names:
-            if self.templateDict[message_name].msg_trust:
+            if self.templateDict[message_name].trusted:
                 self.comboTrusted.addItem(message_name)
             else:
                 self.comboUntrusted.addItem(message_name)

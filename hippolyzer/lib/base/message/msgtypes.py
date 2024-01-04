@@ -47,7 +47,6 @@ class MsgBlockType:
     MBT_SINGLE = 0
     MBT_MULTIPLE = 1
     MBT_VARIABLE = 2
-    MBT_String_List = ['Single', 'Multiple', 'Variable']
 
 
 class PacketFlags(enum.IntFlag):
@@ -64,28 +63,23 @@ class PacketFlags(enum.IntFlag):
 # = '\xFF\xFF'
 # = '\xFF'
 # = ''
-class MsgFrequency:
-    FIXED_FREQUENCY_MESSAGE = -1  # marking it
-    LOW_FREQUENCY_MESSAGE = 4
-    MEDIUM_FREQUENCY_MESSAGE = 2
-    HIGH_FREQUENCY_MESSAGE = 1
+class MsgFrequency(enum.IntEnum):
+    FIXED = -1  # marking it
+    LOW = 4
+    MEDIUM = 2
+    HIGH = 1
 
 
-class MsgTrust:
-    LL_NOTRUST = 0
-    LL_TRUSTED = 1
+class MsgEncoding(enum.IntEnum):
+    UNENCODED = 0
+    ZEROCODED = 1
 
 
-class MsgEncoding:
-    LL_UNENCODED = 0
-    LL_ZEROCODED = 1
-
-
-class MsgDeprecation:
-    LL_DEPRECATED = 0
-    LL_UDPDEPRECATED = 1
-    LL_UDPBLACKLISTED = 2
-    LL_NOTDEPRECATED = 3
+class MsgDeprecation(enum.IntEnum):
+    DEPRECATED = 0
+    UDPDEPRECATED = 1
+    UDPBLACKLISTED = 2
+    NOTDEPRECATED = 3
 
 
 # message variable types

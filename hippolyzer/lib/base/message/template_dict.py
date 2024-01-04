@@ -68,32 +68,32 @@ class TemplateDictionary:
 
             # do a mapping of type to a string for easier reference
             frequency_str = ''
-            if template.frequency == MsgFrequency.FIXED_FREQUENCY_MESSAGE:
+            if template.frequency == MsgFrequency.FIXED:
                 frequency_str = "Fixed"
-            elif template.frequency == MsgFrequency.LOW_FREQUENCY_MESSAGE:
+            elif template.frequency == MsgFrequency.LOW:
                 frequency_str = "Low"
-            elif template.frequency == MsgFrequency.MEDIUM_FREQUENCY_MESSAGE:
+            elif template.frequency == MsgFrequency.MEDIUM:
                 frequency_str = "Medium"
-            elif template.frequency == MsgFrequency.HIGH_FREQUENCY_MESSAGE:
+            elif template.frequency == MsgFrequency.HIGH:
                 frequency_str = "High"
 
             self.message_dict[(frequency_str,
-                               template.msg_num)] = template
+                               template.num)] = template
 
     def build_message_ids(self):
         for template in list(self.message_templates.values()):
             frequency = template.frequency
             num_bytes = None
-            if frequency == MsgFrequency.FIXED_FREQUENCY_MESSAGE:
+            if frequency == MsgFrequency.FIXED:
                 # have to do this because Fixed messages are stored as a long in the template
-                num_bytes = b'\xff\xff\xff' + struct.pack("B", template.msg_num)
-            elif frequency == MsgFrequency.LOW_FREQUENCY_MESSAGE:
-                num_bytes = b'\xff\xff' + struct.pack("!H", template.msg_num)
-            elif frequency == MsgFrequency.MEDIUM_FREQUENCY_MESSAGE:
-                num_bytes = b'\xff' + struct.pack("B", template.msg_num)
-            elif frequency == MsgFrequency.HIGH_FREQUENCY_MESSAGE:
-                num_bytes = struct.pack("B", template.msg_num)
-            template.msg_freq_num_bytes = num_bytes
+                num_bytes = b'\xff\xff\xff' + struct.pack("B", template.num)
+            elif frequency == MsgFrequency.LOW:
+                num_bytes = b'\xff\xff' + struct.pack("!H", template.num)
+            elif frequency == MsgFrequency.MEDIUM:
+                num_bytes = b'\xff' + struct.pack("B", template.num)
+            elif frequency == MsgFrequency.HIGH:
+                num_bytes = struct.pack("B", template.num)
+            template.freq_num_bytes = num_bytes
 
     def get_template_by_name(self, template_name) -> typing.Optional[MessageTemplate]:
         return self.message_templates.get(template_name)

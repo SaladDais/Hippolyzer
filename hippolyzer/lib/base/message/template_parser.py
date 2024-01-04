@@ -22,7 +22,7 @@ import struct
 import re
 
 from . import template
-from .msgtypes import MsgFrequency, MsgTrust, MsgEncoding
+from .msgtypes import MsgFrequency, MsgEncoding
 from .msgtypes import MsgDeprecation, MsgBlockType, MsgType
 from ..exc import MessageTemplateParsingError, MessageTemplateNotFound
 
@@ -112,67 +112,69 @@ class MessageTemplateParser:
         frequency = None
         freq_str = match.group(2)
         if freq_str == 'Low':
-            frequency = MsgFrequency.LOW_FREQUENCY_MESSAGE
+            frequency = MsgFrequency.LOW
         elif freq_str == 'Medium':
-            frequency = MsgFrequency.MEDIUM_FREQUENCY_MESSAGE
+            frequency = MsgFrequency.MEDIUM
         elif freq_str == 'High':
-            frequency = MsgFrequency.HIGH_FREQUENCY_MESSAGE
+            frequency = MsgFrequency.HIGH
         elif freq_str == 'Fixed':
-            frequency = MsgFrequency.FIXED_FREQUENCY_MESSAGE
+            frequency = MsgFrequency.FIXED
 
         new_template.frequency = frequency
 
         msg_num = int(match.group(3), 0)
-        if frequency == MsgFrequency.FIXED_FREQUENCY_MESSAGE:
+        if frequency == MsgFrequency.FIXED:
             # have to do this because Fixed messages are stored as a long in the template
             msg_num &= 0xff
             msg_num_bytes = struct.pack('!BBBB', 0xff, 0xff, 0xff, msg_num)
-        elif frequency == MsgFrequency.LOW_FREQUENCY_MESSAGE:
+        elif frequency == MsgFrequency.LOW:
             msg_num_bytes = struct.pack('!BBH', 0xff, 0xff, msg_num)
-        elif frequency == MsgFrequency.MEDIUM_FREQUENCY_MESSAGE:
+        elif frequency == MsgFrequency.MEDIUM:
             msg_num_bytes = struct.pack('!BB', 0xff, msg_num)
-        elif frequency == MsgFrequency.HIGH_FREQUENCY_MESSAGE:
+        elif frequency == MsgFrequency.HIGH:
             msg_num_bytes = struct.pack('!B', msg_num)
         else:
             raise Exception("don't know about frequency %s" % frequency)
 
-        new_template.msg_num = msg_num
-        new_template.msg_freq_num_bytes = msg_num_bytes
+        new_template.num = msg_num
+        new_template.freq_num_bytes = msg_num_bytes
 
-        msg_trust = None
         msg_trust_str = match.group(4)
         if msg_trust_str == 'Trusted':
-            msg_trust = MsgTrust.LL_TRUSTED
+            msg_trust = True
         elif msg_trust_str == 'NotTrusted':
-            msg_trust = MsgTrust.LL_NOTRUST
+            msg_trust = False
+        else:
+            raise ValueError(f"Invalid trust {msg_trust_str}")
 
-        new_template.msg_trust = msg_trust
+        new_template.trusted = msg_trust
 
-        msg_encoding = None
         msg_encoding_str = match.group(5)
         if msg_encoding_str == 'Unencoded':
-            msg_encoding = MsgEncoding.LL_UNENCODED
+            msg_encoding = MsgEncoding.UNENCODED
         elif msg_encoding_str == 'Zerocoded':
-            msg_encoding = MsgEncoding.LL_ZEROCODED
+            msg_encoding = MsgEncoding.ZEROCODED
+        else:
+            raise ValueError(f"Invalid encoding {msg_encoding_str}")
 
-        new_template.msg_encoding = msg_encoding
+        new_template.encoding = msg_encoding
 
         msg_dep = None
         msg_dep_str = match.group(7)
         if msg_dep_str:
             if msg_dep_str == 'Deprecated':
-                msg_dep = MsgDeprecation.LL_DEPRECATED
+                msg_dep = MsgDeprecation.DEPRECATED
             elif msg_dep_str == 'UDPDeprecated':
-                msg_dep = MsgDeprecation.LL_UDPDEPRECATED
+                msg_dep = MsgDeprecation.UDPDEPRECATED
             elif msg_dep_str == 'UDPBlackListed':
-                msg_dep = MsgDeprecation.LL_UDPBLACKLISTED
+                msg_dep = MsgDeprecation.UDPBLACKLISTED
             elif msg_dep_str == 'NotDeprecated':
-                msg_dep = MsgDeprecation.LL_NOTDEPRECATED
+                msg_dep = MsgDeprecation.NOTDEPRECATED
         else:
-            msg_dep = MsgDeprecation.LL_NOTDEPRECATED
+            msg_dep = MsgDeprecation.NOTDEPRECATED
         if msg_dep is None:
             raise MessageTemplateParsingError("Unknown msg_dep field %s" % match.group(0))
-        new_template.msg_deprecation = msg_dep
+        new_template.deprecation = msg_dep
 
         return new_template
 

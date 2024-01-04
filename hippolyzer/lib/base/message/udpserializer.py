@@ -69,7 +69,7 @@ class UDPMessageSerializer:
             # frequency and message number. The template stores it because it doesn't
             # change per template.
             body_writer = se.BufferWriter("<")
-            body_writer.write_bytes(current_template.msg_freq_num_bytes)
+            body_writer.write_bytes(current_template.freq_num_bytes)
             body_writer.write_bytes(msg.extra)
 
             # We're going to pop off keys as we go, so shallow copy the dict.

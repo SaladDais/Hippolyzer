@@ -27,7 +27,7 @@ from hippolyzer.lib.base.message.data import msg_tmpl
 from hippolyzer.lib.base.message.template import MessageTemplate, MessageTemplateBlock, MessageTemplateVariable
 from hippolyzer.lib.base.message.template_dict import TemplateDictionary
 from hippolyzer.lib.base.message.template_parser import MessageTemplateParser
-from hippolyzer.lib.base.message.msgtypes import MsgFrequency, MsgTrust, MsgEncoding, \
+from hippolyzer.lib.base.message.msgtypes import MsgFrequency, MsgEncoding, \
     MsgDeprecation, MsgBlockType, MsgType
 
 
@@ -45,8 +45,8 @@ class TestDictionary(unittest.TestCase):
         msg_dict = TemplateDictionary(self.template_list)
         packet = msg_dict.get_template_by_name('ConfirmEnableSimulator')
         assert packet is not None, "get_packet failed"
-        assert packet.frequency == MsgFrequency.MEDIUM_FREQUENCY_MESSAGE, "Incorrect frequency"
-        assert packet.msg_num == 8, "Incorrect message number for ConfirmEnableSimulator"
+        assert packet.frequency == MsgFrequency.MEDIUM, "Incorrect frequency"
+        assert packet.num == 8, "Incorrect message number for ConfirmEnableSimulator"
 
     def test_get_packet_pair(self):
         msg_dict = TemplateDictionary(self.template_list)
@@ -76,29 +76,29 @@ class TestTemplates(unittest.TestCase):
         template = self.msg_dict['CompletePingCheck']
         name = template.name
         freq = template.frequency
-        num = template.msg_num
-        trust = template.msg_trust
-        enc = template.msg_encoding
+        num = template.num
+        trust = template.trusted
+        enc = template.encoding
         assert name == 'CompletePingCheck', "Expected: CompletePingCheck  Returned: " + name
-        assert freq == MsgFrequency.HIGH_FREQUENCY_MESSAGE, "Expected: High  Returned: " + freq
+        assert freq == MsgFrequency.HIGH, "Expected: High  Returned: " + freq
         assert num == 2, "Expected: 2  Returned: " + str(num)
-        assert trust == MsgTrust.LL_NOTRUST, "Expected: NotTrusted  Returned: " + trust
-        assert enc == MsgEncoding.LL_UNENCODED, "Expected: Unencoded  Returned: " + enc
+        assert not trust, "Expected: NotTrusted  Returned: " + trust
+        assert enc == MsgEncoding.UNENCODED, "Expected: Unencoded  Returned: " + enc
 
     def test_deprecated(self):
         template = self.msg_dict['ObjectPosition']
-        dep = template.msg_deprecation
-        assert dep == MsgDeprecation.LL_DEPRECATED, "Expected:  Deprecated  Returned: " + str(dep)
+        dep = template.deprecation
+        assert dep == MsgDeprecation.DEPRECATED, "Expected:  Deprecated  Returned: " + str(dep)
 
     def test_template_fixed(self):
         template = self.msg_dict['PacketAck']
-        num = template.msg_num
+        num = template.num
         assert num == 251, "Expected: 251  Returned: " + str(num)
 
     def test_blacklisted(self):
         template = self.msg_dict['TeleportFinish']
-        self.assertEqual(template.msg_deprecation,
-                         MsgDeprecation.LL_UDPBLACKLISTED)
+        self.assertEqual(template.deprecation,
+                         MsgDeprecation.UDPBLACKLISTED)
 
     def test_block(self):
         block = self.msg_dict['OpenCircuit'].get_block('CircuitInfo')
@@ -167,7 +167,7 @@ class TestTemplates(unittest.TestCase):
 
         frequency_counter = {"low": 0, 'medium': 0, "high": 0, 'fixed': 0}
         for template in list(self.msg_dict.message_templates.values()):
-            frequency_counter[template.get_frequency_as_string()] += 1
+            frequency_counter[template.frequency.name.lower()] += 1
         self.assertEqual(low_count, frequency_counter["low"])
         self.assertEqual(medium_count, frequency_counter["medium"])
         self.assertEqual(high_count, frequency_counter["high"])

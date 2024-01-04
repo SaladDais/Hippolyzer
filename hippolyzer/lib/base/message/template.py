@@ -21,7 +21,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import typing
 
-from .msgtypes import MsgType, MsgBlockType
+from .msgtypes import MsgType, MsgBlockType, MsgFrequency
 from ..datatypes import UUID
 
 
@@ -105,26 +105,19 @@ class MessageTemplateBlock:
         return self.variable_map[name]
 
 
-class MessageTemplate(object):
-    frequency_strings = {-1: 'fixed', 1: 'high', 2: 'medium', 4: 'low'}  # strings for printout
-    deprecation_strings = ["Deprecated", "UDPDeprecated", "UDPBlackListed", "NotDeprecated"]  # using _as_string methods
-    encoding_strings = ["Unencoded", "Zerocoded"]  # etc
-    trusted_strings = ["Trusted", "NotTrusted"]  # etc LDE 24oct2008
-
+class MessageTemplate:
     def __init__(self, name):
         self.blocks: typing.List[MessageTemplateBlock] = []
         self.block_map: typing.Dict[str, MessageTemplateBlock] = {}
 
-        # this is the function or object that will handle this type of message
-        self.received_count = 0
-
         self.name = name
-        self.frequency = None
-        self.msg_num = 0
-        self.msg_freq_num_bytes = None
-        self.msg_trust = None
-        self.msg_deprecation = None
-        self.msg_encoding = None
+        self.frequency: typing.Optional[MsgFrequency] = None
+        self.num = 0
+        # Frequency + msg num as bytes
+        self.freq_num_bytes = None
+        self.trusted = False
+        self.deprecation = None
+        self.encoding = None
 
     def add_block(self, block):
         self.block_map[block.name] = block
@@ -134,12 +127,6 @@ class MessageTemplate(object):
         return self.block_map[name]
 
     def get_msg_freq_num_len(self):
-        if self.frequency == -1:
+        if self.frequency == MsgFrequency.FIXED:
             return 4
         return self.frequency
-
-    def get_frequency_as_string(self):
-        return MessageTemplate.frequency_strings[self.frequency]
-
-    def get_deprecation_as_string(self):
-        return MessageTemplate.deprecation_strings[self.msg_deprecation]
