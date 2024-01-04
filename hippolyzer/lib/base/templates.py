@@ -2263,8 +2263,8 @@ class ParcelGridInfo(se.BitfieldDataclass):
 
 
 @se.subfield_serializer("ParcelOverlay", "ParcelData", "Data")
-class ParcelOverlaySerializer(se.AdapterSubfieldSerializer):
-    ADAPTER = se.BitfieldDataclass(ParcelGridInfo)
+class ParcelOverlaySerializer(se.SimpleSubfieldSerializer):
+    TEMPLATE = se.Collection(None, se.BitfieldDataclass(ParcelGridInfo))
 
 
 @se.http_serializer("RenderMaterials")
