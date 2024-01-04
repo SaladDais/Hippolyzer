@@ -29,7 +29,10 @@ from hippolyzer.lib.base.message.msgtypes import MsgType
 
 PACKER = Callable[[Any], bytes]
 UNPACKER = Callable[[bytes], Any]
+LLSD_PACKER = Callable[[Any], Any]
+LLSD_UNPACKER = Callable[[Any], Any]
 SPEC = Tuple[UNPACKER, PACKER]
+LLSD_SPEC = Tuple[LLSD_UNPACKER, LLSD_PACKER]
 
 
 def _pack_string(pack_string):
@@ -62,6 +65,21 @@ def _make_tuplecoord_spec(typ: Type[TupleCoord], struct_fmt: str,
                 x = x.data()
             return struct_obj.pack(*x[:needed_elems])
     return lambda x: typ(*struct_obj.unpack(x)), _packer
+
+
+def _make_llsd_tuplecoord_spec(typ: Type[TupleCoord], needed_elems: Optional[int] = None):
+    if needed_elems is None:
+        # Number of elems needed matches the number in the coord type
+        def _packer(x):
+            return list(x)
+    else:
+        # Special case, we only want to pack some of the components.
+        # Mostly for Quaternion since we don't actually need to send W.
+        def _packer(x):
+            if isinstance(x, TupleCoord):
+                x = x.data()
+            return list(x.data(needed_elems))
+    return lambda x: typ(*x), _packer
 
 
 def _unpack_specs(cls):
@@ -110,10 +128,15 @@ class TemplateDataPacker:
 class LLSDDataPacker(TemplateDataPacker):
     # Some template var types aren't directly representable in LLSD, so they
     # get encoded to binary fields.
-    SPECS = {
+    SPECS: Dict[MsgType, LLSD_SPEC] = {
         MsgType.MVT_IP_ADDR: (socket.inet_ntoa, socket.inet_aton),
         # LLSD ints are technically bound to S32 range.
         MsgType.MVT_U32: _make_struct_spec('!I'),
         MsgType.MVT_U64: _make_struct_spec('!Q'),
         MsgType.MVT_S64: _make_struct_spec('!q'),
+        # These are arrays in LLSD, we need to turn them into coords.
+        MsgType.MVT_LLVector3: _make_llsd_tuplecoord_spec(Vector3),
+        MsgType.MVT_LLVector3d: _make_llsd_tuplecoord_spec(Vector3),
+        MsgType.MVT_LLVector4: _make_llsd_tuplecoord_spec(Vector4),
+        MsgType.MVT_LLQuaternion: _make_llsd_tuplecoord_spec(Quaternion, needed_elems=3)
     }

@@ -16,10 +16,14 @@ import weakref
 from defusedxml import minidom
 
 from hippolyzer.lib.base import serialization as se, llsd
+from hippolyzer.lib.base.message.llsd_msg_serializer import LLSDMessageSerializer
 from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.datatypes import TaggedUnion, UUID, TupleCoord
 from hippolyzer.lib.base.helpers import bytes_escape
 from hippolyzer.lib.base.message.message_formatting import HumanMessageSerializer
+from hippolyzer.lib.base.message.msgtypes import PacketFlags
+from hippolyzer.lib.base.message.template_dict import DEFAULT_TEMPLATE_DICT
+from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.proxy.message_filter import MetaFieldSpecifier, compile_filter, BaseFilterNode, MessageFilterNode, \
     EnumFieldSpecifier, MatchResult
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
@@ -614,6 +618,19 @@ class EQMessageLogEntry(AbstractMessageLogEntry):
         return "EQ"
 
     def request(self, beautify=False, replacements=None):
+        # TODO: This is a bit of a hack! Templated messages can be sent over the EQ, so let's
+        #  display them as template messages if that's what they are.
+        if self.event['message'] in DEFAULT_TEMPLATE_DICT.message_templates:
+            msg = LLSDMessageSerializer().deserialize(self.event)
+            msg.synthetic = True
+            msg.send_flags = PacketFlags.EQ
+            msg.direction = Direction.IN
+            # Annoyingly, templated messages sent over the EQ can have extra fields not specified
+            # in the template, and this is often the case. ParcelProperties has fields that aren't
+            # in the template. Luckily, we don't really care about extra fields, we just may not
+            # be able to automatically decode U32 and friends without the hint from the template
+            # that that is what they are.
+            return HumanMessageSerializer.to_human_string(msg, replacements, beautify)
         return f'EQ {self.event["message"]}\n\n{self._format_llsd(self.event["body"])}'
 
     @property

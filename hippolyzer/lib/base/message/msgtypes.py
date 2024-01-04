@@ -55,6 +55,8 @@ class PacketFlags(enum.IntFlag):
     RELIABLE = 0x40
     RESENT = 0x20
     ACK = 0x10
+    # Not a real flag, just used for display.
+    EQ = 1 << 10
 
 
 # frequency for messages

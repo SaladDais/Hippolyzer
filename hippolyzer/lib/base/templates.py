@@ -1952,7 +1952,7 @@ class AvatarPropertiesFlags(IntFlag):
 
 
 @se.flag_field_serializer("AvatarGroupsReply", "GroupData", "GroupPowers")
-@se.flag_field_serializer("AvatarGroupDataUpdate", "GroupData", "GroupPowers")
+@se.flag_field_serializer("AgentGroupDataUpdate", "GroupData", "GroupPowers")
 @se.flag_field_serializer("AgentDataUpdate", "AgentData", "GroupPowers")
 @se.flag_field_serializer("GroupProfileReply", "GroupData", "PowersMask")
 @se.flag_field_serializer("GroupRoleDataReply", "RoleData", "Powers")
@@ -2134,6 +2134,43 @@ class ScriptPermissions(IntFlag):
     CHANGE_ENVIRONMENT = 1 << 18
 
 
+@se.flag_field_serializer("ParcelProperties", "ParcelData", "ParcelFlags")
+class ParcelFlags(IntFlag):
+    ALLOW_FLY = 1 << 0  # Can start flying
+    ALLOW_OTHER_SCRIPTS = 1 << 1  # Scripts by others can run.
+    FOR_SALE = 1 << 2  # Can buy this land
+    FOR_SALE_OBJECTS = 1 << 7  # Can buy all objects on this land
+    ALLOW_LANDMARK = 1 << 3  # Always true/deprecated
+    ALLOW_TERRAFORM = 1 << 4
+    ALLOW_DAMAGE = 1 << 5
+    CREATE_OBJECTS = 1 << 6
+    # 7 is moved above
+    USE_ACCESS_GROUP = 1 << 8
+    USE_ACCESS_LIST = 1 << 9
+    USE_BAN_LIST = 1 << 10
+    USE_PASS_LIST = 1 << 11
+    SHOW_DIRECTORY = 1 << 12
+    ALLOW_DEED_TO_GROUP = 1 << 13
+    CONTRIBUTE_WITH_DEED = 1 << 14
+    SOUND_LOCAL = 1 << 15  # Hear sounds in this parcel only
+    SELL_PARCEL_OBJECTS = 1 << 16  # Objects on land are included as part of the land when the land is sold
+    ALLOW_PUBLISH = 1 << 17  # Allow publishing of parcel information on the web
+    MATURE_PUBLISH = 1 << 18  # The information on this parcel is mature
+    URL_WEB_PAGE = 1 << 19  # The "media URL" is an HTML page
+    URL_RAW_HTML = 1 << 20  # The "media URL" is a raw HTML string like <H1>Foo</H1>
+    RESTRICT_PUSHOBJECT = 1 << 21  # Restrict push object to either on agent or on scripts owned by parcel owner
+    DENY_ANONYMOUS = 1 << 22  # Deny all non identified/transacted accounts
+    # DENY_IDENTIFIED = 1 << 23  # Deny identified accounts
+    # DENY_TRANSACTED = 1 << 24  # Deny identified accounts
+    ALLOW_GROUP_SCRIPTS = 1 << 25  # Allow scripts owned by group
+    CREATE_GROUP_OBJECTS = 1 << 26  # Allow object creation by group members or objects
+    ALLOW_ALL_OBJECT_ENTRY = 1 << 27  # Allow all objects to enter a parcel
+    ALLOW_GROUP_OBJECT_ENTRY = 1 << 28  # Only allow group (and owner) objects to enter the parcel
+    ALLOW_VOICE_CHAT = 1 << 29  # Allow residents to use voice chat on this parcel
+    USE_ESTATE_VOICE_CHAN = 1 << 30
+    DENY_AGEUNVERIFIED = 1 << 31  # Prevent residents who aren't age-verified
+
+
 @se.enum_field_serializer("UpdateMuteListEntry", "MuteData", "MuteType")
 class MuteType(IntEnum):
     BY_NAME = 0
@@ -2193,6 +2230,7 @@ class CreationDateSerializer(se.AdapterSubfieldSerializer):
 
 
 @se.subfield_serializer("MeanCollisionAlert", "MeanCollision", "Time")
+@se.subfield_serializer("ParcelProperties", "ParcelData", "ClaimDate")
 class DateSerializer(se.AdapterSubfieldSerializer):
     ADAPTER = DateAdapter(1)
     ORIG_INLINE = True
