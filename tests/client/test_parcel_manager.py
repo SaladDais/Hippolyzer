@@ -253,7 +253,7 @@ class TestParcelOverlay(unittest.IsolatedAsyncioTestCase):
     async def test_request_parcel_properties(self):
         for msg in self.test_msgs:
             self.handler.handle(msg)
-        req_task = asyncio.create_task(self.parcel_manager.request_parcels_if_dirty())
+        req_task = asyncio.create_task(self.parcel_manager.request_dirty_parcels())
         # HACK: Wait for requests to be sent out
         await asyncio.sleep(0.01)
 

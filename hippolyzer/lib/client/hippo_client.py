@@ -29,6 +29,7 @@ from hippolyzer.lib.base.xfer_manager import XferManager
 from hippolyzer.lib.client.asset_uploader import AssetUploader
 from hippolyzer.lib.client.inventory_manager import InventoryManager
 from hippolyzer.lib.client.object_manager import ClientObjectManager, ClientWorldObjectManager
+from hippolyzer.lib.client.parcel_manager import ParcelManager
 from hippolyzer.lib.client.state import BaseClientSession, BaseClientRegion, BaseClientSessionManager
 
 
@@ -47,6 +48,8 @@ class ClientSettings(Settings):
     USER_AGENT: str = SettingDescriptor(f"Hippolyzer/v{version('hippolyzer')}")
     SEND_AGENT_UPDATES: bool = SettingDescriptor(True)
     """Generally you want to send these, lots of things will break if you don't send at least one."""
+    AUTO_REQUEST_PARCELS: bool = SettingDescriptor(True)
+    """Automatically request all parcel details when connecting to a region"""
 
 
 class HippoCapsClient(CapsClient):
@@ -121,6 +124,7 @@ class HippoClientRegion(BaseClientRegion):
         self.xfer_manager = XferManager(proxify(self), self.session().secure_session_id)
         self.transfer_manager = TransferManager(proxify(self), session.agent_id, session.id)
         self.asset_uploader = AssetUploader(proxify(self))
+        self.parcel_manager = ParcelManager(proxify(self))
         self.objects = ClientObjectManager(self)
         self._llsd_serializer = LLSDMessageSerializer()
         self._eq_task: Optional[asyncio.Task] = None
@@ -226,6 +230,9 @@ class HippoClientRegion(BaseClientRegion):
                 self.update_caps(await seed_resp.read_llsd())
 
             self._eq_task = asyncio.create_task(self._poll_event_queue())
+
+            if self.session().session_manager.settings.AUTO_REQUEST_PARCELS:
+                _ = asyncio.create_task(self.parcel_manager.request_dirty_parcels())
         except Exception as e:
             # Let consumers who were `await`ing the connected signal know there was an error
             if not self.connected.done():

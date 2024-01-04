@@ -138,12 +138,13 @@ class ParcelManager:
                 # Append the grid to the neighbour testing queue
                 neighbor_test_queue.append(new_pos)
 
-    async def request_parcels_if_dirty(self) -> Tuple[Parcel, ...]:
+    async def request_dirty_parcels(self) -> Tuple[Parcel, ...]:
         if self._parcels_dirty:
             return await self.request_all_parcels()
         return tuple(self.parcels)
 
     async def request_all_parcels(self) -> Tuple[Parcel, ...]:
+        await self.overlay_complete.wait()
         # Because of how we build up the parcel index map, it's safe for us to
         # do this instead of keeping track of seen IDs in a set or similar
         last_seen_parcel_index = 0
@@ -164,9 +165,11 @@ class ParcelManager:
         # Wait for all parcel properties to come in
         await asyncio.gather(*futs)
         self.parcels_downloaded.set()
+        self._parcels_dirty = False
         return tuple(self.parcels)
 
     async def request_parcel_properties(self, pos: Vector2) -> Parcel:
+        await self.overlay_complete.wait()
         seq_id = self._next_seq
         # Register a wait on a ParcelProperties matching this seq
         parcel_props_fut = self._region.message_handler.wait_for(
@@ -176,7 +179,7 @@ class ParcelManager:
         )
         # We don't care about when we receive an ack, we only care about when we receive the parcel props
         _ = self._region.circuit.send_reliable(Message(
-            "RequestParcelProperties",
+            "ParcelPropertiesRequest",
             Block("AgentData", AgentID=self._region.session().agent_id, SessionID=self._region.session().id),
             Block(
                 "ParcelData",

@@ -3,6 +3,7 @@ A simple client that just says hello to people
 """
 
 import asyncio
+import pprint
 from contextlib import aclosing
 import os
 
@@ -30,6 +31,11 @@ async def amain():
             start_location=os.environ.get("HIPPO_START_LOCATION", "last"),
         )
         print("I'm here")
+
+        # Wait until we have details about parcels and print them
+        await client.main_region.parcel_manager.parcels_downloaded.wait()
+        pprint.pprint(client.main_region.parcel_manager.parcels)
+
         await client.send_chat("Hello World!", chat_type=ChatType.SHOUT)
         client.session.message_handler.subscribe("ChatFromSimulator", _respond_to_chat)
         # Example of how to work with caps
