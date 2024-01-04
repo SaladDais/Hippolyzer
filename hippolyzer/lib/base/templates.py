@@ -353,6 +353,7 @@ class ParcelInfoFlags(IntFlag):
 class MapImageFlags(IntFlag):
     # No clue, honestly. I guess there's potentially different image types you could request.
     LAYER = 1 << 1
+    RETURN_NONEXISTENT = 0x10000
 
 
 @se.enum_field_serializer("MapBlockReply", "Data", "Access")
