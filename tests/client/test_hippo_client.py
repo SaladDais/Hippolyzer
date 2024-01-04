@@ -14,7 +14,7 @@ from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.message.msgtypes import PacketFlags
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.network.transport import AbstractUDPTransport, UDPPacket, Direction
-from hippolyzer.lib.base.test_utils import MockTransport, MockConnectionHolder
+from hippolyzer.lib.base.test_utils import MockTransport, MockConnectionHolder, soon
 from hippolyzer.lib.client.hippo_client import HippoClient, HippoClientProtocol
 
 
@@ -72,10 +72,6 @@ class MockHippoClient(HippoClient):
         return MockServerTransport(self.server), protocol
 
 
-async def _soon(get_msg) -> Message:
-    return await asyncio.wait_for(get_msg(), timeout=1.0)
-
-
 class TestHippoClient(unittest.IsolatedAsyncioTestCase):
     FAKE_LOGIN_URI = "http://127.0.0.1:1/login.cgi"
     FAKE_LOGIN_RESP = {
@@ -130,8 +126,8 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
         with self.server_handler.subscribe_async(
                 ("*",),
         ) as get_msg:
-            assert (await _soon(get_msg)).name == "UseCircuitCode"
-            assert (await _soon(get_msg)).name == "CompleteAgentMovement"
+            assert (await soon(get_msg())).name == "UseCircuitCode"
+            assert (await soon(get_msg())).name == "CompleteAgentMovement"
             self.server.circuit.send(Message(
                 'RegionHandshake',
                 Block('RegionInfo', fill_missing=True),
@@ -139,8 +135,8 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
                 Block('RegionInfo3', fill_missing=True),
                 Block('RegionInfo4', fill_missing=True),
             ))
-            assert (await _soon(get_msg)).name == "RegionHandshakeReply"
-            assert (await _soon(get_msg)).name == "AgentThrottle"
+            assert (await soon(get_msg())).name == "RegionHandshakeReply"
+            assert (await soon(get_msg())).name == "AgentThrottle"
             await login_task
 
     async def test_login(self):
@@ -149,15 +145,15 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
                 ("*",),
         ) as get_msg:
             self.client.logout()
-            assert (await _soon(get_msg)).name == "LogoutRequest"
+            assert (await soon(get_msg())).name == "LogoutRequest"
 
     async def test_eq(self):
         await self._log_client_in(self.client)
         with self.client.session.message_handler.subscribe_async(
                 ("ViewerFrozenMessage", "NotTemplated"),
         ) as get_msg:
-            assert (await _soon(get_msg)).name == "ViewerFrozenMessage"
-            msg = await _soon(get_msg)
+            assert (await soon(get_msg())).name == "ViewerFrozenMessage"
+            msg = await soon(get_msg())
             assert msg.name == "NotTemplated"
             assert msg["EventData"]["foo"]["bar"] == 1
 
@@ -179,5 +175,5 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
             self.server_transport.send_packet(packet)
 
             self.server_circuit.send(Message("AgentDataUpdate", Block("AgentData", fill_missing=True)))
-            assert (await _soon(get_msg)).name == "ChatFromSimulator"
-            assert (await _soon(get_msg)).name == "AgentDataUpdate"
+            assert (await soon(get_msg())).name == "ChatFromSimulator"
+            assert (await soon(get_msg())).name == "AgentDataUpdate"

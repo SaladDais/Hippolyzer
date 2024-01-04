@@ -39,3 +39,7 @@ class MockConnectionHolder(ConnectionHolder):
     def __init__(self, circuit, message_handler):
         self.circuit = circuit
         self.message_handler = message_handler
+
+
+async def soon(awaitable) -> Message:
+    return await asyncio.wait_for(awaitable, timeout=1.0)

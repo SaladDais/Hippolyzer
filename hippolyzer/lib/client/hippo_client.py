@@ -108,7 +108,7 @@ class HippoClientProtocol(asyncio.DatagramProtocol):
 
 
 class HippoClientRegion(BaseClientRegion):
-    def __init__(self, circuit_addr, seed_cap: str, session: HippoClientSession, handle=None):
+    def __init__(self, circuit_addr, seed_cap: Optional[str], session: HippoClientSession, handle=None):
         super().__init__()
         self.caps = multidict.MultiDict()
         self.message_handler: MessageHandler[Message, str] = MessageHandler(take_by_default=False)
