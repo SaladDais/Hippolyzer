@@ -269,12 +269,13 @@ class XferManager:
         xfer.xfer_id = request_msg["XferID"]["ID"]
 
         packet_id = 0
-        # TODO: No resend yet. If it's lost, it's lost.
         while xfer.chunks:
             chunk = xfer.chunks.pop(packet_id)
             # EOF if there are no chunks left
             packet_val = XferPacket(PacketID=packet_id, IsEOF=not bool(xfer.chunks))
-            self._connection_holder.circuit.send(Message(
+            # We just send reliably since I don't care to implement the Xfer-specific
+            # resend-on-unacked nastiness
+            _ = self._connection_holder.circuit.send_reliable(Message(
                 "SendXferPacket",
                 Block("XferID", ID=xfer.xfer_id, Packet_=packet_val),
                 Block("DataPacket", Data=chunk),
