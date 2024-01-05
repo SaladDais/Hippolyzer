@@ -2203,7 +2203,7 @@ class MuteFlags(IntFlag):
 
 
 class DateAdapter(se.Adapter):
-    def __init__(self, multiplier: int):
+    def __init__(self, multiplier: int = 1):
         super(DateAdapter, self).__init__(None)
         self._multiplier = multiplier
 
@@ -2233,7 +2233,7 @@ class CreationDateSerializer(se.AdapterSubfieldSerializer):
 @se.subfield_serializer("MeanCollisionAlert", "MeanCollision", "Time")
 @se.subfield_serializer("ParcelProperties", "ParcelData", "ClaimDate")
 class DateSerializer(se.AdapterSubfieldSerializer):
-    ADAPTER = DateAdapter(1)
+    ADAPTER = DateAdapter()
     ORIG_INLINE = True
 
 
@@ -2266,6 +2266,40 @@ class ParcelGridInfo(se.BitfieldDataclass):
 @se.subfield_serializer("ParcelOverlay", "ParcelData", "Data")
 class ParcelOverlaySerializer(se.SimpleSubfieldSerializer):
     TEMPLATE = se.Collection(None, se.BitfieldDataclass(ParcelGridInfo))
+
+
+@se.enum_field_serializer("ParcelProperties", "ParcelData", "LandingType")
+class LandingType(IntEnum):
+    NONE = 1
+    LANDING_POINT = 1
+    DIRECT = 2
+
+
+@se.enum_field_serializer("ParcelProperties", "ParcelData", "Status")
+class LandOwnershipStatus(IntEnum):
+    LEASED = 0
+    LEASE_PENDING = 1
+    ABANDONED = 2
+    NONE = -1
+
+
+@se.enum_field_serializer("ParcelProperties", "ParcelData", "Category")
+class LandCategory(IntEnum):
+    NONE = 0
+    LINDEN = enum.auto()
+    ADULT = enum.auto()
+    ARTS = enum.auto()
+    BUSINESS = enum.auto()
+    EDUCATIONAL = enum.auto()
+    GAMING = enum.auto()
+    HANGOUT = enum.auto()
+    NEWCOMER = enum.auto()
+    PARK = enum.auto()
+    RESIDENTIAL = enum.auto()
+    SHOPPING = enum.auto()
+    STAGE = enum.auto()
+    OTHER = enum.auto()
+    ANY = -1
 
 
 @se.http_serializer("RenderMaterials")
