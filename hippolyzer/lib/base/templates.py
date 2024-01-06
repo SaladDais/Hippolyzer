@@ -2237,7 +2237,7 @@ class DateSerializer(se.AdapterSubfieldSerializer):
     ORIG_INLINE = True
 
 
-class ParcelGridType(enum.IntEnum):
+class ParcelGridType(IntEnum):
     PUBLIC = 0x00
     OWNED = 0x01  # Presumably non-linden owned land
     GROUP = 0x02
@@ -2246,7 +2246,7 @@ class ParcelGridType(enum.IntEnum):
     AUCTION = 0x05
 
 
-class ParcelGridFlags(enum.IntFlag):
+class ParcelGridFlags(IntFlag):
     UNUSED = 0x8
     HIDDEN_AVS = 0x10
     SOUND_LOCAL = 0x20
@@ -2337,7 +2337,7 @@ class RetrieveNavMeshSrcSerializer(se.BaseHTTPSerializer):
 # Beta puppetry stuff, subject to change!
 
 
-class PuppetryEventMask(enum.IntFlag):
+class PuppetryEventMask(IntFlag):
     POSITION = 1 << 0
     POSITION_IN_PARENT_FRAME = 1 << 1
     ROTATION = 1 << 2
