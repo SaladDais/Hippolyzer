@@ -7,6 +7,8 @@ from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.network.caps_client import CapsClient
 from hippolyzer.lib.base.test_utils import MockHandlingCircuit
+from hippolyzer.lib.client.hippo_client import ClientSettings
+from hippolyzer.lib.client.object_manager import ClientWorldObjectManager
 from hippolyzer.lib.client.state import BaseClientRegion, BaseClientSession, BaseClientSessionManager
 
 
@@ -34,3 +36,4 @@ class MockClientSession(BaseClientSession):
     def __init__(self, id, secure_session_id, agent_id, circuit_code,
                  session_manager: Optional[BaseClientSessionManager]):
         super().__init__(id, secure_session_id, agent_id, circuit_code, session_manager)
+        self.objects = ClientWorldObjectManager(self, ClientSettings(), None)

@@ -28,6 +28,7 @@ from hippolyzer.lib.base.objects import (
 from hippolyzer.lib.base.settings import Settings
 from hippolyzer.lib.client.namecache import NameCache, NameCacheEntry
 from hippolyzer.lib.base.templates import PCode, ObjectStateSerializer
+from hippolyzer.lib.base import llsd
 
 if TYPE_CHECKING:
     from hippolyzer.lib.client.state import BaseClientRegion, BaseClientSession
@@ -35,6 +36,7 @@ if TYPE_CHECKING:
 
 LOG = logging.getLogger(__name__)
 OBJECT_OR_LOCAL = Union[Object, int]
+MATERIAL_MAP_TYPE = Dict[UUID, dict]
 
 
 class ObjectUpdateType(enum.IntEnum):
@@ -50,12 +52,13 @@ class ClientObjectManager:
     Object manager for a specific region
     """
 
-    __slots__ = ("_region", "_world_objects", "state", "__weakref__")
+    __slots__ = ("_region", "_world_objects", "state", "__weakref__", "_requesting_all_mats_lock")
 
     def __init__(self, region: BaseClientRegion):
         self._region: BaseClientRegion = proxify(region)
         self._world_objects: ClientWorldObjectManager = proxify(region.session().objects)
         self.state: RegionObjectsState = RegionObjectsState()
+        self._requesting_all_mats_lock = asyncio.Lock()
 
     def __len__(self):
         return len(self.state.localid_lookup)
@@ -165,6 +168,53 @@ class ClientObjectManager:
         for local_id in local_ids:
             futures.append(self.state.register_future(local_id, ObjectUpdateType.UPDATE))
         return futures
+
+    async def request_all_materials(self) -> MATERIAL_MAP_TYPE:
+        """
+        Request all materials within the sim
+
+        Sigh, yes, this is best practice per indra :(
+        """
+        if self._requesting_all_mats_lock.locked():
+            # We're already requesting all materials, wait until the lock is free
+            # and just return what was returned.
+            async with self._requesting_all_mats_lock:
+                return self.state.materials
+
+        async with self._requesting_all_mats_lock:
+            async with self._region.caps_client.get("RenderMaterials") as resp:
+                resp.raise_for_status()
+                # Clear out all previous materials, this is a complete response.
+                self.state.materials.clear()
+                self._process_materials_response(await resp.read())
+            return self.state.materials
+
+    async def request_materials(self, material_ids: Sequence[UUID]) -> MATERIAL_MAP_TYPE:
+        if self._requesting_all_mats_lock.locked():
+            # Just wait for the in-flight request for all materials to complete
+            # if we have one in flight.
+            async with self._requesting_all_mats_lock:
+                # Wait for the lock to be released
+                pass
+
+        not_found = set(x for x in material_ids if (x not in self.state.materials))
+        if not_found:
+            # Request any materials we don't already have, if there were any
+            data = {"Zipped": llsd.zip_llsd([x.bytes for x in material_ids])}
+            async with self._region.caps_client.post("RenderMaterials", data=data) as resp:
+                resp.raise_for_status()
+                self._process_materials_response(await resp.read())
+
+        # build up a dict of just the requested mats
+        mats = {}
+        for mat_id in material_ids:
+            mats[mat_id] = self.state.materials[mat_id]
+        return mats
+
+    def _process_materials_response(self, response: bytes):
+        entries = llsd.unzip_llsd(llsd.parse_xml(response)["Zipped"])
+        for entry in entries:
+            self.state.materials[UUID(bytes=entry["ID"])] = entry["Material"]
 
 
 class ObjectEvent:
@@ -654,13 +704,14 @@ class RegionObjectsState:
 
     __slots__ = (
         "handle", "missing_locals", "_orphans", "localid_lookup", "coarse_locations",
-        "_object_futures"
+        "_object_futures", "materials"
     )
 
     def __init__(self):
         self.missing_locals = set()
         self.localid_lookup: Dict[int, Object] = {}
         self.coarse_locations: Dict[UUID, Vector3] = {}
+        self.materials: MATERIAL_MAP_TYPE = {}
         self._object_futures: Dict[Tuple[int, int], List[asyncio.Future]] = {}
         self._orphans: Dict[int, List[int]] = collections.defaultdict(list)
 
@@ -673,6 +724,7 @@ class RegionObjectsState:
         self.coarse_locations.clear()
         self.missing_locals.clear()
         self.localid_lookup.clear()
+        self.materials.clear()
 
     def lookup_localid(self, localid: int) -> Optional[Object]:
         return self.localid_lookup.get(localid)

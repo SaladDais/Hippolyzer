@@ -5,7 +5,7 @@ import aioresponses
 
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base import llsd
-from hippolyzer.lib.client.material_manager import ClientMaterialManager
+from hippolyzer.lib.client.object_manager import ClientObjectManager
 
 from . import MockClientRegion
 
@@ -54,16 +54,16 @@ class MaterialManagerTest(unittest.IsolatedAsyncioTestCase):
             body=self._make_rendermaterials_resp([self.GET_RENDERMATERIALS_BODY[0]])
         )
         self.region = MockClientRegion(self.FAKE_CAPS)
-        self.manager = ClientMaterialManager(self.region)
+        self.manager = ClientObjectManager(self.region)
 
     async def asyncTearDown(self):
         self.aio_mock.stop()
 
     async def test_fetch_all_materials(self):
         await self.manager.request_all_materials()
-        self.assertListEqual([UUID(int=1), UUID(int=2), UUID(int=3)], list(self.manager.materials.keys()))
+        self.assertListEqual([UUID(int=1), UUID(int=2), UUID(int=3)], list(self.manager.state.materials.keys()))
 
     async def test_fetch_some_materials(self):
         mats = await self.manager.request_materials((UUID(int=1),))
         self.assertListEqual([UUID(int=1)], list(mats.keys()))
-        self.assertListEqual([UUID(int=1)], list(self.manager.materials.keys()))
+        self.assertListEqual([UUID(int=1)], list(self.manager.state.materials.keys()))
