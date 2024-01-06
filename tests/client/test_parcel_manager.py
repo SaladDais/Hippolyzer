@@ -1,16 +1,16 @@
 import asyncio
 import collections
 import unittest
-from typing import Mapping, Dict, Optional
+from typing import Dict
 
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.message import Block, Message
 import hippolyzer.lib.base.serialization as se
-from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.templates import ParcelGridInfo, ParcelGridType, ParcelGridFlags
-from hippolyzer.lib.base.test_utils import MockHandlingCircuit, soon
+from hippolyzer.lib.base.test_utils import soon
 from hippolyzer.lib.client.parcel_manager import ParcelManager
-from hippolyzer.lib.client.state import BaseClientRegion, BaseClientSession, BaseClientSessionManager
+
+from . import MockClientRegion
 
 OVERLAY_CHUNKS = (
     b'\xc2\x82\x82\xc2\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82'
@@ -189,28 +189,6 @@ OVERLAY_CHUNKS = (
     b'\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02'
     b'\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02',
 )
-
-
-class MockClientSession(BaseClientSession):
-    def __init__(self, id, secure_session_id, agent_id, circuit_code,
-                 session_manager: Optional[BaseClientSessionManager]):
-        super().__init__(id, secure_session_id, agent_id, circuit_code, session_manager)
-
-
-class MockClientRegion(BaseClientRegion):
-    def __init__(self):
-        super().__init__()
-        self.handle = None
-        self.circuit_addr = ("127.0.0.1", 1)
-        self.message_handler: MessageHandler[Message, str] = MessageHandler(take_by_default=False)
-        self.circuit = MockHandlingCircuit(self.message_handler)
-        self._name = "Test"
-
-    def session(self):
-        return MockClientSession(UUID.ZERO, UUID.ZERO, UUID.ZERO, 0, None)
-
-    def update_caps(self, caps: Mapping[str, str]) -> None:
-        pass
 
 
 class TestParcelOverlay(unittest.IsolatedAsyncioTestCase):
