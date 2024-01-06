@@ -50,6 +50,8 @@ class ClientSettings(Settings):
     """Generally you want to send these, lots of things will break if you don't send at least one."""
     AUTO_REQUEST_PARCELS: bool = SettingDescriptor(True)
     """Automatically request all parcel details when connecting to a region"""
+    AUTO_REQUEST_MATERIALS: bool = SettingDescriptor(True)
+    """Automatically request all materials when connecting to a region"""
 
 
 class HippoCapsClient(CapsClient):
@@ -231,8 +233,12 @@ class HippoClientRegion(BaseClientRegion):
 
             self._eq_task = asyncio.create_task(self._poll_event_queue())
 
-            if self.session().session_manager.settings.AUTO_REQUEST_PARCELS:
+            settings = self.session().session_manager.settings
+            if settings.AUTO_REQUEST_PARCELS:
                 _ = asyncio.create_task(self.parcel_manager.request_dirty_parcels())
+            if settings.AUTO_REQUEST_MATERIALS:
+                _ = asyncio.create_task(self.objects.request_all_materials())
+
         except Exception as e:
             # Let consumers who were `await`ing the connected signal know there was an error
             if not self.connected.done():
