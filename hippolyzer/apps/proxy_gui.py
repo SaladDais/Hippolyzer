@@ -234,7 +234,7 @@ class MessageLogWindow(QtWidgets.QMainWindow):
                      "ParcelDwellReply ParcelAccessListReply AttachedSoundGainChange " \
                      "ParcelPropertiesRequest ParcelProperties GetObjectCost GetObjectPhysicsData ObjectImage " \
                      "ViewerAsset GetTexture SetAlwaysRun GetDisplayNames MapImageService MapItemReply " \
-                     "AgentFOV".split(" ")
+                     "AgentFOV GenericStreamingMessage".split(" ")
     DEFAULT_FILTER = f"!({' || '.join(ignored for ignored in DEFAULT_IGNORE)})"
 
     textRequest: QtWidgets.QTextEdit
