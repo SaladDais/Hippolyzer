@@ -90,6 +90,7 @@ class AssetType(LookupIntEnum):
     RESERVED_5 = 54
     RESERVED_6 = 55
     SETTINGS = 56
+    MATERIAL = 57
     UNKNOWN = 255
     NONE = -1
 
@@ -125,6 +126,7 @@ class AssetType(LookupIntEnum):
             AssetType.PERSON: InventoryType.PERSON,
             AssetType.MESH: InventoryType.MESH,
             AssetType.SETTINGS: InventoryType.SETTINGS,
+            AssetType.MATERIAL: InventoryType.MATERIAL,
         }.get(self, AssetType.NONE)
 
 
@@ -166,6 +168,7 @@ class InventoryType(LookupIntEnum):
     WIDGET = 23
     PERSON = 24
     SETTINGS = 25
+    MATERIAL = 26
     UNKNOWN = 255
     NONE = -1
 
@@ -235,10 +238,11 @@ class FolderType(LookupIntEnum):
     # Note: We actually *never* create folders with that type. This is used for icon override only.
     MARKETPLACE_VERSION = 55
     SETTINGS = 56
+    MATERIAL = 57
     # Firestorm folders, may not actually exist in legacy schema
-    FIRESTORM = 57
-    PHOENIX = 58
-    RLV = 59
+    FIRESTORM = 58
+    PHOENIX = 59
+    RLV = 60
     # Opensim folders
     MY_SUITCASE = 100
     NONE = -1
