@@ -160,8 +160,12 @@ class HippoLLSDBinaryParser(base_llsd.serde_binary.LLSDBinaryParser):
         return bytes_val
 
 
+# Python uses one, C++ uses the other, and everyone's unhappy.
+_BINARY_HEADERS = (b'<? LLSD/Binary ?>', b'<?llsd/binary?>')
+
+
 def parse_binary(data: bytes):
-    if data.startswith(b'<?llsd/binary?>'):
+    if any(data.startswith(x) for x in _BINARY_HEADERS):
         data = data.split(b'\n', 1)[1]
     return HippoLLSDBinaryParser().parse(data)
 
@@ -187,7 +191,7 @@ def parse(data: bytes):
     # content-type is usually nonsense.
     try:
         data = data.lstrip()
-        if data.startswith(b'<?llsd/binary?>'):
+        if any(data.startswith(x) for x in _BINARY_HEADERS):
             return parse_binary(data)
         elif data.startswith(b'<'):
             return parse_xml(data)
