@@ -64,7 +64,7 @@ typing-extensions==4.0.1
 urllib3==1.26.18
 urwid==2.1.2
 wcwidth==0.2.5
-Werkzeug==2.0.2
+Werkzeug==2.3.8
 wsproto==1.0.0
 yarl==1.8.2
 zstandard<0.18.0
