@@ -45,7 +45,7 @@ publicsuffix2==2.20191221
 pyasn1==0.4.8
 pycparser==2.21
 pycollada==0.7.2
-Pygments==2.10.0
+Pygments==2.15.0
 pyOpenSSL==22.0.0
 pyparsing==2.4.7
 pyperclip==1.8.2
