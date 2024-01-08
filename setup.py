@@ -100,8 +100,8 @@ setup(
         # Proxy-specific stuff
         'outleap<1.0',
         'arpeggio',
-        # 7.x will be a major change.
-        'mitmproxy>=8.0.0,<8.1',
+        # 10.x will be a major change.
+        'mitmproxy>=9.0.0,<10',
         'Werkzeug<3.0',
         # For REPLs
         'ptpython<4.0',
