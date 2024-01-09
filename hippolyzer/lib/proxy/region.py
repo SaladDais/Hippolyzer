@@ -21,6 +21,7 @@ from hippolyzer.lib.proxy.object_manager import ProxyObjectManager
 from hippolyzer.lib.base.transfer_manager import TransferManager
 from hippolyzer.lib.base.xfer_manager import XferManager
 from hippolyzer.lib.proxy.asset_uploader import ProxyAssetUploader
+from hippolyzer.lib.proxy.parcel_manager import ProxyParcelManager
 
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.sessions import Session
@@ -67,6 +68,7 @@ class ProxiedRegion(BaseClientRegion):
         self.xfer_manager = XferManager(proxify(self), self.session().secure_session_id)
         self.transfer_manager = TransferManager(proxify(self), session.agent_id, session.id)
         self.asset_uploader = ProxyAssetUploader(proxify(self))
+        self.parcel_manager = ProxyParcelManager(proxify(self))
         self._recalc_caps()
 
     @property

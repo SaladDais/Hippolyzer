@@ -1,5 +1,6 @@
 import asyncio
 import dataclasses
+import logging
 from typing import *
 
 import numpy as np
@@ -8,6 +9,9 @@ from hippolyzer.lib.base.datatypes import UUID, Vector3, Vector2
 from hippolyzer.lib.base.message.message import Message, Block
 from hippolyzer.lib.base.templates import ParcelGridFlags, ParcelFlags
 from hippolyzer.lib.client.state import BaseClientRegion
+
+
+LOG = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -57,7 +61,8 @@ class ParcelManager:
         self._parcels_dirty = False
         if new_overlay_data != self.overlay.data[:]:
             # If the raw data doesn't match, then we have to parse again
-            self.overlay.data = new_overlay_data
+            new_data = np.frombuffer(new_overlay_data, dtype=np.uint8).reshape(self.overlay.shape)
+            np.copyto(self.overlay, new_data)
             self._parse_overlay()
             # We could optimize this by just marking specific squares dirty
             # if the parcel indices have changed between parses, but I don't care
@@ -194,13 +199,30 @@ class ParcelManager:
         ))
         self._next_seq += 1
 
-        parcel_props = await parcel_props_fut
-        data_block = parcel_props["ParcelData"][0]
-        # Parcel indices are one-indexed, convert to zero-indexed.
-        parcel_idx = self.parcel_indices[self._pos_to_grid_coords(pos)] - 1
-        assert len(self.parcels) > parcel_idx
+        return self._process_parcel_properties(await parcel_props_fut, pos)
 
-        self.parcels[parcel_idx] = parcel = Parcel(
+    def _process_parcel_properties(self, parcel_props: Message, pos: Optional[Vector2] = None) -> Parcel:
+        data_block = parcel_props["ParcelData"][0]
+        grid_coord = None
+        # Parcel indices are one-indexed, convert to zero-indexed.
+        if pos is not None:
+            # We have a pos, figure out where in the grid we should look for the parcel index
+            grid_coord = self._pos_to_grid_coords(pos)
+        else:
+            # Need to look at the parcel bitmap to figure out a valid grid coord.
+            # This is a boolean array where each bit says whether the parcel occupies that grid.
+            parcel_bitmap = data_block.deserialize_var("Bitmap")
+
+            for y in range(self.GRIDS_PER_EDGE):
+                for x in range(self.GRIDS_PER_EDGE):
+                    if parcel_bitmap[y, x]:
+                        # This is the first grid the parcel occupies per the bitmap
+                        grid_coord = y, x
+                        break
+                if grid_coord:
+                    break
+
+        parcel = Parcel(
             local_id=data_block["LocalID"],
             name=data_block["Name"],
             flags=ParcelFlags(data_block["ParcelFlags"]),
@@ -208,4 +230,22 @@ class ParcelManager:
             # Parcel UUID isn't in this response :/
         )
 
+        # I guess the bitmap _could_ be empty, but probably not.
+        if grid_coord is not None:
+            parcel_idx = self.parcel_indices[grid_coord] - 1
+            if len(self.parcels) > parcel_idx >= 0:
+                # Okay, parcels list is sane, place the parcel in there.
+                self.parcels[parcel_idx] = parcel
+            else:
+                LOG.warning(f"Received ParcelProperties with incomplete overlay for {grid_coord!r}")
+
         return parcel
+
+    async def get_parcel_at(self, pos: Vector2, request_if_missing: bool = True) -> Optional[Parcel]:
+        grid_coord = self._pos_to_grid_coords(pos)
+        parcel = None
+        if parcel_idx := self.parcel_indices[grid_coord]:
+            parcel = self.parcels[parcel_idx - 1]
+        if request_if_missing and parcel is None:
+            return await self.request_parcel_properties(pos)
+        return None
