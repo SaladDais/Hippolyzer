@@ -12,11 +12,14 @@ import math
 import zlib
 from typing import *
 
+import numpy as np
+
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID, IntEnum, IntFlag, Vector3, Quaternion
 from hippolyzer.lib.base.helpers import BiDiDict
 from hippolyzer.lib.base.namevalue import NameValuesSerializer
+from hippolyzer.lib.base.serialization import ParseContext
 
 
 class LookupIntEnum(IntEnum):
@@ -2270,6 +2273,30 @@ class ParcelGridInfo(se.BitfieldDataclass):
 @se.subfield_serializer("ParcelOverlay", "ParcelData", "Data")
 class ParcelOverlaySerializer(se.SimpleSubfieldSerializer):
     TEMPLATE = se.Collection(None, se.BitfieldDataclass(ParcelGridInfo))
+
+
+class BitmapAdapter(se.Adapter):
+    def __init__(self, shape: Tuple[int, int]):
+        super().__init__(None)
+        self._shape = shape
+
+    def encode(self, val: Any, ctx: Optional[ParseContext]) -> Any:
+        if val and isinstance(val[0], bytes):
+            return b''.join(val)
+        return np.packbits(np.array(val, dtype=np.uint8).flatten()).tobytes()
+
+    def decode(self, val: Any, ctx: Optional[ParseContext], pod: bool = False) -> Any:
+        if pod:
+            return [val[i:i + (self._shape[1] // 8)] for i in range(0, len(val), (self._shape[1] // 8))]
+        parcel_bitmap = np.frombuffer(val, dtype=np.uint8)
+        # This is a boolean array where each bit says whether the parcel occupies that grid.
+        return np.unpackbits(parcel_bitmap).reshape(self._shape)
+
+
+@se.subfield_serializer("ParcelProperties", "ParcelData", "Bitmap")
+class ParcelPropertiesBitmapSerializer(se.AdapterSubfieldSerializer):
+    """Bitmap that describes which grids a parcel occupies"""
+    ADAPTER = BitmapAdapter((256 // 4, 256 // 4))
 
 
 @se.enum_field_serializer("ParcelProperties", "ParcelData", "LandingType")
