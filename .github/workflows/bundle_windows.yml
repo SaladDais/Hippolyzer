@@ -1,5 +1,3 @@
-# Have to manually unzip this (it gets double zipped) and add it
-# onto the release after it gets created. Don't want actions with repo write.
 name: Bundle Windows EXE
 
 
@@ -9,8 +7,12 @@ on:
     types:
       - created
   workflow_dispatch:
+    inputs:
+      ref_name:
+        description: Name to use for the release
 env:
-  target_tag: ${{ github.ref_name }}
+  target_tag: ${{ github.ref_name || github.event.inputs.ref_name }}
+  sha: ${{ github.sha || github.event.inputs.ref_name }}
 
 
 jobs:
@@ -21,7 +23,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        python-version: [3.9]
+        python-version: [3.11]
 
     steps:
     - uses: actions/checkout@v2
@@ -51,10 +53,11 @@ jobs:
     - name: Upload the artifact
       uses: actions/upload-artifact@v2
       with:
-        name: hippolyzer-windows-${{ github.sha }}
+        name: hippolyzer-windows-${{ env.sha }}
         path: ./hippolyzer-windows-${{ env.target_tag }}.zip
 
     - uses: ncipollo/release-action@v1.10.0
+      if: github.event_name != 'workflow_dispatch'
       with:
         artifacts: hippolyzer-windows-${{ env.target_tag }}.zip
         tag: ${{ env.target_tag }}

@@ -1,3 +1,5 @@
+import glob
+
 import setuptools  # noqa
 
 import os
@@ -32,20 +34,20 @@ TO_DELETE = [
     "lib/aiohttp/_http_writer.c",
     "lib/aiohttp/_websocket.c",
     # Improve this to work with different versions.
-    "lib/aiohttp/python39.dll",
-    "lib/lazy_object_proxy/python39.dll",
-    "lib/lxml/python39.dll",
-    "lib/markupsafe/python39.dll",
-    "lib/multidict/python39.dll",
-    "lib/numpy/core/python39.dll",
-    "lib/numpy/fft/python39.dll",
-    "lib/numpy/linalg/python39.dll",
-    "lib/numpy/random/python39.dll",
-    "lib/python39.dll",
-    "lib/recordclass/python39.dll",
-    "lib/regex/python39.dll",
+    "lib/aiohttp/python3*.dll",
+    "lib/lazy_object_proxy/python3*.dll",
+    "lib/lxml/python3*.dll",
+    "lib/markupsafe/python3*.dll",
+    "lib/multidict/python3*.dll",
+    "lib/numpy/core/python3*.dll",
+    "lib/numpy/fft/python3*.dll",
+    "lib/numpy/linalg/python3*.dll",
+    "lib/numpy/random/python3*.dll",
+    "lib/python3*.dll",
+    "lib/recordclass/python3*.dll",
+    "lib/regex/python3*.dll",
     "lib/test",
-    "lib/yarl/python39.dll",
+    "lib/yarl/python3*.dll",
 ]
 
 COPY_TO_ZIP = [
@@ -77,11 +79,12 @@ class FinalizeCXFreezeCommand(Command):
             if path.name.startswith("exe.") and path.is_dir():
                 for cleanse_suffix in TO_DELETE:
                     cleanse_path = path / cleanse_suffix
-                    shutil.rmtree(cleanse_path, ignore_errors=True)
-                    try:
-                        os.unlink(cleanse_path)
-                    except:
-                        pass
+                    for globbed in glob.glob(str(cleanse_path)):
+                        shutil.rmtree(globbed, ignore_errors=True)
+                        try:
+                            os.unlink(globbed)
+                        except:
+                            pass
                 for to_copy in COPY_TO_ZIP:
                     shutil.copy(BASE_DIR / to_copy, path / to_copy)
                 shutil.copytree(BASE_DIR / "addon_examples", path / "addon_examples")
