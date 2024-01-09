@@ -48,6 +48,7 @@ class ProxyObjectManager(ClientObjectManager):
             "RequestMultipleObjects",
             self._handle_request_multiple_objects,
         )
+        region.http_message_handler.subscribe("RenderMaterials", self._handle_render_materials)
 
     def load_cache(self):
         if not self.may_use_vo_cache or self.cache_loaded:
@@ -99,6 +100,13 @@ class ProxyObjectManager(ClientObjectManager):
     def _handle_request_multiple_objects(self, msg: Message):
         # Remove any queued cache misses that the viewer just requested for itself
         self.queued_cache_misses -= {b["ID"] for b in msg["ObjectData"]}
+
+    def _handle_render_materials(self, flow: HippoHTTPFlow):
+        if flow.response.status_code != 200:
+            return
+        if flow.request.method not in ("GET", "POST"):
+            return
+        self._process_materials_response(flow.response.content)
 
 
 class ProxyWorldObjectManager(ClientWorldObjectManager):
