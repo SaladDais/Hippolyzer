@@ -16,6 +16,8 @@ import mitmproxy.http
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.message.llsd_msg_serializer import LLSDMessageSerializer
+from hippolyzer.lib.base.message.message import Message
+from hippolyzer.lib.base.network.transport import Direction
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.caps import CapData, CapType
@@ -30,6 +32,9 @@ def apply_security_monkeypatches():
 
 
 apply_security_monkeypatches()
+
+
+LOG = logging.getLogger(__name__)
 
 
 class MITMProxyEventManager:
@@ -58,7 +63,7 @@ class MITMProxyEventManager:
             try:
                 await self.pump_proxy_event()
             except:
-                logging.exception("Exploded when handling parsed packets")
+                LOG.exception("Exploded when handling parsed packets")
 
     async def pump_proxy_event(self):
         try:
@@ -140,7 +145,7 @@ class MITMProxyEventManager:
             # Both the wrapper request and the actual asset server request went through
             # the proxy. Don't bother trying the redirect strategy anymore.
             self._asset_server_proxied = True
-            logging.warning("noproxy not used, switching to URI rewrite strategy")
+            LOG.warning("noproxy not used, switching to URI rewrite strategy")
         elif cap_data and cap_data.cap_name == "EventQueueGet":
             # HACK: The sim's EQ acking mechanism doesn't seem to actually work.
             # if the client drops the connection due to timeout before we can
@@ -151,7 +156,7 @@ class MITMProxyEventManager:
             eq_manager = cap_data.region().eq_manager
             cached_resp = eq_manager.get_cached_poll_response(req_ack_id)
             if cached_resp:
-                logging.warning("Had to serve a cached EventQueueGet due to client desync")
+                LOG.warning("Had to serve a cached EventQueueGet due to client desync")
                 flow.response = mitmproxy.http.Response.make(
                     200,
                     llsd.format_xml(cached_resp),
@@ -215,7 +220,7 @@ class MITMProxyEventManager:
             try:
                 message_logger.log_http_response(flow)
             except:
-                logging.exception("Failed while logging HTTP flow")
+                LOG.exception("Failed while logging HTTP flow")
 
         # Don't process responses for requests or responses injected by the proxy.
         # We already processed it, it came from us!
@@ -274,13 +279,13 @@ class MITMProxyEventManager:
 
             if cap_data.cap_name == "Seed":
                 parsed = llsd.parse_xml(flow.response.content)
-                logging.debug("Got seed cap for %r : %r" % (cap_data, parsed))
+                LOG.debug("Got seed cap for %r : %r" % (cap_data, parsed))
                 region.update_caps(parsed)
 
                 # On LL's grid these URIs aren't unique across sessions or regions,
                 # so we get request attribution by replacing them with a unique
                 # alias URI.
-                logging.debug("Replacing GetMesh caps with wrapped versions")
+                LOG.debug("Replacing GetMesh caps with wrapped versions")
                 wrappable_caps = {"GetMesh2", "GetMesh", "GetTexture", "ViewerAsset"}
                 for cap_name in wrappable_caps:
                     if cap_name in parsed:
@@ -315,7 +320,7 @@ class MITMProxyEventManager:
                 if "uploader" in parsed:
                     region.register_cap(cap_data.cap_name + "Uploader", parsed["uploader"], CapType.TEMPORARY)
         except:
-            logging.exception("OOPS, blew up in HTTP proxy!")
+            LOG.exception("OOPS, blew up in HTTP proxy!")
 
     def _handle_login_flow(self, flow: HippoHTTPFlow):
         resp = xmlrpc.client.loads(flow.response.content)[0][0]  # type: ignore
@@ -324,20 +329,30 @@ class MITMProxyEventManager:
         flow.cap_data = CapData("LoginRequest", session=weakref.ref(sess))
 
     def _handle_eq_event(self, session: Session, region: ProxiedRegion, event: Dict[str, Any]):
-        logging.debug("Event received on %r: %r" % (self, event))
+        LOG.debug("Event received on %r: %r" % (self, event))
         message_logger = self.session_manager.message_logger
         if message_logger:
             message_logger.log_eq_event(session, region, event)
+
+        if self.llsd_message_serializer.can_handle(event["message"]):
+            msg = self.llsd_message_serializer.deserialize(event)
+        else:
+            msg = Message.from_eq_event(event)
+        msg.sender = region.circuit_addr
+        msg.direction = Direction.IN
+
+        try:
+            region.message_handler.handle(msg)
+        except:
+            LOG.exception("Failed while handling EQ message")
+
         handle_event = AddonManager.handle_eq_event(session, region, event)
         if handle_event is True:
             # Addon handled the event and didn't want it sent to the viewer
             return True
 
-        msg = None
         # Handle events that inform us about new regions
         sim_addr, sim_handle, sim_seed = None, None, None
-        if self.llsd_message_serializer.can_handle(event["message"]):
-            msg = self.llsd_message_serializer.deserialize(event)
         # Sim is asking us to talk to a neighbour
         if event["message"] == "EstablishAgentCommunication":
             ip_split = event["body"]["sim-ip-and-port"].split(":")

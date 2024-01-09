@@ -341,6 +341,21 @@ class Message:
             msg.acks = dict_val['acks']
         return msg
 
+    @classmethod
+    def from_eq_event(cls, event) -> Message:
+        # If this isn't a templated message (like some EQ-only events are),
+        # then we wrap it in a synthetic `Message` so that the API for handling
+        # both EQ-only and templated message events can be the same. Ick.
+        msg = cls(event["message"])
+        if isinstance(event["body"], dict):
+            msg.add_block(Block("EventData", **event["body"]))
+        else:
+            # Shouldn't be any events that have anything other than a dict
+            # as a body, but just to be sure...
+            msg.add_block(Block("EventData", Data=event["body"]))
+        msg.synthetic = True
+        return msg
+
     def invalidate_caches(self):
         # Don't have any caches if we haven't even parsed
         if self.raw_body:

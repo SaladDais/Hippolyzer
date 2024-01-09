@@ -285,17 +285,7 @@ class HippoClientRegion(BaseClientRegion):
                     if self._llsd_serializer.can_handle(event["message"]):
                         msg = self._llsd_serializer.deserialize(event)
                     else:
-                        # If this isn't a templated message (like some EQ-only events are),
-                        # then we wrap it in a synthetic `Message` so that the API for handling
-                        # both EQ-only and templated message events can be the same. Ick.
-                        msg = Message(event["message"])
-                        if isinstance(event["body"], dict):
-                            msg.add_block(Block("EventData", **event["body"]))
-                        else:
-                            # Shouldn't be any events that have anything other than a dict
-                            # as a body, but just to be sure...
-                            msg.add_block(Block("EventData", Data=event["body"]))
-                        msg.synthetic = True
+                        msg = Message.from_eq_event(event)
                     msg.sender = self.circuit_addr
                     msg.direction = Direction.IN
                     self.session().message_handler.handle(msg)
