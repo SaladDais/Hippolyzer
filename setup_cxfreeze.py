@@ -98,6 +98,7 @@ options = {
             "passlib",
             "_cffi_backend",
             "hippolyzer",
+            "mitmproxy_windows",
         ],
         # exclude packages that are not really needed
         "excludes": [
