@@ -42,7 +42,6 @@ setup(
         "Operating System :: POSIX",
         "Operating System :: Microsoft :: Windows",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: Implementation :: CPython",
@@ -79,7 +78,7 @@ setup(
         }
     },
     zip_safe=False,
-    python_requires='>=3.9',
+    python_requires='>=3.10',
     install_requires=[
         'llsd<1.1.0',
         'defusedxml',
@@ -100,8 +99,8 @@ setup(
         # Proxy-specific stuff
         'outleap<1.0',
         'arpeggio',
-        # 10.x will be a major change.
-        'mitmproxy>=9.0.0,<10',
+        # 11.x will be a major change.
+        'mitmproxy>=10.0.0,<11',
         'Werkzeug<3.0',
         # For REPLs
         'ptpython<4.0',

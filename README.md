@@ -27,7 +27,7 @@ with low-level SL details. See the [Local Animation addon example](https://githu
 
 ### From Source
 
-* Python 3.8 or above is **required**. If you're unable to upgrade your system Python package due to
+* Python 3.10 or above is **required**. If you're unable to upgrade your system Python package due to
   being on a stable distro, you can use [pyenv](https://github.com/pyenv/pyenv) to create
   a self-contained Python install with the appropriate version.
 * [Create a clean Python 3 virtualenv](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/#creating-a-virtual-environment)

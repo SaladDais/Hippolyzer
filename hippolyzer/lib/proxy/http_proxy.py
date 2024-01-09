@@ -8,6 +8,7 @@ import queue
 import typing
 import uuid
 import weakref
+from typing import Iterable
 
 import mitmproxy.certs
 import mitmproxy.ctx
@@ -15,7 +16,10 @@ import mitmproxy.log
 import mitmproxy.master
 import mitmproxy.options
 import mitmproxy.proxy
+from cryptography import x509
+from cryptography.x509 import GeneralNames
 from mitmproxy.addons import core, clientplayback, proxyserver, next_layer, disable_h2c
+from mitmproxy.certs import CertStoreEntry
 from mitmproxy.http import HTTPFlow
 from mitmproxy.proxy.layers import tls
 import OpenSSL
@@ -26,9 +30,16 @@ from hippolyzer.lib.proxy.caps import SerializedCapData
 
 
 class SLCertStore(mitmproxy.certs.CertStore):
-    def get_cert(self, commonname: typing.Optional[str], sans: typing.List[str], *args, **kwargs):
+    def get_cert(
+        self,
+        commonname: str | None,
+        sans: Iterable[x509.GeneralName],
+        organization: str | None = None,
+        *args,
+        **kwargs
+    ) -> CertStoreEntry:
         entry = super().get_cert(commonname, sans, *args, **kwargs)
-        cert, privkey, chain = entry.cert, entry.privatekey, entry.chain_file
+        cert, privkey, chain, chain_certs = entry.cert, entry.privatekey, entry.chain_file, entry.chain_certs
         x509 = cert.to_pyopenssl()
         # The cert must have a subject key ID or the viewer will reject it.
         for i in range(0, x509.get_extension_count()):
@@ -48,10 +59,10 @@ class SLCertStore(mitmproxy.certs.CertStore):
         ])
         x509.sign(OpenSSL.crypto.PKey.from_cryptography_key(privkey), "sha256")  # type: ignore
         new_entry = mitmproxy.certs.CertStoreEntry(
-            mitmproxy.certs.Cert.from_pyopenssl(x509), privkey, chain
+            mitmproxy.certs.Cert.from_pyopenssl(x509), privkey, chain, chain_certs,
         )
         # Replace the cert that was created in the base `get_cert()` with our modified cert
-        self.certs[(commonname, tuple(sans))] = new_entry
+        self.certs[(commonname, GeneralNames(sans))] = new_entry
         self.expire_queue.pop(-1)
         self.expire(new_entry)
         return new_entry
