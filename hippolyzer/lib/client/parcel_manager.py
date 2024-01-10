@@ -248,4 +248,4 @@ class ParcelManager:
             parcel = self.parcels[parcel_idx - 1]
         if request_if_missing and parcel is None:
             return await self.request_parcel_properties(pos)
-        return None
+        return parcel
