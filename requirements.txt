@@ -38,7 +38,7 @@ msgpack==1.0.7
 multidict==6.0.4
 mypy-extensions==1.0.0
 numpy==1.26.3
-outleap==0.5.1
+outleap==0.6.1
 packaging==23.2
 parso==0.8.3
 passlib==1.7.4
