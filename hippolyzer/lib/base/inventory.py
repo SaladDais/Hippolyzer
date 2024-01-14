@@ -11,6 +11,7 @@ It's typically only used for object contents now.
 from __future__ import annotations
 
 import abc
+import asyncio
 import dataclasses
 import datetime as dt
 import inspect
@@ -202,6 +203,7 @@ class InventoryModel(InventoryBase):
     def __init__(self):
         self.nodes: Dict[UUID, InventoryNodeBase] = {}
         self.root: Optional[InventoryContainerBase] = None
+        self.any_dirty = asyncio.Event()
 
     @classmethod
     def from_reader(cls, reader: StringIO, read_header=False) -> InventoryModel:
@@ -247,6 +249,12 @@ class InventoryModel(InventoryBase):
                 yield node
 
     @property
+    def dirty_categories(self) -> Iterable[InventoryCategory]:
+        for node in self.nodes:
+            if isinstance(node, InventoryCategory) and node.version == InventoryCategory.VERSION_NONE:
+                yield node
+
+    @property
     def all_items(self) -> Iterable[InventoryItem]:
         for node in self.nodes.values():
             if not isinstance(node, InventoryContainerBase):
@@ -273,6 +281,29 @@ class InventoryModel(InventoryBase):
             if node.parent_id == UUID.ZERO:
                 self.root = node
         node.model = weakref.proxy(self)
+        return node
+
+    def update(self, node: InventoryNodeBase, update_fields: Optional[Iterable[str]] = None) -> InventoryNodeBase:
+        """Update an existing node, optionally only updating specific fields"""
+        if node.node_id not in self.nodes:
+            raise KeyError(f"{node.node_id} not in the inventory model")
+
+        orig_node = self.nodes[node.node_id]
+        if node.__class__ != orig_node.__class__:
+            raise ValueError(f"Tried to update {orig_node!r} from non-matching {node!r}")
+
+        if not update_fields:
+            # Update everything but the model parameter
+            update_fields = set(node._get_fields_dict().keys()) - {"model"}
+        for field_name in update_fields:
+            setattr(orig_node, field_name, getattr(node, field_name))
+        return orig_node
+
+    def upsert(self, node: InventoryNodeBase, update_fields: Optional[Iterable[str]] = None) -> InventoryNodeBase:
+        """Add or update a node"""
+        if node.node_id in self.nodes:
+            return self.update(node, update_fields)
+        return self.add(node)
 
     def unlink(self, node: InventoryNodeBase, single_only: bool = False) -> Sequence[InventoryNodeBase]:
         """Unlink a node and its descendants from the tree, returning the removed nodes"""
@@ -312,6 +343,10 @@ class InventoryModel(InventoryBase):
             changed=changed_in_other,
             removed=removed_in_other,
         )
+
+    def flag_if_dirty(self):
+        if any(self.dirty_categories):
+            self.any_dirty.set()
 
     def __getitem__(self, item: UUID) -> InventoryNodeBase:
         return self.nodes[item]
@@ -562,7 +597,8 @@ class InventoryItem(InventoryNodeBase):
     def from_inventory_data(cls, block: Block):
         return cls(
             item_id=block["ItemID"],
-            parent_id=block["ParentID"],
+            # Might be under one of two names
+            parent_id=block.get("ParentID", block["FolderID"]),
             permissions=InventoryPermissions(
                 creator_id=block["CreatorID"],
                 owner_id=block["OwnerID"],
@@ -573,7 +609,8 @@ class InventoryItem(InventoryNodeBase):
                 everyone_mask=block["EveryoneMask"],
                 next_owner_mask=block["NextOwnerMask"],
             ),
-            asset_id=block["AssetID"],
+            # May be missing in UpdateInventoryItem
+            asset_id=block.get("AssetID"),
             type=AssetType(block["Type"]),
             inv_type=InventoryType(block["InvType"]),
             flags=block["Flags"],

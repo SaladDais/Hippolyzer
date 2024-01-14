@@ -8,6 +8,7 @@ from typing import Union, List, Tuple, Set
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.inventory import InventoryModel, InventoryCategory, InventoryItem
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.templates import AssetType, FolderType
 from hippolyzer.lib.client.state import BaseClientSession
 
@@ -20,6 +21,10 @@ class InventoryManager:
         self._session = session
         self.model: InventoryModel = InventoryModel()
         self._load_skeleton()
+        self._session.message_handler.subscribe("BulkUpdateInventory", self._handle_bulk_update_inventory)
+        self._session.message_handler.subscribe("UpdateCreateInventoryItem", self._handle_update_create_inventory_item)
+        self._session.message_handler.subscribe("UpdateInventoryItem", self._handle_update_inventory_item)
+        self._session.message_handler.subscribe("RemoveInventoryItem", self._handle_remove_inventory_item)
 
     def _load_skeleton(self):
         assert not self.model.nodes
@@ -68,10 +73,8 @@ class InventoryManager:
             # Cached cat isn't the same as what the inv server says it should be, can't use it.
             if cached_cat.version != skel_versions.get(cached_cat.cat_id):
                 continue
-            if existing_cat:
-                # Remove the category so that we can replace it, but leave any children in place
-                self.model.unlink(existing_cat, single_only=True)
-            self.model.add(cached_cat)
+            # Update any existing category in-place, or add if not present
+            self.model.upsert(cached_cat)
             # Any items in this category in our cache file are usable and should be added
             loaded_cat_ids.add(cached_cat.cat_id)
 
@@ -81,9 +84,12 @@ class InventoryManager:
             if cached_item.item_id in self.model:
                 continue
             # The parent category didn't have a cache hit against the inventory skeleton, can't add!
+            # We don't even know if this item would be in the current version of it's parent cat!
             if cached_item.parent_id not in loaded_cat_ids:
                 continue
             self.model.add(cached_item)
+
+        self.model.flag_if_dirty()
 
     def _parse_cache(self, path: Union[str, Path]) -> Tuple[List[InventoryCategory], List[InventoryItem]]:
         """Warning, may be incredibly slow due to llsd.parse_notation() behavior"""
@@ -112,3 +118,44 @@ class InventoryManager:
                 else:
                     LOG.warning(f"Unknown node type in inv cache: {node_llsd!r}")
         return categories, items
+
+    def _handle_bulk_update_inventory(self, msg: Message):
+        any_cats = False
+        for folder_block in msg["FolderData"]:
+            if folder_block["FolderID"] == UUID.ZERO:
+                continue
+            any_cats = True
+            self.model.upsert(
+                InventoryCategory.from_folder_data(folder_block),
+                # Don't clobber version, we only want to fetch the folder if it's new
+                # and hasn't just moved.
+                update_fields={"parent_id", "name", "pref_type"},
+            )
+        for item_block in msg["ItemData"]:
+            if item_block["ItemID"] == UUID.ZERO:
+                continue
+            self.model.upsert(InventoryItem.from_inventory_data(item_block))
+
+        if any_cats:
+            self.model.flag_if_dirty()
+
+    def _validate_recipient(self, recipient: UUID):
+        if self._session.agent_id != recipient:
+            raise ValueError(f"AgentID Mismatch {self._session.agent_id} != {recipient}")
+
+    def _handle_update_create_inventory_item(self, msg: Message):
+        self._validate_recipient(msg["AgentData"]["AgentID"])
+        for inventory_block in msg["InventoryData"]:
+            self.model.upsert(InventoryItem.from_inventory_data(inventory_block))
+
+    def _handle_update_inventory_item(self, msg: Message):
+        self._validate_recipient(msg["AgentData"]["AgentID"])
+        for inventory_block in msg["InventoryData"]:
+            self.model.update(InventoryItem.from_inventory_data(inventory_block))
+
+    def _handle_remove_inventory_item(self, msg: Message):
+        self._validate_recipient(msg["AgentData"]["AgentID"])
+        for inventory_block in msg["InventoryData"]:
+            node = self.model.get(inventory_block["ItemID"])
+            if node:
+                self.model.unlink(node)
