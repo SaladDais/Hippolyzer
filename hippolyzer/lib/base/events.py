@@ -19,16 +19,17 @@ along with this program; if not, write to the Free Software Foundation,
 Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import asyncio
-from logging import getLogger
+import logging
 
-logger = getLogger('utilities.events')
+LOG = logging.getLogger(__name__)
 
 
 class Event:
     """ an object containing data which will be passed out to all subscribers """
 
-    def __init__(self):
+    def __init__(self, name=None):
         self.subscribers = []
+        self.name = name
 
     def subscribe(self, handler, *args, one_shot=False, predicate=None, **kwargs):
         """ establish the subscribers (handlers) to this event """
@@ -66,10 +67,19 @@ class Event:
                     unsubscribe = await handler(args, *inner_args, **kwargs)
                     if unsubscribe:
                         _ = self.unsubscribe(handler, *inner_args, **kwargs)
-                asyncio.create_task(_run_handler_wrapper())
+                task = asyncio.create_task(_run_handler_wrapper())
+                task.add_done_callback(self._log_task_failures)
             else:
-                if handler(args, *inner_args, **kwargs) and not one_shot:
-                    self.unsubscribe(handler, *inner_args, **kwargs)
+                try:
+                    if handler(args, *inner_args, **kwargs) and not one_shot:
+                        self.unsubscribe(handler, *inner_args, **kwargs)
+                except:
+                    # One handler failing shouldn't prevent notification of other handlers.
+                    LOG.exception(f"Failed in handler for {self.name}")
+
+    def _log_task_failures(self, task: asyncio.Task):
+        if task.exception():
+            LOG.exception(f"Failed in handler for {self.name}", exc_info=task.exception())
 
     def __len__(self):
         return len(self.subscribers)

@@ -37,7 +37,7 @@ class MessageTemplateVariable:
         return f"{self.__class__.__name__}(name={self.name!r}, tp={self.type!r}, size={self.size!r})"
 
     @property
-    def probably_binary(self):
+    def probably_binary(self) -> bool:
         if self._probably_binary is not None:
             return self._probably_binary
 
@@ -49,7 +49,7 @@ class MessageTemplateVariable:
         return self._probably_binary
 
     @property
-    def probably_text(self):
+    def probably_text(self) -> bool:
         if self._probably_text is not None:
             return self._probably_text
 
@@ -97,11 +97,11 @@ class MessageTemplateBlock:
         self.block_type: MsgBlockType = MsgBlockType.MBT_SINGLE
         self.number = 0
 
-    def add_variable(self, var):
+    def add_variable(self, var: MessageTemplateVariable):
         self.variable_map[var.name] = var
         self.variables.append(var)
 
-    def get_variable(self, name):
+    def get_variable(self, name) -> MessageTemplateVariable:
         return self.variable_map[name]
 
 
@@ -119,11 +119,11 @@ class MessageTemplate:
         self.deprecation = None
         self.encoding = None
 
-    def add_block(self, block):
+    def add_block(self, block: MessageTemplateBlock):
         self.block_map[block.name] = block
         self.blocks.append(block)
 
-    def get_block(self, name):
+    def get_block(self, name) -> MessageTemplateBlock:
         return self.block_map[name]
 
     def get_msg_freq_num_len(self):

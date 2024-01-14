@@ -43,7 +43,7 @@ class TemplateDictionary:
 
         self.template_list: typing.List[MessageTemplate] = []
         # maps name to template
-        self.message_templates = {}
+        self.message_templates: typing.Dict[str, MessageTemplate] = {}
 
         # maps (freq,num) to template
         self.message_dict = {}

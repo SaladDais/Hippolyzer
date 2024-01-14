@@ -31,7 +31,7 @@ _T = TypeVar("_T")
 _K = TypeVar("_K", bound=Hashable)
 MESSAGE_HANDLER = Callable[[_T], Any]
 PREDICATE = Callable[[_T], bool]
-# TODO: Can't do `Iterable[Union[_K, Literal["*"]]` apparently?
+# TODO: Can't do `Iterable[Union[_K, Literal["*"]]]` apparently?
 MESSAGE_NAMES = Iterable[Union[_K, str]]
 
 
@@ -42,7 +42,7 @@ class MessageHandler(Generic[_T, _K]):
 
     def register(self, message_name: _K) -> Event:
         LOG.debug('Creating a monitor for %s' % message_name)
-        return self.handlers.setdefault(message_name, Event())
+        return self.handlers.setdefault(message_name, Event(message_name))
 
     def subscribe(self, message_name: Union[_K, Literal["*"]], handler: MESSAGE_HANDLER):
         notifier = self.register(message_name)

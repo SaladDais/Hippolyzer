@@ -75,8 +75,8 @@ class Block:
         for var_name, val in kwargs.items():
             self[var_name] = val
 
-    def get_variable(self, var_name):
-        return self.vars.get(var_name)
+    def get(self, var_name, default: Optional[VAR_TYPE] = None) -> Optional[VAR_TYPE]:
+        return self.vars.get(var_name, default)
 
     def __contains__(self, item):
         return item in self.vars
