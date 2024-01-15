@@ -4,6 +4,7 @@ import unittest
 from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.helpers import create_logged_task
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.templates import (
@@ -61,7 +62,7 @@ class XferManagerTests(BaseTransferTests):
         ))
 
     async def test_small_xfer_upload(self):
-        asyncio.create_task(self._handle_vfile_upload())
+        _ = create_logged_task(self._handle_vfile_upload())
         await asyncio.wait_for(self.xfer_manager.upload_asset(
             AssetType.BODYPART, self.SMALL_PAYLOAD
         ), timeout=0.1)
@@ -69,7 +70,7 @@ class XferManagerTests(BaseTransferTests):
 
     async def test_large_xfer_upload(self):
         # Larger payloads take a different path
-        asyncio.create_task(self._handle_vfile_upload())
+        _ = create_logged_task(self._handle_vfile_upload())
         await asyncio.wait_for(self.xfer_manager.upload_asset(
             AssetType.BODYPART, self.LARGE_PAYLOAD
         ), timeout=0.1)
@@ -125,7 +126,7 @@ class TestTransferManager(BaseTransferTests):
             packet_num += 1
 
     async def test_simple_transfer(self):
-        asyncio.create_task(self._handle_covenant_download())
+        _ = create_logged_task(self._handle_covenant_download())
         transfer: Transfer = await asyncio.wait_for(self.transfer_manager.request(
             source_type=TransferSourceType.SIM_ESTATE,
             params=TransferRequestParamsSimEstate(

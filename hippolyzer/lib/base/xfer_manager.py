@@ -9,6 +9,7 @@ import random
 from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID, RawBytes
+from hippolyzer.lib.base.helpers import create_logged_task
 from hippolyzer.lib.base.message.data_packer import TemplateDataPacker
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.msgtypes import MsgType, PacketFlags
@@ -125,7 +126,7 @@ class XferManager:
             direction=direction,
         ))
         xfer = Xfer(xfer_id, direction=direction, turbo=turbo)
-        asyncio.create_task(self._pump_xfer_replies(xfer))
+        create_logged_task(self._pump_xfer_replies(xfer), "Xfer Pump")
         return xfer
 
     async def _pump_xfer_replies(self, xfer: Xfer):

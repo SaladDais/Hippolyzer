@@ -21,6 +21,8 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import asyncio
 import logging
 
+from hippolyzer.lib.base.helpers import create_logged_task
+
 LOG = logging.getLogger(__name__)
 
 
@@ -67,8 +69,7 @@ class Event:
                     unsubscribe = await handler(args, *inner_args, **kwargs)
                     if unsubscribe:
                         _ = self.unsubscribe(handler, *inner_args, **kwargs)
-                task = asyncio.create_task(_run_handler_wrapper())
-                task.add_done_callback(self._log_task_failures)
+                create_logged_task(_run_handler_wrapper(), self.name, LOG)
             else:
                 try:
                     if handler(args, *inner_args, **kwargs) and not one_shot:
@@ -76,10 +77,6 @@ class Event:
                 except:
                     # One handler failing shouldn't prevent notification of other handlers.
                     LOG.exception(f"Failed in handler for {self.name}")
-
-    def _log_task_failures(self, task: asyncio.Task):
-        if task.exception():
-            LOG.exception(f"Failed in handler for {self.name}", exc_info=task.exception())
 
     def __len__(self):
         return len(self.subscribers)

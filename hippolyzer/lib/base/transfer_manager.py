@@ -8,6 +8,7 @@ import dataclasses
 from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.helpers import create_logged_task
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.circuit import ConnectionHolder
 from hippolyzer.lib.base.message.msgtypes import PacketFlags
@@ -108,7 +109,7 @@ class TransferManager:
             flags=PacketFlags.RELIABLE,
         ))
         transfer = Transfer(transfer_id)
-        asyncio.create_task(self._pump_transfer_replies(transfer))
+        create_logged_task(self._pump_transfer_replies(transfer), "Transfer Pump")
         return transfer
 
     async def _pump_transfer_replies(self, transfer: Transfer):

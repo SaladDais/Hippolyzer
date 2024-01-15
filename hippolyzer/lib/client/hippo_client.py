@@ -13,7 +13,7 @@ import aiohttp
 import multidict
 
 from hippolyzer.lib.base.datatypes import Vector3, StringEnum
-from hippolyzer.lib.base.helpers import proxify, get_resource_filename
+from hippolyzer.lib.base.helpers import proxify, get_resource_filename, create_logged_task
 from hippolyzer.lib.base.message.circuit import Circuit
 from hippolyzer.lib.base.message.llsd_msg_serializer import LLSDMessageSerializer
 from hippolyzer.lib.base.message.message import Message, Block
@@ -231,13 +231,13 @@ class HippoClientRegion(BaseClientRegion):
                 seed_resp.raise_for_status()
                 self.update_caps(await seed_resp.read_llsd())
 
-            self._eq_task = asyncio.create_task(self._poll_event_queue())
+            self._eq_task = create_logged_task(self._poll_event_queue(), "EQ Poll")
 
             settings = self.session().session_manager.settings
             if settings.AUTO_REQUEST_PARCELS:
-                _ = asyncio.create_task(self.parcel_manager.request_dirty_parcels())
+                _ = create_logged_task(self.parcel_manager.request_dirty_parcels(), "Parcel Request")
             if settings.AUTO_REQUEST_MATERIALS:
-                _ = asyncio.create_task(self.objects.request_all_materials())
+                _ = create_logged_task(self.objects.request_all_materials(), "Request All Materials")
 
         except Exception as e:
             # Let consumers who were `await`ing the connected signal know there was an error
@@ -391,10 +391,10 @@ class HippoClientSession(BaseClientSession):
             need_connect = (region.circuit and region.circuit.is_alive) or moving_to_region
             self.open_circuit(sim_addr)
             if need_connect:
-                asyncio.create_task(region.connect(main_region=moving_to_region))
+                create_logged_task(region.connect(main_region=moving_to_region), "Region Connect")
             elif moving_to_region:
                 # No need to connect, but we do need to complete agent movement.
-                asyncio.create_task(region.complete_agent_movement())
+                create_logged_task(region.complete_agent_movement(), "CompleteAgentMovement")
 
 
 class HippoClient(BaseClientSessionManager):
@@ -660,7 +660,7 @@ class HippoClient(BaseClientSessionManager):
         self.session = HippoClientSession.from_login_data(login_data, self)
 
         self.session.transport, self.session.protocol = await self._create_transport()
-        self._resend_task = asyncio.create_task(self._attempt_resends())
+        self._resend_task = create_logged_task(self._attempt_resends(), "Circuit Resend")
         self.session.message_handler.subscribe("AgentDataUpdate", self._handle_agent_data_update)
         self.session.message_handler.subscribe("AgentGroupDataUpdate", self._handle_agent_group_data_update)
 
@@ -742,7 +742,7 @@ class HippoClient(BaseClientSessionManager):
                         return
                     teleport_fut.set_result(None)
 
-        asyncio.create_task(_handle_teleport())
+        create_logged_task(_handle_teleport(), "Teleport")
 
         return teleport_fut
 

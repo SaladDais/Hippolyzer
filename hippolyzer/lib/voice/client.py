@@ -16,6 +16,7 @@ from hippolyzer.lib.base.events import Event
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.objects import handle_to_gridxy
 from .connection import VivoxConnection, VivoxMessage
+from ..base.helpers import create_logged_task
 
 LOG = logging.getLogger(__name__)
 RESP_LOG = logging.getLogger(__name__ + ".responses")
@@ -79,7 +80,7 @@ class VoiceClient:
         self._pos = Vector3(0, 0, 0)
 
         self.vivox_conn: Optional[VivoxConnection] = None
-        self._poll_task = asyncio.create_task(self._poll_messages())
+        self._poll_task = create_logged_task(self._poll_messages(), "Poll Vivox messages")
         self.event_handler: MessageHandler[VivoxMessage, str] = MessageHandler(take_by_default=False)
 
         self.event_handler.subscribe(
@@ -352,7 +353,7 @@ class VoiceClient:
 
         RESP_LOG.debug("%s %s %s %r" % ("Request", request_id, msg_type, data))
 
-        asyncio.create_task(self.vivox_conn.send_request(request_id, msg_type, data))
+        create_logged_task(self.vivox_conn.send_request(request_id, msg_type, data), "Send Vivox message")
         future = asyncio.Future()
         self._pending_req_futures[request_id] = future
         return future

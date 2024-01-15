@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import asyncio
 import codecs
 import functools
+import logging
 import os
 
 import lazy_object_proxy
@@ -165,3 +167,31 @@ def get_mtime(path):
         return os.stat(path).st_mtime
     except:
         return None
+
+
+def fut_logger(name: str, logger: logging.Logger, fut: asyncio.Future, *args) -> None:
+    """Callback suitable for exception logging in `Future.add_done_callback()`"""
+    if fut.exception():
+        if isinstance(fut.exception(), asyncio.CancelledError):
+            # Don't really care if the task was just cancelled
+            return
+        logger.exception(f"Failed in task for {name}", exc_info=fut.exception())
+
+
+def add_future_logger(
+        fut: asyncio.Future,
+        name: Optional[str] = None,
+        logger: Optional[logging.Logger] = None,
+):
+    """Add a logger to Futures that will never be directly `await`ed, logging exceptions"""
+    fut.add_done_callback(functools.partial(fut_logger, name, logger or logging.getLogger()))
+
+
+def create_logged_task(
+        coro: Coroutine,
+        name: Optional[str] = None,
+        logger: Optional[logging.Logger] = None,
+) -> asyncio.Task:
+    task = asyncio.create_task(coro, name=name)
+    add_future_logger(task, name, logger)
+    return task

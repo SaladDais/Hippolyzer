@@ -6,6 +6,7 @@ from typing import *
 from unittest import mock
 
 from hippolyzer.lib.base.datatypes import *
+from hippolyzer.lib.base.helpers import create_logged_task
 from hippolyzer.lib.base.message.message import Block, Message as Message
 from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.message.udpserializer import UDPMessageSerializer
@@ -620,7 +621,7 @@ class SessionObjectManagerTests(ObjectManagerTestMixin, unittest.IsolatedAsyncio
         async def _create_after():
             await asyncio.sleep(0.001)
             self._create_object(region_handle=123, local_id=child.ParentID)
-        asyncio.create_task(_create_after())
+        _ = create_logged_task(_create_after())
 
         await self.session.objects.load_ancestors(child)
         await self.session.objects.load_ancestors(parentless)

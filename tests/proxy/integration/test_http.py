@@ -12,6 +12,7 @@ from yarl import URL
 
 from hippolyzer.apps.proxy import run_http_proxy_process
 from hippolyzer.lib.base.datatypes import Vector3
+from hippolyzer.lib.base.helpers import create_logged_task
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.http_event_manager import MITMProxyEventManager
@@ -164,7 +165,7 @@ class TestMITMProxy(BaseProxyTest):
     def test_mitmproxy_works(self):
         async def _request_example_com():
             # Pump callbacks from mitmproxy
-            asyncio.create_task(self.http_event_manager.run())
+            _ = create_logged_task(self.http_event_manager.run())
             try:
                 async with self.caps_client.get("http://example.com/", timeout=0.5) as resp:
                     self.assertIn(b"Example Domain", await resp.read())

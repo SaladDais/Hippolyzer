@@ -24,7 +24,7 @@ from hippolyzer.apps.model import MessageLogModel, MessageLogHeader, RegionListM
 from hippolyzer.apps.proxy import start_proxy
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
-from hippolyzer.lib.base.helpers import bytes_unescape, bytes_escape, get_resource_filename
+from hippolyzer.lib.base.helpers import bytes_unescape, bytes_escape, get_resource_filename, create_logged_task
 from hippolyzer.lib.base.message.llsd_msg_serializer import LLSDMessageSerializer
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.message_formatting import (
@@ -826,7 +826,7 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
                 # enough for the full response to pass through the proxy
                 await resp.read()
 
-        asyncio.create_task(_send_request())
+        create_logged_task(_send_request(), "Send HTTP Request")
 
 
 class AddonDialog(QtWidgets.QDialog):

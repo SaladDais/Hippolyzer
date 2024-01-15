@@ -24,7 +24,7 @@ from mitmproxy.http import HTTPFlow
 from mitmproxy.proxy.layers import tls
 import OpenSSL
 
-from hippolyzer.lib.base.helpers import get_resource_filename
+from hippolyzer.lib.base.helpers import get_resource_filename, create_logged_task
 from hippolyzer.lib.base.multiprocessing_utils import ParentProcessWatcher
 from hippolyzer.lib.proxy.caps import SerializedCapData
 
@@ -130,7 +130,7 @@ class IPCInterceptionAddon:
 
     def running(self):
         # register to pump the events or something here
-        asyncio.create_task(self._pump_callbacks())
+        create_logged_task(self._pump_callbacks(), "Pump HTTP proxy callbacks")
         # Tell the main process mitmproxy is ready to handle requests
         self.mitmproxy_ready.set()
 
