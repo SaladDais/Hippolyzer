@@ -23,8 +23,8 @@ class InventoryManager:
         self._load_skeleton()
         self._session.message_handler.subscribe("BulkUpdateInventory", self._handle_bulk_update_inventory)
         self._session.message_handler.subscribe("UpdateCreateInventoryItem", self._handle_update_create_inventory_item)
-        self._session.message_handler.subscribe("UpdateInventoryItem", self._handle_update_inventory_item)
         self._session.message_handler.subscribe("RemoveInventoryItem", self._handle_remove_inventory_item)
+        self._session.message_handler.subscribe("MoveInventoryItem", self._handle_move_inventory_item)
 
     def _load_skeleton(self):
         assert not self.model.nodes
@@ -148,14 +148,26 @@ class InventoryManager:
         for inventory_block in msg["InventoryData"]:
             self.model.upsert(InventoryItem.from_inventory_data(inventory_block))
 
-    def _handle_update_inventory_item(self, msg: Message):
-        self._validate_recipient(msg["AgentData"]["AgentID"])
-        for inventory_block in msg["InventoryData"]:
-            self.model.update(InventoryItem.from_inventory_data(inventory_block))
-
     def _handle_remove_inventory_item(self, msg: Message):
         self._validate_recipient(msg["AgentData"]["AgentID"])
         for inventory_block in msg["InventoryData"]:
             node = self.model.get(inventory_block["ItemID"])
             if node:
                 self.model.unlink(node)
+
+    def _handle_remove_inventory_folder(self, msg: Message):
+        self._validate_recipient(msg["AgentData"]["AgentID"])
+        for folder_block in msg["FolderData"]:
+            node = self.model.get(folder_block["FolderID"])
+            if node:
+                self.model.unlink(node)
+
+    def _handle_move_inventory_item(self, msg: Message):
+        for inventory_block in msg["InventoryData"]:
+            node = self.model.get(inventory_block["ItemID"])
+            if not node:
+                LOG.warning(f"Missing inventory item {inventory_block['ItemID']}")
+                continue
+            if inventory_block["NewName"]:
+                node.name = str(inventory_block["NewName"])
+            node.parent_id = inventory_block['FolderID']

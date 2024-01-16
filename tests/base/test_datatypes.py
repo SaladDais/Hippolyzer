@@ -163,3 +163,6 @@ class TestDatatypes(unittest.TestCase):
         self.assertNotEqual(b"foo", val)
         self.assertEqual(b"foo", JankStringyBytes(b"foo"))
         self.assertEqual("foo", JankStringyBytes(b"foo"))
+        self.assertFalse(JankStringyBytes(b""))
+        self.assertFalse(JankStringyBytes(b"\x00"))
+        self.assertTrue(JankStringyBytes(b"\x01"))

@@ -304,6 +304,9 @@ class JankStringyBytes(bytes):
     def __str__(self):
         return self.rstrip(b"\x00").decode("utf8", errors="replace")
 
+    def __bool__(self):
+        return not (super().__eq__(b"") or super().__eq__(b"\x00"))
+
     def __eq__(self, other):
         if isinstance(other, str):
             return str(self) == other

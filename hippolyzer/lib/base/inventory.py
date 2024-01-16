@@ -294,7 +294,7 @@ class InventoryModel(InventoryBase):
 
         if not update_fields:
             # Update everything but the model parameter
-            update_fields = set(node._get_fields_dict().keys()) - {"model"}
+            update_fields = node.get_field_names()
         for field_name in update_fields:
             setattr(orig_node, field_name, getattr(node, field_name))
         return orig_node
@@ -401,6 +401,10 @@ class InventoryNodeBase(InventoryBase, _HasName):
     model: Optional[InventoryModel] = dataclasses.field(
         default=None, init=False, hash=False, compare=False, repr=False
     )
+
+    @classmethod
+    def get_field_names(cls) -> Set[str]:
+        return set(cls._get_fields_dict().keys()) - {"model"}
 
     @property
     def node_id(self) -> UUID:
@@ -602,6 +606,8 @@ class InventoryItem(InventoryNodeBase):
             permissions=InventoryPermissions(
                 creator_id=block["CreatorID"],
                 owner_id=block["OwnerID"],
+                # Unknown, not sent in this schema
+                last_owner_id=block.get("LastOwnerID", UUID.ZERO),
                 group_id=block["GroupID"],
                 base_mask=block["BaseMask"],
                 owner_mask=block["OwnerMask"],
@@ -628,7 +634,43 @@ class InventoryItem(InventoryNodeBase):
         if flavor == "ais":
             # There's little chance this differs from owner ID, just place it.
             val["agent_id"] = val["permissions"]["owner_id"]
+            if val["type"] == AssetType.LINK:
+                # For link items, there is no asset, only a linked ID.
+                val["linked_id"] = val.pop("asset_id")
+                # These don't exist either
+                val.pop("permissions", None)
+                val.pop("sale_info", None)
         return val
+
+    @classmethod
+    def from_llsd(cls, inv_dict: Dict, flavor: str = "legacy"):
+        if flavor == "ais" and inv_dict["type"] == AssetType.LINK:
+            # Links get represented differently than other items for whatever reason.
+            # This is incredibly annoying, under *NIX there's nothing really special about symlinks.
+            inv_dict = inv_dict.copy()
+            # Fill this in since it needs to be there
+            if "permissions" not in inv_dict:
+                inv_dict["permissions"] = InventoryPermissions(
+                    base_mask=0xFFffFFff,
+                    owner_mask=0xFFffFFff,
+                    group_mask=0xFFffFFff,
+                    everyone_mask=0,
+                    next_owner_mask=0xFFffFFff,
+                    creator_id=UUID.ZERO,
+                    owner_id=UUID.ZERO,
+                    last_owner_id=UUID.ZERO,
+                    group_id=UUID.ZERO,
+                ).to_llsd("ais")
+            if "sale_info" not in inv_dict:
+                inv_dict["sale_info"] = InventorySaleInfo(
+                    sale_type=SaleType.NOT,
+                    sale_price=0,
+                ).to_llsd("ais")
+            # In the context of symlinks, asset id means linked item ID.
+            # This is also how indra stores symlinks. Why the asymmetry in AIS if none of the
+            # consumers actually want it? Who knows.
+            inv_dict["asset_id"] = inv_dict.pop("linked_id")
+        return super().from_llsd(inv_dict, flavor)
 
 
 INVENTORY_TYPES: Tuple[Type[InventoryNodeBase], ...] = (InventoryCategory, InventoryObject, InventoryItem)
