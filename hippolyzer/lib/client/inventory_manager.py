@@ -171,3 +171,6 @@ class InventoryManager:
             if inventory_block["NewName"]:
                 node.name = str(inventory_block["NewName"])
             node.parent_id = inventory_block['FolderID']
+
+    def process_aisv3_response(self, payload: dict):
+        pass
