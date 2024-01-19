@@ -4,17 +4,23 @@ import functools
 import logging
 from typing import *
 
+from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.helpers import get_mtime, create_logged_task
 from hippolyzer.lib.client.inventory_manager import InventoryManager
-from hippolyzer.lib.client.state import BaseClientSession
+from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.viewer_settings import iter_viewer_cache_dirs
+
+if TYPE_CHECKING:
+    from hippolyzer.lib.proxy.sessions import Session
 
 
 LOG = logging.getLogger(__name__)
 
 
 class ProxyInventoryManager(InventoryManager):
-    def __init__(self, session: BaseClientSession):
+    _session: "Session"
+
+    def __init__(self, session: "Session"):
         # These handlers all need their processing deferred until the cache has been loaded.
         # Since cache is loaded asynchronously, the viewer may get ahead of us due to parsing
         # the cache faster and start requesting inventory details we can't do anything with yet.
@@ -41,6 +47,7 @@ class ProxyInventoryManager(InventoryManager):
         # be wrapped before we call they're registered. Handlers are registered by method reference,
         # not by name!
         super().__init__(session)
+        session.http_message_handler.subscribe("InventoryAPIv3", self._handle_aisv3_flow)
         newest_cache = None
         newest_timestamp = dt.datetime(year=1970, month=1, day=1, tzinfo=dt.timezone.utc)
         # So consumers know when the inventory should be complete
@@ -85,3 +92,15 @@ class ProxyInventoryManager(InventoryManager):
             else:
                 func(*inner_args)
         return wrapped
+
+    def _handle_aisv3_flow(self, flow: HippoHTTPFlow):
+        if flow.response.status_code < 200 or flow.response.status_code > 300:
+            # Probably not a success
+            return
+        content_type = flow.response.headers.get("Content-Type", "")
+        if "llsd" not in content_type:
+            # Okay, probably still some kind of error...
+            return
+
+        # Try and add anything from the response into the model
+        self.process_aisv3_response(llsd.parse(flow.response.content))

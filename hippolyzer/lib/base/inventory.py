@@ -234,7 +234,7 @@ class InventoryModel(InventoryBase):
                     if (obj := inv_type.from_llsd(obj_dict, flavor)) is not None:
                         model.add(obj)
                     break
-                LOG.warning(f"Unknown object type {obj_dict!r}")
+            LOG.warning(f"Unknown object type {obj_dict!r}")
         return model
 
     @property
@@ -498,6 +498,8 @@ class InventoryObject(InventoryContainerBase):
 @dataclasses.dataclass
 class InventoryCategory(InventoryContainerBase):
     ID_ATTR: ClassVar[str] = "cat_id"
+    # AIS calls this something else...
+    ID_ATTR_AIS: ClassVar[str] = "category_id"
     SCHEMA_NAME: ClassVar[str] = "inv_category"
     VERSION_NONE: ClassVar[int] = -1
 
@@ -529,11 +531,23 @@ class InventoryCategory(InventoryContainerBase):
         )
 
     @classmethod
+    def from_llsd(cls, inv_dict: Dict, flavor: str = "legacy"):
+        if flavor == "ais" and "type" not in inv_dict:
+            inv_dict = inv_dict.copy()
+            inv_dict["type"] = AssetType.CATEGORY
+        return super().from_llsd(inv_dict, flavor)
+
+    def to_llsd(self, flavor: str = "legacy"):
+        payload = super().to_llsd(flavor)
+        if flavor == "ais":
+            # AIS already knows the inventory type is category
+            payload.pop("type", None)
+        return payload
+
+    @classmethod
     def _get_fields_dict(cls, llsd_flavor: Optional[str] = None):
         fields = super()._get_fields_dict(llsd_flavor)
         if llsd_flavor == "ais":
-            # AIS is smart enough to know that all categories are asset type category...
-            fields.pop("type")
             # These have different names though
             fields["type_default"] = fields.pop("preferred_type")
             fields["agent_id"] = fields.pop("owner_id")
@@ -644,7 +658,7 @@ class InventoryItem(InventoryNodeBase):
 
     @classmethod
     def from_llsd(cls, inv_dict: Dict, flavor: str = "legacy"):
-        if flavor == "ais" and inv_dict["type"] == AssetType.LINK:
+        if flavor == "ais" and "linked_id" in inv_dict:
             # Links get represented differently than other items for whatever reason.
             # This is incredibly annoying, under *NIX there's nothing really special about symlinks.
             inv_dict = inv_dict.copy()
@@ -666,6 +680,9 @@ class InventoryItem(InventoryNodeBase):
                     sale_type=SaleType.NOT,
                     sale_price=0,
                 ).to_llsd("ais")
+            if "type" not in inv_dict:
+                inv_dict["type"] = AssetType.LINK
+
             # In the context of symlinks, asset id means linked item ID.
             # This is also how indra stores symlinks. Why the asymmetry in AIS if none of the
             # consumers actually want it? Who knows.

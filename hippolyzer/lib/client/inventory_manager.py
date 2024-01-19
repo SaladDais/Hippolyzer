@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gzip
+import itertools
 import logging
 from pathlib import Path
 from typing import Union, List, Tuple, Set
@@ -173,4 +174,35 @@ class InventoryManager:
             node.parent_id = inventory_block['FolderID']
 
     def process_aisv3_response(self, payload: dict):
-        pass
+        if "name" in payload:
+            # Just a rough guess. Assume this response is updating something if there's
+            # a "name" key.
+            if InventoryCategory.ID_ATTR_AIS in payload:
+                if (cat_node := InventoryCategory.from_llsd(payload, flavor="ais")) is not None:
+                    self.model.upsert(cat_node)
+            elif InventoryItem.ID_ATTR in payload:
+                if (item_node := InventoryItem.from_llsd(payload, flavor="ais")) is not None:
+                    self.model.upsert(item_node)
+            else:
+                LOG.warning(f"Unknown node type in AIS payload: {payload!r}")
+
+        # Parse the embedded stuff
+        embedded_dict = payload.get("_embedded", {})
+        for category_llsd in embedded_dict.get("categories", {}).values():
+            self.model.upsert(InventoryCategory.from_llsd(category_llsd, flavor="ais"))
+        for item_llsd in embedded_dict.get("items", {}).values():
+            self.model.upsert(InventoryItem.from_llsd(item_llsd, flavor="ais"))
+        for link_llsd in embedded_dict.get("links", {}).values():
+            self.model.upsert(InventoryItem.from_llsd(link_llsd, flavor="ais"))
+
+        # Get rid of anything we were asked to
+        for node_id in itertools.chain(
+                payload.get("_broken_links_removed", ()),
+                payload.get("_removed_items", ()),
+                payload.get("_category_items_removed", ()),
+                payload.get("_categories_removed", ()),
+        ):
+            node = self.model.get(node_id)
+            if node:
+                # Presumably this list is exhaustive, so don't unlink children.
+                self.model.unlink(node, single_only=True)
