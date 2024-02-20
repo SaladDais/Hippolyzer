@@ -76,6 +76,7 @@ class ProxyInventoryManager(InventoryManager):
 
     async def _apply_deferred_after_loaded(self):
         await self.cache_loaded.wait()
+        LOG.info("Applying deferred inventory calls")
         deferred_calls = self._cache_deferred_calls[:]
         self._cache_deferred_calls.clear()
         for func, args in deferred_calls:
