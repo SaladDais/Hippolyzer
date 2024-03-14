@@ -3610,6 +3610,14 @@ version 2.0
 		AppearanceHover		Variable
 		{	HoverHeight	LLVector3	}
 	}
+	// SD NOTE: This is a guess based on looking at the data!
+	// See https://github.com/SaladDais/Hippolyzer/issues/45
+	// Update this when LL actually publishes the real template
+    {
+		AttachmentData		Variable
+		{	AttachmentID	LLUUID	}
+		{	AttachmentPoint	U8	}
+	}
 }
 
 // AvatarSitResponse - response to a request to sit on an object
