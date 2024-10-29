@@ -322,12 +322,12 @@ class JankStringyBytes(bytes):
 
     def __add__(self, other):
         if isinstance(other, bytes):
-            return bytes(self) + other
+            return JankStringyBytes(bytes(self) + other)
         return str(self) + other
 
     def __radd__(self, other):
         if isinstance(other, bytes):
-            return other + bytes(self)
+            return JankStringyBytes(other + bytes(self))
         return other + str(self)
 
     def lower(self):
@@ -335,6 +335,20 @@ class JankStringyBytes(bytes):
 
     def upper(self):
         return str(self).upper()
+
+    def startswith(self, __prefix, __start=None, __end=None):
+        if __start or __end:
+            raise RuntimeError("Can't handle __start or __end")
+        if isinstance(__prefix, str):
+            return str(self).startswith(__prefix)
+        return self.startswith(__prefix)
+
+    def endswith(self, __prefix, __start=None, __end=None):
+        if __start or __end:
+            raise RuntimeError("Can't handle __start or __end")
+        if isinstance(__prefix, str):
+            return str(self).endswith(__prefix)
+        return self.endswith(__prefix)
 
 
 class RawBytes(bytes):
