@@ -108,8 +108,9 @@ class HippoClientProtocol(asyncio.DatagramProtocol):
             if should_handle:
                 self.session.message_handler.handle(message)
         except:
-            LOG.exception("Failed in region message handler")
-        region.message_handler.handle(message)
+            LOG.exception("Failed in session message handler")
+        if should_handle:
+            region.message_handler.handle(message)
 
 
 class HippoClientRegion(BaseClientRegion):
