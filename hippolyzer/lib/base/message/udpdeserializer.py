@@ -126,8 +126,14 @@ class UDPMessageDeserializer:
         frequency, num = _parse_msg_num(reader)
         current_template = self.template_dict.get_template_by_pair(frequency, num)
         if current_template is None:
-            raise exc.MessageTemplateNotFound("deserializing data", f"{frequency}:{num}")
-        msg.name = current_template.name
+            if self.settings.ALLOW_UNKNOWN_MESSAGES:
+                LOG.warning(f"Unknown message type {frequency}:{num}")
+                msg.unknown_message = True
+                msg.name = "UnknownMessage:%d" % num
+            else:
+                raise exc.MessageTemplateNotFound("deserializing data", f"{frequency}:{num}")
+        else:
+            msg.name = current_template.name
 
         # extra field, see note regarding msg.offset
         msg.raw_extra = reader.read_bytes(msg.offset)
@@ -143,6 +149,12 @@ class UDPMessageDeserializer:
         # Already parsed if we don't have a raw body
         if not raw_body:
             return
+
+        if msg.unknown_message:
+            # We can't parse this, we don't know anything about it
+            msg.deserializer = None
+            return
+
         msg.raw_body = None
         msg.deserializer = None
 

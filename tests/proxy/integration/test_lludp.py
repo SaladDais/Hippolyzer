@@ -21,6 +21,9 @@ from hippolyzer.lib.proxy.sessions import Session
 from hippolyzer.lib.proxy.test_utils import BaseProxyTest
 
 
+UNKNOWN_PACKET = b'\x00\x00\x00\x00E\x00\xff\xf0\x00\xff\xff\xff\xff\x00'
+
+
 class MockAddon(BaseAddon):
     def __init__(self):
         self.events = []
@@ -241,6 +244,21 @@ class LLUDPIntegrationTests(BaseProxyTest):
         entry: LLUDPMessageLogEntry = entries[0]  # type: ignore
         self.assertEqual(entry.name, "UndoLand")
         self.assertEqual(entry.message.dropped, True)
+
+    async def test_logging_unknown_message(self):
+        message_logger = SimpleMessageLogger()
+        self.session_manager.message_logger = message_logger
+        self._setup_default_circuit()
+        self.protocol.datagram_received(UNKNOWN_PACKET, self.region_addr)
+        await self._wait_drained()
+        entries = message_logger.entries
+        self.assertEqual(len(entries), 1)
+        entry: LLUDPMessageLogEntry = entries[0]  # type: ignore
+        # Freezing shouldn't affect this
+        entry.freeze()
+        self.assertEqual(entry.name, "UnknownMessage:240")
+        self.assertEqual(entry.message.dropped, False)
+        self.assertEqual(entry.message.unknown_message, True)
 
     async def test_session_message_handler(self):
         self._setup_default_circuit()

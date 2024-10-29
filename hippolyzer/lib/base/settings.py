@@ -55,6 +55,7 @@ class SettingDescriptor(Generic[_T]):
 
 class Settings:
     ENABLE_DEFERRED_PACKET_PARSING: bool = SettingDescriptor(True)
+    ALLOW_UNKNOWN_MESSAGES: bool = SettingDescriptor(True)
 
     def __init__(self):
         self._settings: Dict[str, Any] = {}

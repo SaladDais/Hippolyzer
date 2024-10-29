@@ -188,7 +188,7 @@ class MsgBlockList(List["Block"]):
 class Message:
     __slots__ = ("name", "send_flags", "packet_id", "acks", "body_boundaries", "queued",
                  "offset", "raw_extra", "raw_body", "deserializer", "_blocks", "finalized",
-                 "direction", "meta", "synthetic", "dropped", "sender")
+                 "direction", "meta", "synthetic", "dropped", "sender", "unknown_message")
 
     def __init__(self, name, *args, packet_id=None, flags=0, acks=None, direction=None):
         # TODO: Do this on a timer or something.
@@ -200,6 +200,7 @@ class Message:
 
         self.acks = acks if acks is not None else tuple()
         self.body_boundaries = (-1, -1)
+        self.unknown_message = False
         self.offset = 0
         self.raw_extra = b""
         self.direction: Direction = direction if direction is not None else Direction.OUT
@@ -288,7 +289,7 @@ class Message:
 
     def ensure_parsed(self):
         # This is a little magic, think about whether we want this.
-        if self.raw_body and self.deserializer():
+        if self.raw_body and self.deserializer and self.deserializer():
             self.deserializer().parse_message_body(self)
 
     def to_dict(self, extended=False):

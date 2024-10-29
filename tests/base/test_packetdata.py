@@ -50,6 +50,8 @@ OBJECT_UPDATE = binascii.unhexlify(''.join(OBJECT_UPDATE.split()))
 
 COARSE_LOCATION_UPDATE = b'\x00\x00\x00\x00E\x00\xff\x06\x00\xff\xff\xff\xff\x00'
 
+UNKNOWN_PACKET = b'\x00\x00\x00\x00E\x00\xff\xf0\x00\xff\xff\xff\xff\x00'
+
 
 class TestPacketDecode(unittest.TestCase):
 
@@ -109,4 +111,13 @@ class TestPacketDecode(unittest.TestCase):
         serializer = UDPMessageSerializer()
         parsed = deserializer.deserialize(message)
         logging.debug("Parsed blocks: %r " % (list(parsed.blocks.keys()),))
+        self.assertEqual(message, serializer.serialize(parsed))
+
+    def test_unknown_packet_roundtrips(self):
+        message = UNKNOWN_PACKET
+        deserializer = UDPMessageDeserializer(settings=self.settings)
+        serializer = UDPMessageSerializer()
+        parsed = deserializer.deserialize(message)
+        logging.debug("Parsed blocks: %r " % (list(parsed.blocks.keys()),))
+        self.assertEqual("UnknownMessage:240", parsed.name)
         self.assertEqual(message, serializer.serialize(parsed))

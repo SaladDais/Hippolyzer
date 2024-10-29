@@ -45,7 +45,7 @@ class UDPMessageSerializer:
 
     def serialize(self, msg: Message):
         current_template = self.template_dict.get_template_by_name(msg.name)
-        if current_template is None:
+        if current_template is None and msg.raw_body is None:
             raise exc.MessageSerializationError("message name", "invalid message name")
 
         # Header and trailers are all big-endian
