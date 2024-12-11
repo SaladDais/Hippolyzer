@@ -16,10 +16,12 @@ from hippolyzer.lib.base.datatypes import *
 class HippoLLSDBaseFormatter(base_llsd.base.LLSDBaseFormatter):
     UUID: callable
     ARRAY: callable
+    BINARY: callable
 
     def __init__(self):
         super().__init__()
         self.type_map[UUID] = self.UUID
+        self.type_map[JankStringyBytes] = self.BINARY
         self.type_map[Vector2] = self.TUPLECOORD
         self.type_map[Vector3] = self.TUPLECOORD
         self.type_map[Vector4] = self.TUPLECOORD
@@ -101,7 +103,7 @@ def _format_binary_recurse(something) -> bytes:
             raise LLSDSerializationError(str(exc), something)
     elif isinstance(something, uuid.UUID):
         return b'u' + something.bytes
-    elif isinstance(something, binary):
+    elif isinstance(something, (binary, JankStringyBytes)):
         return b'b' + struct.pack('!i', len(something)) + something
     elif is_string(something):
         if is_unicode(something):
