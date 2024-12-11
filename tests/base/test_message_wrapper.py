@@ -181,6 +181,8 @@ class TestMessageHandlers(unittest.IsolatedAsyncioTestCase):
         self.message_handler.handle(msg)
 
     async def test_subscription(self):
+        called = asyncio.Event()
+        called2 = asyncio.Event()
         with self.message_handler.subscribe_async(
                 message_names=("Foo",),
                 predicate=lambda m: m["Bar"]["Baz"] == 1,
@@ -192,6 +194,10 @@ class TestMessageHandlers(unittest.IsolatedAsyncioTestCase):
             msg3 = Message("Foo", Block("Bar", Baz=1, Biz=3))
             self._fake_received_message(msg1)
             self._fake_received_message(msg2)
+
+            self.message_handler.subscribe("Foo", lambda *args: called.set())
+            self.message_handler.subscribe("Foo", lambda *args: called2.set())
+
             self._fake_received_message(msg3)
             received = []
             while True:
@@ -199,14 +205,15 @@ class TestMessageHandlers(unittest.IsolatedAsyncioTestCase):
                     received.append(await asyncio.wait_for(get_msg(), 0.001))
                 except asyncio.exceptions.TimeoutError:
                     break
-            self.assertEqual(len(foo_handlers), 1)
+            self.assertEqual(len(foo_handlers), 3)
         self.assertListEqual(received, [msg1, msg3])
         # The message should have been take()n, making a copy
         self.assertIsNot(msg1, received[0])
         # take() was called, so this should have been marked queued
         self.assertTrue(msg1.queued)
         # Leaving the block should have unsubscribed automatically
-        self.assertEqual(len(foo_handlers), 0)
+        self.assertEqual(len(foo_handlers), 2)
+        self.assertTrue(called.is_set())
 
     async def test_subscription_no_take(self):
         with self.message_handler.subscribe_async(("Foo",), take=False) as get_msg:

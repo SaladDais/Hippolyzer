@@ -171,7 +171,7 @@ def get_mtime(path):
 
 def fut_logger(name: str, logger: logging.Logger, fut: asyncio.Future, *args) -> None:
     """Callback suitable for exception logging in `Future.add_done_callback()`"""
-    if fut.exception():
+    if not fut.cancelled() and fut.exception():
         if isinstance(fut.exception(), asyncio.CancelledError):
             # Don't really care if the task was just cancelled
             return

@@ -49,3 +49,15 @@ class TestEvents(unittest.IsolatedAsyncioTestCase):
         await called.wait()
         mock.assert_called_with("foo")
         self.assertNotIn(_mock_wrapper, [x[0] for x in self.event.subscribers])
+
+    async def test_multiple_subscribers(self):
+        called = asyncio.Event()
+        called2 = asyncio.Event()
+
+        self.event.subscribe(lambda *args: called.set())
+        self.event.subscribe(lambda *args: called2.set())
+
+        self.event.notify(None)
+
+        self.assertTrue(called.is_set())
+        self.assertTrue(called2.is_set())

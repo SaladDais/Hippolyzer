@@ -23,7 +23,7 @@ from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.network.caps_client import CapsClient, CAPS_DICT
 from hippolyzer.lib.base.network.transport import ADDR_TUPLE, Direction, SocketUDPTransport, AbstractUDPTransport
 from hippolyzer.lib.base.settings import Settings, SettingDescriptor
-from hippolyzer.lib.base.templates import RegionHandshakeReplyFlags, ChatType
+from hippolyzer.lib.base.templates import RegionHandshakeReplyFlags, ChatType, ThrottleData
 from hippolyzer.lib.base.transfer_manager import TransferManager
 from hippolyzer.lib.base.xfer_manager import XferManager
 from hippolyzer.lib.client.asset_uploader import AssetUploader
@@ -190,7 +190,7 @@ class HippoClientRegion(BaseClientRegion):
                         "RegionInfo",
                         Flags=(
                             RegionHandshakeReplyFlags.SUPPORTS_SELF_APPEARANCE
-                            | RegionHandshakeReplyFlags.VOCACHE_IS_EMPTY
+                            | RegionHandshakeReplyFlags.VOCACHE_CULLING_ENABLED
                         )
                     )
                 )
@@ -208,7 +208,15 @@ class HippoClientRegion(BaseClientRegion):
                         "Throttle",
                         GenCounter=0,
                         # Reasonable defaults, I guess
-                        Throttles_=[207360.0, 165376.0, 33075.19921875, 33075.19921875, 682700.75, 682700.75, 269312.0],
+                        Throttles_=ThrottleData(
+                            resend=207360.0,
+                            land=165376.0,
+                            wind=33075.19921875,
+                            cloud=33075.19921875,
+                            task=682700.75,
+                            texture=682700.75,
+                            asset=269312.0
+                        ),
                     )
                 )
             )
@@ -277,21 +285,25 @@ class HippoClientRegion(BaseClientRegion):
         ack: Optional[int] = None
         while True:
             payload = {"ack": ack, "done": False}
-            async with self.caps_client.post("EventQueueGet", llsd=payload) as resp:
-                if resp.status != 200:
-                    await asyncio.sleep(0.1)
-                    continue
-                polled = await resp.read_llsd()
-                for event in polled["events"]:
-                    if self._llsd_serializer.can_handle(event["message"]):
-                        msg = self._llsd_serializer.deserialize(event)
-                    else:
-                        msg = Message.from_eq_event(event)
-                    msg.sender = self.circuit_addr
-                    msg.direction = Direction.IN
-                    self.session().message_handler.handle(msg)
-                    self.message_handler.handle(msg)
-                ack = polled["id"]
+            try:
+                async with self.caps_client.post("EventQueueGet", llsd=payload) as resp:
+                    if resp.status != 200:
+                        await asyncio.sleep(0.1)
+                        continue
+                    polled = await resp.read_llsd()
+                    for event in polled["events"]:
+                        if self._llsd_serializer.can_handle(event["message"]):
+                            msg = self._llsd_serializer.deserialize(event)
+                        else:
+                            msg = Message.from_eq_event(event)
+                        msg.sender = self.circuit_addr
+                        msg.direction = Direction.IN
+                        self.session().message_handler.handle(msg)
+                        self.message_handler.handle(msg)
+                    ack = polled["id"]
+                    await asyncio.sleep(0.001)
+            except aiohttp.client_exceptions.ServerDisconnectedError:
+                # This is expected to happen during long-polling, just pick up again where we left off.
                 await asyncio.sleep(0.001)
 
     async def _handle_ping_check(self, message: Message):

@@ -1822,9 +1822,20 @@ class ChatSourceType(IntEnum):
     UNKNOWN = 3
 
 
+@dataclasses.dataclass
+class ThrottleData:
+    resend: float = se.dataclass_field(se.F32)
+    land: float = se.dataclass_field(se.F32)
+    wind: float = se.dataclass_field(se.F32)
+    cloud: float = se.dataclass_field(se.F32)
+    task: float = se.dataclass_field(se.F32)
+    texture: float = se.dataclass_field(se.F32)
+    asset: float = se.dataclass_field(se.F32)
+
+
 @se.subfield_serializer("AgentThrottle", "Throttle", "Throttles")
 class AgentThrottlesSerializer(se.SimpleSubfieldSerializer):
-    TEMPLATE = se.Collection(None, se.F32)
+    TEMPLATE = se.Dataclass(ThrottleData)
 
 
 @se.subfield_serializer("ObjectUpdate", "ObjectData", "NameValue")

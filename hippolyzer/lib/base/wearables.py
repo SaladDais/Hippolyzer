@@ -5,6 +5,7 @@ Body parts and linden clothing layers
 from __future__ import annotations
 
 import dataclasses
+import enum
 import logging
 from io import StringIO
 from typing import *
@@ -21,6 +22,60 @@ LOG = logging.getLogger(__name__)
 _T = TypeVar("_T")
 
 WEARABLE_VERSION = "LLWearable version 22"
+DEFAULT_WEARABLE_TEX = UUID("c228d1cf-4b5d-4ba8-84f4-899a0796aa97")
+
+
+class AvatarTEIndex(enum.IntEnum):
+    """From llavatarappearancedefines.h"""
+    HEAD_BODYPAINT = 0
+    UPPER_SHIRT = enum.auto()
+    LOWER_PANTS = enum.auto()
+    EYES_IRIS = enum.auto()
+    HAIR = enum.auto()
+    UPPER_BODYPAINT = enum.auto()
+    LOWER_BODYPAINT = enum.auto()
+    LOWER_SHOES = enum.auto()
+    HEAD_BAKED = enum.auto()
+    UPPER_BAKED = enum.auto()
+    LOWER_BAKED = enum.auto()
+    EYES_BAKED = enum.auto()
+    LOWER_SOCKS = enum.auto()
+    UPPER_JACKET = enum.auto()
+    LOWER_JACKET = enum.auto()
+    UPPER_GLOVES = enum.auto()
+    UPPER_UNDERSHIRT = enum.auto()
+    LOWER_UNDERPANTS = enum.auto()
+    SKIRT = enum.auto()
+    SKIRT_BAKED = enum.auto()
+    HAIR_BAKED = enum.auto()
+    LOWER_ALPHA = enum.auto()
+    UPPER_ALPHA = enum.auto()
+    HEAD_ALPHA = enum.auto()
+    EYES_ALPHA = enum.auto()
+    HAIR_ALPHA = enum.auto()
+    HEAD_TATTOO = enum.auto()
+    UPPER_TATTOO = enum.auto()
+    LOWER_TATTOO = enum.auto()
+    HEAD_UNIVERSAL_TATTOO = enum.auto()
+    UPPER_UNIVERSAL_TATTOO = enum.auto()
+    LOWER_UNIVERSAL_TATTOO = enum.auto()
+    SKIRT_TATTOO = enum.auto()
+    HAIR_TATTOO = enum.auto()
+    EYES_TATTOO = enum.auto()
+    LEFT_ARM_TATTOO = enum.auto()
+    LEFT_LEG_TATTOO = enum.auto()
+    AUX1_TATTOO = enum.auto()
+    AUX2_TATTOO = enum.auto()
+    AUX3_TATTOO = enum.auto()
+    LEFTARM_BAKED = enum.auto()
+    LEFTLEG_BAKED = enum.auto()
+    AUX1_BAKED = enum.auto()
+    AUX2_BAKED = enum.auto()
+    AUX3_BAKED = enum.auto()
+
+    @property
+    def is_baked(self) -> bool:
+        return self.name.endswith("_BAKED")
 
 
 @dataclasses.dataclass

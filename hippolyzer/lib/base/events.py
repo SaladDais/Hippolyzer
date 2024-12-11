@@ -41,7 +41,8 @@ class Event:
 
         return self
 
-    def _handler_key(self, handler):
+    @staticmethod
+    def _handler_key(handler):
         return handler[:3]
 
     def unsubscribe(self, handler, *args, **kwargs):
@@ -55,21 +56,23 @@ class Event:
             raise ValueError(f"Handler {handler!r} is not subscribed to this event.")
         return self
 
+    def _create_async_wrapper(self, handler, args, inner_args, kwargs):
+        # Note that unsubscription may be delayed due to asyncio scheduling :)
+        async def _run_handler_wrapper():
+            unsubscribe = await handler(args, *inner_args, **kwargs)
+            if unsubscribe:
+                _ = self.unsubscribe(handler, *inner_args, **kwargs)
+        return _run_handler_wrapper
+
     def notify(self, args):
-        for handler in self.subscribers[:]:
-            handler, inner_args, kwargs, one_shot, predicate = handler
+        for subscriber in self.subscribers[:]:
+            handler, inner_args, kwargs, one_shot, predicate = subscriber
             if predicate and not predicate(args):
                 continue
             if one_shot:
                 self.unsubscribe(handler, *inner_args, **kwargs)
             if asyncio.iscoroutinefunction(handler):
-                # Note that unsubscription may be delayed due to asyncio scheduling :)
-
-                async def _run_handler_wrapper():
-                    unsubscribe = await handler(args, *inner_args, **kwargs)
-                    if unsubscribe:
-                        _ = self.unsubscribe(handler, *inner_args, **kwargs)
-                create_logged_task(_run_handler_wrapper(), self.name, LOG)
+                create_logged_task(self._create_async_wrapper(handler, args, inner_args, kwargs)(), self.name, LOG)
             else:
                 try:
                     if handler(args, *inner_args, **kwargs) and not one_shot:
