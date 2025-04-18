@@ -100,9 +100,9 @@ setup(
         # Proxy-specific stuff
         'outleap<1.0',
         'arpeggio',
-        # 11.x will be a major change.
-        'mitmproxy>=10.0.0,<11',
-        'Werkzeug<3.0',
+        # 12.x will be a major change.
+        'mitmproxy>=11.0.0,<12',
+        'Werkzeug<4.0',
         # For REPLs
         'ptpython<4.0',
         # These could be in extras_require if you don't want a GUI.

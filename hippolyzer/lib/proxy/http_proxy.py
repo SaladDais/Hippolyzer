@@ -116,18 +116,6 @@ class IPCInterceptionAddon:
         self.to_proxy_queue: multiprocessing.Queue = flow_context.to_proxy_queue
         self.shutdown_signal: multiprocessing.Event = flow_context.shutdown_signal
 
-    def add_log(self, entry: mitmproxy.log.LogEntry):
-        if entry.level == "debug":
-            logging.debug(entry.msg)
-        elif entry.level in ("alert", "info"):
-            # TODO: All mitmproxy infos are basically debugs, should
-            #  probably give these dedicated loggers
-            logging.debug(entry.msg)
-        elif entry.level == "warn":
-            logging.warning(entry.msg)
-        elif entry.level == "error":
-            logging.error(entry.msg)
-
     def running(self):
         # register to pump the events or something here
         create_logged_task(self._pump_callbacks(), "Pump HTTP proxy callbacks")
