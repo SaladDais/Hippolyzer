@@ -190,32 +190,36 @@ class SchemaBase(abc.ABC):
     def from_llsd(cls, inv_dict: Dict, flavor: str = "legacy"):
         fields = cls._get_fields_dict(llsd_flavor=flavor)
         obj_dict = {}
-        for key, val in inv_dict.items():
-            if key in fields:
-                field: dataclasses.Field = fields[key]
-                key = field.name
-                spec = field.metadata.get("spec")
-                # Not a real key, an internal var on our dataclass
-                if not spec:
-                    LOG.warning(f"Internal key {key!r}")
-                    continue
+        try:
+            for key, val in inv_dict.items():
+                if key in fields:
+                    field: dataclasses.Field = fields[key]
+                    key = field.name
+                    spec = field.metadata.get("spec")
+                    # Not a real key, an internal var on our dataclass
+                    if not spec:
+                        LOG.warning(f"Internal key {key!r}")
+                        continue
 
-                spec_cls = spec
-                if not inspect.isclass(spec_cls):
-                    spec_cls = spec_cls.__class__
+                    spec_cls = spec
+                    if not inspect.isclass(spec_cls):
+                        spec_cls = spec_cls.__class__
 
-                # some kind of nested structure like sale_info
-                if issubclass(spec_cls, SchemaBase):
-                    obj_dict[key] = spec.from_llsd(val, flavor)
-                elif issubclass(spec_cls, SchemaFieldSerializer):
-                    obj_dict[key] = spec.from_llsd(val, flavor)
+                    # some kind of nested structure like sale_info
+                    if issubclass(spec_cls, SchemaBase):
+                        obj_dict[key] = spec.from_llsd(val, flavor)
+                    elif issubclass(spec_cls, SchemaFieldSerializer):
+                        obj_dict[key] = spec.from_llsd(val, flavor)
+                    else:
+                        raise ValueError(f"Unsupported spec for {key!r}, {spec!r}")
                 else:
-                    raise ValueError(f"Unsupported spec for {key!r}, {spec!r}")
-            else:
-                if flavor != "ais":
-                    # AIS has a number of different fields that are irrelevant depending on
-                    # what exactly sent the payload
-                    LOG.warning(f"Unknown key {key!r}")
+                    if flavor != "ais":
+                        # AIS has a number of different fields that are irrelevant depending on
+                        # what exactly sent the payload
+                        LOG.warning(f"Unknown key {key!r}")
+        except:
+            LOG.error(f"Failed to parse inventory schema: {inv_dict!r}")
+            raise
         return cls._obj_from_dict(obj_dict)
 
     def to_bytes(self) -> bytes:

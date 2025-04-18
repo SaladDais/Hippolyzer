@@ -1728,7 +1728,6 @@ class QuantizedNumPyArray(Adapter):
 
 def subfield_serializer(msg_name, block_name, var_name):
     def f(orig_cls):
-        global SUBFIELD_SERIALIZERS
         SUBFIELD_SERIALIZERS[(msg_name, block_name, var_name)] = orig_cls
         return orig_cls
     return f
@@ -1940,7 +1939,6 @@ class IntFlagSubfieldSerializer(AdapterInstanceSubfieldSerializer):
 
 def http_serializer(msg_name):
     def f(orig_cls):
-        global HTTP_SERIALIZERS
         HTTP_SERIALIZERS[msg_name] = orig_cls
         return orig_cls
     return f
