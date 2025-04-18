@@ -36,6 +36,7 @@ jobs:
         user: __token__
         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
         repository_url: https://test.pypi.org/legacy/
+        attestations: false
 
     - name: Publish to PyPI
       if: startsWith(github.event.ref, 'refs/tags') || github.event_name == 'release'
@@ -43,3 +44,4 @@ jobs:
       with:
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
+        attestations: false
