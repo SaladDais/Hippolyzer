@@ -51,7 +51,7 @@ jobs:
         mv ./dist/*.zip hippolyzer-windows-${{ env.target_tag }}.zip
 
     - name: Upload the artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: hippolyzer-windows-${{ env.sha }}
         path: ./hippolyzer-windows-${{ env.target_tag }}.zip
