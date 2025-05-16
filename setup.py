@@ -85,7 +85,7 @@ setup(
         'defusedxml',
         'aiohttp<4.0.0',
         # Newer recordclasses break!
-        'recordclass>0.15,<0.18.3',
+        'recordclass>=0.23.1,<0.24',
         'lazy-object-proxy',
         # requests breaks with newer idna
         'idna<3,>=2.5',

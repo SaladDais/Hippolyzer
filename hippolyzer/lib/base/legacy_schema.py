@@ -46,7 +46,7 @@ class SchemaFieldSerializer(abc.ABC, Generic[_T]):
 class SchemaDate(SchemaFieldSerializer[dt.datetime]):
     @classmethod
     def deserialize(cls, val: str) -> dt.datetime:
-        return dt.datetime.utcfromtimestamp(int(val))
+        return dt.datetime.fromtimestamp(int(val), dt.timezone.utc)
 
     @classmethod
     def serialize(cls, val: dt.datetime) -> str:
@@ -54,7 +54,7 @@ class SchemaDate(SchemaFieldSerializer[dt.datetime]):
 
     @classmethod
     def from_llsd(cls, val: Any, flavor: str) -> dt.datetime:
-        return dt.datetime.utcfromtimestamp(val)
+        return dt.datetime.fromtimestamp(val, dt.timezone.utc)
 
     @classmethod
     def to_llsd(cls, val: dt.datetime, flavor: str):
