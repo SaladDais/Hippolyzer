@@ -47,7 +47,7 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["hippolyzer"]
+where = ["."]
 include = ["hippolyzer*"]
 namespaces = false
 
