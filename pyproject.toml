@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hippolyzer"
+dynamic = ["version"]
+description = "Analysis tools for SL-compatible virtual worlds"
+readme = "README.md"
+license = "LGPL-3.0-only"
+requires-python = ">=3.10"
+authors = [
+    { name = "Salad Dais", email = "83434023+SaladDais@users.noreply.github.com" },
+]
+classifiers = [
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Testing",
+    "Topic :: System :: Networking :: Monitoring",
+]
+dependencies = [
+    "aiohttp<4.0.0",
+    "arpeggio",
+    "defusedxml",
+    "gltflib",
+    "Glymur<0.9.7",
+    "idna<3,>=2.5",
+    "lazy-object-proxy",
+    "llsd<1.1.0",
+    "mitmproxy>=11.0.0,<12",
+    "numpy<2.0",
+    "outleap<1.0",
+    "ptpython<4.0",
+    "pycollada",
+    "pyside6-essentials",
+    "qasync",
+    "recordclass>=0.23.1,<0.24",
+    "transformations",
+    "Werkzeug<4.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["hippolyzer"]
+include = ["hippolyzer*"]
+namespaces = false
+
+[project.scripts]
+hippolyzer-cli = "hippolyzer.apps.proxy:main"
+hippolyzer-gui = "hippolyzer.apps.proxy_gui:gui_main"
+
+[project.urls]
+Homepage = "https://github.com/SaladDais/Hippolyzer/"
+
+[tool.black]
+line-length = 160
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+
+[tool.isort]
+profile = "black"
+
+[tool.setuptools_scm]
