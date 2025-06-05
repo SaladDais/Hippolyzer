@@ -75,7 +75,7 @@ class UDPMessageSerializer:
             # We're going to pop off keys as we go, so shallow copy the dict.
             blocks = copy.copy(msg.blocks)
 
-            missing_block = None
+            missing_blocks: List[MessageTemplateBlock] = []
             # Iterate based on the order of the blocks in the message template
             for tmpl_block in current_template.blocks:
                 block_list = blocks.pop(tmpl_block.name, None)
@@ -83,13 +83,21 @@ class UDPMessageSerializer:
                 # omitted by SL. Not an error unless another block containing data follows it.
                 # Keep track.
                 if block_list is None:
-                    missing_block = tmpl_block.name
+                    missing_blocks.append(tmpl_block)
                     logger.debug("No block %s, bailing out" % tmpl_block.name)
                     continue
-                # Had a missing block before, but we found one later in the template?
-                elif missing_block:
-                    raise ValueError(f"Unexpected {tmpl_block.name} block after missing {missing_block}")
-                self._serialize_block(body_writer, tmpl_block, block_list)
+                # Had a missing block before, but we specified one defined later in the template?
+                elif missing_blocks:
+                    if not all(x.block_type == MsgBlockType.MBT_VARIABLE for x in missing_blocks):
+                        raise ValueError(f"Unexpected {tmpl_block.name} block after missing {missing_blocks!r}")
+                    # This is okay, we just need to put empty blocks for all the variable blocks that came before.
+                    # Normally we wouldn't even put these to match SL behavior, but in this case we need the
+                    # empty blocks so the decoder will decode these as the correct block type.
+                    for missing_block in missing_blocks:
+                        self._serialize_block_list(body_writer, missing_block, MsgBlockList())
+                    missing_blocks.clear()
+
+                self._serialize_block_list(body_writer, tmpl_block, block_list)
             if blocks:
                 raise KeyError(f"Unexpected {tuple(blocks.keys())!r} blocks in {msg.name}")
 
@@ -105,8 +113,8 @@ class UDPMessageSerializer:
             writer.write(se.U8, len(msg.acks))
         return writer.copy_buffer()
 
-    def _serialize_block(self, writer: se.BufferWriter, tmpl_block: MessageTemplateBlock,
-                         block_list: MsgBlockList):
+    def _serialize_block_list(self, writer: se.BufferWriter, tmpl_block: MessageTemplateBlock,
+                              block_list: MsgBlockList):
         block_count = len(block_list)
         # Multiple block type means there is a static number of blocks
         if tmpl_block.block_type == MsgBlockType.MBT_MULTIPLE:
