@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import gzip
 import itertools
 import logging
@@ -9,10 +10,10 @@ from typing import Union, List, Tuple, Set
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.inventory import InventoryModel, InventoryCategory, InventoryItem
-from hippolyzer.lib.base.message.message import Message
-from hippolyzer.lib.base.templates import AssetType, FolderType
+from hippolyzer.lib.base.message.message import Message, Block
+from hippolyzer.lib.base.templates import AssetType, FolderType, InventoryType
 from hippolyzer.lib.client.state import BaseClientSession
-
+from hippolyzer.lib.base.templates import WearableType
 
 LOG = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ class InventoryManager:
         self._session.message_handler.subscribe("UpdateCreateInventoryItem", self._handle_update_create_inventory_item)
         self._session.message_handler.subscribe("RemoveInventoryItem", self._handle_remove_inventory_item)
         self._session.message_handler.subscribe("MoveInventoryItem", self._handle_move_inventory_item)
+        self._session.message_handler.subscribe("MoveInventoryFolder", self._handle_move_inventory_folder)
 
     def _load_skeleton(self):
         assert not self.model.nodes
@@ -173,6 +175,14 @@ class InventoryManager:
                 node.name = str(inventory_block["NewName"])
             node.parent_id = inventory_block['FolderID']
 
+    def _handle_move_inventory_folder(self, msg: Message):
+        for inventory_block in msg["InventoryData"]:
+            node = self.model.get(inventory_block["FolderID"])
+            if not node:
+                LOG.warning(f"Missing inventory folder {inventory_block['FolderID']}")
+                continue
+            node.parent_id = inventory_block['ParentID']
+
     def process_aisv3_response(self, payload: dict):
         if "name" in payload:
             # Just a rough guess. Assume this response is updating something if there's
@@ -195,6 +205,11 @@ class InventoryManager:
         for link_llsd in embedded_dict.get("links", {}).values():
             self.model.upsert(InventoryItem.from_llsd(link_llsd, flavor="ais"))
 
+        for cat_id, version in payload.get("_updated_category_versions", {}).items():
+            cat_node: InventoryCategory = self.model.get(cat_id)  # type: ignore
+            if cat_node:
+                cat_node.version = version
+
         # Get rid of anything we were asked to
         for node_id in itertools.chain(
                 payload.get("_broken_links_removed", ()),
@@ -206,3 +221,77 @@ class InventoryManager:
             if node:
                 # Presumably this list is exhaustive, so don't unlink children.
                 self.model.unlink(node, single_only=True)
+
+    async def create_folder(
+            self,
+            parent: InventoryCategory | UUID,
+            name: str,
+            type: int = -1,
+            cat_id: UUID | None = None
+    ) -> InventoryCategory:
+        if isinstance(parent, InventoryCategory):
+            parent_id = parent.cat_id
+        else:
+            parent_id = parent
+
+        caps_client = self._session.main_region.caps_client
+        transaction_id = UUID.random()
+        params = {"tid": transaction_id}
+        payload = {
+            "categories": [
+                {
+                    "category_id": cat_id,
+                    "name": name,
+                    "type_default": type,
+                    "parent_id": parent_id
+                }
+            ]
+        }
+        async with caps_client.post("InventoryAPIv3", path=f"/category/{parent_id}", params=params, llsd=payload) as resp:
+            resp.raise_for_status()
+            self.process_aisv3_response(await resp.read_llsd())
+        parent_cat: InventoryCategory = self.model.get(parent_id)  # type: ignore
+        return [x for x in parent_cat.children if x.name == name][0]  # type: ignore
+
+    async def create_item(
+            self,
+            parent: UUID | InventoryCategory,
+            name: str,
+            type: AssetType,
+            inv_type: InventoryType,
+            wearable_type: WearableType,
+            perms: int,
+            description: str = '',
+    ) -> InventoryItem:
+        if isinstance(parent, InventoryCategory):
+            parent_id = parent.cat_id
+        else:
+            parent_id = parent
+
+        transaction_id = UUID.random()
+        with self._session.main_region.message_handler.subscribe_async(
+                ("UpdateCreateInventoryItem",),
+                predicate=lambda x: x["AgentData"]["TransactionID"] == transaction_id,
+                take=False,
+        ) as get_msg:
+            await self._session.main_region.circuit.send_reliable(
+                Message(
+                    'CreateInventoryItem',
+                    Block('AgentData', AgentID=self._session.agent_id, SessionID=self._session.id),
+                    Block(
+                        'InventoryBlock',
+                        CallbackID=0,
+                        FolderID=parent_id,
+                        TransactionID=transaction_id,
+                        NextOwnerMask=perms,
+                        Type=type,
+                        InvType=inv_type,
+                        WearableType=wearable_type,
+                        Name=name,
+                        Description=description,
+                    )
+                )
+            )
+            msg = await asyncio.wait_for(get_msg(), 5.0)
+            self._handle_update_create_inventory_item(msg)
+            return self.model.get(msg["InventoryData"]["ItemID"])  # type: ignore

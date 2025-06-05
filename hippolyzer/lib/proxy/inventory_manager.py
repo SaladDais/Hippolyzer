@@ -9,6 +9,9 @@ from hippolyzer.lib.base.helpers import get_mtime, create_logged_task
 from hippolyzer.lib.client.inventory_manager import InventoryManager
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.viewer_settings import iter_viewer_cache_dirs
+from hippolyzer.lib.base.datatypes import UUID
+from hippolyzer.lib.base.inventory import InventoryCategory
+from hippolyzer.lib.base.message.message import Message, Block
 
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.sessions import Session
@@ -38,6 +41,9 @@ class ProxyInventoryManager(InventoryManager):
         )
         self._handle_move_inventory_item = self._wrap_with_cache_defer(
             self._handle_move_inventory_item
+        )
+        self._handle_move_inventory_folder = self._wrap_with_cache_defer(
+            self._handle_move_inventory_folder
         )
         self.process_aisv3_response = self._wrap_with_cache_defer(
             self.process_aisv3_response
@@ -105,3 +111,19 @@ class ProxyInventoryManager(InventoryManager):
 
         # Try and add anything from the response into the model
         self.process_aisv3_response(llsd.parse(flow.response.content))
+
+    async def create_folder(
+            self,
+            parent: InventoryCategory | UUID,
+            name: str,
+            type: int = -1,
+            cat_id: UUID | None = None
+    ) -> InventoryCategory:
+        cat = await super().create_folder(parent, name, type, cat_id)
+        # We need to tell the client about the new folder via an injected eq event
+        self._session.main_region.eq_manager.inject_message(Message(
+            "BulkUpdateInventory",
+            Block("AgentData", AgentID=self._session.agent_id, TransactionID=UUID.random()),
+            cat.to_folder_data()
+        ))
+        return cat

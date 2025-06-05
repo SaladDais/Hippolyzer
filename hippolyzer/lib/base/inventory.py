@@ -384,16 +384,17 @@ class InventorySaleInfo(InventoryBase):
     sale_price: int = schema_field(SchemaInt)
 
 
-class _HasName(abc.ABC):
+class _HasBaseNodeAttrs(abc.ABC):
     """
     Only exists so that we can assert that all subclasses should have this without forcing
     a particular serialization order, as would happen if this was present on InventoryNodeBase.
     """
     name: str
+    type: AssetType
 
 
 @dataclasses.dataclass
-class InventoryNodeBase(InventoryBase, _HasName):
+class InventoryNodeBase(InventoryBase, _HasBaseNodeAttrs):
     ID_ATTR: ClassVar[str]
 
     parent_id: Optional[UUID] = schema_field(SchemaUUID)
