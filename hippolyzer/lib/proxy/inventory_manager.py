@@ -12,6 +12,9 @@ from hippolyzer.lib.proxy.viewer_settings import iter_viewer_cache_dirs
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.inventory import InventoryCategory
 from hippolyzer.lib.base.message.message import Message, Block
+from hippolyzer.lib.base.inventory import InventoryItem
+from hippolyzer.lib.base.templates import AssetType, InventoryType, WearableType
+from hippolyzer.lib.base.network.transport import Direction
 
 if TYPE_CHECKING:
     from hippolyzer.lib.proxy.sessions import Session
@@ -121,9 +124,40 @@ class ProxyInventoryManager(InventoryManager):
     ) -> InventoryCategory:
         cat = await super().create_folder(parent, name, type, cat_id)
         # We need to tell the client about the new folder via an injected eq event
-        self._session.main_region.eq_manager.inject_message(Message(
+        self._session.main_region.circuit.send(Message(
             "BulkUpdateInventory",
             Block("AgentData", AgentID=self._session.agent_id, TransactionID=UUID.random()),
-            cat.to_folder_data()
+            cat.to_folder_data(),
+            direction=Direction.IN
         ))
         return cat
+
+    async def create_item(
+            self,
+            parent: UUID | InventoryCategory,
+            name: str,
+            type: AssetType,
+            inv_type: InventoryType,
+            wearable_type: WearableType,
+            transaction_id: UUID,
+            perms: int = 0x7FffFFff,
+            description: str = '',
+    ) -> InventoryItem:
+        item = await super().create_item(
+            parent=parent,
+            name=name,
+            type=type,
+            inv_type=inv_type,
+            wearable_type=wearable_type,
+            transaction_id=transaction_id,
+            perms=perms,
+            description=description,
+        )
+        # We need to tell the client about the new folder via an injected eq event
+        self._session.main_region.circuit.send(Message(
+            "BulkUpdateInventory",
+            Block("AgentData", AgentID=self._session.agent_id, TransactionID=UUID.random()),
+            item.to_inventory_data("ItemData"),
+            direction=Direction.IN
+        ))
+        return item

@@ -1,8 +1,9 @@
 import copy
+import datetime as dt
 import unittest
 
 from hippolyzer.lib.base.datatypes import *
-from hippolyzer.lib.base.inventory import InventoryModel, SaleType
+from hippolyzer.lib.base.inventory import InventoryModel, SaleType, InventoryItem
 from hippolyzer.lib.base.wearables import Wearable, VISUAL_PARAMS
 
 SIMPLE_INV = """\tinv_object\t0
@@ -46,6 +47,42 @@ SIMPLE_INV = """\tinv_object\t0
 \t\tcreation_date\t1587367239
 \t}
 """
+
+SIMPLE_INV_PARSED = [
+    {
+        'name': 'Contents',
+        'obj_id': UUID('f4d91477-def1-487a-b4f3-6fa201c17376'),
+        'parent_id': UUID('00000000-0000-0000-0000-000000000000'),
+        'type': 'category'
+    },
+    {
+        'asset_id': UUID('00000000-0000-0000-0000-000000000000'),
+        'created_at': 1587367239,
+        'desc': '2020-04-20 04:20:39 lsl2 script',
+        'flags': b'\x00\x00\x00\x00',
+        'inv_type': 'script',
+        'item_id': UUID('dd163122-946b-44df-99f6-a6030e2b9597'),
+        'name': 'New Script',
+        'metadata': {"experience": UUID("a2e76fcd-9360-4f6d-a924-000000000003")},
+        'parent_id': UUID('f4d91477-def1-487a-b4f3-6fa201c17376'),
+        'permissions': {
+            'base_mask': 2147483647,
+            'creator_id': UUID('a2e76fcd-9360-4f6d-a924-000000000003'),
+            'everyone_mask': 0,
+            'group_id': UUID('00000000-0000-0000-0000-000000000000'),
+            'group_mask': 0,
+            'last_owner_id': UUID('a2e76fcd-9360-4f6d-a924-000000000003'),
+            'next_owner_mask': 581632,
+            'owner_id': UUID('a2e76fcd-9360-4f6d-a924-000000000003'),
+            'owner_mask': 2147483647,
+        },
+        'sale_info': {
+            'sale_price': 10,
+            'sale_type': 'not'
+        },
+        'type': 'lsltext'
+    }
+]
 
 INV_CATEGORY = """\tinv_category\t0
 \t{
@@ -122,44 +159,12 @@ class TestLegacyInv(unittest.TestCase):
         self.assertEqual(item, item_copy)
 
     def test_llsd_serialization(self):
-        self.assertEqual(
-            self.model.to_llsd(),
-            [
-                {
-                    'name': 'Contents',
-                    'obj_id': UUID('f4d91477-def1-487a-b4f3-6fa201c17376'),
-                    'parent_id': UUID('00000000-0000-0000-0000-000000000000'),
-                    'type': 'category'
-                },
-                {
-                    'asset_id': UUID('00000000-0000-0000-0000-000000000000'),
-                    'created_at': 1587367239,
-                    'desc': '2020-04-20 04:20:39 lsl2 script',
-                    'flags': b'\x00\x00\x00\x00',
-                    'inv_type': 'script',
-                    'item_id': UUID('dd163122-946b-44df-99f6-a6030e2b9597'),
-                    'name': 'New Script',
-                    'metadata': {"experience": UUID("a2e76fcd-9360-4f6d-a924-000000000003")},
-                    'parent_id': UUID('f4d91477-def1-487a-b4f3-6fa201c17376'),
-                    'permissions': {
-                        'base_mask': 2147483647,
-                        'creator_id': UUID('a2e76fcd-9360-4f6d-a924-000000000003'),
-                        'everyone_mask': 0,
-                        'group_id': UUID('00000000-0000-0000-0000-000000000000'),
-                        'group_mask': 0,
-                        'last_owner_id': UUID('a2e76fcd-9360-4f6d-a924-000000000003'),
-                        'next_owner_mask': 581632,
-                        'owner_id': UUID('a2e76fcd-9360-4f6d-a924-000000000003'),
-                        'owner_mask': 2147483647,
-                    },
-                    'sale_info': {
-                        'sale_price': 10,
-                        'sale_type': 'not'
-                    },
-                    'type': 'lsltext'
-                }
-            ]
-        )
+        self.assertEqual(self.model.to_llsd(), SIMPLE_INV_PARSED)
+
+    def test_llsd_date_parsing(self):
+        model = InventoryModel.from_llsd(SIMPLE_INV_PARSED)
+        item: InventoryItem = model.nodes.get(UUID("dd163122-946b-44df-99f6-a6030e2b9597"))  # type: ignore
+        self.assertEqual(item.creation_date, dt.datetime(2020, 4, 20, 7, 20, 39, tzinfo=dt.timezone.utc))
 
     def test_llsd_serialization_ais(self):
         model = InventoryModel.from_str(INV_CATEGORY)

@@ -18,6 +18,11 @@ from hippolyzer.lib.base.templates import WearableType
 LOG = logging.getLogger(__name__)
 
 
+class CannotMoveError(Exception):
+    def __init__(self):
+        pass
+
+
 class InventoryManager:
     def __init__(self, session: BaseClientSession):
         self._session = session
@@ -222,6 +227,28 @@ class InventoryManager:
                 # Presumably this list is exhaustive, so don't unlink children.
                 self.model.unlink(node, single_only=True)
 
+    async def make_ais_request(
+            self,
+            method: str,
+            path: str,
+            params: dict,
+            payload: dict,
+    ) -> dict:
+        caps_client = self._session.main_region.caps_client
+        async with caps_client.request(method, "InventoryAPIv3", path=path, params=params, llsd=payload) as resp:
+            if resp.ok or resp.status == 400:
+                data = await resp.read_llsd()
+                if err_desc := data.get("error_description", ""):
+                    err_desc: str
+                    if err_desc.startswith("Cannot change parent_id."):
+                        raise CannotMoveError()
+                resp.raise_for_status()
+                self.process_aisv3_response(data)
+            else:
+                resp.raise_for_status()
+
+            return data
+
     async def create_folder(
             self,
             parent: InventoryCategory | UUID,
@@ -234,9 +261,6 @@ class InventoryManager:
         else:
             parent_id = parent
 
-        caps_client = self._session.main_region.caps_client
-        transaction_id = UUID.random()
-        params = {"tid": transaction_id}
         payload = {
             "categories": [
                 {
@@ -247,11 +271,8 @@ class InventoryManager:
                 }
             ]
         }
-        async with caps_client.post("InventoryAPIv3", path=f"/category/{parent_id}", params=params, llsd=payload) as resp:
-            resp.raise_for_status()
-            self.process_aisv3_response(await resp.read_llsd())
-        parent_cat: InventoryCategory = self.model.get(parent_id)  # type: ignore
-        return [x for x in parent_cat.children if x.name == name][0]  # type: ignore
+        data = await self.make_ais_request("POST", f"/category/{parent_id}", {"tid": UUID.random()}, payload)
+        return self.model.get(data["_created_categories"][0])  # type: ignore
 
     async def create_item(
             self,
@@ -260,7 +281,8 @@ class InventoryManager:
             type: AssetType,
             inv_type: InventoryType,
             wearable_type: WearableType,
-            perms: int,
+            transaction_id: UUID,
+            perms: int = 0x7FffFFff,
             description: str = '',
     ) -> InventoryItem:
         if isinstance(parent, InventoryCategory):
@@ -268,7 +290,6 @@ class InventoryManager:
         else:
             parent_id = parent
 
-        transaction_id = UUID.random()
         with self._session.main_region.message_handler.subscribe_async(
                 ("UpdateCreateInventoryItem",),
                 predicate=lambda x: x["AgentData"]["TransactionID"] == transaction_id,
@@ -293,5 +314,6 @@ class InventoryManager:
                 )
             )
             msg = await asyncio.wait_for(get_msg(), 5.0)
+            # Handle this synchronously.
             self._handle_update_create_inventory_item(msg)
             return self.model.get(msg["InventoryData"]["ItemID"])  # type: ignore

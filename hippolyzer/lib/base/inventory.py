@@ -229,12 +229,14 @@ class InventoryModel(InventoryBase):
     def from_llsd(cls, llsd_val: List[Dict], flavor: str = "legacy") -> InventoryModel:
         model = cls()
         for obj_dict in llsd_val:
+            obj = None
             for inv_type in INVENTORY_TYPES:
                 if inv_type.ID_ATTR in obj_dict:
                     if (obj := inv_type.from_llsd(obj_dict, flavor)) is not None:
                         model.add(obj)
                     break
-            LOG.warning(f"Unknown object type {obj_dict!r}")
+            if obj is None:
+                LOG.warning(f"Unknown object type {obj_dict!r}")
         return model
 
     @property
@@ -258,7 +260,7 @@ class InventoryModel(InventoryBase):
     def all_items(self) -> Iterable[InventoryItem]:
         for node in self.nodes.values():
             if not isinstance(node, InventoryContainerBase):
-                yield node
+                yield node  # type: ignore
 
     def __eq__(self, other):
         if not isinstance(other, InventoryModel):
@@ -584,9 +586,9 @@ class InventoryItem(InventoryNodeBase):
             return self.asset_id
         return self.shadow_id ^ MAGIC_ID
 
-    def to_inventory_data(self) -> Block:
+    def to_inventory_data(self, block_name: str = "InventoryData") -> Block:
         return Block(
-            "InventoryData",
+            block_name,
             ItemID=self.item_id,
             FolderID=self.parent_id,
             CallbackID=0,
@@ -641,7 +643,7 @@ class InventoryItem(InventoryNodeBase):
             ),
             name=block["Name"],
             desc=block["Description"],
-            creation_date=block["CreationDate"],
+            creation_date=SchemaDate.from_llsd(block["CreationDate"], "legacy"),
         )
 
     def to_llsd(self, flavor: str = "legacy"):
