@@ -10,7 +10,7 @@ from hippolyzer.lib.client.inventory_manager import InventoryManager
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.viewer_settings import iter_viewer_cache_dirs
 from hippolyzer.lib.base.datatypes import UUID
-from hippolyzer.lib.base.inventory import InventoryCategory
+from hippolyzer.lib.base.inventory import InventoryCategory, InventoryNodeBase
 from hippolyzer.lib.base.message.message import Message, Block
 from hippolyzer.lib.base.inventory import InventoryItem
 from hippolyzer.lib.base.templates import AssetType, InventoryType, WearableType
@@ -123,13 +123,7 @@ class ProxyInventoryManager(InventoryManager):
             cat_id: UUID | None = None
     ) -> InventoryCategory:
         cat = await super().create_folder(parent, name, type, cat_id)
-        # We need to tell the client about the new folder via an injected eq event
-        self._session.main_region.circuit.send(Message(
-            "BulkUpdateInventory",
-            Block("AgentData", AgentID=self._session.agent_id, TransactionID=UUID.random()),
-            cat.to_folder_data(),
-            direction=Direction.IN
-        ))
+        await self._session.main_region.circuit.send_reliable(self._craft_update_message(cat))
         return cat
 
     async def create_item(
@@ -153,11 +147,41 @@ class ProxyInventoryManager(InventoryManager):
             perms=perms,
             description=description,
         )
-        # We need to tell the client about the new folder via an injected eq event
-        self._session.main_region.circuit.send(Message(
+        await self._session.main_region.circuit.send_reliable(self._craft_update_message(item))
+        return item
+
+    async def update(self, node: InventoryNodeBase, data: dict) -> None:
+        await super().update(node, data)
+        await self._session.main_region.circuit.send_reliable(self._craft_update_message(node))
+
+    async def move(self, node: InventoryNodeBase, new_parent: UUID) -> None:
+        await super().move(node, new_parent)
+        await self._session.main_region.circuit.send_reliable(self._craft_update_message(node))
+
+    def _craft_removal_message(self, node: InventoryNodeBase) -> Message:
+        is_folder = True
+        if isinstance(node, InventoryItem):
+            is_folder = False
+
+        msg = Message(
+            "RemoveInventoryFolder" if is_folder else "RemoveInventoryItem",
+            Block("AgentData", AgentID=self._session.agent_id, SessionID=self._session.id),
+            direction=Direction.IN,
+        )
+        if is_folder:
+            msg.add_block(Block("FolderData", FolderID=node.node_id))
+        else:
+            msg.add_block(Block("InventoryData", ItemID=node.node_id))
+        return msg
+
+    def _craft_update_message(self, node: InventoryNodeBase):
+        is_folder = True
+        if isinstance(node, InventoryItem):
+            is_folder = False
+
+        return Message(
             "BulkUpdateInventory",
             Block("AgentData", AgentID=self._session.agent_id, TransactionID=UUID.random()),
-            item.to_inventory_data("ItemData"),
-            direction=Direction.IN
-        ))
-        return item
+            node.to_folder_data() if is_folder else node.to_inventory_data("ItemData"),  # type: ignore
+            direction=Direction.IN,
+        )

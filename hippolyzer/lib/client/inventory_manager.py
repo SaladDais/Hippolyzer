@@ -9,7 +9,7 @@ from typing import Union, List, Tuple, Set
 
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
-from hippolyzer.lib.base.inventory import InventoryModel, InventoryCategory, InventoryItem
+from hippolyzer.lib.base.inventory import InventoryModel, InventoryCategory, InventoryItem, InventoryNodeBase
 from hippolyzer.lib.base.message.message import Message, Block
 from hippolyzer.lib.base.templates import AssetType, FolderType, InventoryType
 from hippolyzer.lib.client.state import BaseClientSession
@@ -31,6 +31,7 @@ class InventoryManager:
         self._session.message_handler.subscribe("BulkUpdateInventory", self._handle_bulk_update_inventory)
         self._session.message_handler.subscribe("UpdateCreateInventoryItem", self._handle_update_create_inventory_item)
         self._session.message_handler.subscribe("RemoveInventoryItem", self._handle_remove_inventory_item)
+        self._session.message_handler.subscribe("RemoveInventoryFolder", self._handle_remove_inventory_folder)
         self._session.message_handler.subscribe("MoveInventoryItem", self._handle_move_inventory_item)
         self._session.message_handler.subscribe("MoveInventoryFolder", self._handle_move_inventory_folder)
 
@@ -92,7 +93,7 @@ class InventoryManager:
             if cached_item.item_id in self.model:
                 continue
             # The parent category didn't have a cache hit against the inventory skeleton, can't add!
-            # We don't even know if this item would be in the current version of it's parent cat!
+            # We don't even know if this item would be in the current version of its parent cat!
             if cached_item.parent_id not in loaded_cat_ids:
                 continue
             self.model.add(cached_item)
@@ -317,3 +318,25 @@ class InventoryManager:
             # Handle this synchronously.
             self._handle_update_create_inventory_item(msg)
             return self.model.get(msg["InventoryData"]["ItemID"])  # type: ignore
+
+    async def move(self, node: InventoryNodeBase, new_parent: UUID) -> None:
+        msg = Message(
+            "MoveInventoryFolder",
+            Block("AgentData", AgentID=self._session.agent_id, SessionID=self._session.id, Stamp=0),
+        )
+
+        if isinstance(node, InventoryItem):
+            msg.add_block(Block("InventoryData", ItemID=node.node_id, FolderID=new_parent, NewName=b''))
+        else:
+            msg.add_block(Block("InventoryData", FolderID=node.node_id, ParentID=new_parent))
+
+        # No message to say if this even succeeded. Great.
+        # TODO: probably need to update category versions for both source and target
+        await self._session.main_region.circuit.send_reliable(msg)
+        node.parent_id = new_parent
+
+    async def update(self, node: InventoryNodeBase, data: dict) -> None:
+        path = f"/category/{node.node_id}"
+        if isinstance(node, InventoryItem):
+            path = f"/item/{node.node_id}"
+        await self.make_ais_request("PATCH", path, {}, data)
