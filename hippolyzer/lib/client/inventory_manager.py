@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import gzip
 import itertools
 import logging
 from pathlib import Path
-from typing import Union, List, Tuple, Set
+from typing import Union, List, Tuple, Set, Sequence
 
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
@@ -21,6 +22,12 @@ LOG = logging.getLogger(__name__)
 class CannotMoveError(Exception):
     def __init__(self):
         pass
+
+
+def _get_node_id(node_or_id: InventoryNodeBase | UUID) -> UUID:
+    if isinstance(node_or_id, UUID):
+        return node_or_id
+    return node_or_id.node_id
 
 
 class InventoryManager:
@@ -233,7 +240,7 @@ class InventoryManager:
             method: str,
             path: str,
             params: dict,
-            payload: dict,
+            payload: dict | Sequence | dataclasses.MISSING = dataclasses.MISSING,
     ) -> dict:
         caps_client = self._session.main_region.caps_client
         async with caps_client.request(method, "InventoryAPIv3", path=path, params=params, llsd=payload) as resp:
@@ -257,10 +264,7 @@ class InventoryManager:
             type: int = -1,
             cat_id: UUID | None = None
     ) -> InventoryCategory:
-        if isinstance(parent, InventoryCategory):
-            parent_id = parent.cat_id
-        else:
-            parent_id = parent
+        parent_id = _get_node_id(parent)
 
         payload = {
             "categories": [
@@ -283,13 +287,10 @@ class InventoryManager:
             inv_type: InventoryType,
             wearable_type: WearableType,
             transaction_id: UUID,
-            perms: int = 0x7FffFFff,
+            next_mask: int = 0x7FffFFff,
             description: str = '',
     ) -> InventoryItem:
-        if isinstance(parent, InventoryCategory):
-            parent_id = parent.cat_id
-        else:
-            parent_id = parent
+        parent_id = _get_node_id(parent)
 
         with self._session.main_region.message_handler.subscribe_async(
                 ("UpdateCreateInventoryItem",),
@@ -305,7 +306,7 @@ class InventoryManager:
                         CallbackID=0,
                         FolderID=parent_id,
                         TransactionID=transaction_id,
-                        NextOwnerMask=perms,
+                        NextOwnerMask=next_mask,
                         Type=type,
                         InvType=inv_type,
                         WearableType=wearable_type,
@@ -319,7 +320,12 @@ class InventoryManager:
             self._handle_update_create_inventory_item(msg)
             return self.model.get(msg["InventoryData"]["ItemID"])  # type: ignore
 
-    async def move(self, node: InventoryNodeBase, new_parent: UUID) -> None:
+    async def move(self, node: InventoryNodeBase, new_parent: UUID | InventoryCategory) -> None:
+        # AIS error messages suggest using the MOVE HTTP method instead of setting a new parent
+        # via PATCH. MOVE is not implemented. Instead, we do what the viewer does and use legacy
+        # UDP messages for reparenting things
+        new_parent = _get_node_id(new_parent)
+
         msg = Message(
             "MoveInventoryFolder",
             Block("AgentData", AgentID=self._session.agent_id, SessionID=self._session.id, Stamp=0),

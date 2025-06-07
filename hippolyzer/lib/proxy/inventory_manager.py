@@ -134,7 +134,7 @@ class ProxyInventoryManager(InventoryManager):
             inv_type: InventoryType,
             wearable_type: WearableType,
             transaction_id: UUID,
-            perms: int = 0x7FffFFff,
+            next_mask: int = 0x7FffFFff,
             description: str = '',
     ) -> InventoryItem:
         item = await super().create_item(
@@ -144,7 +144,7 @@ class ProxyInventoryManager(InventoryManager):
             inv_type=inv_type,
             wearable_type=wearable_type,
             transaction_id=transaction_id,
-            perms=perms,
+            next_mask=next_mask,
             description=description,
         )
         await self._session.main_region.circuit.send_reliable(self._craft_update_message(item))
@@ -154,7 +154,7 @@ class ProxyInventoryManager(InventoryManager):
         await super().update(node, data)
         await self._session.main_region.circuit.send_reliable(self._craft_update_message(node))
 
-    async def move(self, node: InventoryNodeBase, new_parent: UUID) -> None:
+    async def move(self, node: InventoryNodeBase, new_parent: UUID | InventoryCategory) -> None:
         await super().move(node, new_parent)
         await self._session.main_region.circuit.send_reliable(self._craft_update_message(node))
 
