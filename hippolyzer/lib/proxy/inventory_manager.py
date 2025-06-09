@@ -13,7 +13,7 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.inventory import InventoryCategory, InventoryNodeBase
 from hippolyzer.lib.base.message.message import Message, Block
 from hippolyzer.lib.base.inventory import InventoryItem
-from hippolyzer.lib.base.templates import AssetType, InventoryType, WearableType
+from hippolyzer.lib.base.templates import AssetType, InventoryType, WearableType, Permissions
 from hippolyzer.lib.base.network.transport import Direction
 
 if TYPE_CHECKING:
@@ -119,10 +119,10 @@ class ProxyInventoryManager(InventoryManager):
             self,
             parent: InventoryCategory | UUID,
             name: str,
-            type: int = -1,
+            pref_type: int = AssetType.NONE,
             cat_id: UUID | None = None
     ) -> InventoryCategory:
-        cat = await super().create_folder(parent, name, type, cat_id)
+        cat = await super().create_folder(parent, name, pref_type, cat_id)
         await self._session.main_region.circuit.send_reliable(self._craft_update_message(cat))
         return cat
 
@@ -134,7 +134,7 @@ class ProxyInventoryManager(InventoryManager):
             inv_type: InventoryType,
             wearable_type: WearableType,
             transaction_id: UUID,
-            next_mask: int = 0x7FffFFff,
+            next_mask: int | Permissions = 0x0008e000,
             description: str = '',
     ) -> InventoryItem:
         item = await super().create_item(
@@ -175,13 +175,14 @@ class ProxyInventoryManager(InventoryManager):
         return msg
 
     def _craft_update_message(self, node: InventoryNodeBase):
-        is_folder = True
-        if isinstance(node, InventoryItem):
-            is_folder = False
-
-        return Message(
+        msg = Message(
             "BulkUpdateInventory",
             Block("AgentData", AgentID=self._session.agent_id, TransactionID=UUID.random()),
-            node.to_folder_data() if is_folder else node.to_inventory_data("ItemData"),  # type: ignore
             direction=Direction.IN,
         )
+
+        if isinstance(node, InventoryItem):
+            msg.add_block(node.to_inventory_data("ItemData"))
+        elif isinstance(node, InventoryCategory):
+            msg.add_block(node.to_folder_data())
+        return msg

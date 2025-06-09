@@ -12,7 +12,7 @@ from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.inventory import InventoryModel, InventoryCategory, InventoryItem, InventoryNodeBase
 from hippolyzer.lib.base.message.message import Message, Block
-from hippolyzer.lib.base.templates import AssetType, FolderType, InventoryType
+from hippolyzer.lib.base.templates import AssetType, FolderType, InventoryType, Permissions
 from hippolyzer.lib.client.state import BaseClientSession
 from hippolyzer.lib.base.templates import WearableType
 
@@ -219,9 +219,8 @@ class InventoryManager:
             self.model.upsert(InventoryItem.from_llsd(link_llsd, flavor="ais"))
 
         for cat_id, version in payload.get("_updated_category_versions", {}).items():
-            cat_node: InventoryCategory = self.model.get(cat_id)  # type: ignore
-            if cat_node:
-                cat_node.version = version
+            cat_node = self.model.get_category(cat_id)
+            cat_node.version = version
 
         # Get rid of anything we were asked to
         for node_id in itertools.chain(
@@ -261,7 +260,7 @@ class InventoryManager:
             self,
             parent: InventoryCategory | UUID,
             name: str,
-            type: int = -1,
+            pref_type: int = AssetType.NONE,
             cat_id: UUID | None = None
     ) -> InventoryCategory:
         parent_id = _get_node_id(parent)
@@ -271,13 +270,13 @@ class InventoryManager:
                 {
                     "category_id": cat_id,
                     "name": name,
-                    "type_default": type,
+                    "type_default": pref_type,
                     "parent_id": parent_id
                 }
             ]
         }
         data = await self.make_ais_request("POST", f"/category/{parent_id}", {"tid": UUID.random()}, payload)
-        return self.model.get(data["_created_categories"][0])  # type: ignore
+        return self.model.get_category(data["_created_categories"][0])
 
     async def create_item(
             self,
@@ -287,7 +286,7 @@ class InventoryManager:
             inv_type: InventoryType,
             wearable_type: WearableType,
             transaction_id: UUID,
-            next_mask: int = 0x7FffFFff,
+            next_mask: int | Permissions = 0x0008e000,
             description: str = '',
     ) -> InventoryItem:
         parent_id = _get_node_id(parent)
@@ -316,14 +315,14 @@ class InventoryManager:
                 )
             )
             msg = await asyncio.wait_for(get_msg(), 5.0)
-            # Handle this synchronously.
-            self._handle_update_create_inventory_item(msg)
-            return self.model.get(msg["InventoryData"]["ItemID"])  # type: ignore
+            # We assume that _handle_update_create_inventory_item() has already been called internally
+            # by the time that the `await` returns given asyncio scheduling
+            return self.model.get_item(msg["InventoryData"]["ItemID"])
 
     async def move(self, node: InventoryNodeBase, new_parent: UUID | InventoryCategory) -> None:
         # AIS error messages suggest using the MOVE HTTP method instead of setting a new parent
-        # via PATCH. MOVE is not implemented. Instead, we do what the viewer does and use legacy
-        # UDP messages for reparenting things
+        # via PATCH. MOVE is not implemented in AIS. Instead, we do what the viewer does and use
+        # legacy UDP messages for reparenting things
         new_parent = _get_node_id(new_parent)
 
         msg = Message(

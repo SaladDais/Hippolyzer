@@ -356,8 +356,20 @@ class InventoryModel(InventoryBase):
     def __contains__(self, item: UUID):
         return item in self.nodes
 
-    def get(self, item: UUID) -> Optional[InventoryNodeBase]:
-        return self.nodes.get(item)
+    def get(self, key: UUID) -> Optional[InventoryNodeBase]:
+        return self.nodes.get(key)
+
+    def get_category(self, key: UUID) -> InventoryCategory:
+        node = self.get(key)
+        if not isinstance(node, InventoryCategory):
+            raise ValueError(f"{node!r} is not a category")
+        return node
+
+    def get_item(self, key: UUID) -> InventoryItem:
+        node = self.get(key)
+        if not isinstance(node, InventoryItem):
+            raise ValueError(f"{node!r} is not an item")
+        return node
 
 
 @dataclasses.dataclass
