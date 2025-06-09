@@ -57,7 +57,7 @@ class MessageHandler(Generic[_T, _K]):
 
     @contextlib.contextmanager
     def subscribe_async(self, message_names: MESSAGE_NAMES, predicate: Optional[PREDICATE] = None,
-                        take: Optional[bool] = None) -> ContextManager[Callable[[], Awaitable[_T]]]:
+                        take: Optional[bool] = None) -> Generator[Callable[[], Awaitable[_T]], None, None]:
         """
         Subscribe to a set of message matching predicate while within a block
 
@@ -92,6 +92,7 @@ class MessageHandler(Generic[_T, _K]):
         finally:
             for n in notifiers:
                 n.unsubscribe(_handler_wrapper)
+        return None
 
     def wait_for(self, message_names: MESSAGE_NAMES, predicate: Optional[PREDICATE] = None,
                  timeout: Optional[float] = None, take: Optional[bool] = None) -> Awaitable[_T]:

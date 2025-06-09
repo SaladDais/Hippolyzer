@@ -16,7 +16,7 @@ import numpy as np
 
 import hippolyzer.lib.base.serialization as se
 from hippolyzer.lib.base import llsd
-from hippolyzer.lib.base.datatypes import UUID, IntEnum, IntFlag, Vector3, Quaternion
+from hippolyzer.lib.base.datatypes import UUID, IntEnum, IntFlag, Vector3
 from hippolyzer.lib.base.helpers import BiDiDict
 from hippolyzer.lib.base.namevalue import NameValuesSerializer
 from hippolyzer.lib.base.serialization import ParseContext
@@ -60,6 +60,7 @@ _ASSET_TYPE_BIDI: BiDiDict[str] = BiDiDict({
 @se.enum_field_serializer("RezObject", "InventoryData", "Type")
 @se.enum_field_serializer("RezScript", "InventoryBlock", "Type")
 @se.enum_field_serializer("UpdateTaskInventory", "InventoryData", "Type")
+@se.enum_field_serializer("BulkUpdateInventory", "ItemData", "Type")
 class AssetType(LookupIntEnum):
     TEXTURE = 0
     SOUND = 1
@@ -145,6 +146,8 @@ _INV_TYPE_BIDI: BiDiDict[str] = BiDiDict({
 @se.enum_field_serializer("RezObject", "InventoryData", "InvType")
 @se.enum_field_serializer("RezScript", "InventoryBlock", "InvType")
 @se.enum_field_serializer("UpdateTaskInventory", "InventoryData", "InvType")
+@se.enum_field_serializer("BulkUpdateInventory", "ItemData", "InvType")
+@se.enum_field_serializer("BulkUpdateInventory", "FolderData", "Type")
 class InventoryType(LookupIntEnum):
     TEXTURE = 0
     SOUND = 1
@@ -301,6 +304,7 @@ def _register_permissions_flags(message_name, block_name):
 @_register_permissions_flags("RezObject", "InventoryData")
 @_register_permissions_flags("RezScript", "InventoryBlock")
 @_register_permissions_flags("RezMultipleAttachmentsFromInv", "ObjectData")
+@_register_permissions_flags("BulkUpdateInventory", "ItemData")
 class Permissions(IntFlag):
     TRANSFER = (1 << 13)
     MODIFY = (1 << 14)
@@ -322,6 +326,7 @@ _SALE_TYPE_LEGACY_NAMES = ("not", "orig", "copy", "cntn")
 
 
 @se.enum_field_serializer("ObjectSaleInfo", "ObjectData", "SaleType")
+@se.enum_field_serializer("BulkUpdateInventory", "ItemData", "SaleType")
 @se.enum_field_serializer("ObjectProperties", "ObjectData", "SaleType")
 @se.enum_field_serializer("ObjectPropertiesFamily", "ObjectData", "SaleType")
 @se.enum_field_serializer("ObjectBuy", "ObjectData", "SaleType")
@@ -341,6 +346,32 @@ class SaleType(LookupIntEnum):
 
     def to_lookup_name(self) -> str:
         return _SALE_TYPE_LEGACY_NAMES[int(self.value)]
+
+
+class AggregatePermissionType(IntEnum):
+    EMPTY = 0
+    NONE = 1
+    SOME = 2
+    ALL = 3
+
+
+def _make_agg_perms_field():
+    return se.bitfield_field(bits=2, adapter=se.IntEnum(AggregatePermissionType))
+
+
+@dataclasses.dataclass
+class AggregatePerms(se.BitfieldDataclass):
+    Copy: AggregatePermissionType = _make_agg_perms_field()
+    Modify: AggregatePermissionType = _make_agg_perms_field()
+    Transfer: AggregatePermissionType = _make_agg_perms_field()
+
+
+@se.subfield_serializer("ObjectProperties", "ObjectData", "AggregatePerms")
+@se.subfield_serializer("ObjectProperties", "ObjectData", "AggregatePermTextures")
+@se.subfield_serializer("ObjectProperties", "ObjectData", "AggregatePermTexturesOwner")
+class AggregatePermsSerializer(se.AdapterSubfieldSerializer):
+    ORIG_INLINE = True
+    ADAPTER = se.BitfieldDataclass(AggregatePerms)
 
 
 @se.flag_field_serializer("ParcelInfoReply", "Data", "Flags")
@@ -365,6 +396,7 @@ class MapImageFlags(IntFlag):
 
 @se.enum_field_serializer("MapBlockReply", "Data", "Access")
 @se.enum_field_serializer("RegionInfo", "RegionInfo", "SimAccess")
+@se.enum_field_serializer("RegionHandshake", "RegionInfo", "SimAccess")
 class SimAccess(IntEnum):
     # Treated as 'unknown', usually ends up being SIM_ACCESS_PG
     MIN = 0
@@ -2243,13 +2275,14 @@ class MeanCollisionType(IntEnum):
 
 
 @se.subfield_serializer("ObjectProperties", "ObjectData", "CreationDate")
-class CreationDateSerializer(se.AdapterSubfieldSerializer):
+class ObjectCreationDateSerializer(se.AdapterSubfieldSerializer):
     ADAPTER = DateAdapter(1_000_000)
     ORIG_INLINE = True
 
 
 @se.subfield_serializer("MeanCollisionAlert", "MeanCollision", "Time")
 @se.subfield_serializer("ParcelProperties", "ParcelData", "ClaimDate")
+@se.subfield_serializer("BulkUpdateInventory", "ItemData", "CreationDate")
 class DateSerializer(se.AdapterSubfieldSerializer):
     ADAPTER = DateAdapter()
     ORIG_INLINE = True
@@ -2307,7 +2340,9 @@ class BitmapAdapter(se.Adapter):
 @se.subfield_serializer("ParcelProperties", "ParcelData", "Bitmap")
 class ParcelPropertiesBitmapSerializer(se.AdapterSubfieldSerializer):
     """Bitmap that describes which grids a parcel occupies"""
-    ADAPTER = BitmapAdapter((256 // 4, 256 // 4))
+    REGION_METERS = 256
+    METERS_PER_CELL = 4
+    ADAPTER = BitmapAdapter((REGION_METERS // METERS_PER_CELL, REGION_METERS // METERS_PER_CELL))
 
 
 @se.enum_field_serializer("ParcelProperties", "ParcelData", "LandingType")
@@ -2374,69 +2409,3 @@ class RetrieveNavMeshSrcSerializer(se.BaseHTTPSerializer):
         # 15 bit window size, gzip wrapped
         deser["navmesh_data"] = zlib.decompress(deser["navmesh_data"], wbits=15 | 32)
         return deser
-
-
-# Beta puppetry stuff, subject to change!
-
-
-class PuppetryEventMask(IntFlag):
-    POSITION = 1 << 0
-    POSITION_IN_PARENT_FRAME = 1 << 1
-    ROTATION = 1 << 2
-    ROTATION_IN_PARENT_FRAME = 1 << 3
-    SCALE = 1 << 4
-    DISABLE_CONSTRAINT = 1 << 7
-
-
-class PuppetryOption(se.OptionalFlagged):
-    def __init__(self, flag_val, spec):
-        super().__init__("mask", se.IntFlag(PuppetryEventMask, se.U8), flag_val, spec)
-
-
-# Range to use for puppetry's quantized floats when converting to<->from U16
-LL_PELVIS_OFFSET_RANGE = (-5.0, 5.0)
-
-
-@dataclasses.dataclass
-class PuppetryJointData:
-    # Where does this number come from? `avatar_skeleton.xml`?
-    joint_id: int = se.dataclass_field(se.S16)
-    # Determines which fields will follow
-    mask: PuppetryEventMask = se.dataclass_field(se.IntFlag(PuppetryEventMask, se.U8))
-    rotation: Optional[Quaternion] = se.dataclass_field(
-        # These are very odd scales for a quantized quaternion, but that's what they are.
-        PuppetryOption(PuppetryEventMask.ROTATION, se.PackedQuat(se.Vector3U16(*LL_PELVIS_OFFSET_RANGE))),
-    )
-    position: Optional[Vector3] = se.dataclass_field(
-        PuppetryOption(PuppetryEventMask.POSITION, se.Vector3U16(*LL_PELVIS_OFFSET_RANGE)),
-    )
-    scale: Optional[Vector3] = se.dataclass_field(
-        PuppetryOption(PuppetryEventMask.SCALE, se.Vector3U16(*LL_PELVIS_OFFSET_RANGE)),
-    )
-
-
-@dataclasses.dataclass
-class PuppetryEventData:
-    time: int = se.dataclass_field(se.S32)
-    # Must be set manually due to below issue
-    num_joints: int = se.dataclass_field(se.U16)
-    # This field is packed in the least helpful way possible. The length field
-    # is in between the collection count and the collection data, but the length
-    # field essentially only tells you how many bytes until the end of the buffer
-    # proper, which you already know from msgsystem. Why is this here?
-    joints: List[PuppetryJointData] = se.dataclass_field(se.TypedByteArray(
-        se.U32,
-        # Just treat contents as a greedy collection, tries to keep reading until EOF
-        se.Collection(None, se.Dataclass(PuppetryJointData)),
-    ))
-
-
-@se.subfield_serializer("AgentAnimation", "PhysicalAvatarEventList", "TypeData")
-@se.subfield_serializer("AvatarAnimation", "PhysicalAvatarEventList", "TypeData")
-class PuppetryEventDataSerializer(se.SimpleSubfieldSerializer):
-    # You can have multiple joint events packed in right after the other, implicitly.
-    # They may _or may not_ be split into separate PhysicalAvatarEventList blocks?
-    # This doesn't seem to be handled specifically in the decoder, is this a
-    # serialization bug in the viewer?
-    TEMPLATE = se.Collection(None, se.Dataclass(PuppetryEventData))
-    EMPTY_IS_NONE = True
