@@ -219,7 +219,8 @@ class InventoryManager:
             self.model.upsert(InventoryItem.from_llsd(link_llsd, flavor="ais"))
 
         for cat_id, version in payload.get("_updated_category_versions", {}).items():
-            cat_node = self.model.get_category(cat_id)
+            # The key will be a string, so convert to UUID first
+            cat_node = self.model.get_category(UUID(cat_id))
             cat_node.version = version
 
         # Get rid of anything we were asked to

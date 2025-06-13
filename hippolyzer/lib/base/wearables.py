@@ -16,7 +16,7 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.helpers import get_resource_filename
 from hippolyzer.lib.base.inventory import InventorySaleInfo, InventoryPermissions
 from hippolyzer.lib.base.legacy_schema import SchemaBase, parse_schema_line, SchemaParsingError
-from hippolyzer.lib.base.templates import WearableType
+from hippolyzer.lib.base.templates import WearableType, AssetType
 
 LOG = logging.getLogger(__name__)
 _T = TypeVar("_T")
@@ -77,6 +77,12 @@ class AvatarTEIndex(enum.IntEnum):
     def is_baked(self) -> bool:
         return self.name.endswith("_BAKED")
 
+    @property
+    def asset_type(self) -> AssetType:
+        if self in (WearableType.HAIR, WearableType.SKIN, WearableType.EYES, WearableType.SHAPE):
+            return AssetType.BODYPART
+        return AssetType.CLOTHING
+
 
 @dataclasses.dataclass
 class VisualParam:
@@ -84,6 +90,7 @@ class VisualParam:
     name: str
     value_min: float
     value_max: float
+    value_default: float
     # These might be `None` if the param isn't meant to be directly edited
     edit_group: Optional[str]
     wearable: Optional[str]
@@ -102,6 +109,7 @@ class VisualParams(List[VisualParam]):
                 wearable=param.get("wearable"),
                 value_min=float(param.attrib["value_min"]),
                 value_max=float(param.attrib["value_max"]),
+                value_default=float(param.attrib.get("value_default", 0.0))
             ))
 
     def by_name(self, name: str) -> VisualParam:
@@ -120,6 +128,34 @@ class VisualParams(List[VisualParam]):
 VISUAL_PARAMS = VisualParams(get_resource_filename("lib/base/data/avatar_lad.xml"))
 
 
+# See `llpaneleditwearable.cpp`, which TE slots should be set for each wearable type is hardcoded
+# in the viewer.
+WEARABLE_TEXTURE_SLOTS: Dict[WearableType, Sequence[AvatarTEIndex]] = {
+    WearableType.SHAPE: (),
+    WearableType.SKIN: (AvatarTEIndex.HEAD_BODYPAINT, AvatarTEIndex.UPPER_BODYPAINT, AvatarTEIndex.LOWER_BODYPAINT),
+    WearableType.HAIR: (AvatarTEIndex.HAIR,),
+    WearableType.EYES: (AvatarTEIndex.EYES_IRIS,),
+    WearableType.SHIRT: (AvatarTEIndex.UPPER_SHIRT,),
+    WearableType.PANTS: (AvatarTEIndex.LOWER_PANTS,),
+    WearableType.SHOES: (AvatarTEIndex.LOWER_SHOES,),
+    WearableType.SOCKS: (AvatarTEIndex.LOWER_SOCKS,),
+    WearableType.JACKET: (AvatarTEIndex.UPPER_JACKET, AvatarTEIndex.LOWER_JACKET),
+    WearableType.GLOVES: (AvatarTEIndex.UPPER_GLOVES,),
+    WearableType.UNDERSHIRT: (AvatarTEIndex.UPPER_UNDERSHIRT,),
+    WearableType.UNDERPANTS: (AvatarTEIndex.LOWER_UNDERPANTS,),
+    WearableType.SKIRT: (AvatarTEIndex.SKIRT,),
+    WearableType.ALPHA: (AvatarTEIndex.LOWER_ALPHA, AvatarTEIndex.UPPER_ALPHA,
+                         AvatarTEIndex.HEAD_ALPHA, AvatarTEIndex.EYES_ALPHA, AvatarTEIndex.HAIR_ALPHA),
+    WearableType.TATTOO: (AvatarTEIndex.LOWER_TATTOO, AvatarTEIndex.UPPER_TATTOO, AvatarTEIndex.HEAD_TATTOO),
+    WearableType.UNIVERSAL: (AvatarTEIndex.HEAD_UNIVERSAL_TATTOO, AvatarTEIndex.UPPER_UNIVERSAL_TATTOO,
+                             AvatarTEIndex.LOWER_UNIVERSAL_TATTOO, AvatarTEIndex.SKIRT_TATTOO,
+                             AvatarTEIndex.HAIR_TATTOO, AvatarTEIndex.EYES_TATTOO, AvatarTEIndex.LEFT_ARM_TATTOO,
+                             AvatarTEIndex.LEFT_LEG_TATTOO, AvatarTEIndex.AUX1_TATTOO, AvatarTEIndex.AUX2_TATTOO,
+                             AvatarTEIndex.AUX3_TATTOO),
+    WearableType.PHYSICS: (),
+}
+
+
 @dataclasses.dataclass
 class Wearable(SchemaBase):
     name: str
@@ -128,7 +164,7 @@ class Wearable(SchemaBase):
     sale_info: InventorySaleInfo
     # VisualParam ID -> val
     parameters: Dict[int, float]
-    # TextureEntry ID -> texture ID
+    # TextureEntry ID -> texture UUID
     textures: Dict[int, UUID]
 
     @classmethod
@@ -203,3 +239,22 @@ class Wearable(SchemaBase):
         writer.write(f"textures {len(self.textures)}\n")
         for te_id, texture_id in self.textures.items():
             writer.write(f"{te_id} {texture_id}\n")
+
+    @classmethod
+    def make_default(cls, w_type: WearableType) -> Self:
+        instance = cls(
+            name="New " + w_type.name.replace("_", " ").title(),
+            permissions=InventoryPermissions.make_default(),
+            sale_info=InventorySaleInfo.make_default(),
+            parameters={},
+            textures={},
+            wearable_type=w_type,
+        )
+
+        for te_idx in WEARABLE_TEXTURE_SLOTS[w_type]:
+            instance.textures[te_idx] = DEFAULT_WEARABLE_TEX
+
+        for param in VISUAL_PARAMS.by_wearable(w_type.name.lower()):
+            instance.parameters[param.id] = param.value_default
+
+        return instance

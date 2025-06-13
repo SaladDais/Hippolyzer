@@ -389,6 +389,21 @@ class InventoryPermissions(InventoryBase):
     # It's kind of redundant since it just means owner_id == NULL_KEY && group_id != NULL_KEY.
     is_owner_group: Optional[int] = schema_field(SchemaInt, default=None, llsd_only=True)
 
+    @classmethod
+    def make_default(cls) -> Self:
+        return cls(
+            base_mask=0xFFffFFff,
+            owner_mask=0xFFffFFff,
+            group_mask=0,
+            everyone_mask=0,
+            next_owner_mask=0x82000,
+            creator_id=UUID.ZERO,
+            owner_id=UUID.ZERO,
+            last_owner_id=UUID.ZERO,
+            group_id=UUID.ZERO,
+            is_owner_group=None
+        )
+
 
 @dataclasses.dataclass
 class InventorySaleInfo(InventoryBase):
@@ -396,6 +411,10 @@ class InventorySaleInfo(InventoryBase):
 
     sale_type: SaleType = schema_field(SchemaEnumField(SaleType))
     sale_price: int = schema_field(SchemaInt)
+
+    @classmethod
+    def make_default(cls) -> Self:
+        return cls(sale_type=SaleType.NOT, sale_price=10)
 
 
 class _HasBaseNodeAttrs(abc.ABC):

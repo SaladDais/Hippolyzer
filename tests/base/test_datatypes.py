@@ -152,6 +152,15 @@ class TestDatatypes(unittest.TestCase):
     def test_str_llsd_serialization(self):
         self.assertEqual(b"'foo\\nbar'", llsd.format_notation("foo\nbar"))
 
+    def test_int_enum_llsd_serialization(self):
+        class SomeIntEnum(IntEnum):
+            FOO = 4
+
+        orig = SomeIntEnum.FOO
+        val = llsd.parse_xml(llsd.format_xml(orig))
+        self.assertIsInstance(val, int)
+        self.assertEqual(orig, val)
+
     def test_jank_stringy_bytes(self):
         val = JankStringyBytes(b"foo\x00")
         self.assertTrue("o" in val)

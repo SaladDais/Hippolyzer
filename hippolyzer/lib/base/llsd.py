@@ -35,6 +35,12 @@ class HippoLLSDXMLFormatter(base_llsd.serde_xml.LLSDXMLFormatter, HippoLLSDBaseF
     def __init__(self):
         super().__init__()
 
+    def _generate(self, something):
+        if isinstance(something, int) and type(something) is not int:
+            # The lookup in the underlying library will fail if we don't convert IntEnums to actual ints.
+            something = int(something)
+        return super()._generate(something)
+
 
 class HippoLLSDXMLPrettyFormatter(base_llsd.serde_xml.LLSDXMLPrettyFormatter, HippoLLSDBaseFormatter):
     def __init__(self):
