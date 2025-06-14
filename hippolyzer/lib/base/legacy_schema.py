@@ -164,7 +164,7 @@ def parse_schema_line(line: str):
 @dataclasses.dataclass
 class SchemaBase(abc.ABC):
     @classmethod
-    def _get_fields_dict(cls, llsd_flavor: Optional[str] = None):
+    def _get_fields_dict(cls, llsd_flavor: Optional[str] = None) -> Dict[str, dataclasses.Field]:
         fields_dict = {}
         for field in dataclasses.fields(cls):
             field_name = field.name
@@ -193,7 +193,7 @@ class SchemaBase(abc.ABC):
         try:
             for key, val in inv_dict.items():
                 if key in fields:
-                    field: dataclasses.Field = fields[key]
+                    field = fields[key]
                     key = field.name
                     spec = field.metadata.get("spec")
                     # Not a real key, an internal var on our dataclass

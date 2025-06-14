@@ -163,9 +163,9 @@ class InventoryBase(SchemaBase):
         writer.write("\t{\n")
 
         # Make sure the ID field always comes first, if there is one.
-        fields_dict = {}
+        fields_dict: Dict[str, dataclasses.Field] = {}
         if hasattr(self, "ID_ATTR"):
-            fields_dict = {getattr(self, "ID_ATTR"): None}
+            fields_dict = {getattr(self, "ID_ATTR"): dataclasses.field()}
         # update()ing will put all fields that aren't yet in the dict after the ID attr.
         fields_dict.update(self._get_fields_dict())
 
