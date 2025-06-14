@@ -16,7 +16,7 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.helpers import get_resource_filename
 from hippolyzer.lib.base.inventory import InventorySaleInfo, InventoryPermissions
 from hippolyzer.lib.base.legacy_schema import SchemaBase, parse_schema_line, SchemaParsingError
-from hippolyzer.lib.base.templates import WearableType, AssetType
+from hippolyzer.lib.base.templates import WearableType
 
 LOG = logging.getLogger(__name__)
 _T = TypeVar("_T")
@@ -76,12 +76,6 @@ class AvatarTEIndex(enum.IntEnum):
     @property
     def is_baked(self) -> bool:
         return self.name.endswith("_BAKED")
-
-    @property
-    def asset_type(self) -> AssetType:
-        if self in (WearableType.HAIR, WearableType.SKIN, WearableType.EYES, WearableType.SHAPE):
-            return AssetType.BODYPART
-        return AssetType.CLOTHING
 
 
 @dataclasses.dataclass

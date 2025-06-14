@@ -285,6 +285,12 @@ class WearableType(IntEnum):
     PHYSICS = 15
     UNIVERSAL = 16
 
+    @property
+    def asset_type(self) -> AssetType:
+        if self in (WearableType.HAIR, WearableType.SKIN, WearableType.EYES, WearableType.SHAPE):
+            return AssetType.BODYPART
+        return AssetType.CLOTHING
+
 
 def _register_permissions_flags(message_name, block_name):
     def _wrapper(flag_cls):
