@@ -45,6 +45,7 @@ class ObjectUpdateType(enum.IntEnum):
     FAMILY = enum.auto()
     COSTS = enum.auto()
     KILL = enum.auto()
+    ANIMATIONS = enum.auto()
 
 
 class ClientObjectManager:
@@ -132,7 +133,7 @@ class ClientObjectManager:
                 # Need to wait until we get our reply
                 fut = self.state.register_future(local_id, ObjectUpdateType.PROPERTIES)
             else:
-                # This was selected so we should already have up to date info
+                # This was selected so we should already have up-to-date info
                 fut = asyncio.Future()
                 fut.set_result(self.lookup_localid(local_id))
             futures.append(fut)
@@ -261,6 +262,10 @@ class ClientWorldObjectManager:
                                   self._handle_object_properties_generic)
         message_handler.subscribe("ObjectPropertiesFamily",
                                   self._handle_object_properties_generic)
+        message_handler.subscribe("AvatarAnimation",
+                                  self._handle_animation_message)
+        message_handler.subscribe("ObjectAnimation",
+                                  self._handle_animation_message)
 
     def lookup_fullid(self, full_id: UUID) -> Optional[Object]:
         return self._fullid_lookup.get(full_id, None)
@@ -274,7 +279,7 @@ class ClientWorldObjectManager:
 
     @property
     def all_avatars(self) -> Iterable[Avatar]:
-        return tuple(self._avatars.values())
+        return list(self._avatars.values())
 
     def __len__(self):
         return len(self._fullid_lookup)
@@ -293,7 +298,7 @@ class ClientWorldObjectManager:
     def untrack_region_objects(self, handle: int):
         """Handle signal that a region object manager was just cleared"""
         # Make sure they're gone from our lookup table
-        for obj in tuple(self._fullid_lookup.values()):
+        for obj in list(self._fullid_lookup.values()):
             if obj.RegionHandle == handle:
                 del self._fullid_lookup[obj.FullID]
         if handle in self._region_managers:
@@ -609,6 +614,33 @@ class ClientWorldObjectManager:
         region_state.coarse_locations.update(coarse_locations)
         self._rebuild_avatar_objects()
 
+    def _handle_animation_message(self, message: Message):
+        sender_id = message["Sender"]["ID"]
+        if message.name == "AvatarAnimation":
+            avatar = self._avatars.get(sender_id)
+            if not avatar:
+                LOG.warning(f"Received AvatarAnimation for unknown avatar {sender_id}")
+                return
+
+            if not avatar.Object:
+                LOG.warning(f"Received AvatarAnimation for avatar with no object {sender_id}")
+                return
+
+            obj = avatar.Object
+        elif message.name == "ObjectAnimation":
+            obj = self.lookup_fullid(sender_id)
+            if not obj:
+                LOG.warning(f"Received AvatarAnimation for avatar with no object {sender_id}")
+                return
+        else:
+            LOG.error(f"Unknown animation message type: {message.name}")
+            return
+
+        obj.Animations.clear()
+        for block in message["AnimationList"]:
+            obj.Animations.append(block["AnimID"])
+        self._run_object_update_hooks(obj, {"Animations"}, ObjectUpdateType.ANIMATIONS, message)
+
     def _process_get_object_cost_response(self, parsed: dict):
         if "error" in parsed:
             return
@@ -887,8 +919,6 @@ class Avatar:
         self.FullID: UUID = full_id
         self.Object: Optional["Object"] = obj
         self.RegionHandle: int = region_handle
-        # TODO: Allow hooking into getZOffsets FS bridge response
-        #  to fill in the Z axis if it's infinite
         self.CoarseLocation = coarse_location
         self.Valid = True
         self.GuessedZ: Optional[float] = None

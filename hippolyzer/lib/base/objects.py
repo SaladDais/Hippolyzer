@@ -125,12 +125,14 @@ class Object(recordclass.RecordClass, use_weakref=True):  # type: ignore
     SitName: Optional[str] = None
     TextureID: Optional[List[UUID]] = None
     RegionHandle: Optional[int] = None
+    Animations: Optional[List[UUID]] = None
 
     def __init__(self, **_kwargs):
         """ set up the object attributes """
         self.ExtraParams = self.ExtraParams or {}  # Variable 1
         self.ObjectCosts = self.ObjectCosts or {}
         self.ChildIDs = []
+        self.Animations = self.Animations or []
         # Same as parent, contains weakref proxies.
         self.Children: List[Object] = []
 
@@ -253,7 +255,7 @@ def normalize_object_update(block: Block, handle: int):
     # OwnerID is only set in this packet if a sound is playing. Don't allow
     # ObjectUpdates to clobber _real_ OwnerIDs we had from ObjectProperties
     # with a null UUID.
-    if object_data["OwnerID"] == UUID():
+    if object_data["OwnerID"] == UUID.ZERO:
         del object_data["OwnerID"]
     del object_data["Flags"]
     del object_data["Gain"]
@@ -309,7 +311,7 @@ def normalize_object_update_compressed_data(data: bytes):
         compressed["SoundFlags"] = 0
         compressed["SoundGain"] = 0.0
         compressed["SoundRadius"] = 0.0
-        compressed["Sound"] = UUID()
+        compressed["Sound"] = UUID.ZERO
     if compressed["TextureEntry"] is None:
         compressed["TextureEntry"] = tmpls.TextureEntryCollection()
 
@@ -323,7 +325,7 @@ def normalize_object_update_compressed_data(data: bytes):
     # Don't clobber OwnerID in case the object has a proper one from
     # a previous ObjectProperties. OwnerID isn't expected to be populated
     # on ObjectUpdates unless an attached sound is playing.
-    if object_data["OwnerID"] == UUID():
+    if object_data["OwnerID"] == UUID.ZERO:
         del object_data["OwnerID"]
     return object_data
 
