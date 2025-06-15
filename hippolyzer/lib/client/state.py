@@ -17,6 +17,7 @@ from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.network.caps_client import CapsClient
 from hippolyzer.lib.base.network.transport import ADDR_TUPLE
 from hippolyzer.lib.base.objects import handle_to_global_pos
+from hippolyzer.lib.base.xfer_manager import XferManager
 
 from hippolyzer.lib.client.object_manager import ClientObjectManager, ClientWorldObjectManager
 
@@ -27,6 +28,7 @@ class BaseClientRegion(ConnectionHolder, abc.ABC):
     # Actually a weakref
     session: Callable[[], BaseClientSession]
     objects: ClientObjectManager
+    xfer_manager: XferManager
     caps_client: CapsClient
     cap_urls: multidict.MultiDict[str]
     circuit_addr: ADDR_TUPLE

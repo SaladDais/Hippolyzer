@@ -174,7 +174,7 @@ class SchemaBase(abc.ABC):
         return fields_dict
 
     @classmethod
-    def from_str(cls, text: str):
+    def from_str(cls, text: str) -> Self:
         return cls.from_reader(StringIO(text))
 
     @classmethod
@@ -183,11 +183,11 @@ class SchemaBase(abc.ABC):
         pass
 
     @classmethod
-    def from_bytes(cls, data: bytes):
+    def from_bytes(cls, data: bytes) -> Self:
         return cls.from_str(data.decode("utf8"))
 
     @classmethod
-    def from_llsd(cls, inv_dict: Dict, flavor: str = "legacy"):
+    def from_llsd(cls, inv_dict: Dict, flavor: str = "legacy") -> Self:
         fields = cls._get_fields_dict(llsd_flavor=flavor)
         obj_dict = {}
         try:
@@ -262,5 +262,5 @@ class SchemaBase(abc.ABC):
         pass
 
     @classmethod
-    def _obj_from_dict(cls, obj_dict: Dict):
+    def _obj_from_dict(cls, obj_dict: Dict) -> Self:
         return cls(**obj_dict)  # type: ignore

@@ -15,6 +15,7 @@ from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID, Vector3
 from hippolyzer.lib.base.helpers import proxify
+from hippolyzer.lib.base.inventory import InventoryItem, InventoryModel
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.message.msgtypes import PacketFlags
@@ -27,7 +28,7 @@ from hippolyzer.lib.base.objects import (
 )
 from hippolyzer.lib.base.settings import Settings
 from hippolyzer.lib.client.namecache import NameCache, NameCacheEntry
-from hippolyzer.lib.base.templates import PCode, ObjectStateSerializer
+from hippolyzer.lib.base.templates import PCode, ObjectStateSerializer, XferFilePath
 from hippolyzer.lib.base import llsd
 
 if TYPE_CHECKING:
@@ -216,6 +217,38 @@ class ClientObjectManager:
         entries = llsd.unzip_llsd(llsd.parse_xml(response)["Zipped"])
         for entry in entries:
             self.state.materials[UUID(bytes=entry["ID"])] = entry["Material"]
+
+    async def request_object_inv(self, obj: Object) -> List[InventoryItem]:
+        if "RequestTaskInventory" in self._region.cap_urls:
+            return await self.request_object_inv_via_cap(obj)
+        else:
+            return await self.request_object_inv_via_xfer(obj)
+
+    async def request_object_inv_via_cap(self, obj: Object) -> List[InventoryItem]:
+        async with self._region.caps_client.get("RequestTaskInventory", params={"task_id": obj.FullID}) as resp:
+            resp.raise_for_status()
+            return [InventoryItem.from_llsd(x) for x in (await resp.read_llsd())["contents"]]
+
+    async def request_object_inv_via_xfer(self, obj: Object) -> List[InventoryItem]:
+        session = self._region.session()
+        with self._region.message_handler.subscribe_async(
+                ('ReplyTaskInventory',), predicate=lambda x: x["InventoryData"]["TaskID"] == obj.FullID
+        ) as get_msg:
+            await self._region.circuit.send_reliable(Message(
+                'RequestTaskInventory',
+                # If no session is passed in we'll use the active session when the coro was created
+                Block('AgentData', AgentID=session.agent_id, SessionID=session.id),
+                Block('InventoryData', LocalID=obj.LocalID),
+            ))
+
+            inv_message = await asyncio.wait_for(get_msg(), timeout=5.0)
+
+        # Xfer doesn't need to be immediately awaited, multiple signals can be waited on.
+        xfer = await self._region.xfer_manager.request(
+            file_name=inv_message["InventoryData"]["Filename"], file_path=XferFilePath.CACHE)
+
+        inv_model = InventoryModel.from_bytes(xfer.reassemble_chunks())
+        return list(inv_model.all_items)
 
 
 class ObjectEvent:

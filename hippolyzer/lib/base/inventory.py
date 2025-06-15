@@ -226,7 +226,7 @@ class InventoryModel(InventoryBase):
         return model
 
     @classmethod
-    def from_llsd(cls, llsd_val: List[Dict], flavor: str = "legacy") -> InventoryModel:
+    def from_llsd(cls, llsd_val: List[Dict], flavor: str = "legacy") -> Self:
         model = cls()
         for obj_dict in llsd_val:
             obj = None
@@ -565,7 +565,7 @@ class InventoryCategory(InventoryContainerBase):
         )
 
     @classmethod
-    def from_llsd(cls, inv_dict: Dict, flavor: str = "legacy"):
+    def from_llsd(cls, inv_dict: Dict, flavor: str = "legacy") -> Self:
         if flavor == "ais" and "type" not in inv_dict:
             inv_dict = inv_dict.copy()
             inv_dict["type"] = AssetType.CATEGORY
@@ -691,7 +691,7 @@ class InventoryItem(InventoryNodeBase):
         return val
 
     @classmethod
-    def from_llsd(cls, inv_dict: Dict, flavor: str = "legacy"):
+    def from_llsd(cls, inv_dict: Dict, flavor: str = "legacy") -> Self:
         if flavor == "ais" and "linked_id" in inv_dict:
             # Links get represented differently than other items for whatever reason.
             # This is incredibly annoying, under *NIX there's nothing really special about symlinks.
