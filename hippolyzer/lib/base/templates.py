@@ -980,6 +980,7 @@ class MCode(IntEnum):
     # What's in the high nybble, anything?
     STONE = 0
     METAL = 1
+    GLASS = 2
     WOOD = 3
     FLESH = 4
     PLASTIC = 5
@@ -1688,6 +1689,24 @@ class SoundFlags(IntFlag):
     STOP = 1 << 5
 
 
+@se.enum_field_serializer("ObjectClickAction", "ObjectData", "ClickAction")
+@se.enum_field_serializer("ObjectUpdate", "ObjectData", "ClickAction")
+class ClickAction(IntEnum):
+    # "NONE" is also used as an alias for "TOUCH"
+    TOUCH = 0
+    SIT = 1
+    BUY = 2
+    PAY = 3
+    OPEN = 4
+    PLAY = 5
+    OPEN_MEDIA = 6
+    ZOOM = 7
+    DISABLED = 8
+    IGNORE = 9
+    # I've seen this in practice, not clear what it is.
+    UNKNOWN = 255
+
+
 class CompressedFlags(IntFlag):
     SCRATCHPAD = 1
     TREE = 1 << 1
@@ -1722,7 +1741,7 @@ class ObjectUpdateCompressedDataSerializer(se.SimpleSubfieldSerializer):
         "State": ObjectStateAdapter(se.U8),
         "CRC": se.U32,
         "Material": se.IntEnum(MCode, se.U8),
-        "ClickAction": se.U8,
+        "ClickAction": se.IntEnum(ClickAction, se.U8),
         "Scale": se.Vector3,
         "Position": se.Vector3,
         "Rotation": se.PackedQuat(se.Vector3),

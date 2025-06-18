@@ -42,7 +42,7 @@ class Object(recordclass.RecordClass, use_weakref=True):  # type: ignore
     CRC: Optional[int] = None
     PCode: Optional[tmpls.PCode] = None
     Material: Optional[tmpls.MCode] = None
-    ClickAction: Optional[int] = None
+    ClickAction: Optional[tmpls.ClickAction] = None
     Scale: Optional[Vector3] = None
     ParentID: Optional[int] = None
     # Actually contains a weakref proxy
@@ -243,6 +243,7 @@ def normalize_object_update(block: Block, handle: int):
         "NameValue": block.deserialize_var("NameValue", make_copy=False),
         "TextureAnim": block.deserialize_var("TextureAnim", make_copy=False),
         "ExtraParams": block.deserialize_var("ExtraParams", make_copy=False) or {},
+        "ClickAction": block.deserialize_var("ClickAction", make_copy=False),
         "PSBlock": block.deserialize_var("PSBlock", make_copy=False).value,
         "UpdateFlags": block.deserialize_var("UpdateFlags", make_copy=False),
         "State": block.deserialize_var("State", make_copy=False),
@@ -435,8 +436,8 @@ class FastObjectUpdateCompressedDataDeserializer:
             "PCode": pcode,
             "State": state,
             "CRC": crc,
-            "Material": material,
-            "ClickAction": click_action,
+            "Material": tmpls.MCode(material),
+            "ClickAction": tmpls.ClickAction(click_action),
             "Scale": scale,
             "Position": pos,
             "Rotation": rot,
