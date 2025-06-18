@@ -670,7 +670,7 @@ class ClientWorldObjectManager:
             return
 
         obj.Animations.clear()
-        for block in message["AnimationList"]:
+        for block in message.blocks.get("AnimationList", []):
             obj.Animations.append(block["AnimID"])
         self._run_object_update_hooks(obj, {"Animations"}, ObjectUpdateType.ANIMATIONS, message)
 

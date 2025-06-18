@@ -74,7 +74,7 @@ class AnimTrackerAddon(BaseAddon):
             # We don't care about other messages, we're just interested in distinguishing cases where the viewer
             # specifically requested something vs something being done by the server on its own.
             return
-        av = region.objects.lookup_avatar(session.agent_id)
+        av = session.objects.lookup_avatar(session.agent_id)
         if not av or not av.Object:
             print("Somehow didn't know about our own av object?")
             return

@@ -25,6 +25,7 @@ class JointNode:
     rotation: Vector3  # Euler rotation in degrees
     scale: Vector3
     type: str  # bone or collision_volume
+    support: str
 
     def __hash__(self):
         return hash((self.name, self.type))
@@ -97,6 +98,7 @@ class Skeleton:
             pivot=_get_vec_attr(node, "pivot", Vector3()),
             rotation=_get_vec_attr(node, "rot", Vector3()),
             scale=_get_vec_attr(node, "scale", Vector3(1, 1, 1)),
+            support=node.get('support', 'base'),
             type=node.tag,
         )
         self.joint_dict[name] = joint
