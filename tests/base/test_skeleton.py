@@ -20,7 +20,7 @@ class TestSkeleton(unittest.TestCase):
         self.assertEqual(113, self.skeleton["mKneeLeft"].index)
 
     def test_get_joint_parent(self):
-        self.assertEqual("mChest", self.skeleton["mNeck"].parent().name)
+        self.assertEqual("mChest", self.skeleton["mNeck"].parent.name)
 
     def test_get_joint_matrix(self):
         expected_mat = np.array([

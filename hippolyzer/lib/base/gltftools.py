@@ -429,8 +429,8 @@ class GLTFBuilder:
 
         # Add each joint to the child list of their respective parent
         for joint_name, joint_ctx in built_joints.items():
-            if parent := AVATAR_SKELETON[joint_name].parent:
-                built_joints[parent().name].node.children.append(self.model.nodes.index(joint_ctx.node))
+            if parent_name := AVATAR_SKELETON[joint_name].parent_name:
+                built_joints[parent_name].node.children.append(self.model.nodes.index(joint_ctx.node))
         return built_joints
 
     def _fix_blender_joint(self, joint_matrix: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
