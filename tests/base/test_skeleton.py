@@ -30,3 +30,9 @@ class TestSkeleton(unittest.TestCase):
             [0., 0., 0., 1.]
         ])
         np.testing.assert_equal(expected_mat, self.skeleton["mNeck"].matrix)
+
+    def test_get_inverse_joint(self):
+        self.assertEqual("R_CLAVICLE", self.skeleton["L_CLAVICLE"].inverse.name)
+        self.assertEqual(None, self.skeleton["mChest"].inverse)
+        self.assertEqual("mHandMiddle1Right", self.skeleton["mHandMiddle1Left"].inverse.name)
+        self.assertEqual("RIGHT_HANDLE", self.skeleton["LEFT_HANDLE"].inverse.name)

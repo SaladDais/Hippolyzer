@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import dataclasses
+import re
 import weakref
 from typing import *
 
@@ -73,6 +74,29 @@ class JointNode:
             if node.parent_name and node.parent_name == self.name:
                 children.append(node)
         return children
+
+    @property
+    def inverse(self) -> Optional[JointNode]:
+        l_re = re.compile(r"(.*?(?:_|\b))L((?:_|\b).*)")
+        r_re = re.compile(r"(.*?(?:_|\b))R((?:_|\b).*)")
+
+        inverse_name = None
+        if "Left" in self.name:
+            inverse_name = self.name.replace("Left", "Right")
+        elif "LEFT" in self.name:
+            inverse_name = self.name.replace("LEFT", "RIGHT")
+        elif l_re.match(self.name):
+            inverse_name = re.sub(l_re, r"\1R\2", self.name)
+        elif "Right" in self.name:
+            inverse_name = self.name.replace("Right", "Left")
+        elif "RIGHT" in self.name:
+            inverse_name = self.name.replace("RIGHT", "LEFT")
+        elif r_re.match(self.name):
+            inverse_name = re.sub(r_re, r"\1L\2", self.name)
+
+        if inverse_name:
+            return self.skeleton().joint_dict.get(inverse_name)
+        return None
 
     @property
     def descendents(self) -> Set[JointNode]:

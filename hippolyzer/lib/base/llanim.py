@@ -15,6 +15,8 @@ CONSTRAINT_DATACLASS = se.ForwardSerializable(lambda: se.Dataclass(Constraint))
 POSKEYFRAME_DATACLASS = se.ForwardSerializable(lambda: se.Dataclass(PosKeyframe))
 ROTKEYFRAME_DATACLASS = se.ForwardSerializable(lambda: se.Dataclass(RotKeyframe))
 
+JOINTS_DICT = OrderedMultiDict[str, "Joint"]
+
 
 @dataclasses.dataclass
 class Animation:
@@ -29,7 +31,7 @@ class Animation:
     ease_in_duration: float = se.dataclass_field(se.F32)
     ease_out_duration: float = se.dataclass_field(se.F32)
     hand_pose: HandPose = se.dataclass_field(lambda: se.IntEnum(HandPose, se.U32), default=0)
-    joints: OrderedMultiDict[str, Joint] = se.dataclass_field(se.MultiDictAdapter(
+    joints: JOINTS_DICT = se.dataclass_field(se.MultiDictAdapter(
         se.Collection(se.U32, se.Tuple(se.CStr(), JOINT_DATACLASS)),
     ))
     constraints: List[Constraint] = se.dataclass_field(

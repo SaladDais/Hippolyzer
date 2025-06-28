@@ -8,7 +8,7 @@ applied to the mesh before upload.
 I personally use manglers to strip bounding box materials you need
 to add to give a mesh an arbitrary center of rotation / scaling.
 """
-
+from hippolyzer.lib.base.helpers import reorient_coord
 from hippolyzer.lib.base.mesh import MeshAsset
 from hippolyzer.lib.proxy.addons import AddonManager
 
@@ -16,23 +16,8 @@ import local_mesh
 AddonManager.hot_reload(local_mesh, require_addons_loaded=True)
 
 
-def _reorient_coord(coord, orientation, normals=False):
-    coords = []
-    for axis in orientation:
-        axis_idx = abs(axis) - 1
-        if normals:
-            # Normals have a static domain from -1.0 to 1.0, just negate.
-            new_coord = coord[axis_idx] if axis >= 0 else -coord[axis_idx]
-        else:
-            new_coord = coord[axis_idx] if axis >= 0 else 1.0 - coord[axis_idx]
-        coords.append(new_coord)
-    if coord.__class__ in (list, tuple):
-        return coord.__class__(coords)
-    return coord.__class__(*coords)
-
-
-def _reorient_coord_list(coord_list, orientation, normals=False):
-    return [_reorient_coord(x, orientation, normals) for x in coord_list]
+def _reorient_coord_list(coord_list, orientation, min_val: int | float = 0):
+    return [reorient_coord(x, orientation, min_val) for x in coord_list]
 
 
 def reorient_mesh(orientation):
@@ -47,7 +32,7 @@ def reorient_mesh(orientation):
             # flipping the axes around.
             material["Position"] = _reorient_coord_list(material["Position"], orientation)
             # Are you even supposed to do this to the normals?
-            material["Normal"] = _reorient_coord_list(material["Normal"], orientation, normals=True)
+            material["Normal"] = _reorient_coord_list(material["Normal"], orientation, min_val=-1)
         return mesh
     return _reorienter
 

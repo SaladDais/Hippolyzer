@@ -3,10 +3,12 @@ Assorted utilities to make creating animations from scratch easier
 """
 
 import copy
-from typing import List, Union
+from typing import List, Union, Mapping
 
 from hippolyzer.lib.base.datatypes import Vector3, Quaternion
-from hippolyzer.lib.base.llanim import PosKeyframe, RotKeyframe
+from hippolyzer.lib.base.llanim import PosKeyframe, RotKeyframe, JOINTS_DICT, Joint
+from hippolyzer.lib.base.mesh_skeleton import AVATAR_SKELETON
+from hippolyzer.lib.base.multidict import OrderedMultiDict
 
 
 def smooth_step(t: float):
@@ -89,3 +91,35 @@ def smooth_rot(start: Quaternion, end: Quaternion, inter_frames: int, time: floa
         smooth_t = smooth_step(t)
         frames.append(RotKeyframe(time=time + (t * duration), rot=rot_interp(start, end, smooth_t)))
     return frames + [RotKeyframe(time=time + duration, rot=end)]
+
+
+def mirror_joints(joints_dict: Mapping[str, Joint]) -> JOINTS_DICT:
+    """Mirror a joints dict so left / right are swapped, including transformations"""
+    new_joints: JOINTS_DICT = OrderedMultiDict()
+
+    for joint_name, joint in joints_dict.items():
+        inverse_joint_node = AVATAR_SKELETON[joint_name].inverse
+        if not inverse_joint_node:
+            new_joints[joint_name] = joint
+            continue
+
+        # Okay, this is one we have to actually mirror
+        new_joint = Joint(joint.priority, [], [])
+
+        for rot_keyframe in joint.rot_keyframes:
+            new_joint.rot_keyframes.append(RotKeyframe(
+                time=rot_keyframe.time,
+                # Just need to mirror on yaw and roll
+                rot=Quaternion.from_euler(*(rot_keyframe.rot.to_euler() * Vector3(-1, 1, -1)))
+            ))
+
+        for pos_keyframe in joint.pos_keyframes:
+            new_joint.pos_keyframes.append(PosKeyframe(
+                time=pos_keyframe.time,
+                # Y is left / right so just negate it.
+                pos=pos_keyframe.pos * Vector3(1, -1, 1)
+            ))
+
+        new_joints[inverse_joint_node.name] = new_joint
+
+    return new_joints
