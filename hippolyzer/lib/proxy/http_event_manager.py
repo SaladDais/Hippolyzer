@@ -360,7 +360,7 @@ class MITMProxyEventManager:
             sim_seed = event["body"]["seed-capability"]
         # We teleported or cross region, opening comms to new sim
         elif msg and msg.name in ("TeleportFinish", "CrossedRegion"):
-            sim_block = msg.get_block("RegionData", msg.get_block("Info"))[0]
+            sim_block = msg.get_blocks("RegionData", msg.get_blocks("Info"))[0]
             sim_addr = (sim_block["SimIP"], sim_block["SimPort"])
             sim_handle = sim_block["RegionHandle"]
             sim_seed = sim_block["SeedCapability"]

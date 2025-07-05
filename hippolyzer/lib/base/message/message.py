@@ -267,7 +267,7 @@ class Message:
         block.message_name = self.name
         block.finalize()
 
-    def get_block(self, block_name: str, default=None, /) -> Optional[Block]:
+    def get_blocks(self, block_name: str, default=None, /) -> Optional[MsgBlockList]:
         return self.blocks.get(block_name, default)
 
     @property

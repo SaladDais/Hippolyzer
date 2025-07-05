@@ -16,6 +16,8 @@ from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.helpers import get_resource_filename
 from hippolyzer.lib.base.inventory import InventorySaleInfo, InventoryPermissions
 from hippolyzer.lib.base.legacy_schema import SchemaBase, parse_schema_line, SchemaParsingError
+import hippolyzer.lib.base.serialization as se
+from hippolyzer.lib.base.message.message import Message
 from hippolyzer.lib.base.templates import WearableType
 
 LOG = logging.getLogger(__name__)
@@ -78,6 +80,13 @@ class AvatarTEIndex(enum.IntEnum):
         return self.name.endswith("_BAKED")
 
 
+class VisualParamGroup(enum.IntEnum):
+    TWEAKABLE = 0
+    ANIMATABLE = 1
+    TWEAKABLE_NO_TRANSMIT = 2
+    TRANSMIT_NOT_TWEAKABLE = 3
+
+
 @dataclasses.dataclass
 class VisualParam:
     id: int
@@ -85,9 +94,15 @@ class VisualParam:
     value_min: float
     value_max: float
     value_default: float
+    group: VisualParamGroup
     # These might be `None` if the param isn't meant to be directly edited
     edit_group: Optional[str]
     wearable: Optional[str]
+
+    def dequantize_val(self, val: int) -> float:
+        """Dequantize U8 values from AvatarAppearance messages"""
+        spec = se.QuantizedFloat(se.U8, self.value_min, self.value_max, False)
+        return spec.decode(val, None)
 
 
 class VisualParams(List[VisualParam]):
@@ -95,16 +110,31 @@ class VisualParams(List[VisualParam]):
         super().__init__()
         with open(lad_path, "rb") as f:
             doc = parse_etree(f)
+
+        temp_params = []
         for param in doc.findall(".//param"):
-            self.append(VisualParam(
+            temp_params.append(VisualParam(
                 id=int(param.attrib["id"]),
                 name=param.attrib["name"],
+                group=VisualParamGroup(int(param.get("group", "0"))),
                 edit_group=param.get("edit_group"),
                 wearable=param.get("wearable"),
                 value_min=float(param.attrib["value_min"]),
                 value_max=float(param.attrib["value_max"]),
                 value_default=float(param.attrib.get("value_default", 0.0))
             ))
+        # Some functionality relies on the list being sorted by ID, though there may be holes.
+        temp_params.sort(key=lambda x: x.id)
+        # Remove dupes, only using the last value present (matching indra behavior)
+        # This is necessary to remove the duplicate eye pop entry...
+        self.extend({x.id: x for x in temp_params}.values())
+
+    @property
+    def appearance_params(self) -> Iterator[VisualParam]:
+        for param in self:
+            if param.group not in (VisualParamGroup.TWEAKABLE, VisualParamGroup.TRANSMIT_NOT_TWEAKABLE):
+                continue
+            yield param
 
     def by_name(self, name: str) -> VisualParam:
         return [x for x in self if x.name == name][0]
@@ -117,6 +147,12 @@ class VisualParams(List[VisualParam]):
 
     def by_id(self, vparam_id: int) -> VisualParam:
         return [x for x in self if x.id == vparam_id][0]
+
+    def parse_appearance_message(self, message: Message) -> Dict[int, float]:
+        params = {}
+        for param, value_block in zip(self.appearance_params, message["VisualParam"]):
+            params[param.id] = param.dequantize_val(value_block["ParamValue"])
+        return params
 
 
 VISUAL_PARAMS = VisualParams(get_resource_filename("lib/base/data/avatar_lad.xml"))

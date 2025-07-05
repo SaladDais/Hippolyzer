@@ -27,6 +27,7 @@ from hippolyzer.lib.base.objects import (
     Object, handle_to_global_pos,
 )
 from hippolyzer.lib.base.settings import Settings
+from hippolyzer.lib.base.wearables import VISUAL_PARAMS
 from hippolyzer.lib.client.namecache import NameCache, NameCacheEntry
 from hippolyzer.lib.base.templates import PCode, ObjectStateSerializer, XferFilePath
 from hippolyzer.lib.base import llsd
@@ -47,6 +48,7 @@ class ObjectUpdateType(enum.IntEnum):
     COSTS = enum.auto()
     KILL = enum.auto()
     ANIMATIONS = enum.auto()
+    APPEARANCE = enum.auto()
 
 
 class ClientObjectManager:
@@ -299,6 +301,8 @@ class ClientWorldObjectManager:
                                   self._handle_animation_message)
         message_handler.subscribe("ObjectAnimation",
                                   self._handle_animation_message)
+        message_handler.subscribe("AvatarAppearance",
+                                  self._handle_avatar_appearance_message)
 
     def lookup_fullid(self, full_id: UUID) -> Optional[Object]:
         return self._fullid_lookup.get(full_id, None)
@@ -663,7 +667,8 @@ class ClientWorldObjectManager:
         elif message.name == "ObjectAnimation":
             obj = self.lookup_fullid(sender_id)
             if not obj:
-                LOG.warning(f"Received AvatarAnimation for avatar with no object {sender_id}")
+                # This is only a debug message in the viewer, but let's be louder.
+                LOG.warning(f"Received ObjectAnimation for animesh with no object {sender_id}")
                 return
         else:
             LOG.error(f"Unknown animation message type: {message.name}")
@@ -673,6 +678,31 @@ class ClientWorldObjectManager:
         for block in message.blocks.get("AnimationList", []):
             obj.Animations.append(block["AnimID"])
         self._run_object_update_hooks(obj, {"Animations"}, ObjectUpdateType.ANIMATIONS, message)
+
+    def _handle_avatar_appearance_message(self, message: Message):
+        sender_id: UUID = message["Sender"]["ID"]
+        if message["Sender"]["IsTrial"]:
+            return
+        av = self.lookup_avatar(sender_id)
+        if not av:
+            LOG.warning(f"Received AvatarAppearance with no avatar {sender_id}")
+            return
+
+        version = message["AppearanceData"]["CofVersion"]
+        if version < av.COFVersion:
+            LOG.warning(f"Ignoring stale appearance for {sender_id}, {version} < {av.COFVersion}")
+            return
+
+        if not message.get_blocks("VisualParam"):
+            LOG.warning(f"No visual params in AvatarAppearance for {sender_id}")
+            return
+
+        av.COFVersion = version
+        av.Appearance = VISUAL_PARAMS.parse_appearance_message(message)
+
+        av_obj = av.Object
+        if av_obj:
+            self._run_object_update_hooks(av_obj, set(), ObjectUpdateType.APPEARANCE, message)
 
     def _process_get_object_cost_response(self, parsed: dict):
         if "error" in parsed:
@@ -953,6 +983,8 @@ class Avatar:
         self.Object: Optional["Object"] = obj
         self.RegionHandle: int = region_handle
         self.CoarseLocation = coarse_location
+        self.Appearance: Dict[int, float] = {}
+        self.COFVersion: int = -1
         self.Valid = True
         self.GuessedZ: Optional[float] = None
         self._resolved_name = resolved_name
