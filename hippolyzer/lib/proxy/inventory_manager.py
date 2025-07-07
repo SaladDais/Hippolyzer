@@ -158,6 +158,12 @@ class ProxyInventoryManager(InventoryManager):
         await super().move(node, new_parent)
         await self._session.main_region.circuit.send_reliable(self._craft_update_message(node))
 
+    async def copy(self, node: InventoryNodeBase, destination: UUID | InventoryCategory, contents: bool = True)\
+            -> InventoryCategory | InventoryItem:
+        ret_node = await super().copy(node, destination, contents)
+        await self._session.main_region.circuit.send_reliable(self._craft_update_message(node))
+        return ret_node
+
     def _craft_removal_message(self, node: InventoryNodeBase) -> Message:
         is_folder = True
         if isinstance(node, InventoryItem):

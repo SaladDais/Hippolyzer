@@ -485,6 +485,25 @@ class InventoryContainerBase(InventoryNodeBase):
             if x.parent_id == self.node_id
         )
 
+    @property
+    def descendents(self) -> List[InventoryNodeBase]:
+        new_children: List[InventoryNodeBase] = [self]
+        descendents = []
+        while new_children:
+            to_check = new_children[:]
+            new_children.clear()
+            for obj in to_check:
+                if isinstance(obj, InventoryContainerBase):
+                    for child in obj.children:
+                        if child in descendents:
+                            continue
+                        new_children.append(child)
+                        descendents.append(child)
+                else:
+                    if obj not in descendents:
+                        descendents.append(obj)
+        return descendents
+
     def __getitem__(self, item: Union[int, str]) -> InventoryNodeBase:
         if isinstance(item, int):
             return self.children[item]

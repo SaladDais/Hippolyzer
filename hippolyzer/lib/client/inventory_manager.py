@@ -6,7 +6,7 @@ import gzip
 import itertools
 import logging
 from pathlib import Path
-from typing import Union, List, Tuple, Set, Sequence
+from typing import Union, List, Tuple, Set, Sequence, Dict
 
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
@@ -340,6 +340,52 @@ class InventoryManager:
         # TODO: probably need to update category versions for both source and target
         await self._session.main_region.circuit.send_reliable(msg)
         node.parent_id = new_parent
+
+    async def copy(self, node: InventoryNodeBase, destination: UUID | InventoryCategory, contents: bool = True)\
+            -> InventoryItem | InventoryCategory:
+        destination = _get_node_id(destination)
+        if isinstance(node, InventoryItem):
+            with self._session.main_region.message_handler.subscribe_async(
+                    ("BulkUpdateInventory",),
+                    # Not ideal, but there doesn't seem to be an easy way to determine the transaction ID,
+                    # and using the callback ID seems a bit crap.
+                    predicate=lambda x: x["ItemData"]["Name"] == node.name,
+                    take=False,
+            ) as get_msg:
+                await self._session.main_region.circuit.send_reliable(Message(
+                    'CopyInventoryItem',
+                    Block('AgentData', AgentID=self._session.agent_id, SessionID=self._session.id),
+                    Block(
+                        'InventoryData',
+                        CallbackID=0,
+                        OldAgentID=self._session.agent_id,
+                        OldItemID=node.item_id,
+                        NewFolderID=destination,
+                        NewName=b''
+                    )
+                ))
+                msg = await asyncio.wait_for(get_msg(), 5.0)
+                return self.model.get(msg["ItemData"]["ItemID"])  # type: ignore
+        elif isinstance(node, InventoryCategory):
+            # Keep a list of the original descendents in case we're copy a folder within itself
+            to_copy = list(node.descendents)
+            # There's not really any way to "copy" a category, we just create a new one with the same properties.
+            new_cat = await self.create_folder(destination, node.name, node.pref_type)
+            if contents:
+                cat_lookup: Dict[UUID, UUID] = {node.node_id: new_cat.node_id}
+                # Recreate the category hierarchy first, keeping note of the new category IDs.
+                for node in to_copy:
+                    if isinstance(node, InventoryCategory):
+                        new_parent = cat_lookup[node.parent_id]
+                        cat_lookup[node.node_id] = (await self.copy(node, new_parent, contents=False)).node_id
+                # Items have to be explicitly copied individually
+                for node in to_copy:
+                    if isinstance(node, InventoryItem):
+                        new_parent = cat_lookup[node.parent_id]
+                        await self.copy(node, new_parent, contents=False)
+            return new_cat
+        else:
+            assert False
 
     async def update(self, node: InventoryNodeBase, data: dict) -> None:
         path = f"/category/{node.node_id}"
