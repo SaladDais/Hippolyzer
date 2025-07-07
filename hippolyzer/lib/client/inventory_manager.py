@@ -365,7 +365,13 @@ class InventoryManager:
                     )
                 ))
                 msg = await asyncio.wait_for(get_msg(), 5.0)
-                return self.model.get(msg["ItemData"]["ItemID"])  # type: ignore
+                # BulkInventoryUpdate message may not have already been handled internally, do it manually.
+                self._handle_bulk_update_inventory(msg)
+
+                # Now pull the item out of the inventory
+                new_item = self.model.get(msg["ItemData"]["ItemID"])
+                assert new_item is not None
+                return new_item  # type: ignore
         elif isinstance(node, InventoryCategory):
             # Keep a list of the original descendents in case we're copy a folder within itself
             to_copy = list(node.descendents)
@@ -385,7 +391,7 @@ class InventoryManager:
                         await self.copy(node, new_parent, contents=False)
             return new_cat
         else:
-            assert False
+            raise ValueError(f"Unknown node type: {node!r}")
 
     async def update(self, node: InventoryNodeBase, data: dict) -> None:
         path = f"/category/{node.node_id}"
