@@ -38,6 +38,7 @@ class InventoryManager:
         self._session.message_handler.subscribe("BulkUpdateInventory", self._handle_bulk_update_inventory)
         self._session.message_handler.subscribe("UpdateCreateInventoryItem", self._handle_update_create_inventory_item)
         self._session.message_handler.subscribe("RemoveInventoryItem", self._handle_remove_inventory_item)
+        self._session.message_handler.subscribe("RemoveInventoryObjects", self._handle_remove_inventory_objects)
         self._session.message_handler.subscribe("RemoveInventoryFolder", self._handle_remove_inventory_folder)
         self._session.message_handler.subscribe("MoveInventoryItem", self._handle_move_inventory_item)
         self._session.message_handler.subscribe("MoveInventoryFolder", self._handle_move_inventory_folder)
@@ -174,6 +175,17 @@ class InventoryManager:
     def _handle_remove_inventory_folder(self, msg: Message):
         self._validate_recipient(msg["AgentData"]["AgentID"])
         for folder_block in msg["FolderData"]:
+            node = self.model.get(folder_block["FolderID"])
+            if node:
+                self.model.unlink(node)
+
+    def _handle_remove_inventory_objects(self, msg: Message):
+        self._validate_recipient(msg["AgentData"]["AgentID"])
+        for item_block in msg.get_blocks("ItemData", []):
+            node = self.model.get(item_block["ItemID"])
+            if node:
+                self.model.unlink(node)
+        for folder_block in msg.get_blocks("FolderData", []):
             node = self.model.get(folder_block["FolderID"])
             if node:
                 self.model.unlink(node)
