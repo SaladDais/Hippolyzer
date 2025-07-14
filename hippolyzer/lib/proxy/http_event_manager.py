@@ -342,9 +342,14 @@ class MITMProxyEventManager:
         msg.direction = Direction.IN
 
         try:
+            session.message_handler.handle(msg)
+        except:
+            LOG.exception("Failed while handling EQ message for session")
+
+        try:
             region.message_handler.handle(msg)
         except:
-            LOG.exception("Failed while handling EQ message")
+            LOG.exception("Failed while handling EQ message for region")
 
         handle_event = AddonManager.handle_eq_event(session, region, event)
         if handle_event is True:
