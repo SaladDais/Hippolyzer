@@ -57,6 +57,7 @@ _ASSET_TYPE_BIDI: BiDiDict[str] = BiDiDict({
 @se.enum_field_serializer("AssetUploadComplete", "AssetBlock", "Type")
 @se.enum_field_serializer("UpdateCreateInventoryItem", "InventoryData", "Type")
 @se.enum_field_serializer("CreateInventoryItem", "InventoryBlock", "Type")
+@se.enum_field_serializer("LinkInventoryItem", "InventoryBlock", "Type")
 @se.enum_field_serializer("RezObject", "InventoryData", "Type")
 @se.enum_field_serializer("RezScript", "InventoryBlock", "Type")
 @se.enum_field_serializer("UpdateTaskInventory", "InventoryData", "Type")
@@ -143,6 +144,7 @@ _INV_TYPE_BIDI: BiDiDict[str] = BiDiDict({
 
 @se.enum_field_serializer("UpdateCreateInventoryItem", "InventoryData", "InvType")
 @se.enum_field_serializer("CreateInventoryItem", "InventoryBlock", "InvType")
+@se.enum_field_serializer("LinkInventoryItem", "InventoryBlock", "InvType")
 @se.enum_field_serializer("RezObject", "InventoryData", "InvType")
 @se.enum_field_serializer("RezScript", "InventoryBlock", "InvType")
 @se.enum_field_serializer("UpdateTaskInventory", "InventoryData", "InvType")
@@ -1982,6 +1984,7 @@ class RegionFlags(IntFlag):
     ALLOW_VOICE = 1 << 28
     BLOCK_PARCEL_SEARCH = 1 << 29
     DENY_AGEUNVERIFIED = 1 << 30
+    DENY_BOTS = 1 << 31
 
 
 @se.flag_field_serializer("RegionHandshakeReply", "RegionInfo", "Flags")
