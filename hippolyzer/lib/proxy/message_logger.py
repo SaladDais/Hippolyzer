@@ -7,6 +7,7 @@ import copy
 import fnmatch
 import gzip
 import io
+import json
 import logging
 import pickle
 import re
@@ -507,6 +508,8 @@ class HTTPMessageLogEntry(AbstractMessageLogEntry):
                                 raise
                     elif any(content_type.startswith(x) for x in ("application/xml", "text/xml")):
                         beautified = self._format_xml(message.content)
+                    elif "json" in content_type:
+                        beautified = json.dumps(json.loads(message.content), indent=2)
             except:
                 LOG.exception("Failed to beautify message")
 
