@@ -18,6 +18,7 @@ from hippolyzer.lib.base.network.caps_client import CapsClient
 from hippolyzer.lib.base.network.transport import ADDR_TUPLE
 from hippolyzer.lib.base.objects import handle_to_global_pos
 from hippolyzer.lib.base.xfer_manager import XferManager
+from hippolyzer.lib.client.inventory_manager import InventoryManager
 
 from hippolyzer.lib.client.object_manager import ClientObjectManager, ClientWorldObjectManager
 
@@ -91,6 +92,7 @@ class BaseClientSession(abc.ABC):
     region_by_handle: Callable[[int], Optional[BaseClientRegion]]
     region_by_circuit_addr: Callable[[ADDR_TUPLE], Optional[BaseClientRegion]]
     objects: ClientWorldObjectManager
+    inventory: InventoryManager
     login_data: Dict[str, Any]
     REGION_CLS = Type[BaseClientRegion]
 

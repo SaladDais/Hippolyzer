@@ -6,15 +6,17 @@ import gzip
 import itertools
 import logging
 from pathlib import Path
-from typing import Union, List, Tuple, Set, Sequence, Dict
+from typing import Union, List, Tuple, Set, Sequence, Dict, TYPE_CHECKING
 
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
 from hippolyzer.lib.base.inventory import InventoryModel, InventoryCategory, InventoryItem, InventoryNodeBase
 from hippolyzer.lib.base.message.message import Message, Block
 from hippolyzer.lib.base.templates import AssetType, FolderType, InventoryType, Permissions
-from hippolyzer.lib.client.state import BaseClientSession
 from hippolyzer.lib.base.templates import WearableType
+
+if TYPE_CHECKING:
+    from hippolyzer.lib.client.state import BaseClientSession
 
 LOG = logging.getLogger(__name__)
 

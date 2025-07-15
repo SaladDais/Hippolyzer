@@ -159,7 +159,7 @@ class TestHippoClient(unittest.IsolatedAsyncioTestCase):
 
     async def test_inventory_manager(self):
         await self._log_client_in(self.client)
-        self.assertEqual(self.client.session.inventory_manager.model.root.node_id, UUID(int=4))
+        self.assertEqual(self.client.session.inventory.model.root.node_id, UUID(int=4))
 
     async def test_resend_suppression(self):
         """Make sure the client only handles the first seen copy of a reliable message"""

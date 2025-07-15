@@ -34,6 +34,7 @@ if TYPE_CHECKING:
 
 class Session(BaseClientSession):
     regions: MutableSequence[ProxiedRegion]
+    inventory: ProxyInventoryManager
     region_by_handle: Callable[[int], Optional[ProxiedRegion]]
     region_by_circuit_addr: Callable[[ADDR_TUPLE], Optional[ProxiedRegion]]
     main_region: Optional[ProxiedRegion]

@@ -626,6 +626,9 @@ class InventoryItem(InventoryNodeBase):
     name: Optional[str] = schema_field(SchemaMultilineStr, default=None)
     desc: Optional[str] = schema_field(SchemaMultilineStr, default=None)
     metadata: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None, include_none=True)
+    """Specifically for script metadata, generally just experience info"""
+    thumbnail: Optional[Dict[str, Any]] = schema_field(SchemaLLSD, default=None, include_none=False)
+    """Generally just a dict with the thumbnail UUID in it"""
     creation_date: Optional[dt.datetime] = schema_field(SchemaDate, llsd_name="created_at", default=None)
 
     __hash__ = InventoryNodeBase.__hash__

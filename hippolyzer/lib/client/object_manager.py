@@ -15,7 +15,7 @@ from typing import *
 
 from hippolyzer.lib.base.datatypes import UUID, Vector3
 from hippolyzer.lib.base.helpers import proxify
-from hippolyzer.lib.base.inventory import InventoryItem, InventoryModel
+from hippolyzer.lib.base.inventory import InventoryItem, InventoryModel, InventoryObject
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.message_handler import MessageHandler
 from hippolyzer.lib.base.message.msgtypes import PacketFlags
@@ -229,7 +229,18 @@ class ClientObjectManager:
     async def request_object_inv_via_cap(self, obj: Object) -> List[InventoryItem]:
         async with self._region.caps_client.get("RequestTaskInventory", params={"task_id": obj.FullID}) as resp:
             resp.raise_for_status()
-            return [InventoryItem.from_llsd(x) for x in (await resp.read_llsd())["contents"]]
+            all_items = [InventoryItem.from_llsd(x) for x in (await resp.read_llsd())["contents"]]
+            # Synthesize the Contents directory so the items can have a parent
+            parent = InventoryObject(
+                obj_id=obj.FullID,
+                name="Contents",
+            )
+            model = InventoryModel()
+            model.add(parent)
+            for item in all_items:
+                model.add(item)
+
+            return all_items
 
     async def request_object_inv_via_xfer(self, obj: Object) -> List[InventoryItem]:
         session = self._region.session()
@@ -369,6 +380,10 @@ class ClientWorldObjectManager:
             region_mgr = self._get_region_manager(region_handle)
             futs.extend(region_mgr.request_object_properties(region_objs))
         return futs
+
+    async def request_object_inv(self, obj: Object) -> List[InventoryItem]:
+        region_mgr = self._get_region_manager(obj.RegionHandle)
+        return await region_mgr.request_object_inv(obj)
 
     async def load_ancestors(self, obj: Object, wait_time: float = 1.0):
         """

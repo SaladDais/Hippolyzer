@@ -330,7 +330,7 @@ class HippoClientSession(BaseClientSession):
         super().__init__(id, secure_session_id, agent_id, circuit_code, session_manager, login_data=login_data)
         self.http_session = session_manager.http_session
         self.objects = ClientWorldObjectManager(proxify(self), session_manager.settings, None)
-        self.inventory_manager = InventoryManager(proxify(self))
+        self.inventory = InventoryManager(proxify(self))
         self.transport: Optional[SocketUDPTransport] = None
         self.protocol: Optional[HippoClientProtocol] = None
         self.message_handler.take_by_default = False
