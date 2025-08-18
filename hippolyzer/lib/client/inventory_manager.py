@@ -120,6 +120,7 @@ class InventoryManager:
             # Line-delimited LLSD notation!
             for line in f.readlines():
                 # TODO: Parsing of invcache is dominated by `parse_notation()`. It's stupidly inefficient.
+                # TODO: sniff out binary LLSD invcaches
                 node_llsd = llsd.parse_notation(line)
                 if first_line:
                     # First line is the file header
@@ -140,7 +141,7 @@ class InventoryManager:
 
     def _handle_bulk_update_inventory(self, msg: Message):
         any_cats = False
-        for folder_block in msg["FolderData"]:
+        for folder_block in msg.get_blocks("FolderData", ()):
             if folder_block["FolderID"] == UUID.ZERO:
                 continue
             any_cats = True
@@ -150,7 +151,7 @@ class InventoryManager:
                 # and hasn't just moved.
                 update_fields={"parent_id", "name", "pref_type"},
             )
-        for item_block in msg["ItemData"]:
+        for item_block in msg.get_blocks("ItemData", ()):
             if item_block["ItemID"] == UUID.ZERO:
                 continue
             self.model.upsert(InventoryItem.from_inventory_data(item_block))
