@@ -84,7 +84,7 @@ class Circuit:
     def send(self, message: Message, transport=None) -> UDPPacket:
         if self.prepare_message(message):
             # If the message originates from us then we're responsible for resends.
-            if message.reliable and message.synthetic:
+            if message.reliable and message.synthetic and not transport:
                 self.unacked_reliable[(message.direction, message.packet_id)] = ReliableResendInfo(
                     last_resent=dt.datetime.now(),
                     message=message,
