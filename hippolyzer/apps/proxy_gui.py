@@ -719,7 +719,9 @@ class MessageBuilderWindow(QtWidgets.QMainWindow):
             transport = None
             off_circuit = self.checkOffCircuit.isChecked()
             if off_circuit:
-                transport = SocketUDPTransport(socket.socket(socket.AF_INET, socket.SOCK_DGRAM))
+                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                sock.bind(("0.0.0.0", 0))
+                transport = SocketUDPTransport(sock)
             region.circuit.send(msg, transport=transport)
             if off_circuit:
                 transport.close()
