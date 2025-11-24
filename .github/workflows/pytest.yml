@@ -33,7 +33,7 @@ jobs:
         pip install -r requirements.txt
         pip install -r requirements-test.txt
         sudo apt-get install libopenjp2-7
-        pip install -e .
+        pip install -e .[gui]
     - name: Run Flake8
       run: |
         flake8 .

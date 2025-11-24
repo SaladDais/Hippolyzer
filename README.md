@@ -35,7 +35,9 @@ with low-level SL details. See the [Local Animation addon example](https://githu
 * Activate the virtualenv by running the appropriate activation script
 * * Under Linux this would be something like `source <virtualenv_dir>/bin/activate`
 * * Under Windows it's `<virtualenv_dir>\Scripts\activate.bat`
-* Run `pip install hippolyzer`, or run `pip install -e .` in a cloned repo to install an editable version
+* Run `pip install hippolyzer[gui]` for a full install, or run `pip install -e .[gui]` in a cloned repo to install an editable version
+* * If you only want the core library without proxy or GUI support, use `pip install hippolyzer` or `pip install -e .`
+* * If you only want proxy/CLI support without the GUI, use `pip install hippolyzer[proxy]` or `pip install -e .[proxy]`
 
 ### Binary Windows Builds
 

@@ -26,23 +26,30 @@ classifiers = [
 ]
 dependencies = [
     "aiohttp<4.0.0",
-    "arpeggio",
     "defusedxml",
     "gltflib",
     "Glymur<0.9.7",
     "idna<3,>=2.5",
     "lazy-object-proxy",
     "llsd<1.1.0",
-    "mitmproxy>=11.0.0,<12",
     "numpy<2.0",
-    "outleap<1.0",
-    "ptpython<4.0",
     "pycollada",
-    "pyside6-essentials",
-    "qasync",
     "recordclass>=0.23.1,<0.24",
     "transformations",
+]
+
+[project.optional-dependencies]
+proxy = [
+    "arpeggio",
+    "mitmproxy>=11.0.0,<12",
+    "outleap<1.0",
+    "ptpython<4.0",
     "Werkzeug<4.0",
+]
+gui = [
+    "hippolyzer[proxy]",
+    "pyside6-essentials",
+    "qasync",
 ]
 
 [tool.setuptools.packages.find]
