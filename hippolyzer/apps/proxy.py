@@ -12,6 +12,7 @@ import mitmproxy.exceptions
 import outleap
 
 from hippolyzer.lib.base import llsd
+from hippolyzer.lib.base.helpers import patch_loop_factory_for_ptpython
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.ca_utils import setup_ca
@@ -206,6 +207,7 @@ def _windows_timeout_killer(pid: int):
 
 
 def main():
+    patch_loop_factory_for_ptpython()
     multiprocessing.set_start_method("spawn")
     start_proxy(SessionManager(ProxySettings()))
 

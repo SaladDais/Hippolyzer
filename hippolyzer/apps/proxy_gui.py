@@ -24,7 +24,8 @@ from hippolyzer.apps.model import MessageLogModel, MessageLogHeader, RegionListM
 from hippolyzer.apps.proxy import start_proxy
 from hippolyzer.lib.base import llsd
 from hippolyzer.lib.base.datatypes import UUID
-from hippolyzer.lib.base.helpers import bytes_unescape, bytes_escape, get_resource_filename, create_logged_task
+from hippolyzer.lib.base.helpers import bytes_unescape, bytes_escape, get_resource_filename, create_logged_task, \
+    patch_loop_factory_for_ptpython
 from hippolyzer.lib.base.message.llsd_msg_serializer import LLSDMessageSerializer
 from hippolyzer.lib.base.message.message import Block, Message
 from hippolyzer.lib.base.message.message_formatting import (
@@ -924,6 +925,7 @@ class FilterDialog(QtWidgets.QDialog):
 
 
 def gui_main():
+    patch_loop_factory_for_ptpython()
     multiprocessing.set_start_method('spawn')
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
     app = QtWidgets.QApplication(sys.argv)

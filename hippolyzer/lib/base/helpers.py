@@ -5,6 +5,7 @@ import codecs
 import functools
 import logging
 import os
+import platform
 
 import lazy_object_proxy
 import pkg_resources
@@ -213,3 +214,17 @@ def reorient_coord(coord, new_orientation, min_val: int | float = 0):
     if coord.__class__ in (list, tuple):
         return coord.__class__(coords)
     return coord.__class__(*coords)
+
+
+def patch_loop_factory_for_ptpython() -> None:
+    # This patch can be removed when https://github.com/prompt-toolkit/ptpython/issues/582 is fixed
+    from asyncio import get_event_loop_policy
+    if platform.system() != "Windows":
+        return
+
+    policy = get_event_loop_policy()
+    # Note: this patches the underlying event loop class, already existing subclasses should pick up these
+    # new additions as well. This is important for the Qt event loops.
+    if loop_factory := getattr(policy, "_loop_factory", None):
+        for attr in ("add_signal_handler", "remove_signal_handler"):
+            setattr(loop_factory, attr, lambda *args, **kwargs: None)
