@@ -252,7 +252,7 @@ class InventoryModel(InventoryBase):
 
     @property
     def dirty_categories(self) -> Iterable[InventoryCategory]:
-        for node in self.nodes:
+        for node in self.nodes.values():
             if isinstance(node, InventoryCategory) and node.version == InventoryCategory.VERSION_NONE:
                 yield node
 

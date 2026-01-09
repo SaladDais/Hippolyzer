@@ -154,6 +154,13 @@ class VisualParams(List[VisualParam]):
             params[param.id] = param.dequantize_val(value_block["ParamValue"])
         return params
 
+    def parse_appearance_bytes(self, data: bytes) -> Dict[int, float]:
+        """Parse raw appearance bytes (e.g. from server bake response)."""
+        params = {}
+        for param, val in zip(self.appearance_params, data):
+            params[param.id] = param.dequantize_val(val)
+        return params
+
 
 VISUAL_PARAMS = VisualParams(get_resource_filename("lib/base/data/avatar_lad.xml"))
 

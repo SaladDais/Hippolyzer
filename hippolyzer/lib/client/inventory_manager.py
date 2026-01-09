@@ -250,6 +250,37 @@ class InventoryManager:
                 # Presumably this list is exhaustive, so don't unlink children.
                 self.model.unlink(node, single_only=True)
 
+    def process_fetch_descendents_response(self, data: dict) -> List[InventoryCategory]:
+        """Process a FetchInventoryDescendents2 response and update the model."""
+        result = []
+        for folder_data in data.get("folders", []):
+            folder_id = UUID(folder_data["folder_id"])
+            cat = self.model.get_category(folder_id)
+            if cat:
+                cat.version = folder_data["version"]
+                result.append(cat)
+
+            # Parse child categories
+            for cat_data in folder_data.get("categories", []):
+                cat_id = UUID(cat_data.get("category_id") or cat_data.get("folder_id"))
+                self.model.upsert(InventoryCategory(
+                    cat_id=cat_id,
+                    parent_id=UUID(cat_data["parent_id"]),
+                    name=cat_data["name"],
+                    version=cat_data["version"],
+                    type=AssetType.CATEGORY,
+                    pref_type=FolderType(cat_data.get("type_default", FolderType.NONE)),
+                    owner_id=UUID(cat_data["agent_id"]),
+                ))
+
+            # Parse child items
+            for item_data in folder_data.get("items", []):
+                if (item := InventoryItem.from_llsd(item_data, flavor="ais")) is not None:
+                    self.model.upsert(item)
+
+        self.model.flag_if_dirty()
+        return result
+
     async def make_ais_request(
             self,
             method: str,
@@ -347,6 +378,7 @@ class InventoryManager:
         )
 
         if isinstance(node, InventoryItem):
+            msg.name = "MoveInventoryItem"
             msg.add_block(Block("InventoryData", ItemID=node.node_id, FolderID=new_parent, NewName=b''))
         else:
             msg.add_block(Block("InventoryData", FolderID=node.node_id, ParentID=new_parent))
@@ -413,3 +445,110 @@ class InventoryManager:
         if isinstance(node, InventoryItem):
             path = f"/item/{node.node_id}"
         await self.make_ais_request("PATCH", path, {}, data)
+
+    async def remove(self, node: InventoryNodeBase) -> None:
+        """Remove an inventory item or folder."""
+        path = f"/category/{node.node_id}"
+        if isinstance(node, InventoryItem):
+            path = f"/item/{node.node_id}"
+        await self.make_ais_request("DELETE", path, {})
+
+    async def clear_category(self, category: InventoryCategory | UUID) -> None:
+        """Remove all children from a category."""
+        cat_id = _get_node_id(category)
+        await self.make_ais_request("DELETE", f"/category/{cat_id}/children", {})
+
+    async def create_link(
+        self,
+        parent: InventoryCategory | UUID,
+        target: InventoryItem,
+        name: str | None = None,
+        desc: str | None = None,
+    ) -> InventoryItem:
+        """Create an inventory link to an item."""
+        parent_id = _get_node_id(parent)
+        payload = {
+            "links": [{
+                "linked_id": str(target.item_id),
+                "type": int(AssetType.LINK),
+                "inv_type": int(target.inv_type),
+                "name": name or target.name,
+                "desc": desc or target.desc or "",
+            }]
+        }
+        data = await self.make_ais_request("POST", f"/category/{parent_id}", {}, payload)
+        return self.model.get_item(data["_created_items"][0])
+
+    def resolve_link(self, link: InventoryItem) -> InventoryItem | None:
+        """
+        Resolve an inventory link to the actual item.
+
+        Returns None if the linked item isn't in the local inventory cache.
+        """
+        if link.asset_id is None:
+            return None
+        # The asset_id of a link points to the item_id of the actual item
+        return self.model.get_item(link.asset_id)
+
+    async def fetch_folder(
+        self,
+        folder: InventoryCategory | UUID,
+        fetch_folders: bool = True,
+        fetch_items: bool = True,
+    ) -> InventoryCategory:
+        """Fetch a folder's contents from the server."""
+        folders = await self.fetch_folders([folder], fetch_folders, fetch_items)
+        return folders[0] if folders else None
+
+    async def fetch_folders(
+        self,
+        folders: List[InventoryCategory | UUID],
+        fetch_folders: bool = True,
+        fetch_items: bool = True,
+    ) -> List[InventoryCategory]:
+        """Fetch multiple folders' contents from the server."""
+        if not folders:
+            return []
+
+        caps_client = self._session.main_region.caps_client
+        request_folders = []
+        for folder in folders:
+            folder_id = _get_node_id(folder)
+            request_folders.append({
+                "folder_id": folder_id,
+                "owner_id": self._session.agent_id,
+                "fetch_folders": fetch_folders,
+                "fetch_items": fetch_items,
+                "sort_order": 0,
+            })
+
+        async with caps_client.post(
+            "FetchInventoryDescendents2",
+            llsd={"folders": request_folders}
+        ) as resp:
+            resp.raise_for_status()
+            data = await resp.read_llsd()
+
+        return self.process_fetch_descendents_response(data)
+
+    async def complete_inventory(self) -> int:
+        """
+        Fetch all folders recursively until inventory is complete.
+
+        Stops when no dirty folders remain, or when the set of dirty
+        folders stops changing (indicating unfetchable folders).
+        """
+        total = 0
+        prev_dirty_ids: set[UUID] = set()
+        while True:
+            dirty = list(self.model.dirty_categories)
+            dirty_ids = {cat.cat_id for cat in dirty}
+            if not dirty_ids or dirty_ids == prev_dirty_ids:
+                # We stopped making progress, give up
+                break
+            prev_dirty_ids = dirty_ids
+            LOG.info(f"Fetching {len(dirty)} dirty inventory folders")
+            fetched = await self.fetch_folders(dirty)
+            total += len(fetched)
+        self.model.any_dirty.clear()
+        return total

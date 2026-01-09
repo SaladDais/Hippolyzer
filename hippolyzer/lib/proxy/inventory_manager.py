@@ -51,12 +51,16 @@ class ProxyInventoryManager(InventoryManager):
         self.process_aisv3_response = self._wrap_with_cache_defer(
             self.process_aisv3_response
         )
+        self.process_fetch_descendents_response = self._wrap_with_cache_defer(
+            self.process_fetch_descendents_response
+        )
 
         # Base constructor after, because it registers handlers to specific methods, which need to
         # be wrapped before we call they're registered. Handlers are registered by method reference,
         # not by name!
         super().__init__(session)
         session.http_message_handler.subscribe("InventoryAPIv3", self._handle_aisv3_flow)
+        session.http_message_handler.subscribe("FetchInventoryDescendents2", self._handle_fetch_descendents_flow)
         newest_cache = None
         newest_timestamp = dt.datetime(year=1970, month=1, day=1, tzinfo=dt.timezone.utc)
         # So consumers know when the inventory should be complete
@@ -104,7 +108,7 @@ class ProxyInventoryManager(InventoryManager):
         return wrapped
 
     def _handle_aisv3_flow(self, flow: HippoHTTPFlow):
-        if flow.response.status_code < 200 or flow.response.status_code > 300:
+        if flow.response.status_code < 200 or flow.response.status_code >= 300:
             # Probably not a success
             return
         content_type = flow.response.headers.get("Content-Type", "")
@@ -114,6 +118,15 @@ class ProxyInventoryManager(InventoryManager):
 
         # Try and add anything from the response into the model
         self.process_aisv3_response(llsd.parse(flow.response.content))
+
+    def _handle_fetch_descendents_flow(self, flow: HippoHTTPFlow):
+        if flow.response.status_code < 200 or flow.response.status_code >= 300:
+            return
+        content_type = flow.response.headers.get("Content-Type", "")
+        if "llsd" not in content_type:
+            return
+
+        self.process_fetch_descendents_response(llsd.parse(flow.response.content))
 
     async def create_folder(
             self,

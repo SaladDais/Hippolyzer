@@ -12,7 +12,9 @@ from typing import *
 import aiohttp
 import multidict
 
-from hippolyzer.lib.base.datatypes import Vector3, StringEnum
+from hippolyzer.lib.base.datatypes import Vector3, Quaternion, UUID, StringEnum
+from hippolyzer.lib.base.inventory import InventoryItem
+from hippolyzer.lib.base.objects import Object
 from hippolyzer.lib.base.helpers import proxify, get_resource_filename, create_logged_task
 from hippolyzer.lib.base.message.circuit import Circuit
 from hippolyzer.lib.base.message.llsd_msg_serializer import LLSDMessageSerializer
@@ -23,7 +25,7 @@ from hippolyzer.lib.base.message.udpdeserializer import UDPMessageDeserializer
 from hippolyzer.lib.base.network.caps_client import CapsClient, CAPS_DICT
 from hippolyzer.lib.base.network.transport import ADDR_TUPLE, Direction, SocketUDPTransport, AbstractUDPTransport
 from hippolyzer.lib.base.settings import Settings, SettingDescriptor
-from hippolyzer.lib.base.templates import RegionHandshakeReplyFlags, ChatType, ThrottleData
+from hippolyzer.lib.base.templates import RegionHandshakeReplyFlags, ChatType, ThrottleData, AgentControlFlags
 from hippolyzer.lib.base.transfer_manager import TransferManager
 from hippolyzer.lib.base.xfer_manager import XferManager
 from hippolyzer.lib.client.asset_uploader import AssetUploader
@@ -758,6 +760,77 @@ class HippoClient(BaseClientSessionManager):
         create_logged_task(_handle_teleport(), "Teleport")
 
         return teleport_fut
+
+    def sit_on(self, target: Union[Object, UUID], offset: Vector3 = None) -> asyncio.Future:
+        """Request to sit on an object. Accepts an Object or UUID."""
+        if isinstance(target, Object):
+            target_id = target.FullID
+        else:
+            target_id = target
+        if offset is None:
+            offset = Vector3(0, 0, 0)
+        return self.main_circuit.send_reliable(Message(
+            'AgentRequestSit',
+            Block('AgentData', AgentID=self.session.agent_id, SessionID=self.session.id),
+            Block('TargetObject', TargetID=target_id, Offset=offset),
+        ))
+
+    def stand(self) -> asyncio.Future:
+        """Stand up from sitting."""
+        return self.main_circuit.send_reliable(Message(
+            'AgentUpdate',
+            Block(
+                'AgentData',
+                AgentID=self.session.agent_id,
+                SessionID=self.session.id,
+                ControlFlags=AgentControlFlags.STAND_UP,
+                fill_missing=True,
+            )
+        ))
+
+    def start_animation(self, anim: Union[InventoryItem, UUID]) -> asyncio.Future:
+        """Start an animation. Accepts an InventoryItem or asset UUID."""
+        if isinstance(anim, InventoryItem):
+            anim_id = anim.asset_id
+        else:
+            anim_id = anim
+        return self.main_circuit.send_reliable(Message(
+            'AgentAnimation',
+            Block('AgentData', AgentID=self.session.agent_id, SessionID=self.session.id),
+            Block('AnimationList', AnimID=anim_id, StartAnim=True),
+        ))
+
+    def stop_animation(self, anim: Union[InventoryItem, UUID]) -> asyncio.Future:
+        """Stop an animation. Accepts an InventoryItem or asset UUID."""
+        if isinstance(anim, InventoryItem):
+            anim_id = anim.asset_id
+        else:
+            anim_id = anim
+        return self.main_circuit.send_reliable(Message(
+            'AgentAnimation',
+            Block('AgentData', AgentID=self.session.agent_id, SessionID=self.session.id),
+            Block('AnimationList', AnimID=anim_id, StartAnim=False),
+        ))
+
+    @property
+    def position(self) -> Optional[Vector3]:
+        """Current agent position, or None if not available."""
+        if not self.session or not self.session.objects:
+            return None
+        avatar = self.session.objects.lookup_avatar(self.session.agent_id)
+        if avatar:
+            return avatar.RegionPosition
+        return None
+
+    @property
+    def rotation(self) -> Optional[Quaternion]:
+        """Current agent rotation, or None if not available."""
+        if not self.session or not self.session.objects:
+            return None
+        avatar = self.session.objects.lookup_avatar(self.session.agent_id)
+        if avatar and avatar.Object:
+            return avatar.Object.Rotation
+        return None
 
     async def _attempt_resends(self):
         while True:
