@@ -41,7 +41,7 @@ class Object(recordclass.RecordClass, use_weakref=True):  # type: ignore
     FullID: Optional[UUID] = None
     CRC: Optional[int] = None
     PCode: Optional[tmpls.PCode] = None
-    Material: Optional[tmpls.MCode] = None
+    Material: Optional[tmpls.MCode | int] = None
     ClickAction: Optional[tmpls.ClickAction] = None
     Scale: Optional[Vector3] = None
     ParentID: Optional[int] = None
@@ -436,7 +436,8 @@ class FastObjectUpdateCompressedDataDeserializer:
             "PCode": pcode,
             "State": state,
             "CRC": crc,
-            "Material": tmpls.MCode(material),
+            # Make this conversion to enum lax.
+            "Material": tmpls.MCode(material) if material in tmpls.MCode else material,
             "ClickAction": tmpls.ClickAction(click_action),
             "Scale": scale,
             "Position": pos,

@@ -1742,7 +1742,9 @@ class ObjectUpdateCompressedDataSerializer(se.SimpleSubfieldSerializer):
         # point if an object with parents set to an avatar.
         "State": ObjectStateAdapter(se.U8),
         "CRC": se.U32,
-        "Material": se.IntEnum(MCode, se.U8),
+        # I would like for this to be strict, but incomplete server validation prevents it.
+        # You can put whatever you like for MCode.
+        "Material": se.IntEnum(MCode, se.U8, strict=False),
         "ClickAction": se.IntEnum(ClickAction, se.U8),
         "Scale": se.Vector3,
         "Position": se.Vector3,
