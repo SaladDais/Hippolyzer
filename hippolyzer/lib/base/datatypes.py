@@ -313,7 +313,10 @@ class JankStringyBytes(bytes):
         return super().__eq__(other)
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        eq_val = self.__eq__(other)
+        if eq_val is NotImplemented:
+            return NotImplemented
+        return not eq_val
 
     def __contains__(self, item):
         if isinstance(item, str):
