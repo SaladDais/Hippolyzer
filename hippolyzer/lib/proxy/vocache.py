@@ -73,7 +73,7 @@ LOG = logging.getLogger(__name__)
 
 
 class ViewerObjectCache:
-    VERSION = 15
+    VERSION = 17
     MAX_REGIONS = 128
 
     def __init__(self, base_path: Union[str, Path]):
