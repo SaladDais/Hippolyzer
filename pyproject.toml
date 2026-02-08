@@ -51,6 +51,12 @@ gui = [
     "pyside6-essentials",
     "qasync",
 ]
+test = [
+    "pytest",
+    "aioresponses",
+    "pytest-cov",
+    "flake8",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -72,5 +78,9 @@ minversion = "6.0"
 
 [tool.isort]
 profile = "black"
+
+[tool.uv.pip]
+no-emit-package = ["hippolyzer"]
+universal = true
 
 [tool.setuptools_scm]
