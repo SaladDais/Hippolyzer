@@ -117,7 +117,7 @@ multidict==6.4.4
     #   yarl
 mypy-extensions==1.1.0
     # via typing-inspect
-numpy==1.26.4
+numpy==2.4.2
     # via
     #   hippolyzer (pyproject.toml)
     #   glymur
