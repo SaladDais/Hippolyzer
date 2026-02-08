@@ -1,18 +1,19 @@
 from __future__ import annotations
 
+from typing import *
+
 import asyncio
 import codecs
 import functools
+import importlib.resources
 import logging
 import os
 import platform
-
-import lazy_object_proxy
-import pkg_resources
 import re
 import weakref
 from pprint import PrettyPrinter
-from typing import *
+
+import lazy_object_proxy
 
 from hippolyzer.lib.base.multidict import MultiDict
 
@@ -153,8 +154,8 @@ def bytes_escape(val: bytes) -> bytes:
     return re.sub(rb"(?<!\\)\\n", b"\n", codecs.escape_encode(val)[0])  # type: ignore
 
 
-def get_resource_filename(resource_filename: str):
-    return pkg_resources.resource_filename("hippolyzer", resource_filename)
+def get_resource_filename(resource_filename: str) -> str:
+    return str(importlib.resources.files("hippolyzer").joinpath(resource_filename))
 
 
 def to_chunks(chunkable: Sequence[_T], chunk_size: int) -> Generator[Sequence[_T], None, None]:
