@@ -18,6 +18,10 @@ import hippolyzer.lib.base.helpers as helpers
 from hippolyzer.lib.base.multidict import OrderedMultiDict
 
 
+class ReadPastEndError(ValueError):
+    """Raised when a read would go past the end of the buffer"""
+
+
 SERIALIZABLE_TYPE = Union["SerializableBase", Type["SerializableBase"]]
 SUBFIELD_SERIALIZERS: Dict[Tuple[str, str, str], "BaseSubfieldSerializer"] = {}
 HTTP_SERIALIZERS: Dict[str, "BaseHTTPSerializer"] = {}
@@ -224,7 +228,7 @@ class BufferReader(Reader):
     def read_bytes(self, num_bytes, peek=False, to_bytes=False, check_len=True):
         end_pos = self._pos + num_bytes
         if end_pos > self._len and check_len:
-            raise ValueError(f"{len(self)} bytes left, needed {num_bytes}")
+            raise ReadPastEndError(f"{len(self)} bytes left, needed {num_bytes}")
 
         read_bytes = self._buffer[self._pos:end_pos]
         if to_bytes:

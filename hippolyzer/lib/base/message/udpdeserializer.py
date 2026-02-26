@@ -168,6 +168,7 @@ class UDPMessageDeserializer:
         current_template = self.template_dict.get_template_by_name(msg.name)
         reader.seek(current_template.get_msg_freq_num_len() + msg.offset)
 
+        ran_off_end = False
         for tmpl_block in current_template.blocks:
             # EOF?
             if not len(reader):
@@ -200,9 +201,21 @@ class UDPMessageDeserializer:
                             reader=reader,
                             tmpl_variable=tmpl_variable,
                         )
-                    except:
+                    except se.ReadPastEndError:
+                        # Ran off end of packet. Remove the partially-created
+                        # block and bail out so reserialization doesn't include
+                        # blocks that weren't in the original message.
+                        LOG.debug(f"Ran off end of {msg.name} while parsing {context_str}")
+                        msg.blocks[tmpl_block.name].pop()
+                        ran_off_end = True
+                        break
+                    except Exception:
                         LOG.exception(f"Raised while parsing var in {context_str}")
                         raise
+                if ran_off_end:
+                    break
+            if ran_off_end:
+                break
 
         if not msg.blocks and current_template.blocks:
             raise exc.MessageDeserializationError("message", "message is empty")
