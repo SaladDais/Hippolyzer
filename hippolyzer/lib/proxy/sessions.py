@@ -5,7 +5,6 @@ import dataclasses
 import datetime
 import functools
 import logging
-import multiprocessing
 from typing import *
 from weakref import ref
 
@@ -121,13 +120,16 @@ class SessionManager(BaseClientSessionManager):
         BaseClientSessionManager.__init__(self)
         self.settings: ProxySettings = settings
         self.sessions: List[Session] = []
-        self.shutdown_signal = multiprocessing.Event()
-        self.flow_context = HTTPFlowContext()
+        self.flow_context: HTTPFlowContext | None = None
         self.asset_repo = HTTPAssetRepo()
         self.message_logger: Optional[BaseMessageLogger] = None
         self.addon_ctx: Dict[str, Dict[str, Any]] = collections.defaultdict(dict)
         self.name_cache = ProxyNameCache()
         self.pending_leap_clients: List[LEAPClient] = []
+
+    def close(self):
+        if self.flow_context is not None:
+            self.flow_context.close()
 
     def create_session(self, login_data) -> Session:
         session = Session.from_login_data(login_data, self)

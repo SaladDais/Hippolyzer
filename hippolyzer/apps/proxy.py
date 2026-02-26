@@ -128,6 +128,7 @@ def start_proxy(session_manager: SessionManager, extra_addons: Optional[list] = 
     if proxy_host is None:
         proxy_host = session_manager.settings.PROXY_BIND_ADDR
 
+    session_manager.flow_context = HTTPFlowContext()
     flow_context = session_manager.flow_context
     session_manager.name_cache.load_viewer_caches()
 

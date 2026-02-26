@@ -102,6 +102,11 @@ class HTTPFlowContext:
         self.shutdown_signal = multiprocessing.Event()
         self.mitmproxy_ready = multiprocessing.Event()
 
+    def close(self):
+        self.shutdown_signal.set()
+        self.from_proxy_queue.close()
+        self.to_proxy_queue.close()
+
 
 class IPCInterceptionAddon:
     """

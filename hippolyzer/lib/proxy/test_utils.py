@@ -39,6 +39,7 @@ class BaseProxyTest(unittest.IsolatedAsyncioTestCase):
 
     def tearDown(self) -> None:
         self.protocol.close()
+        self.session_manager.close()
 
     async def _wait_drained(self):
         await asyncio.sleep(0.001)

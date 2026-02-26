@@ -16,6 +16,7 @@ from hippolyzer.lib.base.helpers import create_logged_task
 from hippolyzer.lib.proxy.addon_utils import BaseAddon
 from hippolyzer.lib.proxy.addons import AddonManager
 from hippolyzer.lib.proxy.http_event_manager import MITMProxyEventManager
+from hippolyzer.lib.proxy.http_proxy import HTTPFlowContext
 from hippolyzer.lib.proxy.http_flow import HippoHTTPFlow
 from hippolyzer.lib.proxy.caps import SerializedCapData
 from hippolyzer.lib.proxy.sessions import SessionManager
@@ -35,6 +36,7 @@ class HTTPIntegrationTests(BaseProxyTest):
         await super().asyncSetUp()
         self.addon = MockAddon()
         AddonManager.init([], self.session_manager, [self.addon])
+        self.session_manager.flow_context = HTTPFlowContext()
         self.flow_context = self.session_manager.flow_context
         self.http_event_manager = MITMProxyEventManager(self.session_manager, self.flow_context)
         self._setup_default_circuit()
@@ -148,6 +150,7 @@ class TestMITMProxy(BaseProxyTest):
         self.caps_client = self.session.main_region.caps_client
         proxy_port = 9905
         self.session_manager.settings.HTTP_PROXY_PORT = proxy_port
+        self.session_manager.flow_context = HTTPFlowContext()
 
         self.http_proc = multiprocessing.Process(
             target=run_http_proxy_process,
@@ -161,6 +164,15 @@ class TestMITMProxy(BaseProxyTest):
             self.session_manager,
             self.session_manager.flow_context
         )
+
+    def tearDown(self) -> None:
+        self.session_manager.flow_context.shutdown_signal.set()
+        self.http_proc.join(timeout=2.0)
+        if self.http_proc.is_alive():
+            self.http_proc.terminate()
+            self.http_proc.join(timeout=1.0)
+        self.http_proc.close()
+        super().tearDown()
 
     def test_mitmproxy_works(self):
         async def _request_example_com():

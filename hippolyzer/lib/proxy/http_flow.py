@@ -140,7 +140,7 @@ class HippoHTTPFlow:
         assert flow is not None
         cap_data_ser = flow.metadata.get("cap_data_ser")
         callback_queue = None
-        if session_manager:
+        if session_manager and session_manager.flow_context:
             callback_queue = session_manager.flow_context.to_proxy_queue
         if cap_data_ser is not None:
             flow.metadata["cap_data"] = CapData.deserialize(cap_data_ser, session_manager)
