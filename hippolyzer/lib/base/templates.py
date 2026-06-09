@@ -47,6 +47,7 @@ _ASSET_TYPE_BIDI: BiDiDict[str] = BiDiDict({
     "image_jpeg": "jpg",
     "sound_wav": "snd_wav",
     "folder_link": "link_f",
+    "gltf_bin": "glbin",
     "unknown": "invalid",
     "none": "-1",
 })
@@ -96,6 +97,8 @@ class AssetType(LookupIntEnum):
     RESERVED_6 = 55
     SETTINGS = 56
     MATERIAL = 57
+    GLTF = 58
+    GLTF_BIN = 59
     UNKNOWN = 255
     NONE = -1
 
@@ -132,12 +135,15 @@ class AssetType(LookupIntEnum):
             AssetType.MESH: InventoryType.MESH,
             AssetType.SETTINGS: InventoryType.SETTINGS,
             AssetType.MATERIAL: InventoryType.MATERIAL,
+            AssetType.GLTF: InventoryType.GLTF,
+            AssetType.GLTF_BIN: InventoryType.GLTF_BIN,
         }.get(self, AssetType.NONE)
 
 
 _INV_TYPE_BIDI: BiDiDict[str] = BiDiDict({
     "callingcard": "callcard",
     "attachment": "attach",
+    "gltf_bin": "glbin",
     "none": "-1",
 })
 
@@ -177,6 +183,8 @@ class InventoryType(LookupIntEnum):
     PERSON = 24
     SETTINGS = 25
     MATERIAL = 26
+    GLTF = 27
+    GLTF_BIN = 28
     UNKNOWN = 255
     NONE = -1
 
@@ -254,6 +262,16 @@ class FolderType(LookupIntEnum):
     # Opensim folders
     MY_SUITCASE = 100
     NONE = -1
+
+    @classmethod
+    def _missing_(cls, value):
+        # Accept any value in the ensemble range, preserving the original value.
+        if not isinstance(value, int) or not (cls.ENSEMBLE_START <= value <= cls.ENSEMBLE_END):
+            return None
+        member = int.__new__(cls, value)
+        member._name_ = cls.ENSEMBLE_START.name
+        member._value_ = value
+        return cls._value2member_map_.setdefault(value, member)
 
     def to_lookup_name(self) -> str:
         lower = self.name.lower()
@@ -351,6 +369,16 @@ class SaleType(LookupIntEnum):
     @classmethod
     def from_lookup_name(cls, legacy_name: str):
         return cls(_SALE_TYPE_LEGACY_NAMES.index(legacy_name))
+
+    @classmethod
+    def _missing_(cls, value):
+        if not isinstance(value, int):
+            return None
+        LOG.warning(f"Coercing unknown SaleType {value!r} to NOT")
+        member = int.__new__(cls, value)
+        member._name_ = cls.NOT.name
+        member._value_ = value
+        return cls._value2member_map_.setdefault(value, member)
 
     def to_lookup_name(self) -> str:
         return _SALE_TYPE_LEGACY_NAMES[int(self.value)]
