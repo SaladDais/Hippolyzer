@@ -238,8 +238,26 @@ class FolderType(LookupIntEnum):
     GESTURE = 21
     FAVORITE = 23
     # The "ensemble" values aren't used, no idea what they were for.
-    ENSEMBLE_START = 26
-    ENSEMBLE_END = 45
+    ENSEMBLE_UNKNOWN_26 = 26
+    ENSEMBLE_UNKNOWN_27 = 27
+    ENSEMBLE_UNKNOWN_28 = 28
+    ENSEMBLE_UNKNOWN_29 = 29
+    ENSEMBLE_UNKNOWN_30 = 30
+    ENSEMBLE_UNKNOWN_31 = 31
+    ENSEMBLE_UNKNOWN_32 = 32
+    ENSEMBLE_UNKNOWN_33 = 33
+    ENSEMBLE_UNKNOWN_34 = 34
+    ENSEMBLE_UNKNOWN_35 = 35
+    ENSEMBLE_UNKNOWN_36 = 36
+    ENSEMBLE_UNKNOWN_37 = 37
+    ENSEMBLE_UNKNOWN_38 = 38
+    ENSEMBLE_UNKNOWN_39 = 39
+    ENSEMBLE_UNKNOWN_40 = 40
+    ENSEMBLE_UNKNOWN_41 = 41
+    ENSEMBLE_UNKNOWN_42 = 42
+    ENSEMBLE_UNKNOWN_43 = 43
+    ENSEMBLE_UNKNOWN_44 = 44
+    ENSEMBLE_UNKNOWN_45 = 45
     # This range is reserved for special clothing folder types.
     CURRENT_OUTFIT = 46
     OUTFIT = 47
@@ -263,15 +281,9 @@ class FolderType(LookupIntEnum):
     MY_SUITCASE = 100
     NONE = -1
 
-    @classmethod
-    def _missing_(cls, value):
-        # Accept any value in the ensemble range, preserving the original value.
-        if not isinstance(value, int) or not (cls.ENSEMBLE_START <= value <= cls.ENSEMBLE_END):
-            return None
-        member = int.__new__(cls, value)
-        member._name_ = cls.ENSEMBLE_START.name
-        member._value_ = value
-        return cls._value2member_map_.setdefault(value, member)
+    @property
+    def is_ensemble(self) -> bool:
+        return FolderType.ENSEMBLE_UNKNOWN_26 <= self <= FolderType.ENSEMBLE_UNKNOWN_45
 
     def to_lookup_name(self) -> str:
         lower = self.name.lower()
@@ -365,20 +377,12 @@ class SaleType(LookupIntEnum):
     ORIGINAL = 1
     COPY = 2
     CONTENTS = 3
+    # Bogus value seen in the wild, treated as "not for sale" by the viewer.
+    INVALID = 32768
 
     @classmethod
     def from_lookup_name(cls, legacy_name: str):
         return cls(_SALE_TYPE_LEGACY_NAMES.index(legacy_name))
-
-    @classmethod
-    def _missing_(cls, value):
-        if not isinstance(value, int):
-            return None
-        LOG.warning(f"Coercing unknown SaleType {value!r} to NOT")
-        member = int.__new__(cls, value)
-        member._name_ = cls.NOT.name
-        member._value_ = value
-        return cls._value2member_map_.setdefault(value, member)
 
     def to_lookup_name(self) -> str:
         return _SALE_TYPE_LEGACY_NAMES[int(self.value)]
