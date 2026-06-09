@@ -385,7 +385,10 @@ class SaleType(LookupIntEnum):
         return cls(_SALE_TYPE_LEGACY_NAMES.index(legacy_name))
 
     def to_lookup_name(self) -> str:
-        return _SALE_TYPE_LEGACY_NAMES[int(self.value)]
+        try:
+            return _SALE_TYPE_LEGACY_NAMES[int(self.value)]
+        except IndexError:
+            return _SALE_TYPE_LEGACY_NAMES[SaleType.NOT]
 
 
 class AggregatePermissionType(IntEnum):
