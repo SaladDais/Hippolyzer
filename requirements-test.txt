@@ -2,7 +2,7 @@
 #    uv pip compile --extra gui --extra proxy --extra test --output-file=requirements-test.txt pyproject.toml
 aiohappyeyeballs==2.6.1
     # via aiohttp
-aiohttp==3.13.3
+aiohttp==3.13.2
     # via
     #   hippolyzer (pyproject.toml)
     #   aioresponses
