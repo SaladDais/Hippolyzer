@@ -1,3 +1,4 @@
+import datetime
 import enum
 import logging
 import typing
@@ -11,7 +12,8 @@ LOG = logging.getLogger(__name__)
 
 
 class MessageLogHeader(enum.IntEnum):
-    Host = 0
+    Timestamp = 0
+    Host = enum.auto()
     Type = enum.auto()
     Method = enum.auto()
     Name = enum.auto()
@@ -53,7 +55,10 @@ class MessageLogModel(QtCore.QAbstractTableModel, FilteringMessageLogger):
         col = index.column()
         val = None
 
-        if col == MessageLogHeader.Host:
+        if col == MessageLogHeader.Timestamp:
+            timestamp = entry.meta.get("Timestamp")
+            val = datetime.datetime.fromtimestamp(timestamp).strftime("%H:%M:%S.%f")[:-3] if timestamp else ""
+        elif col == MessageLogHeader.Host:
             val = entry.host
         elif col == MessageLogHeader.Method:
             val = entry.method
