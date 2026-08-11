@@ -294,6 +294,7 @@ class MessageLogWindow(QtWidgets.QMainWindow):
         self.toolButtonFilter.setMenu(self._filterMenu)
 
         self._shouldScrollOnInsert = True
+        self.tableView.horizontalHeader().resizeSection(MessageLogHeader.Timestamp, 90)
         self.tableView.horizontalHeader().resizeSection(MessageLogHeader.Host, 80)
         self.tableView.horizontalHeader().resizeSection(MessageLogHeader.Method, 60)
         self.tableView.horizontalHeader().resizeSection(MessageLogHeader.Name, 180)

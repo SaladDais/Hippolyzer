@@ -11,6 +11,7 @@ import json
 import logging
 import pickle
 import re
+import time
 import typing
 import weakref
 
@@ -173,6 +174,7 @@ class AbstractMessageLogEntry(abc.ABC):
         if self.region is not None:
             agent_obj = self.region.objects.lookup_fullid(self.agent_id)
         self.meta = {
+            "Timestamp": time.time(),
             "RegionName": self.region_name,
             "AgentID": self.agent_id,
             "SessionID": self.session.id if self.session else None,
