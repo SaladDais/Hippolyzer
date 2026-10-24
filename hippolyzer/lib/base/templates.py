@@ -1807,7 +1807,6 @@ class ObjectUpdateCompressedDataSerializer(se.SimpleSubfieldSerializer):
         "NameValue": CompressedOption(CompressedFlags.NAME_VALUES, NAMEVALUES_TERMINATED_TEMPLATE),
         # Intentionally not de-quantizing to preserve their real ranges.
         "PathCurve": se.U8,
-        "ProfileCurve": se.U8,
         "PathBegin": se.U16,  # 0 to 1, quanta = 0.01
         "PathEnd": se.U16,  # 0 to 1, quanta = 0.01
         "PathScaleX": se.U8,  # 0 to 1, quanta = 0.01
@@ -1821,6 +1820,7 @@ class ObjectUpdateCompressedDataSerializer(se.SimpleSubfieldSerializer):
         "PathTaperY": se.S8,  # -1 to 1, quanta = 0.01
         "PathRevolutions": se.U8,  # 0 to 3, quanta = 0.015
         "PathSkew": se.S8,  # -1 to 1, quanta = 0.01
+        "ProfileCurve": se.U8,
         "ProfileBegin": se.U16,  # 0 to 1, quanta = 0.01
         "ProfileEnd": se.U16,  # 0 to 1, quanta = 0.01
         "ProfileHollow": se.U16,  # 0 to 1, quanta = 0.01
