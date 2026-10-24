@@ -363,7 +363,7 @@ class FastObjectUpdateCompressedDataDeserializer:
     COLOR_ADAPTER = tmpls.Color4()
     PARTICLES_OLD = se.TypedBytesFixed(86, tmpls.PSBLOCK_TEMPLATE)
     SOUND_STRUCT = struct.Struct("<16sfBf")
-    PRIM_PARAMS_STRUCT = struct.Struct("<BBHHBBBBbbbbbBbHHH")
+    PRIM_PARAMS_STRUCT = struct.Struct("<BHHBBBBbbbbbBbBHHH")
     ATTACHMENT_STATE_ADAPTER = tmpls.AttachmentStateAdapter(None)
 
     @classmethod
@@ -415,10 +415,10 @@ class FastObjectUpdateCompressedDataDeserializer:
         name_value = None
         if flags & tmpls.CompressedFlags.NAME_VALUES.value:
             name_value = reader.read(tmpls.NAMEVALUES_TERMINATED_TEMPLATE)
-        path_curve, profile_curve, path_begin, path_end, path_scale_x, path_scale_y, \
+        path_curve, path_begin, path_end, path_scale_x, path_scale_y, \
             path_shear_x, path_shear_y, path_twist, path_twist_begin, path_radius_offset, \
-            path_taper_x, path_taper_y, path_revolutions, path_skew, profile_begin, \
-            profile_end, profile_hollow = reader.read_struct(cls.PRIM_PARAMS_STRUCT)
+            path_taper_x, path_taper_y, path_revolutions, path_skew, profile_curve, \
+            profile_begin, profile_end, profile_hollow = reader.read_struct(cls.PRIM_PARAMS_STRUCT)
         texture_entry = reader.read(tmpls.DATA_PACKER_TE_TEMPLATE)
         texture_anim = None
         if flags & tmpls.CompressedFlags.TEXTURE_ANIM.value:
